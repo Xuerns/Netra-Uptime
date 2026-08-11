@@ -1,0 +1,57 @@
+# -----------------------------------------------------------------------------
+# Root .gitignore for PulseWatch Monorepo
+# -----------------------------------------------------------------------------
+
+# Sensitive Environment Files (NEVER COMMIT)
+.env
+.env.*
+*.env
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build Outputs & Binary Files
+build/
+**/build/
+dist/
+**/dist/
+.svelte-kit/
+**/.svelte-kit/
+.output/
+.vercel/
+.wrangler/
+tmp/
+**/tmp/
+/bin/
+*.exe
+*.test
+*.out
+
+# Logs
+*.log
+logs/
+**/logs/
+
+# OS & System Junk
+.DS_Store
+Thumbs.db
+*~
+
+# IDE & Editor Settings
+.vscode/
+.idea/
+*.swp
+.agents/
+skills-lock.json
+
+# Mark & Security Reports
+security_audit_report.md
+
+# Documentation filtering (only allow docs/DESIGN.md)
+docs/*
+!docs/DESIGN.md

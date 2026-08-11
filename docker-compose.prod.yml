@@ -1,0 +1,83 @@
+services:
+  # ─────────────────────────────────────────────
+  # PulseWatch App (Pre-built Single Container)
+  # ─────────────────────────────────────────────
+  pulsewatch:
+    image: ghcr.io/xuerns/pulsewatch:latest
+    container_name: pulsewatch_app
+    restart: unless-stopped
+    environment:
+      - APP_ENV=production
+      - APP_MODE=selfhosted
+      - PORT=8080
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=pulsewatch
+      - DB_PASSWORD=pulsewatch_secret_change_me
+      - DB_NAME=pulsewatch
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=redis_secret_change_me
+      - RECENT_CHECKS_LIMIT=60
+      - SELFHOSTED_MAX_MONITORS=0
+      - SELFHOSTED_MAX_ORGS=0
+      - SELFHOSTED_MAX_MEMBERS=0
+      - SELFHOSTED_MAX_PIC=10
+      - SELFHOSTED_MIN_INTERVAL=10
+      - SELFHOSTED_MAX_TIMEOUT=60
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - pulsewatch_net
+
+  # ─────────────────────────────────────────────
+  # PostgreSQL
+  # ─────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: pulsewatch_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pulsewatch
+      POSTGRES_PASSWORD: pulsewatch_secret_change_me
+      POSTGRES_DB: pulsewatch
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pulsewatch -d pulsewatch"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pulsewatch_net
+
+  # ─────────────────────────────────────────────
+  # Redis
+  # ─────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: pulsewatch_redis
+    restart: unless-stopped
+    command: redis-server --requirepass redis_secret_change_me
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis_secret_change_me", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pulsewatch_net
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  pulsewatch_net:
+    driver: bridge
