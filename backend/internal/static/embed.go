@@ -2,8 +2,10 @@ package static
 
 import (
 	"embed"
+	"fmt"
 	"io/fs"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -20,6 +22,30 @@ func RegisterStaticRoutes(r *gin.Engine) {
 	}
 
 	fileServer := http.FileServer(http.FS(subFS))
+
+	// Serve /_app/env.js dynamically so users can configure PUBLIC_API_URL
+	// at runtime via environment variable without rebuilding the image.
+	r.GET("/_app/env.js", func(c *gin.Context) {
+		apiURL := os.Getenv("PUBLIC_API_URL")
+		if apiURL == "" {
+			apiURL = "http://localhost:8080/api/v1"
+		}
+
+		googleClientID := os.Getenv("PUBLIC_GOOGLE_CLIENT_ID")
+		googleRedirectURL := os.Getenv("PUBLIC_GOOGLE_REDIRECT_URL")
+		if googleRedirectURL == "" {
+			googleRedirectURL = fmt.Sprintf("%s/auth/callback/google", strings.TrimSuffix(apiURL, "/api/v1"))
+		}
+
+		js := fmt.Sprintf(
+			`export const env={PUBLIC_API_URL:%q,PUBLIC_GOOGLE_CLIENT_ID:%q,PUBLIC_GOOGLE_REDIRECT_URL:%q}`,
+			apiURL, googleClientID, googleRedirectURL,
+		)
+
+		c.Header("Content-Type", "application/javascript; charset=utf-8")
+		c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+		c.String(http.StatusOK, js)
+	})
 
 	r.NoRoute(func(c *gin.Context) {
 		path := c.Request.URL.Path

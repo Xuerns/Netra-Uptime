@@ -47,12 +47,21 @@ func parseIntEnv(key string, defaultVal int) int {
 
 func Load() *Config {
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
+		if err := godotenv.Load("../.env"); err != nil {
+			if os.Getenv("DB_HOST") == "" && os.Getenv("APP_ENV") == "" {
+				log.Println("No .env file found")
+			}
+		}
 	}
 
 	appMode := os.Getenv("APP_MODE")
 	if appMode == "" {
 		appMode = "selfhosted"
+	}
+
+	dbSSLMode := os.Getenv("DB_SSLMODE")
+	if dbSSLMode == "" {
+		dbSSLMode = "disable"
 	}
 
 	return &Config{
@@ -73,7 +82,7 @@ func Load() *Config {
 		DBUser:     os.Getenv("DB_USER"),
 		DBPassword: os.Getenv("DB_PASSWORD"),
 		DBName:     os.Getenv("DB_NAME"),
-		DBSSLMode:  os.Getenv("DB_SSLMODE"),
+		DBSSLMode:  dbSSLMode,
 
 		RedisHost:     os.Getenv("REDIS_HOST"),
 		RedisPort:     os.Getenv("REDIS_PORT"),

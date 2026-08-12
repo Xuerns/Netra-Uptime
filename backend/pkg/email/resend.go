@@ -113,4 +113,3 @@ func (s *ResendSender) SendExpiryReminder(to []string, monitorName, target, expi
 
 	return s.SendEmail(to, subject, htmlBody)
 }
-

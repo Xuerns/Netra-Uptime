@@ -15,6 +15,7 @@ services:
       - DB_USER=pulsewatch
       - DB_PASSWORD=pulsewatch_secret_change_me
       - DB_NAME=pulsewatch
+      - DB_SSLMODE=disable
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=redis_secret_change_me
