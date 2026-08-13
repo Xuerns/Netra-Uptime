@@ -61,7 +61,7 @@
 </script>
 
 <div
-	class="shrink-0 transition-all duration-250 ease-in-out border-l border-white/8 bg-[#161618]
+	class="shrink-0 overflow-hidden transition-all duration-250 ease-in-out border-l border-white/8 bg-[#161618]
 	{panelOpen ? 'w-[300px] opacity-100' : 'w-0 opacity-0 pointer-events-none'}"
 >
 	<div class="w-[300px] flex flex-col gap-3.5 h-full p-5 overflow-y-auto">

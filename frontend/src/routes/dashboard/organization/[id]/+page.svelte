@@ -119,7 +119,9 @@
 	}
 
 	// ── Derived ──────────────────────────────────────────────────────────────
-	let currentUserRole = $derived(members.find((m: Member) => m.UserID === $page.data.user?.id)?.Role);
+	let currentUserRole = $derived(
+		members.find((m: Member) => m.UserID === $page.data.user?.id)?.Role
+	);
 	let upCount = $derived(monitors.filter((m) => m.Status === 'up').length);
 	let downCount = $derived(monitors.filter((m) => m.Status === 'down').length);
 
@@ -354,7 +356,7 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-	class="flex items-stretch h-[calc(100vh-3rem)] -m-6 text-on-surface antialiased"
+	class="flex items-stretch h-[calc(100vh-3rem)] -m-6 overflow-x-hidden text-on-surface antialiased"
 	onclick={closeDropdowns}
 >
 	<!-- ── Left Column (Header & Main Content) ────────────────────────────────── -->
@@ -391,8 +393,6 @@
 			</div>
 
 			<div class="flex items-center gap-2">
-
-
 				<!-- Panel Toggle -->
 				<button
 					class="flex items-center justify-center size-9 rounded-lg border transition-colors
@@ -502,7 +502,7 @@
 			<div class="px-6 shrink-0 relative pt-1">
 				<!-- The border line that sits behind the tabs -->
 				<div class="absolute bottom-0 left-0 right-0 h-px bg-white/8"></div>
-				
+
 				<Tabs.List class="bg-transparent border-none p-0 h-auto flex gap-1 relative z-10">
 					<Tabs.Trigger
 						value="monitors"
@@ -530,7 +530,8 @@
 
 			<Tabs.Content
 				value="monitors"
-				class="flex-1 p-6 overflow-y-auto m-0 outline-none data-[state=inactive]:hidden flex flex-col"
+				data-lenis-prevent
+				class="flex-1 min-h-0 p-6 overflow-y-auto m-0 outline-none data-[state=inactive]:hidden flex flex-col"
 			>
 				<!-- Loading monitors -->
 				{#if isLoadingMonitors}
@@ -591,36 +592,36 @@
 						</p>
 						{#if currentUserRole === 'owner'}
 							<DropdownMenu.Root>
-							<DropdownMenu.Trigger
-								class="flex items-center gap-2 h-10 px-5 rounded-lg bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 font-medium text-[14px] shadow-sm"
-							>
-								<Plus class="size-4" />
-								<span>Add monitor</span>
-							</DropdownMenu.Trigger>
-							<DropdownMenu.Content
-								align="center"
-								class="bg-[#161618] border-white/8 text-white min-w-[160px] p-1.5"
-							>
-								<DropdownMenu.Item
-									class="hover:bg-white/10 cursor-pointer rounded-md p-2"
-									onclick={() => openAddMonitor('http')}
+								<DropdownMenu.Trigger
+									class="flex items-center gap-2 h-10 px-5 rounded-lg bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 font-medium text-[14px] shadow-sm"
 								>
-									<Globe class="mr-2 size-4 text-primary" /> HTTP/API
-								</DropdownMenu.Item>
-								<DropdownMenu.Item
-									class="hover:bg-white/10 cursor-pointer rounded-md p-2"
-									onclick={() => openAddMonitor('ping')}
+									<Plus class="size-4" />
+									<span>Add monitor</span>
+								</DropdownMenu.Trigger>
+								<DropdownMenu.Content
+									align="center"
+									class="bg-[#161618] border-white/8 text-white min-w-[160px] p-1.5"
 								>
-									<Activity class="mr-2 size-4 text-[#ffc107]" /> Ping
-								</DropdownMenu.Item>
-								<DropdownMenu.Item
-									class="hover:bg-white/10 cursor-pointer rounded-md p-2"
-									onclick={() => openAddMonitor('tcp')}
-								>
-									<Terminal class="mr-2 size-4 text-[#17a2b8]" /> TCP Port
-								</DropdownMenu.Item>
-							</DropdownMenu.Content>
-						</DropdownMenu.Root>
+									<DropdownMenu.Item
+										class="hover:bg-white/10 cursor-pointer rounded-md p-2"
+										onclick={() => openAddMonitor('http')}
+									>
+										<Globe class="mr-2 size-4 text-primary" /> HTTP/API
+									</DropdownMenu.Item>
+									<DropdownMenu.Item
+										class="hover:bg-white/10 cursor-pointer rounded-md p-2"
+										onclick={() => openAddMonitor('ping')}
+									>
+										<Activity class="mr-2 size-4 text-[#ffc107]" /> Ping
+									</DropdownMenu.Item>
+									<DropdownMenu.Item
+										class="hover:bg-white/10 cursor-pointer rounded-md p-2"
+										onclick={() => openAddMonitor('tcp')}
+									>
+										<Terminal class="mr-2 size-4 text-[#17a2b8]" /> TCP Port
+									</DropdownMenu.Item>
+								</DropdownMenu.Content>
+							</DropdownMenu.Root>
 						{/if}
 					</div>
 
@@ -645,13 +646,20 @@
 
 			<Tabs.Content
 				value="statuspages"
-				class="flex-1 p-6 overflow-y-auto m-0 outline-none data-[state=inactive]:hidden flex flex-col"
+				data-lenis-prevent
+				class="flex-1 min-h-0 p-6 overflow-y-auto m-0 outline-none data-[state=inactive]:hidden flex flex-col"
 			>
-				<StatusPageTab {orgId} {monitors} {currentUserRole} bind:isAddModalOpen={isAddStatusPageOpen} />
+				<StatusPageTab
+					{orgId}
+					{monitors}
+					{currentUserRole}
+					bind:isAddModalOpen={isAddStatusPageOpen}
+				/>
 			</Tabs.Content>
 
 			<Tabs.Content
 				value="apikeys"
+				data-lenis-prevent
 				class="flex-1 p-6 overflow-y-auto m-0 outline-none data-[state=inactive]:hidden flex flex-col"
 			>
 				<APIKeysTab {orgId} userRole={currentUserRole || 'member'} />

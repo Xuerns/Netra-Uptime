@@ -296,33 +296,37 @@
 
 			<!-- ── Grid view ─────────────────────────────────────────────────────── -->
 		{:else if viewMode === 'grid'}
-			<div class="grid grid-cols-[repeat(auto-fill,minmax(450px,1fr))] gap-6">
-				{#each filtered as monitor (monitor.ID)}
-					<div animate:flip={{ duration: 250 }} class="flex w-full h-full">
-						<MonitorCard {monitor} />
-					</div>
-				{/each}
+			<div class="monitors-scroll-area">
+				<div data-lenis-prevent class="grid grid-cols-[repeat(auto-fill,minmax(450px,1fr))] gap-6">
+					{#each filtered as monitor (monitor.ID)}
+						<div animate:flip={{ duration: 250 }} class="flex w-full h-full">
+							<MonitorCard {monitor} />
+						</div>
+					{/each}
+				</div>
 			</div>
 
 			<!-- ── List view ─────────────────────────────────────────────────────── -->
 		{:else}
-			<div
-				class="flex flex-col divide-y divide-white/6 border border-white/8 rounded-xl overflow-hidden bg-white/2"
-			>
-				<!-- Header row -->
-				<div class="list-row list-row--header" aria-hidden="true">
-					<span>Monitor</span>
-					<span>Status</span>
-					<span>Response</span>
-					<span>Uptime 30d</span>
-					<span>Interval</span>
-					<span>Last check</span>
-					<span></span>
-				</div>
+			<div class="monitors-scroll-area">
+				<div
+					class="flex flex-col divide-y divide-white/6 border border-white/8 rounded-xl overflow-hidden bg-white/2"
+				>
+					<!-- Header row -->
+					<div class="list-row list-row--header" aria-hidden="true">
+						<span>Monitor</span>
+						<span>Status</span>
+						<span>Response</span>
+						<span>Uptime 30d</span>
+						<span>Interval</span>
+						<span>Last check</span>
+						<span></span>
+					</div>
 
-				{#each filtered as monitor (monitor.ID)}
-					<MonitorListRow {monitor} />
-				{/each}
+					{#each filtered as monitor (monitor.ID)}
+						<MonitorListRow {monitor} />
+					{/each}
+				</div>
 			</div>
 		{/if}
 	{/if}
@@ -412,6 +416,42 @@
 
 	.list-row--header:hover {
 		background: rgba(255, 255, 255, 0.02);
+	}
+
+	/* ── Monitors page layout ────────────────────────────────────────────── */
+	.monitors-page {
+		/* 48px topbar (h-12) + 24px padding-top + 24px padding-bottom dari p-6 layout */
+		height: calc(100vh - 96px);
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+	}
+
+	/* ── Monitors scroll area ─────────────────────────────────────────────── */
+	.monitors-scroll-area {
+		flex: 1;
+		min-height: 0;
+		overflow-y: auto;
+		padding: 4px;
+		scrollbar-width: thin;
+		scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+	}
+
+	.monitors-scroll-area::-webkit-scrollbar {
+		width: 5px;
+	}
+
+	.monitors-scroll-area::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.monitors-scroll-area::-webkit-scrollbar-thumb {
+		background: rgba(255, 255, 255, 0.12);
+		border-radius: 999px;
+	}
+
+	.monitors-scroll-area::-webkit-scrollbar-thumb:hover {
+		background: rgba(255, 255, 255, 0.2);
 	}
 
 	/* ── Reduced motion ───────────────────────────────────────────────────── */

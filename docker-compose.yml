@@ -73,7 +73,6 @@ services:
       - SELFHOSTED_MAX_PIC=${SELFHOSTED_MAX_PIC:-10}
       - SELFHOSTED_MIN_INTERVAL=${SELFHOSTED_MIN_INTERVAL:-10}
       - SELFHOSTED_MAX_TIMEOUT=${SELFHOSTED_MAX_TIMEOUT:-60}
-      # Frontend runtime configuration (served dynamically via /_app/env.js)
       - PUBLIC_API_URL=${PUBLIC_API_URL:-http://localhost:8080/api/v1}
       - PUBLIC_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - PUBLIC_GOOGLE_REDIRECT_URL=${GOOGLE_REDIRECT_URL:-}

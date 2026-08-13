@@ -8,7 +8,7 @@
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { OrgAPI } from '$lib/api/organization';
-	
+
 	let { data, children } = $props();
 
 	let hasUnreadNotifications = $state(false);
@@ -39,14 +39,20 @@
 			>
 				<Bell class="size-4.5" />
 				{#if hasUnreadNotifications}
-					<span class="absolute top-2.25 right-2.25 size-2 rounded-full bg-primary border border-background"></span>
+					<span
+						class="absolute top-2.25 right-2.25 size-2 rounded-full bg-primary border border-background"
+					></span>
 				{/if}
 			</a>
 		</header>
 
 		<main class="flex-1 relative flex flex-col min-h-0">
 			{#key $page.url.pathname}
-				<div in:fade={{ duration: 150, delay: 150 }} out:fade={{ duration: 150 }} class="flex-1 p-6 overflow-y-auto">
+				<div
+					in:fade={{ duration: 150, delay: 150 }}
+					out:fade={{ duration: 150 }}
+					class="flex-1 p-6 overflow-y-auto"
+				>
 					{@render children()}
 				</div>
 			{/key}

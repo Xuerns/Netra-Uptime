@@ -2,7 +2,7 @@
 	let {
 		data = [],
 		color = '#4edea3',
-		width = 100,
+		width = 50,
 		height = 32
 	} = $props<{
 		data: number[];
@@ -33,7 +33,7 @@
 
 <!-- width: 100% makes it responsive to its container, viewBox maps 0-100 x coords -->
 <svg
-	width={width}
+	{width}
 	{height}
 	viewBox="0 0 100 {height}"
 	class="overflow-visible block w-full"
@@ -41,7 +41,7 @@
 >
 	<defs>
 		<linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
-			<stop offset="0%" stop-color={color} stop-opacity="0.25" />
+			<stop offset="0%" stop-color={color} stop-opacity="0.15" />
 			<stop offset="100%" stop-color={color} stop-opacity="0.0" />
 		</linearGradient>
 	</defs>
@@ -56,9 +56,8 @@
 		{points}
 		fill="none"
 		stroke={color}
-		stroke-width="1.5"
+		stroke-width="1"
 		stroke-linecap="round"
 		stroke-linejoin="round"
-		class="drop-shadow-sm"
 	/>
 </svg>
