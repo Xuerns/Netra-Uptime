@@ -32,7 +32,10 @@
 	});
 </script>
 
-<section id="pricing" class="pricing-section py-xl px-md text-on-surface border-t border-[#1a1a1c]">
+<section
+	id="pricing"
+	class="pricing-section pt-32 py-xl px-md text-on-surface border-t border-[#1a1a1c]"
+>
 	<div class="max-w-container-max mx-auto">
 		<div class="text-center mb-xl pricing-header">
 			<h2
@@ -71,7 +74,9 @@
 						<span class="font-display-lg text-[48px] font-bold text-white tracking-tighter"
 							>{t('landing.pricing.free.price')}</span
 						>
-						<span class="font-body-md text-[15px] text-on-surface-variant">{t('landing.pricing.free.period')}</span>
+						<span class="font-body-md text-[15px] text-on-surface-variant"
+							>{t('landing.pricing.free.period')}</span
+						>
 					</div>
 				</div>
 				<ul
@@ -81,7 +86,9 @@
 						<div
 							class="w-5 h-5 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5"
 						>
-							<span class="material-symbols-outlined text-[12px] text-white/50 font-bold">check</span>
+							<span class="material-symbols-outlined text-[12px] text-white/50 font-bold"
+								>check</span
+							>
 						</div>
 						<span>{t('landing.pricing.free.feature1')}</span>
 					</li>
@@ -89,7 +96,9 @@
 						<div
 							class="w-5 h-5 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5"
 						>
-							<span class="material-symbols-outlined text-[12px] text-white/50 font-bold">check</span>
+							<span class="material-symbols-outlined text-[12px] text-white/50 font-bold"
+								>check</span
+							>
 						</div>
 						<span>{t('landing.pricing.free.feature2')}</span>
 					</li>
@@ -97,7 +106,9 @@
 						<div
 							class="w-5 h-5 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5"
 						>
-							<span class="material-symbols-outlined text-[12px] text-white/50 font-bold">check</span>
+							<span class="material-symbols-outlined text-[12px] text-white/50 font-bold"
+								>check</span
+							>
 						</div>
 						<span>{t('landing.pricing.free.feature3')}</span>
 					</li>
@@ -105,7 +116,9 @@
 						<div
 							class="w-5 h-5 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5"
 						>
-							<span class="material-symbols-outlined text-[12px] text-white/50 font-bold">check</span>
+							<span class="material-symbols-outlined text-[12px] text-white/50 font-bold"
+								>check</span
+							>
 						</div>
 						<span>{t('landing.pricing.free.feature4')}</span>
 					</li>
@@ -124,7 +137,9 @@
 
 				<div class="mb-lg relative z-20">
 					<div class="flex items-center justify-between mb-2">
-						<h3 class="font-headline-md text-[28px] text-white font-medium tracking-tight">{t('landing.pricing.pro.title')}</h3>
+						<h3 class="font-headline-md text-[28px] text-white font-medium tracking-tight">
+							{t('landing.pricing.pro.title')}
+						</h3>
 					</div>
 					<p class="font-body-md text-[15px] text-on-surface-variant">
 						{t('landing.pricing.pro.desc')}
@@ -132,11 +147,12 @@
 				</div>
 				<div class="mb-xl pb-lg border-b border-surface-container-high relative z-20">
 					<div class="flex items-baseline gap-1">
-						<span
-							class="font-display-lg text-[48px] font-bold tracking-tighter text-white"
+						<span class="font-display-lg text-[48px] font-bold tracking-tighter text-white"
 							>{t('landing.pricing.pro.price')}</span
 						>
-						<span class="font-body-md text-[15px] text-on-surface-variant">{t('landing.pricing.pro.period')}</span>
+						<span class="font-body-md text-[15px] text-on-surface-variant"
+							>{t('landing.pricing.pro.period')}</span
+						>
 					</div>
 				</div>
 				<ul
@@ -146,7 +162,8 @@
 						<div
 							class="w-5 h-5 rounded-full bg-primary/10 border border-primary/20 group-hover/item:bg-primary/20 group-hover/item:border-primary/40 flex items-center justify-center shrink-0 mt-0.5 transition-colors"
 						>
-							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span>
+							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span
+							>
 						</div>
 						<span class="text-white">{@html t('landing.pricing.pro.feature1')}</span>
 					</li>
@@ -154,7 +171,8 @@
 						<div
 							class="w-5 h-5 rounded-full bg-primary/10 border border-primary/20 group-hover/item:bg-primary/20 group-hover/item:border-primary/40 flex items-center justify-center shrink-0 mt-0.5 transition-colors"
 						>
-							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span>
+							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span
+							>
 						</div>
 						<span class="text-white">{@html t('landing.pricing.pro.feature2')}</span>
 					</li>
@@ -162,7 +180,8 @@
 						<div
 							class="w-5 h-5 rounded-full bg-primary/10 border border-primary/20 group-hover/item:bg-primary/20 group-hover/item:border-primary/40 flex items-center justify-center shrink-0 mt-0.5 transition-colors"
 						>
-							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span>
+							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span
+							>
 						</div>
 						<span class="text-white">{t('landing.pricing.pro.feature3')}</span>
 					</li>
@@ -170,7 +189,8 @@
 						<div
 							class="w-5 h-5 rounded-full bg-primary/10 border border-primary/20 group-hover/item:bg-primary/20 group-hover/item:border-primary/40 flex items-center justify-center shrink-0 mt-0.5 transition-colors"
 						>
-							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span>
+							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span
+							>
 						</div>
 						<span class="text-white">{t('landing.pricing.pro.feature4')}</span>
 					</li>
@@ -178,7 +198,8 @@
 						<div
 							class="w-5 h-5 rounded-full bg-primary/10 border border-primary/20 group-hover/item:bg-primary/20 group-hover/item:border-primary/40 flex items-center justify-center shrink-0 mt-0.5 transition-colors"
 						>
-							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span>
+							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span
+							>
 						</div>
 						<span class="text-white">{t('landing.pricing.pro.feature5')}</span>
 					</li>
@@ -190,8 +211,9 @@
 				class="pricing-card group glass-card relative rounded-3xl p-md flex flex-col h-full overflow-hidden border-primary/20 hover:border-primary transition-colors duration-500 z-10 hover:shadow-[0_0_40px_rgba(78,222,163,0.15)]"
 			>
 				<!-- Subtle premium background tint for Max Plan -->
-				<div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-
+				<div
+					class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
+				></div>
 
 				<!-- Grid pattern overlay -->
 				<div
@@ -200,14 +222,21 @@
 				></div>
 
 				<!-- Slow shimmer sweep on hover -->
-				<div class="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none" aria-hidden="true">
-					<div class="w-[200%] h-full bg-linear-to-r from-transparent via-white/10 to-transparent absolute top-0 left-[-200%] group-hover:left-full transition-all duration-1000 ease-out skew-x-12"></div>
+				<div
+					class="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none"
+					aria-hidden="true"
+				>
+					<div
+						class="w-[200%] h-full bg-linear-to-r from-transparent via-white/10 to-transparent absolute top-0 left-[-200%] group-hover:left-full transition-all duration-1000 ease-out skew-x-12"
+					></div>
 				</div>
 
 				<!-- "Best Value" badge — lives in the heading row, not as an eyebrow -->
 				<div class="mb-lg relative z-20">
 					<div class="flex items-center justify-between mb-2">
-						<h3 class="font-headline-md text-[28px] text-white font-medium tracking-tight">{t('landing.pricing.max.title')}</h3>
+						<h3 class="font-headline-md text-[28px] text-white font-medium tracking-tight">
+							{t('landing.pricing.max.title')}
+						</h3>
 					</div>
 					<p class="font-body-md text-[15px] text-on-surface-variant">
 						{t('landing.pricing.max.desc')}
@@ -220,45 +249,67 @@
 						<span class="font-display-lg text-[48px] font-bold tracking-tighter text-white">
 							{t('landing.pricing.max.price')}
 						</span>
-						<span class="font-body-md text-[15px] text-on-surface-variant">{t('landing.pricing.max.period')}</span>
+						<span class="font-body-md text-[15px] text-on-surface-variant"
+							>{t('landing.pricing.max.period')}</span
+						>
 					</div>
 				</div>
 
 				<!-- Features -->
-				<ul class="space-y-4 mb-xl flex-1 font-body-md text-[15px] text-on-surface-variant relative z-20">
+				<ul
+					class="space-y-4 mb-xl flex-1 font-body-md text-[15px] text-on-surface-variant relative z-20"
+				>
 					<li class="flex items-start gap-3 group/item">
-						<div class="w-5 h-5 rounded-full bg-primary/20 border border-primary/30 group-hover/item:bg-primary/40 group-hover/item:border-primary/60 flex items-center justify-center shrink-0 mt-0.5 transition-colors">
-							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span>
+						<div
+							class="w-5 h-5 rounded-full bg-primary/20 border border-primary/30 group-hover/item:bg-primary/40 group-hover/item:border-primary/60 flex items-center justify-center shrink-0 mt-0.5 transition-colors"
+						>
+							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span
+							>
 						</div>
 						<span class="text-white">{@html t('landing.pricing.max.feature1')}</span>
 					</li>
 					<li class="flex items-start gap-3 group/item">
-						<div class="w-5 h-5 rounded-full bg-primary/20 border border-primary/30 group-hover/item:bg-primary/40 group-hover/item:border-primary/60 flex items-center justify-center shrink-0 mt-0.5 transition-colors">
-							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span>
+						<div
+							class="w-5 h-5 rounded-full bg-primary/20 border border-primary/30 group-hover/item:bg-primary/40 group-hover/item:border-primary/60 flex items-center justify-center shrink-0 mt-0.5 transition-colors"
+						>
+							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span
+							>
 						</div>
 						<span class="text-white">{@html t('landing.pricing.max.feature2')}</span>
 					</li>
 					<li class="flex items-start gap-3 group/item">
-						<div class="w-5 h-5 rounded-full bg-primary/20 border border-primary/30 group-hover/item:bg-primary/40 group-hover/item:border-primary/60 flex items-center justify-center shrink-0 mt-0.5 transition-colors">
-							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span>
+						<div
+							class="w-5 h-5 rounded-full bg-primary/20 border border-primary/30 group-hover/item:bg-primary/40 group-hover/item:border-primary/60 flex items-center justify-center shrink-0 mt-0.5 transition-colors"
+						>
+							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span
+							>
 						</div>
 						<span class="text-white">{t('landing.pricing.max.feature3')}</span>
 					</li>
 					<li class="flex items-start gap-3 group/item">
-						<div class="w-5 h-5 rounded-full bg-primary/20 border border-primary/30 group-hover/item:bg-primary/40 group-hover/item:border-primary/60 flex items-center justify-center shrink-0 mt-0.5 transition-colors">
-							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span>
+						<div
+							class="w-5 h-5 rounded-full bg-primary/20 border border-primary/30 group-hover/item:bg-primary/40 group-hover/item:border-primary/60 flex items-center justify-center shrink-0 mt-0.5 transition-colors"
+						>
+							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span
+							>
 						</div>
 						<span class="text-white">{t('landing.pricing.max.feature4')}</span>
 					</li>
 					<li class="flex items-start gap-3 group/item">
-						<div class="w-5 h-5 rounded-full bg-primary/20 border border-primary/30 group-hover/item:bg-primary/40 group-hover/item:border-primary/60 flex items-center justify-center shrink-0 mt-0.5 transition-colors">
-							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span>
+						<div
+							class="w-5 h-5 rounded-full bg-primary/20 border border-primary/30 group-hover/item:bg-primary/40 group-hover/item:border-primary/60 flex items-center justify-center shrink-0 mt-0.5 transition-colors"
+						>
+							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span
+							>
 						</div>
 						<span class="text-white">{t('landing.pricing.max.feature5')}</span>
 					</li>
 					<li class="flex items-start gap-3 group/item">
-						<div class="w-5 h-5 rounded-full bg-primary/20 border border-primary/30 group-hover/item:bg-primary/40 group-hover/item:border-primary/60 flex items-center justify-center shrink-0 mt-0.5 transition-colors">
-							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span>
+						<div
+							class="w-5 h-5 rounded-full bg-primary/20 border border-primary/30 group-hover/item:bg-primary/40 group-hover/item:border-primary/60 flex items-center justify-center shrink-0 mt-0.5 transition-colors"
+						>
+							<span class="material-symbols-outlined text-[12px] text-primary font-bold">check</span
+							>
 						</div>
 						<span class="text-white">{t('landing.pricing.max.feature6')}</span>
 					</li>

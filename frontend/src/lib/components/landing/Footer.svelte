@@ -24,10 +24,18 @@
 				{t('landing.footer.product')}
 			</h4>
 			<div class="flex flex-col gap-2 font-body-md text-[14px]">
-				<a class="text-on-surface-variant hover:text-white transition-colors" href="/">{t('landing.footer.product_links.features')}</a>
-				<a class="text-on-surface-variant hover:text-white transition-colors" href="/">{t('landing.footer.product_links.solutions')}</a>
-				<a class="text-on-surface-variant hover:text-white transition-colors" href="/">{t('landing.footer.product_links.pricing')}</a>
-				<a class="text-on-surface-variant hover:text-white transition-colors" href="/">{t('landing.footer.product_links.status')}</a>
+				<a class="text-on-surface-variant hover:text-white transition-colors" href="/"
+					>{t('landing.footer.product_links.features')}</a
+				>
+				<a class="text-on-surface-variant hover:text-white transition-colors" href="/"
+					>{t('landing.footer.product_links.solutions')}</a
+				>
+				<a class="text-on-surface-variant hover:text-white transition-colors" href="/pricing"
+					>{t('landing.footer.product_links.pricing')}</a
+				>
+				<a class="text-on-surface-variant hover:text-white transition-colors" href="/"
+					>{t('landing.footer.product_links.status')}</a
+				>
 			</div>
 		</div>
 
@@ -38,7 +46,9 @@
 				{t('landing.footer.company')}
 			</h4>
 			<div class="flex flex-col gap-2 font-body-md text-[14px]">
-				<a class="text-on-surface-variant hover:text-white transition-colors" href="/">{t('landing.footer.company_links.about')}</a>
+				<a class="text-on-surface-variant hover:text-white transition-colors" href="/"
+					>{t('landing.footer.company_links.about')}</a
+				>
 				<a class="text-on-surface-variant hover:text-white transition-colors" href="/"
 					>{t('landing.footer.company_links.privacy')}</a
 				>
@@ -55,7 +65,7 @@
 				{t('landing.footer.support')}
 			</h4>
 			<div class="flex flex-col gap-2 font-body-md text-[14px]">
-				<a class="text-on-surface-variant hover:text-white transition-colors" href="/"
+				<a class="text-on-surface-variant hover:text-white transition-colors" href="/documentation"
 					>{t('landing.footer.support_links.docs')}</a
 				>
 				<a class="text-on-surface-variant hover:text-white transition-colors" href="/"

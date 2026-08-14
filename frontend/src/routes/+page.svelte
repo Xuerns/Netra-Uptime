@@ -4,7 +4,6 @@
 	import WhyPulsewatch from '$lib/components/landing/WhyPulsewatch.svelte';
 	import FeaturesBento from '$lib/components/landing/FeaturesBento.svelte';
 	import FeatureDeepDive from '$lib/components/landing/FeatureDeepDive.svelte';
-	import Pricing from '$lib/components/landing/Pricing.svelte';
 	import Footer from '$lib/components/landing/Footer.svelte';
 </script>
 
@@ -21,7 +20,6 @@
 		<WhyPulsewatch />
 		<FeaturesBento />
 		<FeatureDeepDive />
-		<Pricing />
 		<Footer />
 	</main>
 </div>
