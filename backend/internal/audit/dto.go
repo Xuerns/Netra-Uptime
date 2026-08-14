@@ -6,6 +6,7 @@ type AuditLogResponse struct {
 	UserID         string  `json:"user_id"`
 	UserName       string  `json:"user_name,omitempty"`
 	UserEmail      string  `json:"user_email,omitempty"`
+	UserAvatarURL  string  `json:"user_avatar_url,omitempty"`
 	Action         string  `json:"action"`
 	EntityType     string  `json:"entity_type"`
 	EntityID       *string `json:"entity_id,omitempty"`

@@ -9,6 +9,7 @@ export interface AuditLogItem {
 	user_id: string;
 	user_name?: string;
 	user_email?: string;
+	user_avatar_url?: string;
 	action: string;
 	entity_type: string;
 	entity_id?: string;

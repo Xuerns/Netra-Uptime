@@ -117,7 +117,7 @@
 			</p>
 		</div>
 
-		<div class="flex items-center gap-3">
+		<div class="flex items-center gap-2 flex-wrap">
 			<!-- Refresh -->
 			<button
 				class="flex items-center justify-center size-9 rounded-lg border border-white/10 bg-white/3 text-on-surface-variant hover:text-on-surface hover:bg-white/6 transition-colors disabled:opacity-40"
@@ -128,8 +128,66 @@
 				<RefreshCw class="size-4 {isRefreshing ? 'animate-spin' : ''}" />
 			</button>
 
-			<!-- View toggle — only when we have data -->
+			<!-- Search + Filter Chips — only when we have data -->
 			{#if monitors.length > 0}
+				<!-- Search bar -->
+				<div class="relative">
+					<Search
+						class="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-on-surface-variant/50 pointer-events-none"
+					/>
+					<input
+						type="search"
+						placeholder="Search monitors…"
+						bind:value={searchQuery}
+						class="w-[200px] h-9 pl-8 pr-3 bg-black/20 border border-white/10 rounded-lg text-[13px] text-on-surface placeholder:text-on-surface-variant/35 outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-colors"
+					/>
+				</div>
+
+				<!-- Status filter chips -->
+				<div class="flex items-center gap-1.5" role="group" aria-label="Filter by status">
+					<button
+						class="stat-chip {statusFilter === 'all' ? 'stat-chip--active' : ''}"
+						onclick={() => (statusFilter = 'all')}
+						aria-pressed={statusFilter === 'all'}
+					>
+						<Activity class="size-3.5" />
+						All <span class="stat-chip__count">{counts.total}</span>
+					</button>
+
+					<button
+						class="stat-chip stat-chip--up {statusFilter === 'up' ? 'stat-chip--active' : ''}"
+						onclick={() => (statusFilter = 'up')}
+						aria-pressed={statusFilter === 'up'}
+					>
+						<ShieldCheck class="size-3.5" />
+						Up <span class="stat-chip__count">{counts.up}</span>
+					</button>
+
+					<button
+						class="stat-chip stat-chip--down {statusFilter === 'down' ? 'stat-chip--active' : ''}"
+						onclick={() => (statusFilter = 'down')}
+						aria-pressed={statusFilter === 'down'}
+					>
+						<TriangleAlert class="size-3.5" />
+						Down <span class="stat-chip__count">{counts.down}</span>
+					</button>
+
+					<button
+						class="stat-chip stat-chip--paused {statusFilter === 'paused'
+							? 'stat-chip--active'
+							: ''}"
+						onclick={() => (statusFilter = 'paused')}
+						aria-pressed={statusFilter === 'paused'}
+					>
+						<Pause class="size-3.5" />
+						Paused <span class="stat-chip__count">{counts.paused}</span>
+					</button>
+				</div>
+
+				<!-- Divider -->
+				<div class="w-px h-5 bg-white/10"></div>
+
+				<!-- View toggle -->
 				<div
 					class="flex items-center bg-black/20 border border-white/10 rounded-lg p-0.5"
 					role="group"
@@ -189,64 +247,6 @@
 
 		<!-- ── Data ──────────────────────────────────────────────────────────────── -->
 	{:else}
-		<!-- Status summary chips -->
-		{#if monitors.length > 0}
-			<div
-				class="flex flex-wrap items-center gap-2 mb-4"
-				role="group"
-				aria-label="Filter by status"
-			>
-				<button
-					class="stat-chip {statusFilter === 'all' ? 'stat-chip--active' : ''}"
-					onclick={() => (statusFilter = 'all')}
-					aria-pressed={statusFilter === 'all'}
-				>
-					<Activity class="size-3.5" />
-					All <span class="stat-chip__count">{counts.total}</span>
-				</button>
-
-				<button
-					class="stat-chip stat-chip--up {statusFilter === 'up' ? 'stat-chip--active' : ''}"
-					onclick={() => (statusFilter = 'up')}
-					aria-pressed={statusFilter === 'up'}
-				>
-					<ShieldCheck class="size-3.5" />
-					Up <span class="stat-chip__count">{counts.up}</span>
-				</button>
-
-				<button
-					class="stat-chip stat-chip--down {statusFilter === 'down' ? 'stat-chip--active' : ''}"
-					onclick={() => (statusFilter = 'down')}
-					aria-pressed={statusFilter === 'down'}
-				>
-					<TriangleAlert class="size-3.5" />
-					Down <span class="stat-chip__count">{counts.down}</span>
-				</button>
-
-				<button
-					class="stat-chip stat-chip--paused {statusFilter === 'paused' ? 'stat-chip--active' : ''}"
-					onclick={() => (statusFilter = 'paused')}
-					aria-pressed={statusFilter === 'paused'}
-				>
-					<Pause class="size-3.5" />
-					Paused <span class="stat-chip__count">{counts.paused}</span>
-				</button>
-			</div>
-
-			<!-- Search bar -->
-			<div class="relative w-full max-w-[320px] mb-6">
-				<Search
-					class="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-on-surface-variant/50 pointer-events-none"
-				/>
-				<input
-					type="search"
-					placeholder="Search monitors…"
-					bind:value={searchQuery}
-					class="w-full h-9 pl-8 pr-3 bg-black/20 border border-white/10 rounded-lg text-[13px] text-on-surface placeholder:text-on-surface-variant/35 outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-colors"
-				/>
-			</div>
-		{/if}
-
 		<!-- Empty state (no monitors at all) -->
 		{#if monitors.length === 0}
 			<div
@@ -339,7 +339,7 @@
 		align-items: center;
 		gap: 6px;
 		padding: 3px 10px;
-		border-radius: 999px;
+		border-radius: 6px;
 		font-size: 12.5px;
 		font-weight: 500;
 		border: 1px solid rgba(255, 255, 255, 0.1);

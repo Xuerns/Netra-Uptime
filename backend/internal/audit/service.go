@@ -86,9 +86,11 @@ func (s *AuditServiceImpl) GetLogs(orgId string, query GetAuditLogsQuery) (*Pagi
 
 		userName := ""
 		userEmail := ""
+		userAvatarURL := ""
 		if l.User.ID != uuid.Nil {
 			userName = l.User.Name
 			userEmail = l.User.Email
+			userAvatarURL = l.User.AvatarURL
 		}
 
 		logResponses = append(logResponses, AuditLogResponse{
@@ -97,6 +99,7 @@ func (s *AuditServiceImpl) GetLogs(orgId string, query GetAuditLogsQuery) (*Pagi
 			UserID:         l.UserID.String(),
 			UserName:       userName,
 			UserEmail:      userEmail,
+			UserAvatarURL:  userAvatarURL,
 			Action:         l.Action,
 			EntityType:     l.EntityType,
 			EntityID:       entityIDStr,

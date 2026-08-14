@@ -122,7 +122,8 @@
 				: '200';
 			isActive = monitor.IsActive !== undefined ? monitor.IsActive : true;
 			criticality = monitor.Criticality || 'medium';
-			enableSSLDomainCheck = monitor.EnableSSLDomainCheck !== undefined ? monitor.EnableSSLDomainCheck : true;
+			enableSSLDomainCheck =
+				monitor.EnableSSLDomainCheck !== undefined ? monitor.EnableSSLDomainCheck : true;
 			error = '';
 			fieldErrors = { name: '', target: '', intervalSeconds: '', timeoutSeconds: '' };
 			shake = { name: false, target: false, intervalSeconds: false, timeoutSeconds: false };
@@ -330,10 +331,14 @@
 
 					<!-- SSL & Domain Expiry Toggle (HTTP monitors) -->
 					{#if monitor && monitor.Type === 'http'}
-						<div class="flex items-center justify-between p-3 rounded-lg bg-white/4 border border-white/8 mt-3">
+						<div
+							class="flex items-center justify-between p-3 rounded-lg bg-white/4 border border-white/8 mt-3"
+						>
 							<div class="flex flex-col gap-0.5">
 								<span class="text-xs font-semibold text-white">SSL & Domain Expiry Check</span>
-								<span class="text-[11px] text-on-surface-variant">Monitors SSL cert & WHOIS expiration daily</span>
+								<span class="text-[11px] text-on-surface-variant"
+									>Monitors SSL cert & WHOIS expiration daily</span
+								>
 							</div>
 							<input
 								type="checkbox"
@@ -405,6 +410,7 @@
 					</div>
 
 					<div
+						data-lenis-prevent
 						class="flex-1 min-h-[250px] overflow-y-auto bg-[rgba(0,0,0,0.2)] border border-white/10 rounded-lg p-2 space-y-1"
 					>
 						{#each members as member}

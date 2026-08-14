@@ -5,7 +5,13 @@
 	import * as Select from '$lib/components/ui/select';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { debounce, validateMonitorName, validateMonitorTarget, validateMonitorInterval, validateMonitorTimeout } from '$lib/utils/validation';
+	import {
+		debounce,
+		validateMonitorName,
+		validateMonitorTarget,
+		validateMonitorInterval,
+		validateMonitorTimeout
+	} from '$lib/utils/validation';
 	import MonitorTypeGuide from '$lib/components/monitor/MonitorTypeGuide.svelte';
 
 	let {
@@ -85,7 +91,12 @@
 	}, 500);
 
 	let canSubmit = $derived(
-		!loading && !fieldErrors.name && !fieldErrors.target && !fieldErrors.intervalSeconds && !fieldErrors.timeoutSeconds && selectedPICs.length > 0
+		!loading &&
+			!fieldErrors.name &&
+			!fieldErrors.target &&
+			!fieldErrors.intervalSeconds &&
+			!fieldErrors.timeoutSeconds &&
+			selectedPICs.length > 0
 	);
 
 	// Reset form when modal opens or monitor type changes
@@ -104,9 +115,11 @@
 			selectedPICs = [];
 
 			if (orgId) {
-				OrgAPI.getMembers(orgId).then((res) => {
-					members = res.data ?? [];
-				}).catch(err => console.error('Failed to load members', err));
+				OrgAPI.getMembers(orgId)
+					.then((res) => {
+						members = res.data ?? [];
+					})
+					.catch((err) => console.error('Failed to load members', err));
 			}
 		}
 	});
@@ -126,7 +139,8 @@
 				target,
 				interval_seconds: intervalSeconds,
 				timeout_seconds: timeoutSeconds,
-				expectation_status_code: monitorType === 'http' ? parseInt(expectedStatusCodeStr) : undefined,
+				expectation_status_code:
+					monitorType === 'http' ? parseInt(expectedStatusCodeStr) : undefined,
 				criticality,
 				MonitorPICs: selectedPICs.length > 0 ? selectedPICs : undefined,
 				enable_ssl_domain_check: enableSSLDomainCheck
@@ -141,9 +155,13 @@
 	}
 
 	let modalTitle = $derived(
-		monitorType === 'http' ? 'Add HTTP/API Monitor' :
-		monitorType === 'ping' ? 'Add Ping Monitor' :
-		monitorType === 'tcp' ? 'Add TCP Port Monitor' : 'Add Monitor'
+		monitorType === 'http'
+			? 'Add HTTP/API Monitor'
+			: monitorType === 'ping'
+				? 'Add Ping Monitor'
+				: monitorType === 'tcp'
+					? 'Add TCP Port Monitor'
+					: 'Add Monitor'
 	);
 
 	function avatarColor(name: string) {
@@ -180,7 +198,9 @@
 
 		<form onsubmit={handleSubmit} class="flex flex-col gap-5">
 			{#if error}
-				<div class="p-3 text-[13px] text-[#690005] bg-[#ffb4ab] border border-[#93000a] rounded-lg font-medium">
+				<div
+					class="p-3 text-[13px] text-[#690005] bg-[#ffb4ab] border border-[#93000a] rounded-lg font-medium"
+				>
 					{error}
 				</div>
 			{/if}
@@ -191,7 +211,9 @@
 					<!-- Name -->
 					<div class="space-y-2">
 						<div class="flex items-center gap-3">
-							<Label for="name" class="text-sm font-medium text-[#e5e2e3]">Monitor Name <span class="text-error font-bold">*</span></Label>
+							<Label for="name" class="text-sm font-medium text-[#e5e2e3]"
+								>Monitor Name <span class="text-error font-bold">*</span></Label
+							>
 							{#if fieldErrors.name}
 								<span class="text-xs text-error font-medium">{fieldErrors.name}</span>
 							{/if}
@@ -202,7 +224,9 @@
 							bind:value={name}
 							oninput={() => handleNameValidation(name)}
 							required
-							class="bg-[rgba(0,0,0,0.2)] border-white/10 text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#3B82F6] focus-visible:border-[#3B82F6] rounded-lg h-10 {fieldErrors.name ? 'border-error/70 focus-visible:border-error focus-visible:ring-error' : ''} {shake.name ? 'animate-shake' : ''}"
+							class="bg-[rgba(0,0,0,0.2)] border-white/10 text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#3B82F6] focus-visible:border-[#3B82F6] rounded-lg h-10 {fieldErrors.name
+								? 'border-error/70 focus-visible:border-error focus-visible:ring-error'
+								: ''} {shake.name ? 'animate-shake' : ''}"
 						/>
 					</div>
 
@@ -210,7 +234,11 @@
 					<div class="space-y-2">
 						<div class="flex items-center gap-3">
 							<Label for="target" class="text-sm font-medium text-[#e5e2e3]">
-								{monitorType === 'http' ? 'URL' : monitorType === 'ping' ? 'Hostname / IP' : 'Hostname / IP:Port'}
+								{monitorType === 'http'
+									? 'URL'
+									: monitorType === 'ping'
+										? 'Hostname / IP'
+										: 'Hostname / IP:Port'}
 								<span class="text-error font-bold">*</span>
 							</Label>
 							{#if fieldErrors.target}
@@ -219,11 +247,17 @@
 						</div>
 						<Input
 							id="target"
-							placeholder={monitorType === 'http' ? 'https://api.example.com' : monitorType === 'ping' ? '8.8.8.8' : 'db.example.com:5432'}
+							placeholder={monitorType === 'http'
+								? 'https://api.example.com'
+								: monitorType === 'ping'
+									? '8.8.8.8'
+									: 'db.example.com:5432'}
 							bind:value={target}
 							oninput={() => handleTargetValidation(target)}
 							required
-							class="bg-[rgba(0,0,0,0.2)] border-white/10 text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#3B82F6] focus-visible:border-[#3B82F6] rounded-lg h-10 font-mono {fieldErrors.target ? 'border-error/70 focus-visible:border-error focus-visible:ring-error' : ''} {shake.target ? 'animate-shake' : ''}"
+							class="bg-[rgba(0,0,0,0.2)] border-white/10 text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#3B82F6] focus-visible:border-[#3B82F6] rounded-lg h-10 font-mono {fieldErrors.target
+								? 'border-error/70 focus-visible:border-error focus-visible:ring-error'
+								: ''} {shake.target ? 'animate-shake' : ''}"
 						/>
 					</div>
 
@@ -232,17 +266,40 @@
 						<div class="space-y-2">
 							<Label class="text-sm font-medium text-[#e5e2e3]">Expected Status Code</Label>
 							<Select.Root type="single" bind:value={expectedStatusCodeStr}>
-								<Select.Trigger class="bg-[rgba(0,0,0,0.2)] border-white/10 text-white focus:ring-1 focus:ring-[#3B82F6] focus:border-[#3B82F6] rounded-lg h-10 w-full">
-									{expectedStatusCodeStr === '200' ? '200 (OK)' : 
-									expectedStatusCodeStr === '201' ? '201 (Created)' : 
-									expectedStatusCodeStr === '301' ? '301 (Moved Permanently)' : 
-									expectedStatusCodeStr === '404' ? '404 (Not Found)' : expectedStatusCodeStr}
+								<Select.Trigger
+									class="bg-[rgba(0,0,0,0.2)] border-white/10 text-white focus:ring-1 focus:ring-[#3B82F6] focus:border-[#3B82F6] rounded-lg h-10 w-full"
+								>
+									{expectedStatusCodeStr === '200'
+										? '200 (OK)'
+										: expectedStatusCodeStr === '201'
+											? '201 (Created)'
+											: expectedStatusCodeStr === '301'
+												? '301 (Moved Permanently)'
+												: expectedStatusCodeStr === '404'
+													? '404 (Not Found)'
+													: expectedStatusCodeStr}
 								</Select.Trigger>
 								<Select.Content class="bg-[#161618] border-white/10 text-white">
-									<Select.Item value="200" class="hover:bg-white/10 focus:bg-white/10 focus:text-white cursor-pointer">200 (OK)</Select.Item>
-									<Select.Item value="201" class="hover:bg-white/10 focus:bg-white/10 focus:text-white cursor-pointer">201 (Created)</Select.Item>
-									<Select.Item value="301" class="hover:bg-white/10 focus:bg-white/10 focus:text-white cursor-pointer">301 (Moved Permanently)</Select.Item>
-									<Select.Item value="404" class="hover:bg-white/10 focus:bg-white/10 focus:text-white cursor-pointer">404 (Not Found)</Select.Item>
+									<Select.Item
+										value="200"
+										class="hover:bg-white/10 focus:bg-white/10 focus:text-white cursor-pointer"
+										>200 (OK)</Select.Item
+									>
+									<Select.Item
+										value="201"
+										class="hover:bg-white/10 focus:bg-white/10 focus:text-white cursor-pointer"
+										>201 (Created)</Select.Item
+									>
+									<Select.Item
+										value="301"
+										class="hover:bg-white/10 focus:bg-white/10 focus:text-white cursor-pointer"
+										>301 (Moved Permanently)</Select.Item
+									>
+									<Select.Item
+										value="404"
+										class="hover:bg-white/10 focus:bg-white/10 focus:text-white cursor-pointer"
+										>404 (Not Found)</Select.Item
+									>
 								</Select.Content>
 							</Select.Root>
 						</div>
@@ -252,24 +309,46 @@
 					<div class="space-y-2">
 						<Label class="text-sm font-medium text-[#e5e2e3]">Criticality Level</Label>
 						<Select.Root type="single" bind:value={criticality}>
-							<Select.Trigger class="bg-[rgba(0,0,0,0.2)] border-white/10 text-white focus:ring-1 focus:ring-[#3B82F6] focus:border-[#3B82F6] rounded-lg h-10 w-full capitalize">
+							<Select.Trigger
+								class="bg-[rgba(0,0,0,0.2)] border-white/10 text-white focus:ring-1 focus:ring-[#3B82F6] focus:border-[#3B82F6] rounded-lg h-10 w-full capitalize"
+							>
 								{criticality}
 							</Select.Trigger>
 							<Select.Content class="bg-[#161618] border-white/10 text-white">
-								<Select.Item value="extreme" class="hover:bg-white/10 focus:bg-white/10 focus:text-white cursor-pointer">Extreme</Select.Item>
-								<Select.Item value="high" class="hover:bg-white/10 focus:bg-white/10 focus:text-white cursor-pointer">High</Select.Item>
-								<Select.Item value="medium" class="hover:bg-white/10 focus:bg-white/10 focus:text-white cursor-pointer">Medium</Select.Item>
-								<Select.Item value="low" class="hover:bg-white/10 focus:bg-white/10 focus:text-white cursor-pointer">Low</Select.Item>
+								<Select.Item
+									value="extreme"
+									class="hover:bg-white/10 focus:bg-white/10 focus:text-white cursor-pointer"
+									>Extreme</Select.Item
+								>
+								<Select.Item
+									value="high"
+									class="hover:bg-white/10 focus:bg-white/10 focus:text-white cursor-pointer"
+									>High</Select.Item
+								>
+								<Select.Item
+									value="medium"
+									class="hover:bg-white/10 focus:bg-white/10 focus:text-white cursor-pointer"
+									>Medium</Select.Item
+								>
+								<Select.Item
+									value="low"
+									class="hover:bg-white/10 focus:bg-white/10 focus:text-white cursor-pointer"
+									>Low</Select.Item
+								>
 							</Select.Content>
 						</Select.Root>
 					</div>
 
 					<!-- SSL & Domain Expiry Toggle (HTTP monitors) -->
 					{#if monitorType === 'http'}
-						<div class="flex items-center justify-between p-3 rounded-lg bg-white/4 border border-white/8 mt-3">
+						<div
+							class="flex items-center justify-between p-3 rounded-lg bg-white/4 border border-white/8 mt-3"
+						>
 							<div class="flex flex-col gap-0.5">
 								<span class="text-xs font-semibold text-white">SSL & Domain Expiry Check</span>
-								<span class="text-[11px] text-[#94a3b8]">Monitors SSL cert & WHOIS expiration daily</span>
+								<span class="text-[11px] text-[#94a3b8]"
+									>Monitors SSL cert & WHOIS expiration daily</span
+								>
 							</div>
 							<input
 								type="checkbox"
@@ -283,9 +362,13 @@
 						<!-- Interval -->
 						<div class="space-y-2">
 							<div class="flex items-center gap-3">
-								<Label for="interval" class="text-sm font-medium text-[#e5e2e3]">Check Interval (sec) <span class="text-error font-bold">*</span></Label>
+								<Label for="interval" class="text-sm font-medium text-[#e5e2e3]"
+									>Check Interval (sec) <span class="text-error font-bold">*</span></Label
+								>
 								{#if fieldErrors.intervalSeconds}
-									<span class="text-[10px] text-error font-medium">{fieldErrors.intervalSeconds}</span>
+									<span class="text-[10px] text-error font-medium"
+										>{fieldErrors.intervalSeconds}</span
+									>
 								{/if}
 							</div>
 							<Input
@@ -295,16 +378,22 @@
 								bind:value={intervalSeconds}
 								oninput={() => handleIntervalValidation(intervalSeconds)}
 								required
-								class="bg-[rgba(0,0,0,0.2)] border-white/10 text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#3B82F6] focus-visible:border-[#3B82F6] rounded-lg h-10 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none {fieldErrors.intervalSeconds ? 'border-error/70 focus-visible:border-error focus-visible:ring-error' : ''} {shake.intervalSeconds ? 'animate-shake' : ''}"
+								class="bg-[rgba(0,0,0,0.2)] border-white/10 text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#3B82F6] focus-visible:border-[#3B82F6] rounded-lg h-10 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none {fieldErrors.intervalSeconds
+									? 'border-error/70 focus-visible:border-error focus-visible:ring-error'
+									: ''} {shake.intervalSeconds ? 'animate-shake' : ''}"
 							/>
 						</div>
 
 						<!-- Timeout -->
 						<div class="space-y-2">
 							<div class="flex items-center gap-3">
-								<Label for="timeout" class="text-sm font-medium text-[#e5e2e3]">Timeout (sec) <span class="text-error font-bold">*</span></Label>
+								<Label for="timeout" class="text-sm font-medium text-[#e5e2e3]"
+									>Timeout (sec) <span class="text-error font-bold">*</span></Label
+								>
 								{#if fieldErrors.timeoutSeconds}
-									<span class="text-[10px] text-error font-medium">{fieldErrors.timeoutSeconds}</span>
+									<span class="text-[10px] text-error font-medium"
+										>{fieldErrors.timeoutSeconds}</span
+									>
 								{/if}
 							</div>
 							<Input
@@ -315,7 +404,9 @@
 								bind:value={timeoutSeconds}
 								oninput={() => handleTimeoutValidation(timeoutSeconds)}
 								required
-								class="bg-[rgba(0,0,0,0.2)] border-white/10 text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#3B82F6] focus-visible:border-[#3B82F6] rounded-lg h-10 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none {fieldErrors.timeoutSeconds ? 'border-error/70 focus-visible:border-error focus-visible:ring-error' : ''} {shake.timeoutSeconds ? 'animate-shake' : ''}"
+								class="bg-[rgba(0,0,0,0.2)] border-white/10 text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#3B82F6] focus-visible:border-[#3B82F6] rounded-lg h-10 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none {fieldErrors.timeoutSeconds
+									? 'border-error/70 focus-visible:border-error focus-visible:ring-error'
+									: ''} {shake.timeoutSeconds ? 'animate-shake' : ''}"
 							/>
 						</div>
 					</div>
@@ -324,27 +415,45 @@
 				<!-- Right Column: PIC Settings -->
 				<div class="space-y-3 flex flex-col h-full">
 					<div class="flex items-center justify-between">
-						<Label class="text-sm font-medium text-[#e5e2e3]">Person in Charge (PIC) <span class="text-error font-bold">*</span></Label>
+						<Label class="text-sm font-medium text-[#e5e2e3]"
+							>Person in Charge (PIC) <span class="text-error font-bold">*</span></Label
+						>
 						<span class="text-xs text-white/40">Select 1-2 PICs</span>
 					</div>
-					
-					<div class="flex-1 min-h-[250px] overflow-y-auto bg-[rgba(0,0,0,0.2)] border border-white/10 rounded-lg p-2 space-y-1">
+
+					<div
+						data-lenis-prevent
+						class="flex-1 min-h-[250px] overflow-y-auto bg-[rgba(0,0,0,0.2)] border border-white/10 rounded-lg p-2 space-y-1"
+					>
 						{#each members as member}
 							{@const isSelected = selectedPICs.includes(member.User.ID)}
 							{@const isDisabled = !isSelected && selectedPICs.length >= 2}
-							
-							<label class="flex items-center justify-between p-2 hover:bg-white/5 rounded-md cursor-pointer transition-colors {isDisabled ? 'opacity-50 cursor-not-allowed' : ''}">
+
+							<label
+								class="flex items-center justify-between p-2 hover:bg-white/5 rounded-md cursor-pointer transition-colors {isDisabled
+									? 'opacity-50 cursor-not-allowed'
+									: ''}"
+							>
 								<div class="flex items-center gap-3 overflow-hidden">
 									<!-- Avatar -->
 									{#if member.User.AvatarURL}
-										<img src={member.User.AvatarURL} alt={member.User.Name} class="size-8 rounded-full object-cover shrink-0 border border-white/10" />
+										<img
+											src={member.User.AvatarURL}
+											alt={member.User.Name}
+											class="size-8 rounded-full object-cover shrink-0 border border-white/10"
+										/>
 									{:else}
-										<div class="size-8 rounded-full flex items-center justify-center font-semibold text-[12.5px] shrink-0 border {avatarColor(member.User.Name)}">
+										<div
+											class="size-8 rounded-full flex items-center justify-center font-semibold text-[12.5px] shrink-0 border {avatarColor(
+												member.User.Name
+											)}"
+										>
 											{member.User.Name?.charAt(0).toUpperCase() || '?'}
 										</div>
 									{/if}
 
-									<span class="text-[13px] font-medium text-white truncate">{member.User.Name}</span>
+									<span class="text-[13px] font-medium text-white truncate">{member.User.Name}</span
+									>
 								</div>
 
 								<input
@@ -360,30 +469,55 @@
 												e.currentTarget.checked = false; // prevent checking more than 2
 											}
 										} else {
-											selectedPICs = selectedPICs.filter(id => id !== member.User.ID);
+											selectedPICs = selectedPICs.filter((id) => id !== member.User.ID);
 										}
 									}}
 								/>
-								<div class="w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all {isSelected ? 'bg-primary border-primary' : 'bg-white/5 border-white/20'} {isDisabled ? 'opacity-50' : ''}">
+								<div
+									class="w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all {isSelected
+										? 'bg-primary border-primary'
+										: 'bg-white/5 border-white/20'} {isDisabled ? 'opacity-50' : ''}"
+								>
 									{#if isSelected}
-										<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											width="12"
+											height="12"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="3"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											class="text-black"><polyline points="20 6 9 17 4 12"></polyline></svg
+										>
 									{/if}
 								</div>
 							</label>
 						{:else}
-							<div class="p-4 text-xs text-white/40 text-center flex flex-col items-center justify-center h-full">Loading members...</div>
+							<div
+								class="p-4 text-xs text-white/40 text-center flex flex-col items-center justify-center h-full"
+							>
+								Loading members...
+							</div>
 						{/each}
 					</div>
-					
+
 					{#if selectedPICs.length === 0}
-						<span class="text-[11px] text-error font-medium block">At least 1 Person in Charge is required.</span>
+						<span class="text-[11px] text-error font-medium block"
+							>At least 1 Person in Charge is required.</span
+						>
 					{:else if selectedPICs.length === 2}
-						<span class="text-[11px] text-[#4edea3] font-medium block">Maximum 2 PICs selected.</span>
+						<span class="text-[11px] text-[#4edea3] font-medium block"
+							>Maximum 2 PICs selected.</span
+						>
 					{/if}
 				</div>
 			</div>
 
-			<Dialog.Footer class="bg-transparent! m-0! p-0! pt-6 mt-2 flex justify-end gap-3 sm:space-x-0 border-t border-white/5">
+			<Dialog.Footer
+				class="bg-transparent! m-0! p-0! pt-6 mt-2 flex justify-end gap-3 sm:space-x-0 border-t border-white/5"
+			>
 				<button
 					type="button"
 					onclick={() => (isOpen = false)}
