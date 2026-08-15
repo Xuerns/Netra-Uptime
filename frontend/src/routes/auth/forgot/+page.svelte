@@ -3,7 +3,12 @@
 	import { ArrowLeft, Eye, EyeOff, Mail, KeyRound, CheckCircle2, Loader2 } from 'lucide-svelte';
 	import { env } from '$env/dynamic/public';
 	import { page } from '$app/stores';
-	import { validateEmail, validatePassword, validateConfirmPassword, debounce } from '$lib/utils/validation';
+	import {
+		validateEmail,
+		validatePassword,
+		validateConfirmPassword,
+		debounce
+	} from '$lib/utils/validation';
 
 	const API_Route = `${env.PUBLIC_API_URL}`;
 
@@ -132,7 +137,7 @@
 
 <svelte:head>
 	<title
-		>{isResetMode ? 'Reset Password • PulseWatch' : 'Forgot Password • PulseWatch'} - Pulsewatch</title
+		>{isResetMode ? 'Reset Password • PulseWatch' : 'Forgot Password • PulseWatch'} • Pulsewatch</title
 	>
 </svelte:head>
 
@@ -221,7 +226,9 @@
 								<input
 									bind:value={newPassword}
 									oninput={() => handleNewPasswordInput(newPassword, confirmPassword)}
-									class="w-full rounded-lg px-3 py-2.5 bg-[#0e0e0f] border border-[#2a2a2b] text-on-surface font-body-md placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors pr-10 {fieldErrors.newPassword ? 'border-error/70 focus:border-error focus:ring-error' : ''} {shake.newPassword ? 'animate-shake' : ''}"
+									class="w-full rounded-lg px-3 py-2.5 bg-[#0e0e0f] border border-[#2a2a2b] text-on-surface font-body-md placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors pr-10 {fieldErrors.newPassword
+										? 'border-error/70 focus:border-error focus:ring-error'
+										: ''} {shake.newPassword ? 'animate-shake' : ''}"
 									id="new-password"
 									name="new-password"
 									placeholder="••••••••"
@@ -256,7 +263,9 @@
 								<input
 									bind:value={confirmPassword}
 									oninput={() => handleConfirmPasswordInput(newPassword, confirmPassword)}
-									class="w-full rounded-lg px-3 py-2.5 bg-[#0e0e0f] border border-[#2a2a2b] text-on-surface font-body-md placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors pr-10 {fieldErrors.confirmPassword ? 'border-error/70 focus:border-error focus:ring-error' : ''} {shake.confirmPassword ? 'animate-shake' : ''}"
+									class="w-full rounded-lg px-3 py-2.5 bg-[#0e0e0f] border border-[#2a2a2b] text-on-surface font-body-md placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors pr-10 {fieldErrors.confirmPassword
+										? 'border-error/70 focus:border-error focus:ring-error'
+										: ''} {shake.confirmPassword ? 'animate-shake' : ''}"
 									id="confirm-password"
 									name="confirm-password"
 									placeholder="••••••••"
@@ -369,7 +378,9 @@
 					<div class="space-y-sm">
 						<div class="flex flex-col gap-1">
 							<div class="flex items-center gap-3">
-								<label class="font-label-md text-on-surface-variant" for="email"> Work Email </label>
+								<label class="font-label-md text-on-surface-variant" for="email">
+									Work Email
+								</label>
 								{#if fieldErrors.email}
 									<span class="text-xs text-error font-medium">{fieldErrors.email}</span>
 								{/if}
@@ -377,7 +388,9 @@
 							<input
 								bind:value={email}
 								oninput={() => handleEmailInput(email)}
-								class="w-full rounded-lg px-3 py-2.5 bg-[#0e0e0f] border border-[#2a2a2b] text-on-surface font-body-md placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors {fieldErrors.email ? 'border-error/70 focus:border-error focus:ring-error' : ''} {shake.email ? 'animate-shake' : ''}"
+								class="w-full rounded-lg px-3 py-2.5 bg-[#0e0e0f] border border-[#2a2a2b] text-on-surface font-body-md placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors {fieldErrors.email
+									? 'border-error/70 focus:border-error focus:ring-error'
+									: ''} {shake.email ? 'animate-shake' : ''}"
 								id="email"
 								name="email"
 								placeholder="john@company.com"

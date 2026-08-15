@@ -75,7 +75,7 @@
 </script>
 
 <svelte:head>
-	<title>Status Pages · PulseWatch</title>
+	<title>Status Pages • PulseWatch</title>
 </svelte:head>
 
 <div class="statuspages-page text-on-surface antialiased">

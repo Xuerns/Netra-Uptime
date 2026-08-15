@@ -10,7 +10,7 @@
 </script>
 
 <svelte:head>
-	<title>{statusPage.title} - Status Page</title>
+	<title>{statusPage.title} • Status Page</title>
 </svelte:head>
 
 <div
@@ -50,7 +50,6 @@
 					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 						{#each statusPage.monitors as monitor}
 							{@const isUp = monitor.status === 'up'}
-
 
 							<!-- Monitor Card -->
 							<div
@@ -102,7 +101,9 @@
 												height={32}
 											/>
 										{:else}
-											<div class="text-[10px] text-on-surface-variant w-full text-center pb-1">No data available</div>
+											<div class="text-[10px] text-on-surface-variant w-full text-center pb-1">
+												No data available
+											</div>
 										{/if}
 									</div>
 								</div>

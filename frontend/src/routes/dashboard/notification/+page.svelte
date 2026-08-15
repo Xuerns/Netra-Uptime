@@ -112,7 +112,7 @@
 </script>
 
 <svelte:head>
-	<title>Notification - PulseWatch</title>
+	<title>Notification • PulseWatch</title>
 </svelte:head>
 
 <div class="w-full text-on-surface antialiased py-4">

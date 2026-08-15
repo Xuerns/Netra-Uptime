@@ -268,7 +268,7 @@
 </script>
 
 <svelte:head>
-	<title>Organizations · PulseWatch</title>
+	<title>Organizations • PulseWatch</title>
 </svelte:head>
 
 <div class="text-on-surface antialiased">

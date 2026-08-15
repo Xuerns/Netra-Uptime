@@ -102,7 +102,7 @@
 </script>
 
 <svelte:head>
-	<title>Monitors · PulseWatch</title>
+	<title>Monitors • PulseWatch</title>
 </svelte:head>
 
 <div class="monitors-page text-on-surface antialiased">

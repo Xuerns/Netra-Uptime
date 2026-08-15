@@ -34,7 +34,7 @@
 </script>
 
 <svelte:head>
-	<title>Billing & Subscriptions - PulseWatch</title>
+	<title>Billing & Subscriptions • PulseWatch</title>
 </svelte:head>
 
 <div class="flex flex-col gap-6">

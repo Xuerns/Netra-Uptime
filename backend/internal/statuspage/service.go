@@ -89,11 +89,12 @@ func (s *StatusPageServiceImpl) Create(orgID, userID, ipAddress string, req *Cre
 	}
 
 	statusPage := &model.StatusPage{
-		OrganizationID: orgUUID,
-		Title:          req.Title,
-		Description:    req.Description,
-		Subdomain:      req.Subdomain,
-		IsPublic:       req.IsPublic,
+		OrganizationID:     orgUUID,
+		Title:              req.Title,
+		Description:        req.Description,
+		Subdomain:          req.Subdomain,
+		IsPublic:           req.IsPublic,
+		StatusPageMonitors: statusPageMonitor,
 	}
 
 	createdStatusPage, err := s.repo.Create(statusPage)
