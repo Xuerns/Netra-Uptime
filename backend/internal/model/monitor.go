@@ -37,11 +37,12 @@ type Monitor struct {
 	LastSSLSentReminderDay    *int       `gorm:"default:null"`
 	LastDomainSentReminderDay *int       `gorm:"default:null"`
 
-	Organization       Organization        `gorm:"foreignKey:OrganizationID"`
-	Checks             []Check             `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
-	Incidents          []Incident          `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
-	StatusPageMonitors []StatusPageMonitor `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
-	MonitorPICs        []MonitorPIC        `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
+	Organization       Organization          `gorm:"foreignKey:OrganizationID"`
+	Checks             []Check               `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
+	Incidents          []Incident            `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
+	StatusPageMonitors []StatusPageMonitor   `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
+	MonitorPICs        []MonitorPIC          `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
+	NotificationLogs   []NotificationLog     `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
 
 	RecentChecks []Check `gorm:"-" json:"recent_checks"`
 }
