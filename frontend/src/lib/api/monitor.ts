@@ -105,7 +105,9 @@ function mapMonitor(m: any): Monitor {
 		DomainDaysLeft: m.domain_days_left ?? m.DomainDaysLeft,
 		DomainStatus: m.domain_status ?? m.DomainStatus,
 		DomainError: m.domain_error ?? m.DomainError,
-		MonitorPICs: m.monitor_pics ?? m.MonitorPICs,
+		MonitorPICs: (m.monitor_pics || m.MonitorPICs || []).map((pic: any) => ({
+			UserID: pic.user_id ?? pic.UserID ?? pic.id
+		})),
 		recent_checks: (m.recent_checks || []).map((c: any) => ({
 			ID: c.id ?? c.ID,
 			MonitorID: c.monitor_id ?? c.MonitorID,

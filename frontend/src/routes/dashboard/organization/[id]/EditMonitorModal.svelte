@@ -129,7 +129,14 @@
 			shake = { name: false, target: false, intervalSeconds: false, timeoutSeconds: false };
 
 			// Extract existing PICs
-			selectedPICs = monitor.MonitorPICs ? monitor.MonitorPICs.map((pic: any) => pic.UserID) : [];
+			const rawPics = monitor.MonitorPICs || (monitor as any).monitor_pics || [];
+			selectedPICs = Array.isArray(rawPics)
+				? rawPics
+						.map((pic: any) =>
+							typeof pic === 'string' ? pic : pic?.UserID || pic?.user_id || pic?.id
+						)
+						.filter(Boolean)
+				: [];
 
 			if (orgId) {
 				OrgAPI.getMembers(orgId)

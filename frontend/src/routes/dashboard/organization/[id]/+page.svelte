@@ -36,6 +36,7 @@
 	import MonitorCard from './MonitorCard.svelte';
 	import StatusPageTab from './StatusPageTab.svelte';
 	import APIKeysTab from './APIKeysTab.svelte';
+	import NotificationTab from './NotificationTab.svelte';
 	import { wsClient, type MonitorUpdatePayload } from '$lib/utils/ws';
 	import { toast } from 'svelte-sonner';
 	// ── Types ─────────────────────────────────────────────────────────────────
@@ -525,6 +526,13 @@
 						data-[state=inactive]:bg-transparent data-[state=inactive]:text-on-surface-variant data-[state=inactive]:border data-[state=inactive]:border-transparent data-[state=inactive]:hover:text-white/80 data-[state=inactive]:hover:bg-white/3"
 						>API Keys</Tabs.Trigger
 					>
+					<Tabs.Trigger
+						value="notifications"
+						class="relative rounded-t-lg rounded-b-none px-5 py-2.5 text-[13px] font-medium transition-all duration-200 shadow-none
+						data-[state=active]:bg-white/6 data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-white/8 data-[state=active]:border-b-transparent data-[state=active]:-mb-px
+						data-[state=inactive]:bg-transparent data-[state=inactive]:text-on-surface-variant data-[state=inactive]:border data-[state=inactive]:border-transparent data-[state=inactive]:hover:text-white/80 data-[state=inactive]:hover:bg-white/3"
+						>Notifications</Tabs.Trigger
+					>
 				</Tabs.List>
 			</div>
 
@@ -663,6 +671,13 @@
 				class="flex-1 p-6 overflow-y-auto m-0 outline-none data-[state=inactive]:hidden flex flex-col"
 			>
 				<APIKeysTab {orgId} userRole={currentUserRole || 'member'} />
+			</Tabs.Content>
+			<Tabs.Content
+				value="notifications"
+				data-lenis-prevent
+				class="flex-1 p-6 overflow-y-auto m-0 outline-none data-[state=inactive]:hidden flex flex-col"
+			>
+				<NotificationTab {orgId} userRole={currentUserRole || 'member'} />
 			</Tabs.Content>
 		</Tabs.Root>
 	</div>

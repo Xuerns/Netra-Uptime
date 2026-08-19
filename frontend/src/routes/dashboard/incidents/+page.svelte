@@ -158,321 +158,337 @@
 {:else}
 	<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
 		<!-- Column 1: Active Incidents -->
-		<div
-			class="flex flex-col gap-4 h-[calc(100vh-14rem)] overflow-y-auto custom-scrollbar pr-2 pb-4"
-		>
+		<div class="flex flex-col h-[calc(100vh-14rem)]">
 			<!-- Column Header -->
-			<div class="border-b border-white/10 pb-4 mb-4 mt-2">
+			<div class="border-b border-white/10 pb-4 mb-4 mt-2 shrink-0">
 				<div class="border-l-[3px] border-red-500 pl-4">
-					<div class="text-xs font-mono font-medium tracking-widest text-on-surface-variant uppercase mb-1">
+					<div
+						class="text-xs font-mono font-medium tracking-widest text-on-surface-variant uppercase mb-1"
+					>
 						INC &middot; UNRESOLVED
 					</div>
 					<div class="flex items-center justify-between">
-						<h2 class="text-[22px] font-semibold text-on-surface tracking-tight">Active incidents</h2>
-						<span class="text-[13px] font-medium text-on-surface-variant border border-white/10 rounded-full px-3 py-1 bg-transparent">
+						<h2 class="text-[22px] font-semibold text-on-surface tracking-tight">
+							Active incidents
+						</h2>
+						<span
+							class="text-[13px] font-medium text-on-surface-variant border border-white/10 rounded-full px-3 py-1 bg-transparent"
+						>
 							{activeIncidents.length} open
 						</span>
 					</div>
 				</div>
 			</div>
 
-			{#each activeIncidents as incident}
-				<article
-					class="glass-card p-5 relative transition-colors"
-					class:ring-1={incident.SeverityCode === 'sev1'}
-					class:ring-red-500_20={incident.SeverityCode === 'sev1'}
-					class:hover:border-white_20={incident.SeverityCode !== 'sev1'}
-					class:opacity-75={incident.SeverityCode === 'sev3'}
-				>
-					<div
-						class="absolute top-0 left-0 w-1 h-full"
-						class:bg-red-500={incident.SeverityCode === 'sev1'}
-						class:bg-orange-400={incident.SeverityCode === 'sev2'}
-						class:bg-yellow-400={incident.SeverityCode === 'sev3'}
-					></div>
-
-					<div class="flex justify-between items-start mb-4">
-						<div>
-							{#if incident.Severity}
-								<div class="flex items-center gap-2 mb-1">
-									{#if incident.SeverityCode === 'sev1'}
-										<AlertCircle size={14} class="text-red-400" />
-									{:else if incident.SeverityCode === 'sev2'}
-										<AlertTriangle size={14} class="text-orange-400" />
-									{:else}
-										<Info size={14} class="text-yellow-400" />
-									{/if}
-									<span
-										class="text-xs font-semibold tracking-wider uppercase"
-										class:text-red-400={incident.SeverityCode === 'sev1'}
-										class:text-orange-400={incident.SeverityCode === 'sev2'}
-										class:text-yellow-400={incident.SeverityCode === 'sev3'}
-									>
-										{incident.Severity}
-									</span>
-								</div>
-							{/if}
-							<h3 class="text-lg font-semibold text-on-surface">
-								{incident.Monitor?.Name || 'Unknown Monitor'}
-							</h3>
-						</div>
-						<span
-							class="font-mono text-xs text-on-surface-variant bg-black/30 px-2 py-1 rounded border border-white/5"
-							>{incident.ID.substring(0, 8)}</span
-						>
-					</div>
-
-					<p class="text-[15px] text-on-surface-variant mb-4 line-clamp-2">{incident.Summary}</p>
-
-					<div class="flex justify-between items-end">
-						<div class="flex items-center gap-4 text-xs font-mono text-on-surface-variant">
-							<div class="flex items-center gap-1.5">
-								<Clock size={14} />
-								<span>{formatTimeAgo(incident.StartedAt)}</span>
-							</div>
-							<div class="flex items-center gap-1.5">
-								<Server size={14} />
-								<span>{incident.MonitorID.substring(0, 8)}</span>
-							</div>
-						</div>
-
-						{#if incident.Assignees && incident.Assignees.length > 0}
-							<div class="flex items-center gap-1.5 text-xs text-on-surface-variant">
-								<Users size={13} />
-								<span>{incident.Assignees.length}</span>
-							</div>
-						{/if}
-					</div>
-
-					<!-- Timeline Toggle Button -->
-					<div class="mt-4 flex justify-between items-center">
-						<button
-							class="text-xs font-medium text-on-surface-variant hover:text-white transition-colors flex items-center gap-1"
-							onclick={() => toggleTimeline(incident.ID)}
-						>
-							{#if expandedTimelines[incident.ID]}
-								<ChevronUp size={14} /> Hide Timeline
-							{:else}
-								<ChevronDown size={14} /> View Timeline
-							{/if}
-						</button>
-					</div>
-
-					<!-- Vertical Timeline -->
-					{#if expandedTimelines[incident.ID]}
+			<!-- Scrollable Active Cards List -->
+			<div class="flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2 pb-4 flex-1 min-h-0">
+				{#each activeIncidents as incident}
+					<article
+						data-lenis-prevent
+						class="glass-card p-5 relative transition-colors"
+						class:ring-1={incident.SeverityCode === 'sev1'}
+						class:ring-red-500_20={incident.SeverityCode === 'sev1'}
+						class:hover:border-white_20={incident.SeverityCode !== 'sev1'}
+						class:opacity-75={incident.SeverityCode === 'sev3'}
+					>
 						<div
-							class="mt-3 bg-black/20 rounded-lg p-4 border border-white/5 max-h-[300px] overflow-y-auto custom-scrollbar"
-						>
-							<h4 class="text-sm font-medium text-on-surface mb-3 flex items-center gap-2">
-								<Activity size={15} />
-								Incident Timeline
-							</h4>
-							{#if loadingUpdates[incident.ID]}
-								<div class="text-xs text-on-surface-variant text-center py-4">
-									Loading updates...
-								</div>
-							{:else if incidentUpdates[incident.ID] && incidentUpdates[incident.ID].length > 0}
-								<div class="relative pl-4 border-l border-white/10 space-y-4">
-									{#each incidentUpdates[incident.ID] as update, i}
-										<div class="relative">
-											<div
-												class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full ring-4 ring-[#0A0A0B]"
-												class:bg-primary-container={i === 0}
-												class:bg-surface-variant={i > 0}
-											></div>
-											<div class="flex justify-between items-baseline mb-1 gap-2">
-												<span class="text-sm font-medium text-on-surface"
-													>{update.message.split('\n')[0]}</span
-												>
-												<span class="text-[11px] font-mono text-on-surface-variant flex-shrink-0"
-													>{formatTimeOnly(update.createAt)}</span
-												>
-											</div>
+							class="absolute top-0 left-0 w-1 h-full"
+							class:bg-red-500={incident.SeverityCode === 'sev1'}
+							class:bg-orange-400={incident.SeverityCode === 'sev2'}
+							class:bg-yellow-400={incident.SeverityCode === 'sev3'}
+						></div>
 
-											{#if update.message.includes('\n')}
-												<div
-													class="text-xs font-mono text-on-surface-variant mt-1 bg-black/40 p-2 rounded border border-white/5 overflow-hidden text-ellipsis whitespace-nowrap"
-												>
-													{update.message.split('\n').slice(1).join(' ').replace(/`/g, '')}
-												</div>
-											{/if}
-
-											<div class="flex items-center gap-2 mt-2">
-												{#if update.avatarUrl}
-													<img
-														alt="Avatar"
-														class="w-5 h-5 rounded-full object-cover grayscale opacity-80"
-														src={update.avatarUrl}
-													/>
-												{/if}
-												<span class="text-xs font-medium text-on-surface-variant"
-													>{update.username || 'System'}</span
-												>
-											</div>
-										</div>
-									{/each}
-
-									<!-- Initial Alert -->
-									<div class="relative pt-2">
-										<div
-											class="absolute -left-[21px] top-3 w-2.5 h-2.5 rounded-full bg-red-500 ring-4 ring-[#0A0A0B]"
-										></div>
-										<div class="flex justify-between items-baseline">
-											<span class="text-sm font-medium text-red-400">Alert Triggered</span>
-											<span class="text-[11px] font-mono text-on-surface-variant"
-												>{formatTimeOnly(incident.StartedAt)}</span
-											>
-										</div>
+						<div class="flex justify-between items-start mb-4">
+							<div>
+								{#if incident.Severity}
+									<div class="flex items-center gap-2 mb-1">
+										{#if incident.SeverityCode === 'sev1'}
+											<AlertCircle size={14} class="text-red-400" />
+										{:else if incident.SeverityCode === 'sev2'}
+											<AlertTriangle size={14} class="text-orange-400" />
+										{:else}
+											<Info size={14} class="text-yellow-400" />
+										{/if}
+										<span
+											class="text-xs font-semibold tracking-wider uppercase"
+											class:text-red-400={incident.SeverityCode === 'sev1'}
+											class:text-orange-400={incident.SeverityCode === 'sev2'}
+											class:text-yellow-400={incident.SeverityCode === 'sev3'}
+										>
+											{incident.Severity}
+										</span>
 									</div>
+								{/if}
+								<h3 class="text-lg font-semibold text-on-surface">
+									{incident.Monitor?.Name || 'Unknown Monitor'}
+								</h3>
+							</div>
+							<span
+								class="font-mono text-xs text-on-surface-variant bg-black/30 px-2 py-1 rounded border border-white/5"
+								>{incident.ID.substring(0, 8)}</span
+							>
+						</div>
+
+						<p class="text-[15px] text-on-surface-variant mb-4 line-clamp-2">{incident.Summary}</p>
+
+						<div class="flex justify-between items-end">
+							<div class="flex items-center gap-4 text-xs font-mono text-on-surface-variant">
+								<div class="flex items-center gap-1.5">
+									<Clock size={14} />
+									<span>{formatTimeAgo(incident.StartedAt)}</span>
 								</div>
-							{:else}
-								<div class="relative pl-4 border-l border-white/10 space-y-4">
-									<!-- Initial Alert -->
-									<div class="relative pt-2">
-										<div
-											class="absolute -left-[21px] top-3 w-2.5 h-2.5 rounded-full bg-red-500 ring-4 ring-[#0A0A0B]"
-										></div>
-										<div class="flex justify-between items-baseline">
-											<span class="text-sm font-medium text-red-400">Alert Triggered</span>
-											<span class="text-[11px] font-mono text-on-surface-variant"
-												>{formatTimeOnly(incident.StartedAt)}</span
-											>
-										</div>
-									</div>
+								<div class="flex items-center gap-1.5">
+									<Server size={14} />
+									<span>{incident.MonitorID.substring(0, 8)}</span>
+								</div>
+							</div>
+
+							{#if incident.Assignees && incident.Assignees.length > 0}
+								<div class="flex items-center gap-1.5 text-xs text-on-surface-variant">
+									<Users size={13} />
+									<span>{incident.Assignees.length}</span>
 								</div>
 							{/if}
 						</div>
-					{/if}
 
-					<!-- Action Buttons: always shown for active incidents -->
-					<div class="mt-4 flex gap-3">
-						{#if incident.Assignees?.some((a) => a.UserID === currentUserId)}
+						<!-- Timeline Toggle Button -->
+						<div class="mt-4 flex justify-between items-center">
 							<button
-								class="bg-primary-container text-white px-4 py-2 rounded text-sm font-medium hover:bg-primary transition-colors"
-								onclick={() => {
-									updatingIncidentId = updatingIncidentId === incident.ID ? null : incident.ID;
-									updateMessage = '';
-								}}
+								class="text-xs font-medium text-on-surface-variant hover:text-white transition-colors flex items-center gap-1"
+								onclick={() => toggleTimeline(incident.ID)}
 							>
-								Update Status
+								{#if expandedTimelines[incident.ID]}
+									<ChevronUp size={14} /> Hide Timeline
+								{:else}
+									<ChevronDown size={14} /> View Timeline
+								{/if}
 							</button>
-							<span
-								class="border border-white/5 bg-white/5 text-on-surface-variant px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+						</div>
+
+						<!-- Vertical Timeline -->
+						{#if expandedTimelines[incident.ID]}
+							<div
+								class="mt-3 bg-black/20 rounded-lg p-4 border border-white/5 max-h-[300px] overflow-y-auto custom-scrollbar"
 							>
-								<CheckCircle size={14} /> Joined
-							</span>
-						{:else}
-							<button
-								class="border border-white/10 text-on-surface px-4 py-2 rounded-lg text-sm font-medium hover:bg-white/5 transition-colors flex items-center gap-2"
-								onclick={() => handleJoin(incident.ID)}
-							>
-								<Users size={14} /> Join Bridge to Update
-							</button>
+								<h4 class="text-sm font-medium text-on-surface mb-3 flex items-center gap-2">
+									<Activity size={15} />
+									Incident Timeline
+								</h4>
+								{#if loadingUpdates[incident.ID]}
+									<div class="text-xs text-on-surface-variant text-center py-4">
+										Loading updates...
+									</div>
+								{:else if incidentUpdates[incident.ID] && incidentUpdates[incident.ID].length > 0}
+									<div class="relative pl-4 border-l border-white/10 space-y-4">
+										{#each incidentUpdates[incident.ID] as update, i}
+											<div class="relative">
+												<div
+													class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full ring-4 ring-[#0A0A0B]"
+													class:bg-primary-container={i === 0}
+													class:bg-surface-variant={i > 0}
+												></div>
+												<div class="flex justify-between items-baseline mb-1 gap-2">
+													<span class="text-sm font-medium text-on-surface"
+														>{update.message.split('\n')[0]}</span
+													>
+													<span class="text-[11px] font-mono text-on-surface-variant flex-shrink-0"
+														>{formatTimeOnly(update.createAt)}</span
+													>
+												</div>
+
+												{#if update.message.includes('\n')}
+													<div
+														class="text-xs font-mono text-on-surface-variant mt-1 bg-black/40 p-2 rounded border border-white/5 overflow-hidden text-ellipsis whitespace-nowrap"
+													>
+														{update.message.split('\n').slice(1).join(' ').replace(/`/g, '')}
+													</div>
+												{/if}
+
+												<div class="flex items-center gap-2 mt-2">
+													{#if update.avatarUrl}
+														<img
+															alt="Avatar"
+															class="w-5 h-5 rounded-full object-cover grayscale opacity-80"
+															src={update.avatarUrl}
+														/>
+													{/if}
+													<span class="text-xs font-medium text-on-surface-variant"
+														>{update.username || 'System'}</span
+													>
+												</div>
+											</div>
+										{/each}
+
+										<!-- Initial Alert -->
+										<div class="relative pt-2">
+											<div
+												class="absolute -left-[21px] top-3 w-2.5 h-2.5 rounded-full bg-red-500 ring-4 ring-[#0A0A0B]"
+											></div>
+											<div class="flex justify-between items-baseline">
+												<span class="text-sm font-medium text-red-400">Alert Triggered</span>
+												<span class="text-[11px] font-mono text-on-surface-variant"
+													>{formatTimeOnly(incident.StartedAt)}</span
+												>
+											</div>
+										</div>
+									</div>
+								{:else}
+									<div class="relative pl-4 border-l border-white/10 space-y-4">
+										<!-- Initial Alert -->
+										<div class="relative pt-2">
+											<div
+												class="absolute -left-[21px] top-3 w-2.5 h-2.5 rounded-full bg-red-500 ring-4 ring-[#0A0A0B]"
+											></div>
+											<div class="flex justify-between items-baseline">
+												<span class="text-sm font-medium text-red-400">Alert Triggered</span>
+												<span class="text-[11px] font-mono text-on-surface-variant"
+													>{formatTimeOnly(incident.StartedAt)}</span
+												>
+											</div>
+										</div>
+									</div>
+								{/if}
+							</div>
 						{/if}
-					</div>
 
-					<!-- Update Form Inline -->
-					{#if updatingIncidentId === incident.ID}
-						<div class="mt-4 bg-black/30 border border-white/10 rounded-lg p-4">
-							<textarea
-								bind:value={updateMessage}
-								placeholder="What's the latest status?..."
-								class="w-full bg-black/50 border border-white/10 rounded p-3 text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary transition-colors resize-none"
-								rows="3"></textarea>
-							<div class="flex justify-end gap-2 mt-3">
+						<!-- Action Buttons: always shown for active incidents -->
+						<div class="mt-4 flex gap-3">
+							{#if incident.Assignees?.some((a) => a.UserID === currentUserId)}
 								<button
-									class="px-4 py-1.5 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors"
+									class="bg-primary-container text-white px-4 py-2 rounded text-sm font-medium hover:bg-primary transition-colors"
 									onclick={() => {
-										updatingIncidentId = null;
+										updatingIncidentId = updatingIncidentId === incident.ID ? null : incident.ID;
 										updateMessage = '';
 									}}
 								>
-									Cancel
+									Update Status
 								</button>
-								<button
-									class="bg-primary text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-primary-container transition-colors flex items-center gap-2 disabled:opacity-50"
-									disabled={!updateMessage.trim() || isUpdating}
-									onclick={() => handleUpdate(incident.ID)}
+								<span
+									class="border border-white/5 bg-white/5 text-on-surface-variant px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
 								>
-									{#if isUpdating}
-										<div
-											class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"
-										></div>
-										Posting...
-									{:else}
-										Post Update
-									{/if}
+									<CheckCircle size={14} /> Joined
+								</span>
+							{:else}
+								<button
+									class="border border-white/10 text-on-surface px-4 py-2 rounded-lg text-sm font-medium hover:bg-white/5 transition-colors flex items-center gap-2"
+									onclick={() => handleJoin(incident.ID)}
+								>
+									<Users size={14} /> Join Bridge to Update
 								</button>
-							</div>
+							{/if}
 						</div>
-					{/if}
-				</article>
-			{/each}
 
-			{#if activeIncidents.length === 0}
-				<div
-					class="text-center py-8.5 px-4 text-on-surface-variant border border-dashed border-white/10 rounded-lg"
-				>
-					<h3 class="text-base font-medium text-on-surface mb-1">All Systems Operational</h3>
-					<p class="text-sm text-on-surface-variant">No active incidents at this time.</p>
-				</div>
-			{/if}
+						<!-- Update Form Inline -->
+						{#if updatingIncidentId === incident.ID}
+							<div class="mt-4 bg-black/30 border border-white/10 rounded-lg p-4">
+								<textarea
+									bind:value={updateMessage}
+									placeholder="What's the latest status?..."
+									class="w-full bg-black/50 border border-white/10 rounded p-3 text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary transition-colors resize-none"
+									rows="3"></textarea>
+								<div class="flex justify-end gap-2 mt-3">
+									<button
+										class="px-4 py-1.5 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors"
+										onclick={() => {
+											updatingIncidentId = null;
+											updateMessage = '';
+										}}
+									>
+										Cancel
+									</button>
+									<button
+										class="bg-primary text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-primary-container transition-colors flex items-center gap-2 disabled:opacity-50"
+										disabled={!updateMessage.trim() || isUpdating}
+										onclick={() => handleUpdate(incident.ID)}
+									>
+										{#if isUpdating}
+											<div
+												class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"
+											></div>
+											Posting...
+										{:else}
+											Post Update
+										{/if}
+									</button>
+								</div>
+							</div>
+						{/if}
+					</article>
+				{/each}
+
+				{#if activeIncidents.length === 0}
+					<div
+						class="text-center py-8.5 px-4 text-on-surface-variant border border-dashed border-white/10 rounded-lg"
+					>
+						<h3 class="text-base font-medium text-on-surface mb-1">All Systems Operational</h3>
+						<p class="text-sm text-on-surface-variant">No active incidents at this time.</p>
+					</div>
+				{/if}
+			</div>
 		</div>
 
 		<!-- Column 2: Resolved Incidents -->
-		<div
-			class="flex flex-col gap-4 opacity-80 h-[calc(100vh-14rem)] overflow-y-auto custom-scrollbar pr-2 pb-4"
-		>
+		<div class="flex flex-col opacity-80 h-[calc(100vh-14rem)]">
 			<!-- Column Header -->
-			<div class="border-b border-white/10 pb-4 mb-4 mt-2">
+			<div class="border-b border-white/10 pb-4 mb-4 mt-2 shrink-0">
 				<div class="border-l-[3px] border-[#10B981] pl-4">
-					<div class="text-xs font-mono font-medium tracking-widest text-on-surface-variant uppercase mb-1">
+					<div
+						class="text-xs font-mono font-medium tracking-widest text-on-surface-variant uppercase mb-1"
+					>
 						INC &middot; RESOLVED
 					</div>
 					<div class="flex items-center justify-between">
 						<h2 class="text-[22px] font-semibold text-on-surface tracking-tight">Resolved (24h)</h2>
-						<span class="text-[13px] font-medium text-on-surface-variant border border-white/10 rounded-full px-3 py-1 bg-transparent">
+						<span
+							class="text-[13px] font-medium text-on-surface-variant border border-white/10 rounded-full px-3 py-1 bg-transparent"
+						>
 							{resolvedIncidents.length} closed
 						</span>
 					</div>
 				</div>
 			</div>
 
-			{#each resolvedIncidents as incident}
-				<article class="glass-card p-5 relative border-l-2 border-l-[#10B981]/50 bg-black/40">
-					<div class="flex justify-between items-start mb-2">
-						<div>
-							<h3 class="text-lg font-medium text-[#e5e2e3] line-through decoration-white/30">
-								{incident.Monitor?.Name || 'Unknown Monitor'}
-							</h3>
+			<!-- Scrollable Resolved Cards List -->
+			<div class="flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2 pb-4 flex-1 min-h-0">
+				{#each resolvedIncidents as incident}
+					<article
+						data-lenis-prevent
+						class="glass-card p-5 relative border-l-2 border-l-[#10B981]/50 bg-black/40"
+					>
+						<div class="flex justify-between items-start mb-2">
+							<div>
+								<h3 class="text-lg font-medium text-[#e5e2e3] line-through decoration-white/30">
+									{incident.Monitor?.Name || 'Unknown Monitor'}
+								</h3>
+							</div>
+							<div class="flex items-center gap-2">
+								<CheckCircle size={14} class="text-[#10B981]" />
+								<span class="text-xs font-mono text-[#bbcabf]">{incident.ID.substring(0, 8)}</span>
+							</div>
 						</div>
-						<div class="flex items-center gap-2">
-							<CheckCircle size={14} class="text-[#10B981]" />
-							<span class="text-xs font-mono text-[#bbcabf]">{incident.ID.substring(0, 8)}</span>
+						<p class="text-[15px] text-[#bbcabf] mb-4">{incident.Summary}</p>
+						<div class="flex justify-between items-end border-t border-white/5 pt-3">
+							<div class="flex flex-col text-xs font-mono text-[#bbcabf] gap-1">
+								<span>Opened: {formatDateTime(incident.StartedAt)}</span>
+								{#if incident.ResolvedAt}
+									<span class="text-[#10B981]">Resolved: {formatDateTime(incident.ResolvedAt)}</span>
+								{/if}
+							</div>
+							<button class="text-xs text-secondary hover:text-white transition-colors"
+								>View RCA</button
+							>
 						</div>
-					</div>
-					<p class="text-[15px] text-[#bbcabf] mb-4">{incident.Summary}</p>
-					<div class="flex justify-between items-end border-t border-white/5 pt-3">
-						<div class="flex flex-col text-xs font-mono text-[#bbcabf] gap-1">
-							<span>Opened: {formatDateTime(incident.StartedAt)}</span>
-							{#if incident.ResolvedAt}
-								<span class="text-[#10B981]">Resolved: {formatDateTime(incident.ResolvedAt)}</span>
-							{/if}
-						</div>
-						<button class="text-xs text-secondary hover:text-white transition-colors"
-							>View RCA</button
-						>
-					</div>
-				</article>
-			{/each}
+					</article>
+				{/each}
 
-			{#if resolvedIncidents.length === 0}
-				<div
-					class="text-center py-12 text-[#bbcabf] border border-dashed border-white/10 rounded-lg"
-				>
-					<p class="text-sm">No resolved incidents in the last 24 hours.</p>
-				</div>
-			{/if}
+				{#if resolvedIncidents.length === 0}
+					<div
+						class="text-center py-12 text-[#bbcabf] border border-dashed border-white/10 rounded-lg"
+					>
+						<p class="text-sm">No resolved incidents in the last 24 hours.</p>
+					</div>
+				{/if}
+			</div>
 		</div>
 	</div>
 {/if}

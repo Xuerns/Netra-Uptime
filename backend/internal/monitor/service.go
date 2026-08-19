@@ -297,15 +297,23 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 	maxPIC := 2
 	maxInterval := 300
 	maxTimeout := 10
-	switch subs.Plan {
-	case "pro":
-		maxPIC = 4
-		maxInterval = 180
-		maxTimeout = 15
-	case "max":
-		maxPIC = 6
-		maxInterval = 60
-		maxTimeout = 20
+
+	cfg := config.Load()
+	if cfg.AppMode == "selfhosted" {
+		maxPIC = cfg.SelfHostedMaxPIC
+		maxInterval = cfg.SelfHostedMinInterval
+		maxTimeout = cfg.SelfHostedMaxTimeout
+	} else {
+		switch subs.Plan {
+		case "pro":
+			maxPIC = 4
+			maxInterval = 180
+			maxTimeout = 15
+		case "max":
+			maxPIC = 6
+			maxInterval = 60
+			maxTimeout = 20
+		}
 	}
 
 	updatedMonitor, err := s.repo.GetById(orgId, monitorId)
@@ -333,7 +341,7 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 		if *req.TimeoutSeconds > maxTimeout {
 			return nil, errors.New("You have reach max timeout limit for your plan")
 		}
-		if *req.TimeoutSeconds < 10 {
+		if *req.TimeoutSeconds < 1 {
 			return nil, errors.New("Invalid timeout seconds")
 		}
 		updatedMonitor.TimeoutSeconds = *req.TimeoutSeconds
