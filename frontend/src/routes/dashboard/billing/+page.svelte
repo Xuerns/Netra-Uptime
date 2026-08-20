@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import { SubscriptionAPI } from '$lib/api/subscription';
 	import { Building2, CreditCard } from 'lucide-svelte';
+	import { userTimezone } from '$lib/stores/timezone';
+	import { formatDateOnly } from '$lib/utils/datetime';
 
 	let subscriptions: any[] = [];
 	let loading = true;
@@ -18,14 +20,9 @@
 		}
 	});
 
-	function formatDate(dateString: string | null) {
-		if (!dateString) return '-';
-		return new Date(dateString).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric'
-		});
-	}
+	// Format date menggunakan timezone dari store
+	let tz = $derived($userTimezone);
+	const formatDate = (d: string | null) => formatDateOnly(d ?? undefined, tz);
 
 	function getPlanName(plan: string) {
 		if (!plan) return 'Free';

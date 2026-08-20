@@ -28,6 +28,8 @@
 		type ChannelType
 	} from '$lib/api/notification';
 	import { toast } from 'svelte-sonner';
+	import { userTimezone } from '$lib/stores/timezone';
+	import { formatDateTime } from '$lib/utils/datetime';
 
 	let { orgId, userRole } = $props<{ orgId: string; userRole: string }>();
 
@@ -186,15 +188,9 @@
 		);
 	}
 
-	function formatDate(iso: string): string {
-		return new Date(iso).toLocaleString('en-GB', {
-			day: '2-digit',
-			month: 'short',
-			year: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit'
-		});
-	}
+	// Format date menggunakan timezone dari store
+	let tz = $derived($userTimezone);
+	const formatDate = (iso: string) => formatDateTime(iso, tz);
 </script>
 
 {#snippet SlackIcon(className = 'size-4')}

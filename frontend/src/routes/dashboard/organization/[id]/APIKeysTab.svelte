@@ -1,12 +1,26 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Key, Plus, Trash2, Copy, Check, Shield, ShieldCheck, AlertCircle, Clock, Eye } from 'lucide-svelte';
+	import {
+		Key,
+		Plus,
+		Trash2,
+		Copy,
+		Check,
+		Shield,
+		ShieldCheck,
+		AlertCircle,
+		Clock,
+		Eye
+	} from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import { APIKeyAPI, type APIKey, type CreateAPIKeyRequest } from '$lib/api/apikey';
+	import { toast } from 'svelte-sonner';
+	import { userTimezone } from '$lib/stores/timezone';
+	import { formatDateOnly } from '$lib/utils/datetime';
 
 	let { orgId, userRole } = $props<{ orgId: string; userRole: string }>();
 
@@ -99,14 +113,9 @@
 		}
 	}
 
-	function formatDate(dStr?: string) {
-		if (!dStr) return 'Never';
-		return new Date(dStr).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric'
-		});
-	}
+	// Format date menggunakan timezone dari store
+	let tz = $derived($userTimezone);
+	const formatDate = (d?: string) => formatDateOnly(d, tz);
 
 	onMount(() => {
 		loadAPIKeys();
@@ -117,9 +126,7 @@
 	<!-- Header & Action -->
 	<div class="flex items-center justify-between gap-4 flex-wrap pb-4 border-b border-white/8">
 		<div>
-			<h2 class="text-lg font-semibold text-on-surface flex items-center gap-2">
-				 API Keys
-			</h2>
+			<h2 class="text-lg font-semibold text-on-surface flex items-center gap-2">API Keys</h2>
 			<p class="text-xs text-on-surface-variant/70 mt-0.5">
 				Manage API keys for programmatically accessing the PulseWatch REST API.
 			</p>
@@ -129,7 +136,7 @@
 			<Button
 				variant="default"
 				size="sm"
-				class="gap-1.5 h-9 bg-primary text-black font-semibold hover:bg-primary/90 rounded-lg"
+				class="gap-1.5 h-10 bg-primary text-black font-semibold hover:bg-primary/90 rounded-lg"
 				onclick={() => (isCreateOpen = true)}
 			>
 				<Plus class="size-4" /> Create API Key
@@ -139,22 +146,32 @@
 
 	<!-- Content Area -->
 	{#if isLoading}
-		<div class="p-8 text-center text-xs text-on-surface-variant/60 bg-white/2 border border-white/6 rounded-lg">
+		<div
+			class="p-8 text-center text-xs text-on-surface-variant/60 bg-white/2 border border-white/6 rounded-lg"
+		>
 			Loading API keys...
 		</div>
 	{:else if fetchError}
-		<div class="p-4 text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg flex items-center gap-2">
-			<AlertCircle class="size-4 shrink-0" /> {fetchError}
+		<div
+			class="p-4 text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg flex items-center gap-2"
+		>
+			<AlertCircle class="size-4 shrink-0" />
+			{fetchError}
 		</div>
 	{:else if apiKeys.length === 0}
-		<div class="p-10 text-center flex flex-col items-center justify-center gap-3 bg-white/2 border border-white/6 rounded-lg">
-			<div class="size-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-on-surface-variant">
+		<div
+			class="p-10 text-center flex flex-col items-center justify-center gap-3 bg-white/2 border border-white/6 rounded-lg"
+		>
+			<div
+				class="size-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-on-surface-variant"
+			>
 				<Key class="size-5" />
 			</div>
 			<div>
 				<h3 class="text-sm font-semibold text-on-surface">No API keys created yet</h3>
 				<p class="text-xs text-on-surface-variant/70 mt-1">
-					Create an API key to allow CI/CD scripts, bots, or custom services to access your monitors and incidents.
+					Create an API key to allow CI/CD scripts, bots, or custom services to access your monitors
+					and incidents.
 				</p>
 			</div>
 			{#if canManage}
@@ -172,21 +189,30 @@
 		<!-- API Keys Table / Card List -->
 		<div class="flex flex-col gap-3">
 			{#each apiKeys as key (key.id)}
-				<div class="p-4 rounded-lg bg-white/3 border border-white/8 flex items-center justify-between gap-4 flex-wrap transition-colors hover:border-white/14">
+				<div
+					class="p-4 rounded-lg bg-white/3 border border-white/8 flex items-center justify-between gap-4 flex-wrap transition-colors hover:border-white/14"
+				>
 					<div class="flex flex-col gap-1 min-w-0">
 						<div class="flex items-center gap-2.5 flex-wrap">
 							<span class="text-sm font-semibold text-on-surface truncate">{key.name}</span>
-							
+
 							<!-- Scope Badge -->
 							<span
-								class="text-[10.5px] font-mono px-2 py-0.5 rounded-md border font-medium {key.permissions === 'write' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-blue-500/10 border-blue-500/20 text-blue-400'}"
+								class="text-[10.5px] font-mono px-2 py-0.5 rounded-md border font-medium {key.permissions ===
+								'write'
+									? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+									: 'bg-blue-500/10 border-blue-500/20 text-blue-400'}"
 							>
 								{key.permissions === 'write' ? 'Full Access (Read & Write)' : 'Read Only'}
 							</span>
 						</div>
 
-						<div class="flex items-center gap-4 text-[11.5px] font-mono text-on-surface-variant/70 flex-wrap">
-							<span class="bg-white/5 px-2 py-0.5 rounded border border-white/8 text-on-surface font-semibold">
+						<div
+							class="flex items-center gap-4 text-[11.5px] font-mono text-on-surface-variant/70 flex-wrap"
+						>
+							<span
+								class="bg-white/5 px-2 py-0.5 rounded border border-white/8 text-on-surface font-semibold"
+							>
 								{key.key_prefix}...****
 							</span>
 							<span class="flex items-center gap-1">
@@ -202,7 +228,8 @@
 						<div class="text-right text-[11px] text-on-surface-variant/60 hidden sm:block">
 							{#if key.last_used_at}
 								Last used {new Date(key.last_used_at).toLocaleDateString()}
-								{#if key.last_used_ip} ({key.last_used_ip}){/if}
+								{#if key.last_used_ip}
+									({key.last_used_ip}){/if}
 							{:else}
 								Never used
 							{/if}
@@ -229,7 +256,9 @@
 
 <!-- Modal 1: Create API Key -->
 <Dialog.Root bind:open={isCreateOpen}>
-	<Dialog.Content class="sm:max-w-[480px] bg-[#161618] border border-white/10 text-white p-6 rounded-lg shadow-xl">
+	<Dialog.Content
+		class="sm:max-w-[480px] bg-[#161618] border border-white/10 text-white p-6 rounded-lg shadow-xl"
+	>
 		<Dialog.Header>
 			<Dialog.Title class="text-lg font-semibold flex items-center gap-2">
 				<Key class="size-5 text-primary" /> Create New API Key
@@ -247,7 +276,9 @@
 			{/if}
 
 			<div class="space-y-1.5">
-				<Label for="keyName" class="text-xs font-semibold text-on-surface">Key Name <span class="text-rose-400">*</span></Label>
+				<Label for="keyName" class="text-xs font-semibold text-on-surface"
+					>Key Name <span class="text-rose-400">*</span></Label
+				>
 				<Input
 					id="keyName"
 					placeholder="e.g., GitHub Actions CI/CD"
@@ -263,25 +294,35 @@
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div
-						class="p-3 rounded-lg border text-left cursor-pointer transition-all {permissions === 'read' ? 'bg-primary/10 border-primary text-primary' : 'bg-white/3 border-white/8 text-on-surface-variant hover:bg-white/5'}"
+						class="p-3 rounded-lg border text-left cursor-pointer transition-all {permissions ===
+						'read'
+							? 'bg-primary/10 border-primary text-primary'
+							: 'bg-white/3 border-white/8 text-on-surface-variant hover:bg-white/5'}"
 						onclick={() => (permissions = 'read')}
 					>
 						<div class="flex items-center gap-1.5 font-semibold text-xs mb-1">
 							<Shield class="size-3.5" /> Read Only
 						</div>
-						<p class="text-[11px] opacity-75">Read-only access to monitors, checks & status pages.</p>
+						<p class="text-[11px] opacity-75">
+							Read-only access to monitors, checks & status pages.
+						</p>
 					</div>
 
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div
-						class="p-3 rounded-lg border text-left cursor-pointer transition-all {permissions === 'write' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-white/3 border-white/8 text-on-surface-variant hover:bg-white/5'}"
+						class="p-3 rounded-lg border text-left cursor-pointer transition-all {permissions ===
+						'write'
+							? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+							: 'bg-white/3 border-white/8 text-on-surface-variant hover:bg-white/5'}"
 						onclick={() => (permissions = 'write')}
 					>
 						<div class="flex items-center gap-1.5 font-semibold text-xs mb-1">
 							<ShieldCheck class="size-3.5" /> Full Access
 						</div>
-						<p class="text-[11px] opacity-75">Full read & write access to create/update monitors & incidents.</p>
+						<p class="text-[11px] opacity-75">
+							Full read & write access to create/update monitors & incidents.
+						</p>
 					</div>
 				</div>
 			</div>
@@ -305,7 +346,7 @@
 					type="button"
 					variant="ghost"
 					size="sm"
-					class="rounded-lg text-xs"
+					class="rounded-lg text-xs h-11"
 					onclick={() => (isCreateOpen = false)}
 				>
 					Cancel
@@ -314,7 +355,7 @@
 					type="submit"
 					size="sm"
 					disabled={isSubmitting || !name.trim()}
-					class="bg-primary text-black font-semibold hover:bg-primary/90 rounded-lg text-xs"
+					class="bg-primary h-11 text-black font-semibold hover:bg-primary/90 rounded-lg text-xs"
 				>
 					{isSubmitting ? 'Generating...' : 'Generate API Key'}
 				</Button>
@@ -325,18 +366,24 @@
 
 <!-- Modal 2: Show Plaintext API Key Once -->
 <Dialog.Root bind:open={isShowKeyOpen}>
-	<Dialog.Content class="sm:max-w-[500px] bg-[#161618] border border-white/10 text-white p-6 rounded-lg shadow-xl">
+	<Dialog.Content
+		class="sm:max-w-[500px] bg-[#161618] border border-white/10 text-white p-6 rounded-lg shadow-xl"
+	>
 		<Dialog.Header>
 			<Dialog.Title class="text-lg font-semibold text-emerald-400 flex items-center gap-2">
 				<Check class="size-5" /> API Key Created Successfully
 			</Dialog.Title>
 			<Dialog.Description class="text-xs text-on-surface-variant/70 mt-1">
-				Please copy your API key now. For your security, <strong class="text-rose-400">it will not be shown again!</strong>
+				Please copy your API key now. For your security, <strong class="text-rose-400"
+					>it will not be shown again!</strong
+				>
 			</Dialog.Description>
 		</Dialog.Header>
 
 		<div class="flex flex-col gap-4 mt-4">
-			<div class="p-3 bg-black/40 border border-white/10 rounded-lg font-mono text-xs text-primary break-all flex items-center justify-between gap-3">
+			<div
+				class="p-3 bg-black/40 border border-white/10 rounded-lg font-mono text-xs text-primary break-all flex items-center justify-between gap-3"
+			>
 				<span>{createdPlaintextKey}</span>
 				<Button
 					size="sm"
@@ -352,10 +399,13 @@
 				</Button>
 			</div>
 
-			<div class="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs flex items-start gap-2">
+			<div
+				class="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs flex items-start gap-2"
+			>
 				<AlertCircle class="size-4 shrink-0 mt-0.5" />
 				<div>
-					<strong>Keep this key secret!</strong> Store it securely in your CI/CD environment variables or password manager.
+					<strong>Keep this key secret!</strong> Store it securely in your CI/CD environment variables
+					or password manager.
 				</div>
 			</div>
 

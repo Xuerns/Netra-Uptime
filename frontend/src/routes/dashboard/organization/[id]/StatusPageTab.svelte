@@ -15,6 +15,8 @@
 	import { StatusPageAPI, type StatusPage } from '$lib/api/statuspage';
 	import type { Monitor } from '$lib/api/monitor';
 	import { toast } from 'svelte-sonner';
+	import { userTimezone } from '$lib/stores/timezone';
+	import { formatDateOnly } from '$lib/utils/datetime';
 	
 	import AddStatusPageModal from './AddStatusPageModal.svelte';
 	import EditStatusPageModal from './EditStatusPageModal.svelte';
@@ -136,7 +138,7 @@
 							{sp.IsPublic ? 'Public' : 'Private'}
 						</span>
 						<span class="text-xs text-on-surface-variant ml-auto">
-							Created {new Date(sp.CreatedAt).toLocaleDateString()}
+							Created {formatDateOnly(sp.CreatedAt, $userTimezone)}
 						</span>
 					</div>
 				</div>

@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { IncidentAPI, type Incident, type IncidentUpdateResponse } from '$lib/api/incident';
+	import { userTimezone } from '$lib/stores/timezone';
+	import { formatDateTime, formatTimeOnly, formatIncidentTimeAgo } from '$lib/utils/datetime';
 	import { OrgAPI } from '$lib/api/organization';
 	import {
 		AlertTriangle,
@@ -113,25 +115,12 @@
 		}
 	});
 
-	function formatTimeAgo(dateString: string) {
-		const diff = Date.now() - new Date(dateString).getTime();
-		const hours = Math.floor(diff / (1000 * 60 * 60));
-		const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-		return `T-${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
-	}
+	// Format functions diambil dari $lib/utils/datetime + timezone dari store
+	let tz = $derived($userTimezone);
 
-	function formatDateTime(dateString: string) {
-		const date = new Date(dateString);
-		return date.toISOString().replace('T', ' ').substring(0, 16) + ' UTC';
-	}
-
-	function formatTimeOnly(dateString: string) {
-		const date = new Date(dateString);
-		return (
-			date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) +
-			' UTC'
-		);
-	}
+	function fmtDateTime(d: string) { return formatDateTime(d, tz); }
+	function fmtTimeOnly(d: string) { return formatTimeOnly(d, tz); }
+	function fmtTimeAgo(d: string) { return formatIncidentTimeAgo(d); }
 </script>
 
 <svelte:head>
@@ -235,7 +224,7 @@
 							<div class="flex items-center gap-4 text-xs font-mono text-on-surface-variant">
 								<div class="flex items-center gap-1.5">
 									<Clock size={14} />
-									<span>{formatTimeAgo(incident.StartedAt)}</span>
+									<span>{fmtTimeAgo(incident.StartedAt)}</span>
 								</div>
 								<div class="flex items-center gap-1.5">
 									<Server size={14} />
@@ -327,7 +316,7 @@
 											<div class="flex justify-between items-baseline">
 												<span class="text-sm font-medium text-red-400">Alert Triggered</span>
 												<span class="text-[11px] font-mono text-on-surface-variant"
-													>{formatTimeOnly(incident.StartedAt)}</span
+													>{fmtTimeOnly(incident.StartedAt)}</span
 												>
 											</div>
 										</div>
@@ -342,7 +331,7 @@
 											<div class="flex justify-between items-baseline">
 												<span class="text-sm font-medium text-red-400">Alert Triggered</span>
 												<span class="text-[11px] font-mono text-on-surface-variant"
-													>{formatTimeOnly(incident.StartedAt)}</span
+													>{fmtTimeOnly(incident.StartedAt)}</span
 												>
 											</div>
 										</div>
@@ -469,9 +458,9 @@
 						<p class="text-[15px] text-[#bbcabf] mb-4">{incident.Summary}</p>
 						<div class="flex justify-between items-end border-t border-white/5 pt-3">
 							<div class="flex flex-col text-xs font-mono text-[#bbcabf] gap-1">
-								<span>Opened: {formatDateTime(incident.StartedAt)}</span>
+								<span>Opened: {fmtDateTime(incident.StartedAt)}</span>
 								{#if incident.ResolvedAt}
-									<span class="text-[#10B981]">Resolved: {formatDateTime(incident.ResolvedAt)}</span>
+									<span class="text-[#10B981]">Resolved: {fmtDateTime(incident.ResolvedAt)}</span>
 								{/if}
 							</div>
 							<button class="text-xs text-secondary hover:text-white transition-colors"
