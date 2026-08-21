@@ -2,6 +2,7 @@ package worker
 
 import (
 	"PulseWatch/internal/model"
+	"PulseWatch/internal/notification"
 	"PulseWatch/internal/websocket"
 	"PulseWatch/internal/worker/checker"
 	"PulseWatch/pkg/email"
@@ -9,7 +10,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -23,6 +23,7 @@ type WorkerPool struct {
 	numWorkers  int
 	emailSender email.EmailSender
 	hub         *websocket.WsHandler
+	dispatcher  *notification.Dispatcher
 }
 
 func NewWorkerPool(db *gorm.DB, numWorkers int, sender email.EmailSender, hub *websocket.WsHandler) *WorkerPool {
@@ -32,6 +33,7 @@ func NewWorkerPool(db *gorm.DB, numWorkers int, sender email.EmailSender, hub *w
 		numWorkers:  numWorkers,
 		emailSender: sender,
 		hub:         hub,
+		dispatcher:  notification.NewDispatcher(db, sender),
 	}
 }
 
@@ -68,14 +70,14 @@ func (wp *WorkerPool) runAllSSLDomainChecks() {
 	log.Printf("[SSL/Domain Scheduler] Running daily check for %d monitors", len(monitors))
 	for _, m := range monitors {
 		mon := m
-		go ProcessSSLDomainCheck(wp.db, wp.emailSender, &mon)
+		go ProcessSSLDomainCheck(wp.db, wp.emailSender, wp.dispatcher, &mon)
 		// Small jitter delay between domain queries to avoid rate limiting
 		time.Sleep(500 * time.Millisecond)
 	}
 }
 
 func (wp *WorkerPool) TriggerSingleSSLDomainCheck(monitor *model.Monitor) {
-	go ProcessSSLDomainCheck(wp.db, wp.emailSender, monitor)
+	go ProcessSSLDomainCheck(wp.db, wp.emailSender, wp.dispatcher, monitor)
 }
 
 func (wp *WorkerPool) QueueJob(job Job) {
@@ -161,6 +163,7 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) {
 			message := fmt.Sprintf("<h3>Service restored</h3><p>Your monitor <b>%s</b> (%s) has returned to healty state.</p>", dbMonitor.Name, dbMonitor.Target)
 
 			go wp.sendNotification(&dbMonitor, subject, message)
+			go wp.dispatcher.Dispatch(&dbMonitor, nil, "monitor.up", subject, message)
 
 			now := time.Now()
 			err := wp.db.Model(&model.Incident{}).Where("monitor_id = ? AND status = ?", monitor.ID, "ongoing").Updates(map[string]interface{}{
@@ -200,6 +203,8 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) {
 			if err := wp.db.Create(&newIncident).Error; err != nil {
 				log.Printf("[Incident] Failed to create incident for monitor %s: %v\n", monitor.Name, err)
 			} else {
+				incidentIDStr := newIncident.ID.String()
+				go wp.dispatcher.Dispatch(&dbMonitor, &incidentIDStr, "monitor.down", subject, message)
 				log.Printf("[Incident] MONITOR DOWN TRIGGERED: %s is DOWN after %d failures. Error: %s\n", monitor.Name, threshold, errMsg)
 			}
 
@@ -236,41 +241,68 @@ func (wp *WorkerPool) sendNotification(monitor *model.Monitor, subject, message 
 		return
 	}
 
-	var members []model.MonitorPIC
-	err := wp.db.Preload("User").Where("monitor_id = ?", monitor.ID).Find(&members).Error
-	if err != nil {
-		log.Printf("[Notification] Failed to find members\n")
+	monitorID := monitor.ID
+
+	// 1. Collect PIC emails
+	var pics []model.MonitorPIC
+	if err := wp.db.Preload("User").Where("monitor_id = ?", monitorID).Find(&pics).Error; err != nil {
+		log.Printf("[Notification] Failed to fetch PICs for monitor %s: %v\n", monitor.Name, err)
 		return
 	}
 
 	var recipients []string
-	for _, member := range members {
-		if member.User.Email != "" {
-			recipients = append(recipients, member.User.Email)
+	for _, pic := range pics {
+		if pic.User.Email != "" {
+			recipients = append(recipients, pic.User.Email)
+		}
+	}
+
+	// 2. Fallback: if no PIC assigned, escalate to org owner + admins
+	if len(recipients) == 0 {
+		log.Printf("[Notification] No PIC found for monitor %s, escalating to org admins/owners\n", monitor.Name)
+		var members []model.OrganizationMember
+		if err := wp.db.Preload("User").
+			Where("organization_id = ? AND role IN ('owner', 'admin')", monitor.OrganizationID).
+			Find(&members).Error; err != nil {
+			log.Printf("[Notification] Failed to fetch org admins for monitor %s: %v\n", monitor.Name, err)
+			return
+		}
+		for _, m := range members {
+			if m.User.Email != "" {
+				recipients = append(recipients, m.User.Email)
+			}
 		}
 	}
 
 	if len(recipients) == 0 {
-		log.Printf("[Notification] No recipient found\n")
+		log.Printf("[Notification] No recipient found for monitor %s, skipping\n", monitor.Name)
 		return
 	}
 
-	// Send Email
-	_, err = wp.emailSender.SendEmail(recipients, subject, message)
+	// 3. Send email and log the result correctly
+	logMsg := fmt.Sprintf("Monitor '%s' (%s): %s", monitor.Name, monitor.Target, subject)
+	_, err := wp.emailSender.SendEmail(recipients, subject, message)
 	if err != nil {
-		log.Printf("[Notification] Failed to send email.\n Details %v:\n", err)
+		log.Printf("[Notification] Failed to send email for monitor %s: %v\n", monitor.Name, err)
 
+		errDetail := err.Error()
 		wp.db.Create(&model.NotificationLog{
-			ChannelID: uuid.Nil,
-			Status:    "failed",
-			SentAt:    time.Now(),
+			MonitorID:   &monitorID,
+			Channel:     "email_pic",
+			Message:     logMsg,
+			Status:      "failed",
+			ErrorDetail: errDetail,
+			SentAt:      time.Now(),
 		})
+		return
 	}
 
-	log.Printf("[Notification] Email send successfully\n")
+	log.Printf("[Notification] Email sent successfully for monitor %s to %v\n", monitor.Name, recipients)
 	wp.db.Create(&model.NotificationLog{
-		Status: "success",
-		SentAt: time.Now(),
+		MonitorID: &monitorID,
+		Channel:   "email_pic",
+		Message:   logMsg,
+		Status:    "sent",
+		SentAt:    time.Now(),
 	})
-
 }

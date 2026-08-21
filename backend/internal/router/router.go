@@ -7,6 +7,7 @@ import (
 	"PulseWatch/internal/incident"
 	"PulseWatch/internal/middleware"
 	"PulseWatch/internal/monitor"
+	"PulseWatch/internal/notification"
 	"PulseWatch/internal/organization"
 	"PulseWatch/internal/publicapi"
 	"PulseWatch/internal/static"
@@ -21,16 +22,17 @@ import (
 )
 
 type Handlers struct {
-	AuthHandler         auth.AuthHandler
-	OrganizationHandler organization.OrganizationHandler
-	MonitorHandler      monitor.MonitorHandler
-	IncidentHandler     incident.Incidenthandler
-	StatusPageHandler   statuspage.StatusPageHandler
-	SubscriptionHandler subscription.SubscriptionHandler
-	AuditHandler        audit.AuditHandler
-	APIKeyHandler       *apikey.APIKeyHandler
-	PublicAPIHandler    *publicapi.PublicAPIHandler
-	APIKeyService       apikey.APIKeyService
+	AuthHandler            auth.AuthHandler
+	OrganizationHandler    organization.OrganizationHandler
+	MonitorHandler         monitor.MonitorHandler
+	IncidentHandler        incident.Incidenthandler
+	StatusPageHandler      statuspage.StatusPageHandler
+	SubscriptionHandler    subscription.SubscriptionHandler
+	AuditHandler           audit.AuditHandler
+	APIKeyHandler          *apikey.APIKeyHandler
+	PublicAPIHandler       *publicapi.PublicAPIHandler
+	APIKeyService          apikey.APIKeyService
+	NotificationHandler    *notification.ChannelHandler
 }
 
 func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, wsHandler *websocket.WsHandler) {
@@ -115,6 +117,14 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 
 	// Audit Logs
 	orgRoutes.GET("/audit-logs", h.AuditHandler.GetOrgAuditLogs)
+
+	// Notification Channels
+	orgRoutes.GET("/notifications/channels", h.NotificationHandler.GetAll)
+	orgRoutes.GET("/notifications/channels/:channelId", h.NotificationHandler.GetByID)
+	orgRoutes.POST("/notifications/channels", middleware.RequireRole("owner", "admin"), h.NotificationHandler.Create)
+	orgRoutes.PUT("/notifications/channels/:channelId", middleware.RequireRole("owner", "admin"), h.NotificationHandler.Update)
+	orgRoutes.DELETE("/notifications/channels/:channelId", middleware.RequireRole("owner", "admin"), h.NotificationHandler.Delete)
+	orgRoutes.GET("/notifications/logs", h.NotificationHandler.GetLogs)
 
 	// API Keys Management
 	orgRoutes.GET("/api-keys", h.APIKeyHandler.List)

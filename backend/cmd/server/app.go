@@ -6,6 +6,7 @@ import (
 	"PulseWatch/internal/auth"
 	"PulseWatch/internal/incident"
 	"PulseWatch/internal/monitor"
+	"PulseWatch/internal/notification"
 	"PulseWatch/internal/organization"
 	"PulseWatch/internal/publicapi"
 	"PulseWatch/internal/router"
@@ -51,6 +52,10 @@ func BuildHandler(db *gorm.DB, rdb *redis.Client) router.Handlers {
 
 	publicAPIHandler := publicapi.NewPublicAPIHandler(monitorServise, incidentService, statuspageService)
 
+	notificationRepo := notification.NewChannelRepository(db)
+	notificationService := notification.NewChannelService(notificationRepo)
+	notificationHandler := notification.NewChannelHandler(notificationService)
+
 	return router.Handlers{
 		AuthHandler:         authHandler,
 		OrganizationHandler: organizationHandler,
@@ -62,5 +67,6 @@ func BuildHandler(db *gorm.DB, rdb *redis.Client) router.Handlers {
 		APIKeyHandler:       apiKeyHandler,
 		PublicAPIHandler:    publicAPIHandler,
 		APIKeyService:       apiKeyService,
+		NotificationHandler: notificationHandler,
 	}
 }

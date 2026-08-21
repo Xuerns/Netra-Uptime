@@ -2,8 +2,10 @@ package worker
 
 import (
 	"PulseWatch/internal/model"
+	"PulseWatch/internal/notification"
 	"PulseWatch/internal/worker/checker"
 	"PulseWatch/pkg/email"
+	"fmt"
 	"log"
 	"time"
 
@@ -11,7 +13,7 @@ import (
 )
 
 // ProcessSSLDomainCheck performs SSL and Domain expiry checks for a monitor and sends email reminders if needed
-func ProcessSSLDomainCheck(db *gorm.DB, emailSender email.EmailSender, monitor *model.Monitor) {
+func ProcessSSLDomainCheck(db *gorm.DB, emailSender email.EmailSender, dispatcher *notification.Dispatcher, monitor *model.Monitor) {
 	if !monitor.EnableSSLDomainCheck || monitor.Type != "http" {
 		return
 	}
@@ -42,10 +44,10 @@ func ProcessSSLDomainCheck(db *gorm.DB, emailSender email.EmailSender, monitor *
 	).Updates(monitor)
 
 	// 4. Handle Notification Reminders for 30, 14, 7, 3 Days
-	checkAndSendExpiryReminders(db, emailSender, monitor)
+	checkAndSendExpiryReminders(db, emailSender, dispatcher, monitor)
 }
 
-func checkAndSendExpiryReminders(db *gorm.DB, emailSender email.EmailSender, monitor *model.Monitor) {
+func checkAndSendExpiryReminders(db *gorm.DB, emailSender email.EmailSender, dispatcher *notification.Dispatcher, monitor *model.Monitor) {
 	if emailSender == nil {
 		return
 	}
@@ -59,7 +61,7 @@ func checkAndSendExpiryReminders(db *gorm.DB, emailSender email.EmailSender, mon
 			if daysLeft <= threshold {
 				// Check if we already sent reminder for this threshold
 				if monitor.LastSSLSentReminderDay == nil || *monitor.LastSSLSentReminderDay > threshold {
-					sendExpiryNotification(db, emailSender, monitor, "SSL Certificate", daysLeft, monitor.SSLExpiresAt, threshold)
+					sendExpiryNotification(db, emailSender, dispatcher, monitor, "SSL Certificate", daysLeft, monitor.SSLExpiresAt, threshold)
 					monitor.LastSSLSentReminderDay = &threshold
 					db.Model(monitor).Update("LastSSLSentReminderDay", threshold)
 				}
@@ -75,7 +77,7 @@ func checkAndSendExpiryReminders(db *gorm.DB, emailSender email.EmailSender, mon
 			if daysLeft <= threshold {
 				// Check if we already sent reminder for this threshold
 				if monitor.LastDomainSentReminderDay == nil || *monitor.LastDomainSentReminderDay > threshold {
-					sendExpiryNotification(db, emailSender, monitor, "Domain Name", daysLeft, monitor.DomainExpiresAt, threshold)
+					sendExpiryNotification(db, emailSender, dispatcher, monitor, "Domain Name", daysLeft, monitor.DomainExpiresAt, threshold)
 					monitor.LastDomainSentReminderDay = &threshold
 					db.Model(monitor).Update("LastDomainSentReminderDay", threshold)
 				}
@@ -85,26 +87,34 @@ func checkAndSendExpiryReminders(db *gorm.DB, emailSender email.EmailSender, mon
 	}
 }
 
-func sendExpiryNotification(db *gorm.DB, emailSender email.EmailSender, monitor *model.Monitor, expiryType string, daysLeft int, expiresAt *time.Time, threshold int) {
+func sendExpiryNotification(db *gorm.DB, emailSender email.EmailSender, dispatcher *notification.Dispatcher, monitor *model.Monitor, expiryType string, daysLeft int, expiresAt *time.Time, threshold int) {
 	recipients := getExpiryNotificationRecipients(db, monitor, threshold)
-	if len(recipients) == 0 {
-		log.Printf("[SSL/Domain Expiry] No email recipients found for monitor %s", monitor.Name)
-		return
-	}
 
 	expiresStr := "Unknown"
 	if expiresAt != nil {
 		expiresStr = expiresAt.Format("2006-01-02")
 	}
 
-	// Check if emailSender supports SendExpiryReminder
-	if resendSender, ok := emailSender.(*email.ResendSender); ok {
-		_, err := resendSender.SendExpiryReminder(recipients, monitor.Name, monitor.Target, expiryType, daysLeft, expiresStr)
-		if err != nil {
-			log.Printf("[SSL/Domain Expiry Error] Failed to send email to %v: %v", recipients, err)
-		} else {
-			log.Printf("[SSL/Domain Expiry] Email reminder sent for %s (%s) to %v", monitor.Name, expiryType, recipients)
+	// Send to PICs/admins via Resend email
+	if len(recipients) > 0 {
+		if resendSender, ok := emailSender.(*email.ResendSender); ok {
+			_, err := resendSender.SendExpiryReminder(recipients, monitor.Name, monitor.Target, expiryType, daysLeft, expiresStr)
+			if err != nil {
+				log.Printf("[SSL/Domain Expiry Error] Failed to send email to %v: %v", recipients, err)
+			} else {
+				log.Printf("[SSL/Domain Expiry] Email reminder sent for %s (%s) to %v", monitor.Name, expiryType, recipients)
+			}
 		}
+	} else {
+		log.Printf("[SSL/Domain Expiry] No email recipients found for monitor %s", monitor.Name)
+	}
+
+	// Also dispatch to org NotificationChannels (slack, webhook, email channels)
+	if dispatcher != nil {
+		subject := fmt.Sprintf("[PulseWatch] %s Expiry Warning: %s (%d days left)", expiryType, monitor.Name, daysLeft)
+		body := fmt.Sprintf("<h3>%s Expiry Warning</h3><p>Monitor <b>%s</b> (%s): %s expires in <b>%d days</b> on %s.</p>",
+			expiryType, monitor.Name, monitor.Target, expiryType, daysLeft, expiresStr)
+		go dispatcher.Dispatch(monitor, nil, "expiry.warning", subject, body)
 	}
 }
 
