@@ -8,8 +8,18 @@ export interface CreateSubscriptionRequest {
 	email: string;
 }
 
+export interface Subscription {
+	organization_id: string;
+	organization: {
+		name: string;
+	};
+	plan: string;
+	status: string;
+	current_period_end: string | null;
+}
+
 export const SubscriptionAPI = {
-	getByUserId: async () => {
+	getByUserId: async (): Promise<{ data: Subscription[] }> => {
 		const res = await apiFetch(`${API_Route}/subscription`, { method: 'GET' });
 		if (!res.ok) throw new Error('Failed to fetch subscriptions');
 		return res.json();

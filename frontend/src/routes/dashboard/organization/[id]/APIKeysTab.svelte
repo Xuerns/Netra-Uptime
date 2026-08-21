@@ -134,9 +134,7 @@
 
 		{#if canManage}
 			<Button
-				variant="default"
-				size="sm"
-				class="gap-1.5 h-10 bg-primary text-black font-semibold hover:bg-primary/90 rounded-lg"
+				class="bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 h-9 px-4 text-xs font-medium shadow-sm rounded-lg flex items-center gap-1.5"
 				onclick={() => (isCreateOpen = true)}
 			>
 				<Plus class="size-4" /> Create API Key
@@ -176,12 +174,10 @@
 			</div>
 			{#if canManage}
 				<Button
-					variant="outline"
-					size="sm"
-					class="mt-2 h-9 border-white/10 hover:bg-white/5 rounded-lg"
+					class="mt-2 bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 h-9 px-4 text-xs font-medium shadow-sm rounded-lg flex items-center gap-1.5"
 					onclick={() => (isCreateOpen = true)}
 				>
-					<Plus class="size-3.5 mr-1" /> Create First Key
+					<Plus class="size-3.5" /> Create First Key
 				</Button>
 			{/if}
 		</div>
@@ -345,17 +341,15 @@
 				<Button
 					type="button"
 					variant="ghost"
-					size="sm"
-					class="rounded-lg text-xs h-11"
+					class="text-white h-11 px-6 hover:text-white hover:bg-white/10 rounded-lg text-xs font-medium"
 					onclick={() => (isCreateOpen = false)}
 				>
 					Cancel
 				</Button>
 				<Button
 					type="submit"
-					size="sm"
 					disabled={isSubmitting || !name.trim()}
-					class="bg-primary h-11 text-black font-semibold hover:bg-primary/90 rounded-lg text-xs"
+					class="h-11 px-6 rounded-lg text-xs font-medium bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 shadow-sm disabled:opacity-50"
 				>
 					{isSubmitting ? 'Generating...' : 'Generate API Key'}
 				</Button>
@@ -387,8 +381,7 @@
 				<span>{createdPlaintextKey}</span>
 				<Button
 					size="sm"
-					variant="outline"
-					class="shrink-0 gap-1.5 border-white/20 hover:bg-white/10 rounded-lg text-xs"
+					class="shrink-0 gap-1.5 bg-[#1A1A1B] border border-[#2A2A2B] text-slate-300 hover:text-white hover:bg-[#2A2A2B] active:scale-[0.98] transition-all duration-200 rounded-lg text-xs font-medium"
 					onclick={handleCopyKey}
 				>
 					{#if isCopied}
@@ -411,8 +404,7 @@
 
 			<div class="flex justify-end pt-2">
 				<Button
-					size="sm"
-					class="bg-primary h-9 px-4 text-black font-semibold hover:bg-primary/90 rounded-lg text-xs"
+					class="bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 h-9 px-5 text-xs font-medium rounded-lg shadow-sm"
 					onclick={() => {
 						isShowKeyOpen = false;
 						createdPlaintextKey = '';
