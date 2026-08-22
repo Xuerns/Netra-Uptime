@@ -9,6 +9,7 @@
 
 <svelte:head>
 	<title>PulseWatch</title>
+	<meta name="description" content="Monitor your websites, APIs and services in real-time. Get instant alerts when things go down. Free to start." />
 </svelte:head>
 
 <div class="bg-background text-on-surface">

@@ -4,6 +4,7 @@ import (
 	"PulseWatch/pkg/email"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -63,9 +64,11 @@ func (h AuthHandler) Login(c *gin.Context) {
 	accessMaxAge := int(expiryAccess.Seconds())
 	refreshMaxAge := int(expiryRefresh.Seconds())
 
+	isProduction := strings.EqualFold(os.Getenv("APP_ENV"), "production")
+
 	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("access_token", response.AccessToken, accessMaxAge, "/", "", false, true)
-	c.SetCookie("refresh_token", response.RefreshToken, refreshMaxAge, "/", "", false, true)
+	c.SetCookie("access_token", response.AccessToken, accessMaxAge, "/", "", isProduction, true)
+	c.SetCookie("refresh_token", response.RefreshToken, refreshMaxAge, "/", "", isProduction, true)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Login Succesfully"})
 }
@@ -108,8 +111,10 @@ func (h AuthHandler) RefreshAccessToken(c *gin.Context) {
 	}
 	accessMaxAge := int(expiryAccess.Seconds())
 
+	isProduction := strings.EqualFold(os.Getenv("APP_ENV"), "production")
+
 	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("access_token", accessToken, accessMaxAge, "/", "", false, true)
+	c.SetCookie("access_token", accessToken, accessMaxAge, "/", "", isProduction, true)
 	c.JSON(http.StatusOK, gin.H{"message": "New access Token granted"})
 }
 
@@ -145,12 +150,16 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 		return
 	}
 
-	if err := email.MailSender(req.Email, url); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+	// Only send email if user was found (url is not empty)
+	if url != "" {
+		if err := email.MailSender(req.Email, url); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Check your email"})
+	// Always return success to prevent email enumeration
+	c.JSON(http.StatusOK, gin.H{"message": "If this email is registered, a reset link has been sent."})
 }
 
 func (h *AuthHandler) ResetPassword(c *gin.Context) {
@@ -193,9 +202,11 @@ func (h *AuthHandler) OauthLoginAndRegister(c *gin.Context) {
 		expiryRefresh = 168 * time.Hour
 	}
 
+	isProduction := strings.EqualFold(os.Getenv("APP_ENV"), "production")
+
 	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("access_token", response.AccessToken, int(expiryAccess.Seconds()), "/", "", false, true)
-	c.SetCookie("refresh_token", response.RefreshToken, int(expiryRefresh.Seconds()), "/", "", false, true)
+	c.SetCookie("access_token", response.AccessToken, int(expiryAccess.Seconds()), "/", "", isProduction, true)
+	c.SetCookie("refresh_token", response.RefreshToken, int(expiryRefresh.Seconds()), "/", "", isProduction, true)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Login successfully"})
 }

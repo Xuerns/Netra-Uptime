@@ -41,6 +41,14 @@
 
 	async function handleLogin(event: Event) {
 		event.preventDefault();
+
+		// Re-validate before submit (Bug #5)
+		const emailErr = validateEmail(email);
+		const passErr = validatePassword(password);
+		fieldErrors.email = emailErr;
+		fieldErrors.password = passErr;
+		if (emailErr || passErr) return;
+
 		loading = true;
 		error = '';
 
@@ -56,8 +64,13 @@
 
 			const data = await response.json();
 
+			// Handle rate limit
+			if (response.status === 429) {
+				throw new Error('Too many attempts. Please wait a moment and try again.');
+			}
+
 			if (!response.ok) {
-				throw new Error(data.message || 'Gagal Login');
+				throw new Error(data.error || data.message || 'Login failed');
 			}
 
 			window.location.href = '/dashboard/monitor';
@@ -69,13 +82,16 @@
 	}
 
 	function loginWithGoogle() {
-		const clientId = env.PUBLIC_GOOGLE_CLIENT_ID;
-		const redirectUri = env.PUBLIC_GOOGLE_REDIRECT_URL;
+		const clientId = env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
+		const redirectUri = env.PUBLIC_GOOGLE_REDIRECT_URL ?? '';
+		const state = crypto.randomUUID();
+		sessionStorage.setItem('oauth_state', state);
 		const params = new URLSearchParams({
 			client_id: clientId,
 			redirect_uri: redirectUri,
 			response_type: 'code',
-			scope: 'email profile'
+			scope: 'email profile',
+			state: state
 		});
 		window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 	}
@@ -111,6 +127,13 @@
 					Log in to monitor your systems.
 				</p>
 			</div>
+
+			<!-- Error Banner -->
+			{#if error}
+				<div class="flex items-start gap-2 p-3 rounded-lg bg-error/10 border border-error/20 animate-fade-in">
+					<p class="font-body-md text-sm text-error">{error}</p>
+				</div>
+			{/if}
 
 			<!-- Fields -->
 			<div class="space-y-sm">
@@ -178,7 +201,6 @@
 				<button
 					class="w-full bg-primary hover:bg-primary-container text-on-primary font-label-md font-semibold py-2.5 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-[#131314]"
 					type="submit"
-					onclick={handleLogin}
 					disabled={loading}
 				>
 					{#if loading}Loading...{:else}Login{/if}

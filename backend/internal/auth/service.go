@@ -360,7 +360,8 @@ func (s *AuthServiceImpl) ForgotPassword(email string) (string, error) {
 	user, err := s.repo.FindUserByEmail(email)
 
 	if err != nil {
-		return "", errors.New("Something wrong, please try again")
+		// User not found — return empty URL (no error) to prevent email enumeration
+		return "", nil
 	}
 
 	randomBytes := make([]byte, 32)

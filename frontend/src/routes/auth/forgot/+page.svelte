@@ -137,7 +137,7 @@
 
 <svelte:head>
 	<title
-		>{isResetMode ? 'Reset Password • PulseWatch' : 'Forgot Password • PulseWatch'} • Pulsewatch</title
+		>{isResetMode ? 'Reset Password' : 'Forgot Password'} • PulseWatch</title
 	>
 </svelte:head>
 

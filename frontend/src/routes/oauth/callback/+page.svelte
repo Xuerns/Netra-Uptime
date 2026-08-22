@@ -14,6 +14,19 @@
 			return;
 		}
 
+		// Verify OAuth state parameter
+		const state = urlParams.get('state');
+		const savedState = sessionStorage.getItem('oauth_state');
+		if (!state || state !== savedState) {
+			error = 'Invalid OAuth state. Please try logging in again.';
+			return;
+		}
+		sessionStorage.removeItem('oauth_state');
+
+		// Timeout handling
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), 15000);
+
 		try {
 			const API_Route = `${env.PUBLIC_API_URL}`;
 			const response = await fetch(`${API_Route}/auth`, {
@@ -22,9 +35,11 @@
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({ provider, code }),
-				credentials: 'include'
+				credentials: 'include',
+				signal: controller.signal
 			});
 
+			clearTimeout(timeout);
 			const data = await response.json();
 
 			if (!response.ok) {
@@ -34,8 +49,13 @@
 			// Redirect to dashboard on success
 			window.location.href = '/dashboard/monitor';
 		} catch (err: any) {
+			clearTimeout(timeout);
 			console.error(err);
-			error = err.message || 'An error occurred during authentication';
+			if (err.name === 'AbortError') {
+				error = 'Authentication timed out. Please try again.';
+			} else {
+				error = err.message || 'An error occurred during authentication';
+			}
 		}
 	});
 </script>

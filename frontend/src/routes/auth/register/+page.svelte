@@ -71,6 +71,18 @@
 
 	async function handleRegister(event: Event) {
 		event.preventDefault();
+
+		// Re-validate before submit
+		const nameErr = validateName(name);
+		const emailErr = validateEmail(email);
+		const passErr = validatePassword(password);
+		const confirmErr = validateConfirmPassword(password, confirmPassword);
+		fieldErrors.name = nameErr;
+		fieldErrors.email = emailErr;
+		fieldErrors.password = passErr;
+		fieldErrors.confirmPassword = confirmErr;
+		if (nameErr || emailErr || passErr || confirmErr) return;
+
 		loading = true;
 		error = '';
 
@@ -89,8 +101,13 @@
 
 			const data = await response.json();
 
+			// Handle rate limit
+			if (response.status === 429) {
+				throw new Error('Too many attempts. Please wait a moment and try again.');
+			}
+
 			if (!response.ok) {
-				throw new Error(data.message || 'Gagal Registrasi');
+				throw new Error(data.error || data.message || 'Registration failed');
 			}
 
 			window.location.href = '/auth/login';
@@ -102,13 +119,16 @@
 	}
 
 	function loginWithGoogle() {
-		const clientId = env.PUBLIC_GOOGLE_CLIENT_ID;
-		const redirectUri = env.PUBLIC_GOOGLE_REDIRECT_URL;
+		const clientId = env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
+		const redirectUri = env.PUBLIC_GOOGLE_REDIRECT_URL ?? '';
+		const state = crypto.randomUUID();
+		sessionStorage.setItem('oauth_state', state);
 		const params = new URLSearchParams({
 			client_id: clientId,
 			redirect_uri: redirectUri,
 			response_type: 'code',
-			scope: 'email profile'
+			scope: 'email profile',
+			state: state
 		});
 		window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 	}
@@ -144,6 +164,13 @@
 					Start monitoring your systems today.
 				</p>
 			</div>
+
+			<!-- Error Banner -->
+			{#if error}
+				<div class="flex items-start gap-2 p-3 rounded-lg bg-error/10 border border-error/20 animate-fade-in">
+					<p class="font-body-md text-sm text-error">{error}</p>
+				</div>
+			{/if}
 
 			<!-- Fields -->
 			<div class="space-y-sm">
@@ -256,7 +283,6 @@
 				<button
 					class="w-full bg-primary hover:bg-primary-container text-on-primary font-label-md font-semibold py-2.5 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-[#131314]"
 					type="submit"
-					onclick={handleRegister}
 					disabled={loading}
 				>
 					{#if loading}Loading...{:else}Create Account{/if}
