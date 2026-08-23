@@ -36,6 +36,7 @@ tmp/
 *.log
 logs/
 **/logs/
+!frontend/src/routes/dashboard/logs/
 
 # OS & System Junk
 .DS_Store
