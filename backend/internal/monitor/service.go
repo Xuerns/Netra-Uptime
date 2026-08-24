@@ -64,6 +64,9 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 		}
 		maxPIC = cfg.SelfHostedMaxPIC
 		maxInterval = cfg.SelfHostedMinInterval
+		if maxInterval < 10 {
+			maxInterval = 10
+		}
 		maxTimeout = cfg.SelfHostedMaxTimeout
 	} else {
 		switch subs.Plan {

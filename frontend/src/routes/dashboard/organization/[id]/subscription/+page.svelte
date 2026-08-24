@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { isSelfHosted } from '$lib/utils/appMode';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
@@ -16,6 +18,10 @@
 	let currentSub = $state<any>(null);
 
 	onMount(async () => {
+		if (isSelfHosted()) {
+			goto('/dashboard/monitor');
+			return;
+		}
 		await loadSubscription();
 	});
 

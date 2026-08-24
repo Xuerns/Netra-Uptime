@@ -1,10 +1,19 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { isSelfHosted } from '$lib/utils/appMode';
 	import Navigation from '$lib/components/landing/Navigation.svelte';
 	import Hero from '$lib/components/landing/Hero.svelte';
 	import WhyPulsewatch from '$lib/components/landing/WhyPulsewatch.svelte';
 	import FeaturesBento from '$lib/components/landing/FeaturesBento.svelte';
 	import FeatureDeepDive from '$lib/components/landing/FeatureDeepDive.svelte';
 	import Footer from '$lib/components/landing/Footer.svelte';
+
+	onMount(() => {
+		if (isSelfHosted()) {
+			goto('/auth/login');
+		}
+	});
 </script>
 
 <svelte:head>

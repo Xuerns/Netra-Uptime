@@ -27,6 +27,7 @@
 	import Logo from '$lib/assets/Logo.svg';
 	import { apiFetch } from '$lib/helper/api';
 	import UserSettingsModal from '$lib/components/UserSettingsModal.svelte';
+	import { isSelfHosted } from '$lib/utils/appMode';
 
 	let isSettingsOpen = $state(false);
 
@@ -45,7 +46,7 @@
 	const navSettings = [
 		{ title: 'Organization', url: '/dashboard/organization', icon: Users },
 		{ title: 'Logs', url: '/dashboard/logs', icon: logs },
-		{ title: 'Billing', url: '/dashboard/billing', icon: CreditCard }
+		...(!isSelfHosted() ? [{ title: 'Billing', url: '/dashboard/billing', icon: CreditCard }] : [])
 	];
 
 	let {

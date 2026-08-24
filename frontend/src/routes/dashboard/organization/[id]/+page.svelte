@@ -28,6 +28,7 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Tabs from '$lib/components/ui/tabs/index.js';
 	import { OrgAPI } from '$lib/api/organization';
+	import { isSelfHosted } from '$lib/utils/appMode';
 	import { MonitorAPI, type Monitor } from '$lib/api/monitor';
 	import { debounce } from '$lib/helper/utils';
 	import MembersSidebar from './MembersSidebar.svelte';
@@ -480,12 +481,14 @@
 							>
 								<UserPlus class="mr-2 size-4 text-primary" /> Invite Member
 							</DropdownMenu.Item>
-							<DropdownMenu.Item
-								class="hover:bg-white/10 cursor-pointer rounded-md p-2 flex items-center"
-								onclick={() => goto(`/dashboard/organization/${orgId}/subscription`)}
-							>
-								<CreditCard class="mr-2 size-4 text-primary" /> Billing & Subscription
-							</DropdownMenu.Item>
+							{#if !isSelfHosted()}
+								<DropdownMenu.Item
+									class="hover:bg-white/10 cursor-pointer rounded-md p-2 flex items-center"
+									onclick={() => goto(`/dashboard/organization/${orgId}/subscription`)}
+								>
+									<CreditCard class="mr-2 size-4 text-primary" /> Billing & Subscription
+								</DropdownMenu.Item>
+							{/if}
 							<DropdownMenu.Item
 								class="hover:bg-white/10 cursor-pointer rounded-md p-2 flex items-center"
 								onclick={() => goto(`/dashboard/organization/${orgId}/settings`)}

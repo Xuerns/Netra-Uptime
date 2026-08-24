@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { isSelfHosted } from '$lib/utils/appMode';
 	import { SubscriptionAPI, type Subscription } from '$lib/api/subscription';
 	import { Building2, CreditCard, Crown, ArrowUpRight, Calendar, Zap, Shield } from 'lucide-svelte';
 	import { userTimezone } from '$lib/stores/timezone';
@@ -10,6 +12,10 @@
 	let error = $state('');
 
 	onMount(async () => {
+		if (isSelfHosted()) {
+			goto('/dashboard/monitor');
+			return;
+		}
 		try {
 			const res = await SubscriptionAPI.getByUserId();
 			subscriptions = res.data || [];
