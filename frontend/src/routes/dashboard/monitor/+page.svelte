@@ -31,6 +31,7 @@
 	let statusFilter = $state<StatusFilter>('all');
 	let searchQuery = $state('');
 	let isRefreshing = $state(false);
+	let openDropdownId = $state<string | null>(null);
 
 	// ── Derived ───────────────────────────────────────────────────────────────
 	let counts = $derived({
@@ -52,6 +53,32 @@
 	);
 
 	// ── Data ──────────────────────────────────────────────────────────────────
+	function toggleDropdown(id: string) {
+		openDropdownId = openDropdownId === id ? null : id;
+	}
+
+	async function handleTogglePause(m: Monitor) {
+		try {
+			await MonitorAPI.update(m.OrganizationID, m.ID, {
+				is_active: m.Status === 'paused'
+			});
+			await loadMonitors(true);
+		} catch (err: any) {
+			alert(err.message || 'Failed to toggle monitor status');
+		}
+	}
+
+	async function handleDeleteMonitor(id: string) {
+		const m = monitors.find((item) => item.ID === id);
+		if (!m) return;
+		try {
+			await MonitorAPI.delete(m.OrganizationID, m.ID);
+			await loadMonitors(true);
+		} catch (err: any) {
+			alert(err.message || 'Failed to delete monitor');
+		}
+	}
+
 	async function loadMonitors(silent = false) {
 		if (!silent) isLoading = true;
 		else isRefreshing = true;

@@ -90,6 +90,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 	orgRoutes.POST("/monitors", middleware.RequireRole("owner"), h.MonitorHandler.CreateMonitor)
 	orgRoutes.GET("/monitors", h.MonitorHandler.GetAllMonitor)
 	orgRoutes.GET("/monitors/:monitorId", h.MonitorHandler.GetById)
+	orgRoutes.GET("/monitors/:monitorId/stats", h.MonitorHandler.GetDailyStats)
 	orgRoutes.PUT("/monitors/:monitorId", h.MonitorHandler.UpdateMonitor)
 	orgRoutes.DELETE("/monitors/:monitorId", h.MonitorHandler.DeleteMonitor)
 

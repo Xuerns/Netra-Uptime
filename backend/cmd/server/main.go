@@ -31,7 +31,7 @@ func main() {
 
 	_ = db.AutoMigrate(&model.User{}, &model.Check{}, &model.Incident{}, &model.IncidentUpdate{}, &model.Monitor{}, &model.NotificationChannel{},
 		&model.NotificationLog{}, &model.Organization{}, &model.OrganizationMember{}, &model.RefreshToken{}, &model.StatusPage{}, &model.StatusPageMonitor{},
-		&model.Subscription{}, &model.OrganizationInvitation{}, &model.PasswordResetToken{}, &model.IncidentAssignee{}, &model.MonitorPIC{}, &model.AuditLog{}, &model.APIKey{})
+		&model.Subscription{}, &model.OrganizationInvitation{}, &model.PasswordResetToken{}, &model.IncidentAssignee{}, &model.MonitorPIC{}, &model.AuditLog{}, &model.APIKey{}, &model.MonitorDailyStat{})
 
 	sender, err := email.NewResendSender()
 	if err != nil {

@@ -44,5 +44,6 @@ type Monitor struct {
 	MonitorPICs        []MonitorPIC          `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
 	NotificationLogs   []NotificationLog     `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
 
-	RecentChecks []Check `gorm:"-" json:"recent_checks"`
+	RecentChecks        []Check  `gorm:"-" json:"recent_checks"`
+	CalculatedUptime30D *float64 `gorm:"-" json:"calculated_uptime_30d"`
 }

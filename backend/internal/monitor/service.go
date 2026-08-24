@@ -21,6 +21,7 @@ type MonitorService interface {
 	UpdateMonitor(orgId, userId, ipAddress, monitorId string, req UpdatedMonitorRequest) (*model.Monitor, error)
 	DeleteMonitor(orgId, userId, ipAddress, monitorId string) error
 	GetAllMonitorByUserId(userId string) ([]MonitorResponse, error)
+	GetDailyStats(orgId, monitorId string, days int) ([]model.MonitorDailyStat, error)
 }
 
 type SubscriptionChecker interface {
@@ -208,6 +209,22 @@ func mapMonitorToResponse(m model.Monitor) MonitorResponse {
 		resp.MonitorPICs = append(resp.MonitorPICs, MonitorPICInfo{
 			UserID: pic.UserID.String(),
 		})
+	}
+
+	if m.CalculatedUptime30D != nil {
+		resp.UptimePercent = m.CalculatedUptime30D
+	} else if len(m.RecentChecks) > 0 {
+		upCount := 0
+		for _, rc := range m.RecentChecks {
+			if rc.Status == "up" {
+				upCount++
+			}
+		}
+		pct := (float64(upCount) / float64(len(m.RecentChecks))) * 100.0
+		resp.UptimePercent = &pct
+	} else {
+		pct := 100.0
+		resp.UptimePercent = &pct
 	}
 
 	for _, rc := range m.RecentChecks {
@@ -465,4 +482,17 @@ func (s *MonitorServiceImpl) GetAllMonitorByUserId(userId string) ([]MonitorResp
 	}
 
 	return response, nil
+}
+
+func (s *MonitorServiceImpl) GetDailyStats(orgId, monitorId string, days int) ([]model.MonitorDailyStat, error) {
+	_, err := s.repo.GetById(orgId, monitorId)
+	if err != nil {
+		return nil, errors.New("Monitor not found or access denied")
+	}
+
+	if days <= 0 {
+		days = 30
+	}
+
+	return s.repo.GetDailyStats(monitorId, days)
 }

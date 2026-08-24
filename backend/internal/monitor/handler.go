@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -171,4 +172,32 @@ func (h *MonitorHandler) GetAllMonitorByUserId(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": "success", "data": monitors})
+}
+
+func (h *MonitorHandler) GetDailyStats(c *gin.Context) {
+	orgId, exist := c.Get("organizationID")
+	if !exist {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		return
+	}
+
+	monitorId := c.Param("monitorId")
+	if monitorId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Monitor ID is required"})
+		return
+	}
+
+	daysStr := c.DefaultQuery("days", "30")
+	days, err := strconv.Atoi(daysStr)
+	if err != nil || days <= 0 {
+		days = 30
+	}
+
+	stats, err := h.service.GetDailyStats(orgId.(uuid.UUID).String(), monitorId, days)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "data": stats})
 }

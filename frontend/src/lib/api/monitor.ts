@@ -37,6 +37,19 @@ export interface RecentCheck {
 	CheckedAt: string;
 }
 
+export interface MonitorDailyStat {
+	ID: string;
+	MonitorID: string;
+	Date: string;
+	TotalChecks: number;
+	UpChecks: number;
+	DownChecks: number;
+	UptimePercentage: number;
+	AvgLatencyMs: number;
+	MinLatencyMs: number;
+	MaxLatencyMs: number;
+}
+
 export interface Monitor {
 	ID: string;
 	Name: string;
@@ -186,6 +199,12 @@ export const MonitorAPI = {
 			method: 'DELETE'
 		});
 		if (!res.ok) throw new Error('Failed to delete monitor');
+		return res.json();
+	},
+
+	getDailyStats: async (orgId: string, monitorId: string, days = 30) => {
+		const res = await apiFetch(`${API_Route}/organization/${orgId}/monitors/${monitorId}/stats?days=${days}`);
+		if (!res.ok) throw new Error('Failed to fetch monitor daily stats');
 		return res.json();
 	}
 };

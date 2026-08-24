@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CircleDot, Clock, ArrowUpRight, MoreVertical, Edit2, Trash2, ShieldCheck, Globe } from 'lucide-svelte';
+	import { CircleDot, Clock, ArrowUpRight, MoreVertical, Edit2, Trash2, ShieldCheck, Globe, Pause, Play } from 'lucide-svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import Sparkline from '$lib/components/Sparkline.svelte';
 	import type { Monitor } from '$lib/api/monitor';
@@ -18,13 +18,15 @@
 		openDropdownId,
 		toggleDropdown,
 		handleDeleteMonitor,
-		handleEditMonitor 
+		handleEditMonitor,
+		handleTogglePause
 	} = $props<{ 
 		monitor: Monitor;
 		openDropdownId?: string | null;
 		toggleDropdown?: (id: string) => void;
 		handleDeleteMonitor?: (id: string) => Promise<void>;
 		handleEditMonitor?: (monitor: Monitor) => void;
+		handleTogglePause?: (monitor: Monitor) => Promise<void>;
 	}>();
 
 	let isConfirmDeleteOpen = $state(false);
@@ -63,7 +65,9 @@
 
 			<div class="min-w-0 flex-1">
 				<h3 class="text-[15px] font-semibold text-on-surface leading-tight truncate mb-0.5">
-					{monitor.Name}
+					<a href="/dashboard/monitor/{monitor.ID}" class="hover:text-primary transition-colors">
+						{monitor.Name}
+					</a>
 				</h3>
 				<p class="text-[12px] font-mono text-on-surface-variant/70 truncate" title={monitor.Target}>
 					{trimTarget(monitor.Target)}
@@ -101,6 +105,23 @@
 								role="presentation"
 								onclick={(e) => e.stopPropagation()}
 							>
+								{#if handleTogglePause}
+									<button
+										class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[13px] text-on-surface hover:bg-white/10 transition-colors text-left w-full"
+										onclick={() => {
+											toggleDropdown('');
+											handleTogglePause(monitor);
+										}}
+									>
+										{#if monitor.Status === 'paused'}
+											<Play class="size-3.5 text-emerald-400" />
+											Resume check
+										{:else}
+											<Pause class="size-3.5 text-amber-400" />
+											Pause check
+										{/if}
+									</button>
+								{/if}
 								{#if handleEditMonitor}
 									<button
 										class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[13px] text-on-surface hover:bg-white/10 transition-colors text-left w-full"
@@ -224,7 +245,7 @@
 			</div>
 
 			<a
-				href="/dashboard/organization/{monitor.OrganizationID}"
+				href="/dashboard/monitor/{monitor.ID}"
 				class="flex items-center gap-1 text-[12px] font-medium text-on-surface-variant hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
 				aria-label="View {monitor.Name} details"
 			>

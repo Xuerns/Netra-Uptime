@@ -23,7 +23,9 @@
 			<TypeIcon class="size-3.5" />
 		</div>
 		<div class="min-w-0">
-			<p class="text-[13.5px] font-semibold text-on-surface truncate">{monitor.Name}</p>
+			<a href="/dashboard/monitor/{monitor.ID}" class="text-[13.5px] font-semibold text-on-surface hover:text-primary transition-colors truncate block">
+				{monitor.Name}
+			</a>
 			<div class="flex items-center gap-1.5 truncate">
 				<p class="text-[11.5px] font-mono text-on-surface-variant/60 truncate" title={monitor.Target}>
 					{trimTarget(monitor.Target, 36)}

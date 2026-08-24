@@ -66,7 +66,7 @@
 			const res = await apiFetch(`${API_Route}/auth/logout`, { method: 'POST' });
 
 			if (res.ok) {
-				window.location.href = '/';
+				window.location.href = isSelfHosted() ? '/auth/login' : '/';
 			}
 		} catch (err: any) {
 			console.error(err.message);

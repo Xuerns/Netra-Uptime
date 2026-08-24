@@ -5,7 +5,9 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type RetentionJob struct {
@@ -45,10 +47,74 @@ func (r *RetentionJob) Stop() {
 func (r *RetentionJob) CleanOldChecks() {
 	threshold := time.Now().Add(-3 * 24 * time.Hour)
 
-	log.Printf("[Retention] Cleaning old data check before : %s", threshold.Format("2006-01-02 15:04:05"))
+	log.Printf("[Retention] Starting aggregation and cleanup for checks before: %s", threshold.Format("2006-01-02 15:04:05"))
+
+	type AggregateResult struct {
+		MonitorID    string    `gorm:"column:monitor_id"`
+		Date         time.Time `gorm:"column:date"`
+		TotalChecks  int       `gorm:"column:total_checks"`
+		UpChecks     int       `gorm:"column:up_checks"`
+		DownChecks   int       `gorm:"column:down_checks"`
+		AvgLatencyMs int       `gorm:"column:avg_latency_ms"`
+		MinLatencyMs int       `gorm:"column:min_latency_ms"`
+		MaxLatencyMs int       `gorm:"column:max_latency_ms"`
+	}
+
+	var results []AggregateResult
+
+	query := `
+		SELECT 
+			monitor_id,
+			DATE(checked_at) AS date,
+			COUNT(*) AS total_checks,
+			COUNT(CASE WHEN status = 'up' THEN 1 END) AS up_checks,
+			COUNT(CASE WHEN status = 'down' THEN 1 END) AS down_checks,
+			ROUND(AVG(response_time_ms)) AS avg_latency_ms,
+			MIN(response_time_ms) AS min_latency_ms,
+			MAX(response_time_ms) AS max_latency_ms
+		FROM checks
+		WHERE checked_at < ?
+		GROUP BY monitor_id, DATE(checked_at)
+	`
+
+	if err := r.db.Raw(query, threshold).Scan(&results).Error; err != nil {
+		log.Printf("[Retention] Failed to aggregate old checks: %v", err)
+	} else if len(results) > 0 {
+		log.Printf("[Retention] Aggregating %d daily stat bucket(s)...", len(results))
+
+		for _, agg := range results {
+			monitorUUID, err := uuid.Parse(agg.MonitorID)
+			if err != nil {
+				continue
+			}
+
+			uptimePct := 100.0
+			if agg.TotalChecks > 0 {
+				uptimePct = (float64(agg.UpChecks) / float64(agg.TotalChecks)) * 100.0
+			}
+
+			stat := model.MonitorDailyStat{
+				MonitorID:        monitorUUID,
+				Date:             agg.Date,
+				TotalChecks:      agg.TotalChecks,
+				UpChecks:         agg.UpChecks,
+				DownChecks:       agg.DownChecks,
+				UptimePercentage: uptimePct,
+				AvgLatencyMs:     agg.AvgLatencyMs,
+				MinLatencyMs:     agg.MinLatencyMs,
+				MaxLatencyMs:     agg.MaxLatencyMs,
+			}
+
+			if err := r.db.Clauses(clause.OnConflict{
+				Columns:   []clause.Column{{Name: "monitor_id"}, {Name: "date"}},
+				DoUpdates: clause.AssignmentColumns([]string{"total_checks", "up_checks", "down_checks", "uptime_percentage", "avg_latency_ms", "min_latency_ms", "max_latency_ms", "updated_at"}),
+			}).Create(&stat).Error; err != nil {
+				log.Printf("[Retention] Failed to upsert daily stat for monitor %s on date %s: %v", agg.MonitorID, agg.Date.Format("2006-01-02"), err)
+			}
+		}
+	}
 
 	result := r.db.Where("checked_at < ?", threshold).Delete(&model.Check{})
-
 	if result.Error != nil {
 		log.Printf("[Retention] Failed to clean old data check: %v", result.Error)
 		return

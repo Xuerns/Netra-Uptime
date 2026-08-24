@@ -1,7 +1,16 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { isSelfHosted } from '$lib/utils/appMode';
 	import Navigation from '$lib/components/landing/Navigation.svelte';
 	import Pricing from '$lib/components/landing/Pricing.svelte';
 	import Footer from '$lib/components/landing/Footer.svelte';
+
+	onMount(() => {
+		if (isSelfHosted()) {
+			goto('/auth/login');
+		}
+	});
 </script>
 
 <svelte:head>

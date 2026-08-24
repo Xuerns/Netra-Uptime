@@ -3,6 +3,7 @@ package monitor
 import (
 	"PulseWatch/config"
 	"PulseWatch/internal/model"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -20,6 +21,8 @@ type MonitorRepository interface {
 	ReplaceMonitorPICs(monitor *model.Monitor, newPICs []model.MonitorPIC) error
 	GetNumberOfPIC(orgId, monitorId string) (int, error)
 	TotalOrganizationMonitor(orgId string) (int64, error)
+	GetDailyStats(monitorId string, days int) ([]model.MonitorDailyStat, error)
+	Get30DayUptimeMap(monitorIDs []string) (map[string]float64, error)
 }
 
 type MonitorRepositoryImpl struct {
@@ -74,8 +77,13 @@ func (r *MonitorRepositoryImpl) GetAllByOrg(orgId string) ([]model.Monitor, erro
 			checkMap[monitorIDStr] = append(checkMap[monitorIDStr], check)
 		}
 
+		uptimeMap, _ := r.Get30DayUptimeMap(monitorIds)
 		for i, monitor := range monitors {
 			monitors[i].RecentChecks = checkMap[monitor.ID.String()]
+			if pct, ok := uptimeMap[monitor.ID.String()]; ok {
+				val := pct
+				monitors[i].CalculatedUptime30D = &val
+			}
 		}
 	}
 
@@ -132,8 +140,13 @@ func (r *MonitorRepositoryImpl) GetAllMonitorByUserId(userId string) ([]model.Mo
 			checkMap[monitorIDStr] = append(checkMap[monitorIDStr], check)
 		}
 
+		uptimeMap, _ := r.Get30DayUptimeMap(MonitorIDs)
 		for i, Monitor := range monitors {
 			monitors[i].RecentChecks = checkMap[Monitor.ID.String()]
+			if pct, ok := uptimeMap[Monitor.ID.String()]; ok {
+				val := pct
+				monitors[i].CalculatedUptime30D = &val
+			}
 		}
 	}
 
@@ -159,8 +172,9 @@ func (r *MonitorRepositoryImpl) ReplaceMonitorPICs(monitor *model.Monitor, newPI
 		return err
 	}
 
-	if len(newPICs) > 0 {
-		if err := r.db.Model(monitor).Association("MonitorPICs").Append(newPICs); err != nil {
+	for _, pic := range newPICs {
+		pic.MonitorID = monitor.ID
+		if err := r.db.Create(&pic).Error; err != nil {
 			return err
 		}
 	}
@@ -183,4 +197,65 @@ func (r *MonitorRepositoryImpl) TotalOrganizationMonitor(orgId string) (int64, e
 		return 0, err
 	}
 	return totalOrganizationMonitor, nil
+}
+
+func (r *MonitorRepositoryImpl) GetDailyStats(monitorId string, days int) ([]model.MonitorDailyStat, error) {
+	var stats []model.MonitorDailyStat
+	startDate := time.Now().AddDate(0, 0, -days)
+	err := r.db.Where("monitor_id = ? AND date >= ?", monitorId, startDate).Order("date ASC").Find(&stats).Error
+	return stats, err
+}
+
+type UptimeAgg struct {
+	MonitorID   string `gorm:"column:monitor_id"`
+	TotalChecks int64  `gorm:"column:total_checks"`
+	UpChecks    int64  `gorm:"column:up_checks"`
+}
+
+func (r *MonitorRepositoryImpl) Get30DayUptimeMap(monitorIDs []string) (map[string]float64, error) {
+	result := make(map[string]float64)
+	if len(monitorIDs) == 0 {
+		return result, nil
+	}
+
+	sinceDate := time.Now().AddDate(0, 0, -30)
+
+	var dailyAggs []UptimeAgg
+	r.db.Table("monitor_daily_stats").
+		Select("monitor_id::text as monitor_id, SUM(total_checks) as total_checks, SUM(up_checks) as up_checks").
+		Where("monitor_id IN ? AND date >= ?", monitorIDs, sinceDate).
+		Group("monitor_id").
+		Scan(&dailyAggs)
+
+	var checkAggs []UptimeAgg
+	r.db.Table("checks").
+		Select("monitor_id::text as monitor_id, COUNT(*) as total_checks, COUNT(CASE WHEN status = 'up' THEN 1 END) as up_checks").
+		Where("monitor_id IN ? AND checked_at >= ?", monitorIDs, sinceDate).
+		Group("monitor_id").
+		Scan(&checkAggs)
+
+	totals := make(map[string]int64)
+	ups := make(map[string]int64)
+
+	for _, d := range dailyAggs {
+		totals[d.MonitorID] += d.TotalChecks
+		ups[d.MonitorID] += d.UpChecks
+	}
+
+	for _, c := range checkAggs {
+		totals[c.MonitorID] += c.TotalChecks
+		ups[c.MonitorID] += c.UpChecks
+	}
+
+	for _, id := range monitorIDs {
+		tot := totals[id]
+		u := ups[id]
+		if tot > 0 {
+			result[id] = (float64(u) / float64(tot)) * 100.0
+		} else {
+			result[id] = 100.0
+		}
+	}
+
+	return result, nil
 }
