@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -54,14 +55,19 @@ func Load() *Config {
 		}
 	}
 
-	appMode := os.Getenv("APP_MODE")
-	if appMode == "" {
+	appMode := strings.ToLower(strings.TrimSpace(os.Getenv("APP_MODE")))
+	if appMode == "" || strings.HasPrefix(appMode, "selfhost") {
 		appMode = "selfhosted"
 	}
 
 	dbSSLMode := os.Getenv("DB_SSLMODE")
 	if dbSSLMode == "" {
 		dbSSLMode = "disable"
+	}
+
+	minInterval := parseIntEnv("SELFHOSTED_MIN_INTERVAL", 10)
+	if minInterval < 10 {
+		minInterval = 10
 	}
 
 	return &Config{
@@ -74,7 +80,7 @@ func Load() *Config {
 		SelfHostedMaxOrgs:     parseIntEnv("SELFHOSTED_MAX_ORGS", 0),
 		SelfHostedMaxMembers:  parseIntEnv("SELFHOSTED_MAX_MEMBERS", 0),
 		SelfHostedMaxPIC:      parseIntEnv("SELFHOSTED_MAX_PIC", 10),
-		SelfHostedMinInterval: parseIntEnv("SELFHOSTED_MIN_INTERVAL", 10),
+		SelfHostedMinInterval: minInterval,
 		SelfHostedMaxTimeout:  parseIntEnv("SELFHOSTED_MAX_TIMEOUT", 60),
 
 		DBHost:     os.Getenv("DB_HOST"),
