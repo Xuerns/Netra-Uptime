@@ -9,9 +9,10 @@
 		data: DataPoint[];
 		title?: string;
 		height?: number;
+		color?: string;
 	}
 
-	let { data = [], title = 'Response Time (ms)', height = 220 }: Props = $props();
+	let { data = [], title = 'Response Time (ms)', height = 220, color = '#10B981' }: Props = $props();
 
 	let hoverIndex = $state<number | null>(null);
 
@@ -51,7 +52,7 @@
 <div class="bg-[#161618] border border-white/8 rounded-2xl p-5 md:p-6 shadow-xl flex flex-col space-y-4">
 	<div class="flex items-center justify-between min-h-7">
 		<h3 class="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
-			<span class="size-2 rounded-full bg-primary"></span>
+			<span class="size-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
 			<span>{title}</span>
 		</h3>
 
@@ -75,8 +76,8 @@
 			<svg viewBox="0 0 800 {height}" preserveAspectRatio="none" class="w-full h-full overflow-visible">
 				<defs>
 					<linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-						<stop offset="0%" stop-color="#3B82F6" stop-opacity="0.35" />
-						<stop offset="100%" stop-color="#3B82F6" stop-opacity="0.0" />
+						<stop offset="0%" stop-color={color} stop-opacity="0.35" />
+						<stop offset="100%" stop-color={color} stop-opacity="0.0" />
 					</linearGradient>
 				</defs>
 
@@ -89,7 +90,7 @@
 				<path d={areaD} fill="url(#chartGradient)" />
 
 				<!-- Stroke Line -->
-				<path d={pathD} fill="none" stroke="#3B82F6" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
+				<path d={pathD} fill="none" stroke={color} stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
 
 				<!-- Hover Circles & Points -->
 				{#each points as p, i}
@@ -97,7 +98,7 @@
 						cx={p.x}
 						cy={p.y}
 						r={hoverIndex === i ? 5 : 2.5}
-						class="{p.status === 'down' ? 'fill-rose-500' : 'fill-primary'} stroke-[#161618] transition-all cursor-pointer"
+						class="{p.status === 'down' ? 'fill-rose-500' : 'fill-emerald-400'} stroke-[#161618] transition-all cursor-pointer"
 						stroke-width="2"
 						role="button"
 						tabindex="0"

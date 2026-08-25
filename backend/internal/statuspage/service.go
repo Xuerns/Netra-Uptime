@@ -119,6 +119,39 @@ func (s *StatusPageServiceImpl) Create(orgID, userID, ipAddress string, req *Cre
 	return createdStatusPage, nil
 }
 
+func toStatusPageResponse(sp model.StatusPage) StatusPageResponse {
+	var monitors []StatusPageMonitorInfo
+	for _, m := range sp.StatusPageMonitors {
+		monitors = append(monitors, StatusPageMonitorInfo{
+			ID:           m.ID.String(),
+			StatusPageID: m.StatusPageID.String(),
+			MonitorID:    m.MonitorID.String(),
+			DisplayOrder: m.DisplayOrder,
+		})
+	}
+
+	resp := StatusPageResponse{
+		ID:                 sp.ID.String(),
+		OrganizationID:     sp.OrganizationID.String(),
+		Subdomain:          sp.Subdomain,
+		Title:              sp.Title,
+		Description:        sp.Description,
+		IsPublic:           sp.IsPublic,
+		CreatedAt:          sp.CreatedAt,
+		StatusPageMonitors: monitors,
+	}
+
+	if sp.Organization.ID != uuid.Nil {
+		resp.Organization = &OrgInfo{
+			ID:   sp.Organization.ID.String(),
+			Name: sp.Organization.Name,
+			Slug: sp.Organization.Slug,
+		}
+	}
+
+	return resp
+}
+
 func (s *StatusPageServiceImpl) GetAllByOrganizationID(orgID, userID string) ([]StatusPageResponse, error) {
 	member, err := s.Subchecker.GetMemberById(orgID, userID)
 
@@ -133,15 +166,7 @@ func (s *StatusPageServiceImpl) GetAllByOrganizationID(orgID, userID string) ([]
 
 	var response []StatusPageResponse
 	for _, sp := range statusPages {
-		response = append(response, StatusPageResponse{
-			ID:             sp.ID.String(),
-			OrganizationID: sp.OrganizationID.String(),
-			Subdomain:      sp.Subdomain,
-			Title:          sp.Title,
-			Description:    sp.Description,
-			IsPublic:       sp.IsPublic,
-			CreatedAt:      sp.CreatedAt,
-		})
+		response = append(response, toStatusPageResponse(sp))
 	}
 
 	return response, nil
@@ -259,17 +284,8 @@ func (s *StatusPageServiceImpl) GetById(statusPageID, orgID, userID string) (*St
 		return nil, errors.New("Not Found")
 	}
 
-	response := &StatusPageResponse{
-		ID:             statusPage.ID.String(),
-		OrganizationID: statusPage.OrganizationID.String(),
-		Subdomain:      statusPage.Subdomain,
-		Title:          statusPage.Title,
-		Description:    statusPage.Description,
-		IsPublic:       statusPage.IsPublic,
-		CreatedAt:      statusPage.CreatedAt,
-	}
-
-	return response, nil
+	resp := toStatusPageResponse(*statusPage)
+	return &resp, nil
 }
 
 func (s *StatusPageServiceImpl) GetBySubdomain(subdomain string) (*PublicStatusPageResponse, error) {
@@ -326,15 +342,7 @@ func (s *StatusPageServiceImpl) GetStatusPageByUserId(userId string) ([]StatusPa
 
 	var response []StatusPageResponse
 	for _, sp := range statusPages {
-		response = append(response, StatusPageResponse{
-			ID:             sp.ID.String(),
-			OrganizationID: sp.OrganizationID.String(),
-			Subdomain:      sp.Subdomain,
-			Title:          sp.Title,
-			Description:    sp.Description,
-			IsPublic:       sp.IsPublic,
-			CreatedAt:      sp.CreatedAt,
-		})
+		response = append(response, toStatusPageResponse(sp))
 	}
 
 	if jsonData, err := json.Marshal(response); err == nil {

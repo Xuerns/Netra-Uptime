@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { MonitorAPI, type Monitor, type MonitorDailyStat } from '$lib/api/monitor';
@@ -8,6 +8,7 @@
 	import MonitorStatsGrid from '$lib/components/monitor/MonitorStatsGrid.svelte';
 	import MonitorLatencyChart from '$lib/components/monitor/MonitorLatencyChart.svelte';
 	import MonitorUptimeBar from '$lib/components/monitor/MonitorUptimeBar.svelte';
+	import MonitorDetailSkeleton from '$lib/components/skeletons/MonitorDetailSkeleton.svelte';
 	import { AlertTriangle, CheckCircle2, Clock, Calendar, Activity, Loader2 } from 'lucide-svelte';
 	import { formatDateOnly, formatDateTime } from '$lib/utils/datetime';
 	import { userTimezone } from '$lib/stores/timezone';
@@ -72,6 +73,14 @@
 
 	// Chart Data Points
 	let chartPoints = $derived.by(() => {
+		if (activePeriod === '24h' && monitor?.recent_checks && monitor.recent_checks.length > 0) {
+			return monitor.recent_checks.map((c: any) => ({
+				label: formatDateTime(c.CheckedAt, tz),
+				value: c.ResponseTimeMs,
+				status: c.Status
+			}));
+		}
+
 		if (stats.length === 0 && monitor?.recent_checks) {
 			return monitor.recent_checks.map((c: any) => ({
 				label: formatDateTime(c.CheckedAt, tz),
@@ -98,6 +107,23 @@
 	});
 
 	// ── Data Fetching ─────────────────────────────────────────────────────────
+	let currentReqId = 0;
+
+	async function loadPeriodStats(orgId: string, monId: string, days: number) {
+		const reqId = ++currentReqId;
+		try {
+			const statsRes = await MonitorAPI.getDailyStats(orgId, monId, days);
+			if (reqId === currentReqId) {
+				stats = statsRes.data || [];
+			}
+		} catch (err) {
+			if (reqId === currentReqId) {
+				console.warn('Failed to load daily stats:', err);
+				stats = [];
+			}
+		}
+	}
+
 	async function loadMonitorData(silent = false) {
 		if (!silent) isLoading = true;
 		else isRefreshing = true;
@@ -110,14 +136,7 @@
 
 			if (found) {
 				monitor = found;
-				// Fetch daily stats from newly created backend endpoint
-				try {
-					const statsRes = await MonitorAPI.getDailyStats(found.OrganizationID, monitorId, periodDays);
-					stats = statsRes.data || [];
-				} catch (err) {
-					console.warn('Failed to load daily stats, falling back to recent checks:', err);
-					stats = [];
-				}
+				await loadPeriodStats(found.OrganizationID, monitorId, periodDays);
 
 				// Fetch incidents for this monitor/org
 				try {
@@ -143,8 +162,12 @@
 	});
 
 	$effect(() => {
-		if (activePeriod && monitor) {
-			loadMonitorData(true);
+		const days = periodDays;
+		if (monitor) {
+			const orgId = monitor.OrganizationID;
+			untrack(() => {
+				loadPeriodStats(orgId, monitorId, days);
+			});
 		}
 	});
 
@@ -179,10 +202,7 @@
 
 <div class="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
 	{#if isLoading}
-		<div class="h-96 flex flex-col items-center justify-center space-y-3 text-on-surface-variant">
-			<Loader2 class="size-8 animate-spin text-primary" />
-			<span class="text-sm font-medium">Loading monitor analytics...</span>
-		</div>
+		<MonitorDetailSkeleton />
 	{:else if fetchError || !monitor}
 		<div class="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-8 text-center space-y-3 max-w-lg mx-auto">
 			<AlertTriangle class="size-10 text-rose-400 mx-auto" />

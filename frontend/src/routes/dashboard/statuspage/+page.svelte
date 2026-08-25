@@ -15,6 +15,7 @@
 	import { StatusPageAPI, type StatusPage } from '$lib/api/statuspage';
 	import StatusPageCard from '$lib/components/statuspage/StatusPageCard.svelte';
 	import StatusPageListRow from '$lib/components/statuspage/StatusPageListRow.svelte';
+	import StatusPageSkeleton from '$lib/components/skeletons/StatusPageSkeleton.svelte';
 
 	// ── Types ─────────────────────────────────────────────────────────────────
 	type ViewMode = 'grid' | 'list';
@@ -141,10 +142,7 @@
 
 	<!-- ── Loading ──────────────────────────────────────────────────────────── -->
 	{#if isLoading}
-		<div class="flex flex-col items-center justify-center py-24 gap-3 text-on-surface-variant">
-			<RefreshCw class="size-8 animate-spin opacity-50" />
-			<p class="text-sm">Loading status pages...</p>
-		</div>
+		<StatusPageSkeleton {viewMode} />
 	<!-- ── Error state ──────────────────────────────────────────────────────── -->
 	{:else if fetchError}
 		<div

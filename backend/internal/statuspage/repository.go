@@ -40,7 +40,7 @@ func (r *StatusPageRepositoryImpl) Create(statuspage *model.StatusPage) (*model.
 func (r *StatusPageRepositoryImpl) GetAllByOrganizationID(orgID string) ([]model.StatusPage, error) {
 	var StatusPages []model.StatusPage
 
-	if err := r.db.Where("organization_id = ?", orgID).Find(&StatusPages).Error; err != nil {
+	if err := r.db.Preload("StatusPageMonitors").Where("organization_id = ?", orgID).Find(&StatusPages).Error; err != nil {
 		return nil, err
 	}
 

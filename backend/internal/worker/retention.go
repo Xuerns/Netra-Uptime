@@ -45,7 +45,7 @@ func (r *RetentionJob) Stop() {
 }
 
 func (r *RetentionJob) CleanOldChecks() {
-	threshold := time.Now().Add(-3 * 24 * time.Hour)
+	threshold := time.Now().Add(-24 * time.Hour)
 
 	log.Printf("[Retention] Starting aggregation and cleanup for checks before: %s", threshold.Format("2006-01-02 15:04:05"))
 

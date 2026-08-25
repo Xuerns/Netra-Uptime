@@ -411,14 +411,7 @@
 
 	<!-- STATE 1: Organization Selection Required Prompt -->
 	{#if isLoadingOrgs}
-		<div
-			class="p-12 border border-white/8 rounded-lg bg-white/3 flex flex-col items-center justify-center text-center"
-		>
-			<div
-				class="size-8 border-2 border-white/20 border-t-primary rounded-full animate-spin mb-3"
-			></div>
-			<p class="text-sm text-on-surface-variant">Loading organizations...</p>
-		</div>
+		<LogsSkeleton />
 	{:else if !selectedOrgId}
 		<div class="flex-1 min-h-[calc(100vh-10rem)] flex flex-col items-center justify-center py-6">
 			<div

@@ -5,6 +5,7 @@
 	import { userTimezone } from '$lib/stores/timezone';
 	import { formatDateTime, formatTimeOnly, formatIncidentTimeAgo } from '$lib/utils/datetime';
 	import { OrgAPI } from '$lib/api/organization';
+	import IncidentSkeleton from '$lib/components/skeletons/IncidentSkeleton.svelte';
 	import {
 		AlertTriangle,
 		AlertCircle,
@@ -135,11 +136,7 @@
 </div>
 
 {#if isLoading}
-	<div class="flex items-center justify-center p-12">
-		<div
-			class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"
-		></div>
-	</div>
+	<IncidentSkeleton />
 {:else if error}
 	<div class="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg">
 		{error}

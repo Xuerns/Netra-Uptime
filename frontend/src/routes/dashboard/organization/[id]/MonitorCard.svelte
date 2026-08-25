@@ -54,7 +54,9 @@
 	<div class="flex items-start justify-between gaep-2">
 		<div class="min-w-0">
 			<p class="text-body-md font-semibold text-on-surface truncate m-0">
-				{monitor.Name}
+				<a href="/dashboard/monitor/{monitor.ID}" class="hover:text-primary transition-colors">
+					{monitor.Name}
+				</a>
 			</p>
 			<p class="font-mono text-[12px] text-on-surface-variant truncate mt-1 m-0">
 				{monitor.Target}

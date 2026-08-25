@@ -69,7 +69,7 @@
 
 	<div class="flex justify-end">
 		<a
-			href="/dashboard/organization/{monitor.OrganizationID}"
+			href="/dashboard/monitor/{monitor.ID}"
 			class="flex items-center gap-1 text-[12px] font-medium text-on-surface-variant hover:text-primary transition-colors opacity-0 group-hover:opacity-100 px-2 py-1 rounded-md hover:bg-white/5"
 			aria-label="View {monitor.Name} details"
 		>

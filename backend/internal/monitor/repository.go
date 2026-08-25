@@ -3,8 +3,10 @@ package monitor
 import (
 	"PulseWatch/config"
 	"PulseWatch/internal/model"
+	"sort"
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -203,7 +205,91 @@ func (r *MonitorRepositoryImpl) GetDailyStats(monitorId string, days int) ([]mod
 	var stats []model.MonitorDailyStat
 	startDate := time.Now().AddDate(0, 0, -days)
 	err := r.db.Where("monitor_id = ? AND date >= ?", monitorId, startDate).Order("date ASC").Find(&stats).Error
-	return stats, err
+	if err != nil {
+		return nil, err
+	}
+
+	type RawDailyAgg struct {
+		Date         time.Time `gorm:"column:date"`
+		TotalChecks  int       `gorm:"column:total_checks"`
+		UpChecks     int       `gorm:"column:up_checks"`
+		DownChecks   int       `gorm:"column:down_checks"`
+		AvgLatencyMs int       `gorm:"column:avg_latency_ms"`
+		MinLatencyMs int       `gorm:"column:min_latency_ms"`
+		MaxLatencyMs int       `gorm:"column:max_latency_ms"`
+	}
+
+	var rawAggs []RawDailyAgg
+	r.db.Table("checks").
+		Select(`
+			DATE(checked_at) AS date,
+			COUNT(*) AS total_checks,
+			COUNT(CASE WHEN status = 'up' THEN 1 END) AS up_checks,
+			COUNT(CASE WHEN status = 'down' THEN 1 END) AS down_checks,
+			ROUND(AVG(response_time_ms)) AS avg_latency_ms,
+			MIN(response_time_ms) AS min_latency_ms,
+			MAX(response_time_ms) AS max_latency_ms
+		`).
+		Where("monitor_id = ? AND checked_at >= ?", monitorId, startDate).
+		Group("DATE(checked_at)").
+		Scan(&rawAggs)
+
+	if len(rawAggs) > 0 {
+		mUUID, _ := uuid.Parse(monitorId)
+		dateMap := make(map[string]int)
+		for idx, s := range stats {
+			dateMap[s.Date.Format("2006-01-02")] = idx
+		}
+
+		for _, raw := range rawAggs {
+			dateStr := raw.Date.Format("2006-01-02")
+			if idx, found := dateMap[dateStr]; found {
+				tot := stats[idx].TotalChecks + raw.TotalChecks
+				up := stats[idx].UpChecks + raw.UpChecks
+				down := stats[idx].DownChecks + raw.DownChecks
+				pct := 100.0
+				if tot > 0 {
+					pct = (float64(up) / float64(tot)) * 100.0
+				}
+				prevTot := stats[idx].TotalChecks
+				stats[idx].TotalChecks = tot
+				stats[idx].UpChecks = up
+				stats[idx].DownChecks = down
+				stats[idx].UptimePercentage = pct
+				if raw.MinLatencyMs > 0 && (stats[idx].MinLatencyMs == 0 || raw.MinLatencyMs < stats[idx].MinLatencyMs) {
+					stats[idx].MinLatencyMs = raw.MinLatencyMs
+				}
+				if raw.MaxLatencyMs > stats[idx].MaxLatencyMs {
+					stats[idx].MaxLatencyMs = raw.MaxLatencyMs
+				}
+				if tot > 0 {
+					stats[idx].AvgLatencyMs = (stats[idx].AvgLatencyMs*prevTot + raw.AvgLatencyMs*raw.TotalChecks) / tot
+				}
+			} else {
+				pct := 100.0
+				if raw.TotalChecks > 0 {
+					pct = (float64(raw.UpChecks) / float64(raw.TotalChecks)) * 100.0
+				}
+				stats = append(stats, model.MonitorDailyStat{
+					MonitorID:        mUUID,
+					Date:             raw.Date,
+					TotalChecks:      raw.TotalChecks,
+					UpChecks:         raw.UpChecks,
+					DownChecks:       raw.DownChecks,
+					UptimePercentage: pct,
+					AvgLatencyMs:     raw.AvgLatencyMs,
+					MinLatencyMs:     raw.MinLatencyMs,
+					MaxLatencyMs:     raw.MaxLatencyMs,
+				})
+			}
+		}
+
+		sort.Slice(stats, func(i, j int) bool {
+			return stats[i].Date.Before(stats[j].Date)
+		})
+	}
+
+	return stats, nil
 }
 
 type UptimeAgg struct {

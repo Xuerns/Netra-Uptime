@@ -33,12 +33,27 @@ type PublicStatusPageResponse struct {
 	Monitors  []PublicMonitorResponse `json:"monitors"`
 }
 
+type OrgInfo struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Slug string `json:"slug"`
+}
+
+type StatusPageMonitorInfo struct {
+	ID           string `json:"id"`
+	StatusPageID string `json:"status_page_id"`
+	MonitorID    string `json:"monitor_id"`
+	DisplayOrder int    `json:"display_order"`
+}
+
 type StatusPageResponse struct {
-	ID             string    `json:"id"`
-	OrganizationID string    `json:"organization_id"`
-	Subdomain      string    `json:"subdomain"`
-	Title          string    `json:"title"`
-	Description    *string   `json:"description"`
-	IsPublic       bool      `json:"is_public"`
-	CreatedAt      time.Time `json:"created_at"`
+	ID                 string                  `json:"id"`
+	OrganizationID     string                  `json:"organization_id"`
+	Organization       *OrgInfo                `json:"organization,omitempty"`
+	Subdomain          string                  `json:"subdomain"`
+	Title              string                  `json:"title"`
+	Description        *string                 `json:"description"`
+	IsPublic           bool                    `json:"is_public"`
+	CreatedAt          time.Time               `json:"created_at"`
+	StatusPageMonitors []StatusPageMonitorInfo `json:"status_page_monitors"`
 }
