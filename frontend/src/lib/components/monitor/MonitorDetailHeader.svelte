@@ -1,20 +1,7 @@
 <script lang="ts">
 	import { type Monitor } from '$lib/api/monitor';
-	import { Button } from '$lib/components/ui/button/index.js';
 	import { statusLabel } from '$lib/utils/monitor';
-	import {
-		ArrowLeft,
-		Activity,
-		Globe,
-		Pause,
-		Play,
-		Pencil,
-		Trash2,
-		RefreshCw,
-		ShieldCheck,
-		ExternalLink,
-		Clock
-	} from 'lucide-svelte';
+	import { ArrowLeft, Globe, ShieldCheck, ExternalLink, Clock } from 'lucide-svelte';
 
 	interface Props {
 		monitor: Monitor;
@@ -37,13 +24,33 @@
 	let statusColor = $derived.by(() => {
 		switch (monitor.Status) {
 			case 'up':
-				return { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20', dot: 'bg-emerald-400' };
+				return {
+					bg: 'bg-emerald-500/10',
+					text: 'text-emerald-400',
+					border: 'border-emerald-500/20',
+					dot: 'bg-emerald-400'
+				};
 			case 'down':
-				return { bg: 'bg-rose-500/10', text: 'text-rose-400', border: 'border-rose-500/20', dot: 'bg-rose-400' };
+				return {
+					bg: 'bg-rose-500/10',
+					text: 'text-rose-400',
+					border: 'border-rose-500/20',
+					dot: 'bg-rose-400'
+				};
 			case 'paused':
-				return { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20', dot: 'bg-amber-400' };
+				return {
+					bg: 'bg-amber-500/10',
+					text: 'text-amber-400',
+					border: 'border-amber-500/20',
+					dot: 'bg-amber-400'
+				};
 			default:
-				return { bg: 'bg-sky-500/10', text: 'text-sky-400', border: 'border-sky-500/20', dot: 'bg-sky-400' };
+				return {
+					bg: 'bg-sky-500/10',
+					text: 'text-sky-400',
+					border: 'border-sky-500/20',
+					dot: 'bg-sky-400'
+				};
 		}
 	});
 </script>
@@ -61,10 +68,14 @@
 	</div>
 
 	<!-- Monitor Header Banner -->
-	<div class="bg-[#161618] border border-white/8 rounded-2xl p-5 md:p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+	<div
+		class="bg-[#161618] border border-white/8 rounded-2xl p-5 md:p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4"
+	>
 		<div class="flex items-start gap-4">
 			<!-- Monitor Icon Box -->
-			<div class="size-12 rounded-xl bg-white/5 border border-white/8 flex items-center justify-center shrink-0">
+			<div
+				class="size-12 rounded-xl bg-white/5 border border-white/8 flex items-center justify-center shrink-0"
+			>
 				<Globe class="size-6 text-primary" />
 			</div>
 
@@ -74,8 +85,9 @@
 					<h1 class="text-xl md:text-2xl font-bold text-white tracking-tight">{monitor.Name}</h1>
 
 					<!-- Status Badge -->
-					<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border {statusColor.bg} {statusColor.text} {statusColor.border}">
-						<span class="size-2 rounded-full {statusColor.dot} {monitor.Status === 'up' ? 'animate-pulse' : ''}"></span>
+					<div
+						class="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold uppercase tracking-wider border {statusColor.bg} {statusColor.text} {statusColor.border}"
+					>
 						<span>{statusLabel(monitor.Status)}</span>
 					</div>
 				</div>
@@ -97,15 +109,25 @@
 						<span>Interval: {monitor.IntervalSeconds}s</span>
 					</div>
 
-					<div class="uppercase px-2 py-0.5 rounded bg-white/5 border border-white/8 font-mono text-[11px]">
+					<div
+						class="uppercase px-2 py-0.5 rounded bg-white/5 border border-white/8 font-mono text-[11px]"
+					>
 						{monitor.Type}
 					</div>
 
 					{#if monitor.Type === 'http' && (monitor.EnableSSLDomainCheck ?? true)}
 						{#if monitor.SSLStatus}
 							<span
-								class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono font-medium text-[11px] {monitor.SSLStatus === 'valid' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : monitor.SSLStatus === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}"
-								title={monitor.SSLError || (monitor.SSLExpiresAt ? `SSL Expires: ${new Date(monitor.SSLExpiresAt).toLocaleDateString()}` : '')}
+								class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono font-medium text-[11px] {monitor.SSLStatus ===
+								'valid'
+									? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+									: monitor.SSLStatus === 'warning'
+										? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+										: 'bg-rose-500/10 border-rose-500/20 text-rose-400'}"
+								title={monitor.SSLError ||
+									(monitor.SSLExpiresAt
+										? `SSL Expires: ${new Date(monitor.SSLExpiresAt).toLocaleDateString()}`
+										: '')}
 							>
 								<ShieldCheck class="size-3 shrink-0" />
 								{#if monitor.SSLStatus === 'valid'}
@@ -122,8 +144,16 @@
 
 						{#if monitor.DomainStatus}
 							<span
-								class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono font-medium text-[11px] {monitor.DomainStatus === 'valid' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : monitor.DomainStatus === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}"
-								title={monitor.DomainError || (monitor.DomainExpiresAt ? `Domain Expires: ${new Date(monitor.DomainExpiresAt).toLocaleDateString()}` : '')}
+								class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono font-medium text-[11px] {monitor.DomainStatus ===
+								'valid'
+									? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+									: monitor.DomainStatus === 'warning'
+										? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+										: 'bg-rose-500/10 border-rose-500/20 text-rose-400'}"
+								title={monitor.DomainError ||
+									(monitor.DomainExpiresAt
+										? `Domain Expires: ${new Date(monitor.DomainExpiresAt).toLocaleDateString()}`
+										: '')}
 							>
 								<Globe class="size-3 shrink-0" />
 								{#if monitor.DomainStatus === 'valid'}

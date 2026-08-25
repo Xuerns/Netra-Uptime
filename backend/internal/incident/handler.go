@@ -20,7 +20,7 @@ func (h *Incidenthandler) GetIncidentDetail(c *gin.Context) {
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
@@ -45,7 +45,7 @@ func (h *Incidenthandler) GetAllIncident(c *gin.Context) {
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
@@ -63,14 +63,14 @@ func (h *Incidenthandler) AddIncidentUpdate(c *gin.Context) {
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
 	userId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
@@ -103,14 +103,14 @@ func (h *Incidenthandler) JoinAssignee(c *gin.Context) {
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
 	userId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
@@ -133,7 +133,7 @@ func (h *Incidenthandler) GetMessageAndUser(c *gin.Context) {
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 

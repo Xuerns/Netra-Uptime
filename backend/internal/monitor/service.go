@@ -167,12 +167,17 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 }
 
 func mapMonitorToResponse(m model.Monitor) MonitorResponse {
+	status := m.Status
+	if !m.IsActive {
+		status = "paused"
+	}
+
 	resp := MonitorResponse{
 		ID:                   m.ID.String(),
 		Name:                 m.Name,
 		Type:                 m.Type,
 		Target:               m.Target,
-		Status:               m.Status,
+		Status:               status,
 		IntervalSeconds:      m.IntervalSeconds,
 		TimeoutSeconds:       m.TimeoutSeconds,
 		ExpectedStatusCode:   m.ExpectedStatusCode,
@@ -373,6 +378,11 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 
 	if req.IsActive != nil {
 		updatedMonitor.IsActive = *req.IsActive
+		if !*req.IsActive {
+			updatedMonitor.Status = "paused"
+		} else if updatedMonitor.Status == "paused" {
+			updatedMonitor.Status = "up"
+		}
 	}
 
 	if req.Criticality != nil {

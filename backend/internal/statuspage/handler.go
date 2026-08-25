@@ -25,14 +25,14 @@ func (h *StatusPageHandler) CreateStatusPage(c *gin.Context) {
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
 	userId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
@@ -43,21 +43,21 @@ func (h *StatusPageHandler) CreateStatusPage(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "success", "message": res})
+	c.JSON(http.StatusCreated, gin.H{"status": "success", "message": res})
 }
 
 func (h *StatusPageHandler) GetAllStatusPage(c *gin.Context) {
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
 	userId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
@@ -75,14 +75,14 @@ func (h *StatusPageHandler) DeleteStatusPage(c *gin.Context) {
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
 	userId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
@@ -108,14 +108,14 @@ func (h *StatusPageHandler) UpdateStatusPage(c *gin.Context) {
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
 	userId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
@@ -146,13 +146,13 @@ func (h *StatusPageHandler) GetStatusPageMonitor(c *gin.Context) {
 func (h *StatusPageHandler) GetById(c *gin.Context) {
 	orgId, exist := c.Get("organizationID")
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
 	userId, exist := c.Get("userID")
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
@@ -183,7 +183,7 @@ func (h *StatusPageHandler) GetAllStatusPageByUserId(c *gin.Context) {
 	userId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 

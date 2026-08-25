@@ -30,7 +30,13 @@
 	}
 
 	let sparkColor = $derived(
-		monitor.Status === 'up' ? '#4edea3' : monitor.Status === 'down' ? '#ff6b6b' : '#888899'
+		monitor.Status === 'paused' || !monitor.IsActive
+			? '#f59e0b'
+			: monitor.Status === 'up'
+				? '#4edea3'
+				: monitor.Status === 'down'
+					? '#ff6b6b'
+					: '#888899'
 	);
 
 	// Derive real sparkline data from RecentChecks.
@@ -121,7 +127,10 @@
 
 	<!-- Status Row -->
 	<div class="flex items-center gap-1.5 text-[12.5px] text-on-surface-variant">
-		{#if monitor.Status === 'up'}
+		{#if monitor.Status === 'paused' || !monitor.IsActive}
+			<span class="size-2 rounded-full bg-amber-400 shrink-0"></span>
+			<span class="text-amber-400 font-medium">Paused</span>
+		{:else if monitor.Status === 'up'}
 			<span class="size-2 rounded-full bg-primary shrink-0"></span>
 			<span class="text-primary">Operational</span>
 		{:else}

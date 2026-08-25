@@ -74,7 +74,7 @@
 	// Chart Data Points
 	let chartPoints = $derived.by(() => {
 		if (activePeriod === '24h' && monitor?.recent_checks && monitor.recent_checks.length > 0) {
-			return monitor.recent_checks.map((c: any) => ({
+			return [...monitor.recent_checks].reverse().map((c: any) => ({
 				label: formatDateTime(c.CheckedAt, tz),
 				value: c.ResponseTimeMs,
 				status: c.Status
@@ -82,7 +82,7 @@
 		}
 
 		if (stats.length === 0 && monitor?.recent_checks) {
-			return monitor.recent_checks.map((c: any) => ({
+			return [...monitor.recent_checks].reverse().map((c: any) => ({
 				label: formatDateTime(c.CheckedAt, tz),
 				value: c.ResponseTimeMs,
 				status: c.Status
@@ -204,7 +204,9 @@
 	{#if isLoading}
 		<MonitorDetailSkeleton />
 	{:else if fetchError || !monitor}
-		<div class="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-8 text-center space-y-3 max-w-lg mx-auto">
+		<div
+			class="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-8 text-center space-y-3 max-w-lg mx-auto"
+		>
 			<AlertTriangle class="size-10 text-rose-400 mx-auto" />
 			<h2 class="text-lg font-bold text-white">Failed to Load Monitor</h2>
 			<p class="text-xs text-on-surface-variant">{fetchError || 'Monitor not found'}</p>
@@ -226,12 +228,15 @@
 		/>
 
 		<!-- 2. Time Range Selector Control Bar -->
-		<div class="flex items-center justify-between bg-[#161618] border border-white/8 rounded-xl p-1.5 flex-wrap gap-2">
+		<div
+			class="flex items-center justify-between bg-[#161618] border border-white/8 rounded-xl p-1.5 flex-wrap gap-2"
+		>
 			<div class="flex items-center gap-1.5">
 				{#each ['24h', '7d', '30d', '90d', '1y'] as period}
 					<button
 						type="button"
-						class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all {activePeriod === period
+						class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all {activePeriod ===
+						period
 							? 'bg-primary text-on-primary shadow-sm'
 							: 'text-on-surface-variant hover:text-white hover:bg-white/5'}"
 						onclick={() => (activePeriod = period as any)}
@@ -283,17 +288,29 @@
 				<div class="bg-white/5 rounded-xl p-6 text-center space-y-2">
 					<CheckCircle2 class="size-8 text-emerald-400 mx-auto" />
 					<p class="text-sm font-medium text-white">All Systems Operational</p>
-					<p class="text-xs text-on-surface-variant">No downtime incidents recorded during this timeframe.</p>
+					<p class="text-xs text-on-surface-variant">
+						No downtime incidents recorded during this timeframe.
+					</p>
 				</div>
 			{:else}
 				<div class="space-y-2">
 					{#each incidents as inc}
-						<div class="flex items-center justify-between bg-white/5 border border-white/8 rounded-xl p-4 transition-colors hover:bg-white/8">
+						<div
+							class="flex items-center justify-between bg-white/5 border border-white/8 rounded-xl p-4 transition-colors hover:bg-white/8"
+						>
 							<div class="space-y-1">
 								<div class="flex items-center gap-2">
-									<span class="size-2 rounded-full {inc.Status === 'resolved' ? 'bg-emerald-400' : 'bg-rose-500'}"></span>
-									<span class="text-sm font-semibold text-white">{inc.Summary || 'Service Disruption'}</span>
-									<span class="uppercase text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-on-surface-variant">
+									<span
+										class="size-2 rounded-full {inc.Status === 'resolved'
+											? 'bg-emerald-400'
+											: 'bg-rose-500'}"
+									></span>
+									<span class="text-sm font-semibold text-white"
+										>{inc.Summary || 'Service Disruption'}</span
+									>
+									<span
+										class="uppercase text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-on-surface-variant"
+									>
 										{inc.Status}
 									</span>
 								</div>

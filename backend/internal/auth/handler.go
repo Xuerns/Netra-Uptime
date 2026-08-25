@@ -32,7 +32,7 @@ func (h AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": message})
+	c.JSON(http.StatusCreated, gin.H{"message": message})
 }
 
 func (h AuthHandler) Login(c *gin.Context) {
@@ -45,7 +45,7 @@ func (h AuthHandler) Login(c *gin.Context) {
 	response, err := h.service.Login(req)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -93,14 +93,14 @@ func (h AuthHandler) RefreshAccessToken(c *gin.Context) {
 	token, err := c.Cookie("refresh_token")
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Refresh token not found"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh token not found"})
 		return
 	}
 
 	accessToken, err := h.service.RefreshAccessToken(token)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -122,7 +122,7 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 	userId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "User ID not found"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found"})
 		return
 	}
 
@@ -170,7 +170,7 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	}
 
 	if err := h.service.ResetPassword(req.Password, req.Token); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 

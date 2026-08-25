@@ -20,14 +20,14 @@ func (h *MonitorHandler) CreateMonitor(c *gin.Context) {
 	userId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
@@ -45,14 +45,14 @@ func (h *MonitorHandler) CreateMonitor(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "success", "data": monitor})
+	c.JSON(http.StatusCreated, gin.H{"status": "success", "data": monitor})
 }
 
 func (h *MonitorHandler) GetById(c *gin.Context) {
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
@@ -77,7 +77,7 @@ func (h *MonitorHandler) GetAllMonitor(c *gin.Context) {
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
@@ -94,14 +94,14 @@ func (h *MonitorHandler) GetAllMonitor(c *gin.Context) {
 func (h *MonitorHandler) UpdateMonitor(c *gin.Context) {
 	userId, exist := c.Get("userID")
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
@@ -130,14 +130,14 @@ func (h *MonitorHandler) UpdateMonitor(c *gin.Context) {
 func (h *MonitorHandler) DeleteMonitor(c *gin.Context) {
 	userId, exist := c.Get("userID")
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
@@ -160,7 +160,7 @@ func (h *MonitorHandler) GetAllMonitorByUserId(c *gin.Context) {
 	userId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
@@ -177,7 +177,7 @@ func (h *MonitorHandler) GetAllMonitorByUserId(c *gin.Context) {
 func (h *MonitorHandler) GetDailyStats(c *gin.Context) {
 	orgId, exist := c.Get("organizationID")
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 

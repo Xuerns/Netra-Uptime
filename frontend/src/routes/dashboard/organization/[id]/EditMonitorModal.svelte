@@ -336,6 +336,34 @@
 						</Select.Root>
 					</div>
 
+					<!-- Monitor Status (Active / Paused) Toggle -->
+					<div
+						class="flex items-center justify-between p-3 rounded-lg bg-white/4 border border-white/8 mt-3"
+					>
+						<div class="flex flex-col gap-0.5">
+							<div class="flex items-center gap-2">
+								<span class="text-xs font-semibold text-white">Monitor Status</span>
+								<span
+									class="px-2 py-0.5 text-[10.5px] font-semibold rounded-full uppercase tracking-wider {isActive
+										? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+										: 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}"
+								>
+									{isActive ? 'Active' : 'Paused'}
+								</span>
+							</div>
+							<span class="text-[11px] text-on-surface-variant">
+								{isActive
+									? 'Automated uptime checks and alerts are enabled'
+									: 'Paused: Automated checks & alert notifications are paused'}
+							</span>
+						</div>
+						<input
+							type="checkbox"
+							bind:checked={isActive}
+							class="size-4 accent-primary rounded cursor-pointer"
+						/>
+					</div>
+
 					<!-- SSL & Domain Expiry Toggle (HTTP monitors) -->
 					{#if monitor && monitor.Type === 'http'}
 						<div

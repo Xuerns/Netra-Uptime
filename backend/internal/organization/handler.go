@@ -20,7 +20,7 @@ func (h OrganizationHandler) GetAllOrganization(c *gin.Context) {
 	userId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
@@ -40,7 +40,7 @@ func (h *OrganizationHandler) GetAllMember(c *gin.Context) {
 	memberId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
@@ -64,7 +64,7 @@ func (h *OrganizationHandler) CreateOrganization(c *gin.Context) {
 	ownerId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
@@ -75,14 +75,14 @@ func (h *OrganizationHandler) CreateOrganization(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "success", "message": res})
+	c.JSON(http.StatusCreated, gin.H{"status": "success", "message": res})
 }
 
 func (h *OrganizationHandler) GetInvitation(c *gin.Context) {
 	userId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Somethin wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
@@ -100,7 +100,7 @@ func (h *OrganizationHandler) InvitationAction(c *gin.Context) {
 	userId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
@@ -132,14 +132,14 @@ func (h *OrganizationHandler) InviteMember(c *gin.Context) {
 	userId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
@@ -156,7 +156,7 @@ func (h *OrganizationHandler) InviteMember(c *gin.Context) {
 func (h *OrganizationHandler) KickMember(c *gin.Context) {
 	userId, exist := c.Get("userID")
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
@@ -169,7 +169,7 @@ func (h *OrganizationHandler) KickMember(c *gin.Context) {
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
@@ -187,14 +187,14 @@ func (h *OrganizationHandler) Disband(c *gin.Context) {
 	userId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
@@ -212,7 +212,7 @@ func (h *OrganizationHandler) Disband(c *gin.Context) {
 func (h *OrganizationHandler) UpdateOrganization(c *gin.Context) {
 	userId, exist := c.Get("userID")
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		c.Abort()
 		return
 	}
@@ -220,7 +220,7 @@ func (h *OrganizationHandler) UpdateOrganization(c *gin.Context) {
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		c.Abort()
 		return
 	}
@@ -248,7 +248,7 @@ func (h *OrganizationHandler) SearchPersons(c *gin.Context) {
 	userId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
@@ -272,7 +272,7 @@ func (h *OrganizationHandler) SearchPersons(c *gin.Context) {
 	users, err := h.service.SearchPersons(name, userId.(string), page, orgid)
 	if err != nil {
 		if err.Error() == "No users found" {
-			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			c.JSON(http.StatusOK, gin.H{"status": "success", "data": []interface{}{}})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
@@ -287,14 +287,14 @@ func (h *OrganizationHandler) PromoteToAdmin(c *gin.Context) {
 	userId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
@@ -318,14 +318,14 @@ func (h *OrganizationHandler) DemoteToMember(c *gin.Context) {
 	userId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
@@ -349,14 +349,14 @@ func (h *OrganizationHandler) TransferOwnership(c *gin.Context) {
 	owner, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
@@ -380,14 +380,14 @@ func (h *OrganizationHandler) LeaveOrganization(c *gin.Context) {
 	userId, exist := c.Get("userID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
 	orgId, exist := c.Get("organizationID")
 
 	if !exist {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Something wrong, please try again"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 

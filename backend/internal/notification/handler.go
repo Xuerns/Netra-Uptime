@@ -154,7 +154,7 @@ func (h *ChannelHandler) GetLogs(c *gin.Context) {
 func getOrgID(c *gin.Context) (string, bool) {
 	orgID, exists := c.Get("organizationID")
 	if !exists {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "organization context missing"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "organization context missing"})
 		return "", false
 	}
 	return orgID.(uuid.UUID).String(), true
