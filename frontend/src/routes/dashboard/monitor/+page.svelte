@@ -365,13 +365,14 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 6px;
-		padding: 3px 10px;
-		border-radius: 6px;
+		height: 32px;
+		padding: 0 12px;
+		border-radius: 8px;
 		font-size: 12.5px;
 		font-weight: 500;
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		background: rgba(255, 255, 255, 0.03);
-		color: var(--color-on-surface-variant);
+		border: 1px solid transparent;
+		background: transparent;
+		color: rgba(255, 255, 255, 0.4);
 		transition:
 			background 140ms ease,
 			border-color 140ms ease,
@@ -380,39 +381,24 @@
 	}
 
 	.stat-chip:hover:not(.stat-chip--active) {
-		background: rgba(255, 255, 255, 0.07);
-		color: var(--color-on-surface);
+		background: rgba(255, 255, 255, 0.05);
+		color: rgba(255, 255, 255, 0.7);
 	}
 
 	.stat-chip--active {
 		background: rgba(255, 255, 255, 0.1);
 		border-color: rgba(255, 255, 255, 0.18);
-		color: var(--color-on-surface);
-	}
-
-	.stat-chip--down.stat-chip--active {
-		background: rgba(255, 107, 107, 0.12);
-		border-color: rgba(255, 107, 107, 0.3);
-		color: #ff6b6b;
-	}
-
-	.stat-chip--up.stat-chip--active {
-		background: rgba(78, 222, 163, 0.1);
-		border-color: rgba(78, 222, 163, 0.28);
-		color: #4edea3;
-	}
-
-	.stat-chip--paused.stat-chip--active {
-		background: rgba(136, 136, 153, 0.1);
-		border-color: rgba(136, 136, 153, 0.25);
-		color: #888899;
+		color: #ffffff;
+		font-weight: 700;
 	}
 
 	.stat-chip__count {
 		font-variant-numeric: tabular-nums;
 		font-weight: 600;
-		font-size: 12px;
-		opacity: 0.75;
+		font-size: 11.5px;
+		padding: 1px 6px;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.08);
 	}
 
 	/* ── List view ────────────────────────────────────────────────────────── */

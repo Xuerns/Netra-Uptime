@@ -514,18 +514,18 @@
 					/>
 				</div>
 
-				<!-- Category Filter Buttons -->
+				<!-- Category Filter Buttons (GitHub Style) -->
 				<div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
 					{#each categories as cat}
+						{@const isSelected = selectedCategory === cat.id}
 						<button
 							type="button"
-							class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap border {selectedCategory ===
-							cat.id
-								? 'bg-primary/15 border-primary/40 text-primary'
-								: 'bg-white/4 border-transparent text-on-surface-variant hover:text-white hover:bg-white/8'}"
+							class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all whitespace-nowrap border cursor-pointer {isSelected
+								? 'font-bold text-white bg-white/10 border-white/18 shadow-sm'
+								: 'font-medium text-white/40 border-transparent bg-transparent hover:text-white/70 hover:bg-white/5'}"
 							onclick={() => handleCategoryChange(cat.id as any)}
 						>
-							<cat.icon class="size-3.5" />
+							<cat.icon class="size-3.5 {isSelected ? 'text-primary' : 'text-white/40'}" />
 							{cat.label}
 						</button>
 					{/each}
