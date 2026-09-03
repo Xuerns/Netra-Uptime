@@ -1,64 +1,71 @@
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-	<!-- Active Incidents Skeleton -->
-	<div class="flex flex-col gap-4">
-		<div class="flex items-center justify-between pb-3 border-b border-white/10 mb-2">
-			<div class="flex items-center gap-3">
-				<div class="w-8 h-8 rounded-lg bg-white/5 animate-pulse"></div>
-				<div class="h-6 w-40 bg-white/10 rounded-md animate-pulse"></div>
-			</div>
-			<div class="w-16 h-6 rounded-full bg-white/5 animate-pulse"></div>
-		</div>
-
-		{#each Array(3) as _}
-			<article class="glass-card p-5 relative overflow-hidden">
-				<div class="absolute top-0 left-0 w-1 h-full bg-white/10 animate-pulse"></div>
-				<div class="flex justify-between items-start mb-4 pl-1">
-					<div class="flex flex-col gap-2 w-2/3">
-						<div class="h-4 w-1/4 bg-white/10 rounded animate-pulse"></div>
-						<div class="h-5 w-3/4 bg-white/10 rounded animate-pulse"></div>
-					</div>
-					<div class="h-6 w-16 bg-white/5 rounded animate-pulse"></div>
-				</div>
-				<div class="h-4 w-full bg-white/5 rounded animate-pulse mb-2"></div>
-				<div class="h-4 w-4/5 bg-white/5 rounded animate-pulse mb-6"></div>
-				<div class="flex justify-between items-end">
-					<div class="flex items-center gap-4">
-						<div class="h-4 w-20 bg-white/5 rounded animate-pulse"></div>
-						<div class="h-4 w-24 bg-white/5 rounded animate-pulse"></div>
-					</div>
-				</div>
-				<div class="mt-4 flex gap-3">
-					<div class="h-9 w-32 bg-white/10 rounded-lg animate-pulse"></div>
-				</div>
-			</article>
-		{/each}
+<div class="space-y-4">
+	<!-- Search & Filter Control Bar Skeleton -->
+	<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
+		<!-- Search Input Skeleton -->
+		<div class="h-9 flex-1 bg-[#161618] border border-white/10 rounded-xl animate-pulse"></div>
+		<!-- Severity Filter Select Skeleton -->
+		<div class="h-9 w-36 bg-[#161618] border border-white/10 rounded-xl animate-pulse shrink-0"></div>
 	</div>
 
-	<!-- Resolved Incidents Skeleton -->
-	<div class="flex flex-col gap-4 opacity-80">
-		<div class="flex items-center justify-between pb-3 border-b border-white/10 mb-2">
-			<div class="flex items-center gap-3">
-				<div class="w-8 h-8 rounded-lg bg-white/5 animate-pulse"></div>
-				<div class="h-6 w-48 bg-white/10 rounded-md animate-pulse"></div>
+	<!-- GitHub-Style Table List Box Skeleton -->
+	<div class="bg-[#161618] border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+		<!-- Table Header Bar Skeleton -->
+		<div class="bg-white/3 border-b border-white/10 px-5 py-3.5 flex items-center justify-between">
+			<!-- Filter Tabs Skeleton (Active / Resolved) -->
+			<div class="flex items-center gap-6">
+				<div class="flex items-center gap-2">
+					<div class="size-3.5 rounded-full bg-white/10 animate-pulse"></div>
+					<div class="h-4 w-12 bg-white/10 rounded animate-pulse"></div>
+					<div class="h-5 w-7 bg-white/5 rounded-full animate-pulse"></div>
+				</div>
+				<div class="flex items-center gap-2">
+					<div class="size-3.5 rounded-full bg-white/10 animate-pulse"></div>
+					<div class="h-4 w-16 bg-white/10 rounded animate-pulse"></div>
+					<div class="h-5 w-7 bg-white/5 rounded-full animate-pulse"></div>
+				</div>
 			</div>
-			<div class="w-16 h-6 rounded-full bg-white/5 animate-pulse"></div>
+			<!-- Right Stats Skeleton -->
+			<div class="h-4 w-28 bg-white/5 rounded animate-pulse"></div>
 		</div>
 
-		{#each Array(4) as _}
-			<article class="glass-card p-5 relative border-l-2 border-l-white/10 bg-black/40">
-				<div class="flex justify-between items-start mb-2">
-					<div class="h-5 w-2/3 bg-white/10 rounded animate-pulse"></div>
-					<div class="h-4 w-16 bg-white/5 rounded animate-pulse"></div>
-				</div>
-				<div class="h-4 w-full bg-white/5 rounded animate-pulse mb-4"></div>
-				<div class="flex justify-between items-end border-t border-white/5 pt-3">
-					<div class="flex flex-col gap-2 w-1/2">
-						<div class="h-3 w-3/4 bg-white/5 rounded animate-pulse"></div>
-						<div class="h-3 w-3/4 bg-white/5 rounded animate-pulse"></div>
+		<!-- Incident Rows Skeleton Container -->
+		<div class="divide-y divide-white/5">
+			{#each Array(5) as _}
+				<div class="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+					<!-- Left: Status Icon + Info -->
+					<div class="flex items-start gap-3.5 min-w-0 flex-1">
+						<!-- Status Icon Dot -->
+						<div class="pt-1 shrink-0">
+							<div class="size-3 rounded-full bg-white/10 animate-pulse"></div>
+						</div>
+
+						<!-- Incident Title, Severity & Meta -->
+						<div class="space-y-2 min-w-0 flex-1">
+							<div class="flex items-center gap-2.5 flex-wrap">
+								<!-- Severity Pill -->
+								<div class="h-5 w-12 bg-white/10 rounded animate-pulse"></div>
+								<!-- Title / Summary -->
+								<div class="h-5 w-56 bg-white/10 rounded animate-pulse"></div>
+								<!-- Target Monitor Tag -->
+								<div class="h-5 w-32 bg-white/5 rounded animate-pulse"></div>
+							</div>
+
+							<!-- Meta Details Row -->
+							<div class="flex items-center gap-3 flex-wrap">
+								<div class="h-3.5 w-16 bg-white/5 rounded animate-pulse"></div>
+								<div class="h-3.5 w-44 bg-white/5 rounded animate-pulse"></div>
+								<div class="h-3.5 w-20 bg-white/5 rounded animate-pulse"></div>
+							</div>
+						</div>
 					</div>
-					<div class="h-4 w-16 bg-white/5 rounded animate-pulse"></div>
+
+					<!-- Right Actions Group -->
+					<div class="flex items-center gap-2.5 shrink-0 self-end md:self-center">
+						<div class="h-8 w-28 bg-white/10 rounded-lg animate-pulse"></div>
+						<div class="h-8 w-24 bg-white/5 rounded-lg animate-pulse"></div>
+					</div>
 				</div>
-			</article>
-		{/each}
+			{/each}
+		</div>
 	</div>
 </div>

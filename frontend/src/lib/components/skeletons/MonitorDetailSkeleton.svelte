@@ -51,13 +51,4 @@
 		</div>
 		<div class="h-48 w-full rounded-xl bg-white/4 border border-white/6 animate-pulse"></div>
 	</div>
-
-	<!-- 5. Daily Heatmap Bar Skeleton -->
-	<div class="bg-[#161618] border border-white/8 rounded-2xl p-5 space-y-3">
-		<div class="flex justify-between items-center">
-			<div class="h-4 w-36 bg-white/10 rounded animate-pulse"></div>
-			<div class="h-4 w-24 bg-white/5 rounded animate-pulse"></div>
-		</div>
-		<div class="h-8 w-full rounded-lg bg-white/5 animate-pulse"></div>
-	</div>
 </div>

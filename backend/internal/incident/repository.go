@@ -26,7 +26,7 @@ func NewMonitorRepository(db *gorm.DB) IncidentRepository {
 
 func (r *IncidentRepositoryImpl) GetById(orgId, incidentId string) (*model.Incident, error) {
 	var incident model.Incident
-	if err := r.db.Preload("IncidentUpdates.User").Preload("Assignees.User").
+	if err := r.db.Preload("Monitor").Preload("IncidentUpdates.User").Preload("Assignees.User").
 		Joins("JOIN monitors ON monitors.id = incidents.monitor_id").
 		Where("monitors.organization_id = ? AND incidents.id = ?", orgId, incidentId).First(&incident).Error; err != nil {
 		return nil, err

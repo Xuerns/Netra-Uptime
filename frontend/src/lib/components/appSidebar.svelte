@@ -22,6 +22,8 @@
 	import LogOut from 'lucide-svelte/icons/log-out';
 	import Bell from 'lucide-svelte/icons/bell';
 	import BadgeCheck from 'lucide-svelte/icons/badge-check';
+	import BookOpen from 'lucide-svelte/icons/book-open';
+	import ExternalLink from 'lucide-svelte/icons/external-link';
 	import { env } from '$env/dynamic/public';
 
 	import Logo from '$lib/assets/Logo.svg';
@@ -44,9 +46,10 @@
 	];
 
 	const navSettings = [
-		{ title: 'Organization', url: '/dashboard/organization', icon: Users },
-		{ title: 'Logs', url: '/dashboard/logs', icon: logs },
-		...(!isSelfHosted() ? [{ title: 'Billing', url: '/dashboard/billing', icon: CreditCard }] : [])
+		{ title: 'Organization', url: '/dashboard/organization', icon: Users, isExternal: false },
+		{ title: 'Logs', url: '/dashboard/logs', icon: logs, isExternal: false },
+		...(!isSelfHosted() ? [{ title: 'Billing', url: '/dashboard/billing', icon: CreditCard, isExternal: false }] : []),
+		{ title: 'Documentation', url: 'https://pulsewatch-dev.dmmaulana06.workers.dev/docs', icon: BookOpen, isExternal: true }
 	];
 
 	let {
@@ -175,17 +178,24 @@
 								{#snippet child({ props })}
 									<a
 										href={item.url}
+										target={item.isExternal ? '_blank' : undefined}
+										rel={item.isExternal ? 'noopener noreferrer' : undefined}
 										{...props}
-										class="flex items-center gap-3.5 w-full px-2.5 py-2 pr-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
+										class="flex items-center gap-3.5 w-full px-2.5 py-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
 									>
 										<item.icon
 											class="size-4.5 shrink-0 transition-colors {isActive
 												? 'text-white'
 												: 'text-[#94A3B8] group-hover/item:text-white'}"
 										/>
-										<span class="text-md font-medium group-data-[collapsible=icon]:hidden"
+										<span class="text-md font-medium flex-1 group-data-[collapsible=icon]:hidden"
 											>{item.title}</span
 										>
+										{#if item.isExternal}
+											<ExternalLink
+												class="size-3.5 text-[#94A3B8] group-hover/item:text-white transition-colors group-data-[collapsible=icon]:hidden"
+											/>
+										{/if}
 									</a>
 								{/snippet}
 							</Sidebar.MenuButton>

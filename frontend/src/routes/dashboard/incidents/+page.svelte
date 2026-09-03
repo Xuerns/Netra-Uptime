@@ -82,65 +82,6 @@
 		currentPage = 1;
 	});
 
-	async function handleJoin(incidentId: string) {
-		try {
-			if (!currentOrgId) return;
-			await IncidentAPI.joinAssignee(currentOrgId, incidentId);
-			await loadIncidents(currentOrgId);
-			toast.success('Successfully joined the incident bridge!');
-		} catch (err: any) {
-			toast.error(err.message || 'Failed to join incident');
-		}
-	}
-
-	let updatingIncidentId: string | null = $state(null);
-	let updateMessage: string = $state('');
-	let isUpdating: boolean = $state(false);
-
-	let expandedTimelines = $state<Record<string, boolean>>({});
-	let incidentUpdates = $state<Record<string, IncidentUpdateResponse[]>>({});
-	let loadingUpdates = $state<Record<string, boolean>>({});
-
-	async function toggleTimeline(incidentId: string) {
-		expandedTimelines[incidentId] = !expandedTimelines[incidentId];
-		if (expandedTimelines[incidentId] && !incidentUpdates[incidentId]) {
-			loadingUpdates[incidentId] = true;
-			try {
-				if (currentOrgId) {
-					const res = await IncidentAPI.getUpdates(currentOrgId, incidentId);
-					incidentUpdates[incidentId] = res.data || [];
-				}
-			} catch (err: any) {
-				console.error(err);
-			} finally {
-				loadingUpdates[incidentId] = false;
-			}
-		}
-	}
-
-	async function handleUpdate(incidentId: string) {
-		if (!updateMessage.trim()) return;
-		try {
-			if (!currentOrgId) return;
-			isUpdating = true;
-			await IncidentAPI.addUpdate(currentOrgId, incidentId, { message: updateMessage });
-			await loadIncidents(currentOrgId);
-
-			if (expandedTimelines[incidentId]) {
-				const res = await IncidentAPI.getUpdates(currentOrgId, incidentId);
-				incidentUpdates[incidentId] = res.data || [];
-			}
-
-			updatingIncidentId = null;
-			updateMessage = '';
-			toast.success('Update posted successfully');
-		} catch (err: any) {
-			toast.error(err.message || 'Failed to add update');
-		} finally {
-			isUpdating = false;
-		}
-	}
-
 	onMount(async () => {
 		try {
 			const orgRes = await OrgAPI.getAll();
@@ -226,8 +167,7 @@
 			<div class="flex items-center gap-6">
 				<!-- Active / Open Tab -->
 				<button
-					class="flex items-center gap-2 transition-colors cursor-pointer {activeFilter ===
-					'active'
+					class="flex items-center gap-2 transition-colors cursor-pointer {activeFilter === 'active'
 						? 'font-bold text-white'
 						: 'font-medium text-white/40 hover:text-white/70'}"
 					onclick={() => (activeFilter = 'active')}
@@ -257,9 +197,7 @@
 					onclick={() => (activeFilter = 'resolved')}
 				>
 					<CheckCircle2
-						class="size-3.5 {activeFilter === 'resolved'
-							? 'text-emerald-400'
-							: 'text-white/40'}"
+						class="size-3.5 {activeFilter === 'resolved' ? 'text-emerald-400' : 'text-white/40'}"
 					/>
 					<span>Resolved</span>
 					<span
@@ -290,21 +228,17 @@
 		<div class="divide-y divide-white/5">
 			{#each paginatedIncidents as incident}
 				{@const isOngoing = incident.Status === 'ongoing'}
-				{@const isExpanded = expandedTimelines[incident.ID]}
 
-				<div class="transition-colors hover:bg-white/[0.02]">
+				<div class="transition-colors hover:bg-white/5">
 					<!-- Main Row Content -->
 					<div class="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
 						<!-- Left: Status Icon + Info -->
 						<div class="flex items-start gap-3.5 min-w-0 flex-1">
 							<!-- Status Icon Dot -->
-							<div class="pt-0.5 shrink-0">
+							<div class="pt-1 shrink-0">
 								{#if isOngoing}
 									<span class="relative flex size-3">
-										<span
-											class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"
-										></span>
-										<span class="relative inline-flex rounded-full size-3 bg-rose-500"></span>
+										<span class="inline-flex rounded-full size-3 bg-rose-500"></span>
 									</span>
 								{:else}
 									<CheckCircle2 class="size-4 text-emerald-400 shrink-0" />
@@ -329,9 +263,12 @@
 									{/if}
 
 									<!-- Title / Summary -->
-									<h3 class="text-sm font-semibold text-white truncate">
+									<a
+										href="/dashboard/incidents/{incident.ID}"
+										class="text-sm font-semibold text-white hover:text-primary transition-colors truncate"
+									>
 										{incident.Summary || 'Service Disruption'}
-									</h3>
+									</a>
 
 									<!-- Target Monitor Tag -->
 									{#if incident.Monitor}
@@ -340,7 +277,7 @@
 											class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/5 border border-white/8 text-[11px] font-mono text-on-surface-variant hover:text-white hover:border-white/20 transition-all"
 										>
 											<Server class="size-3 text-primary" />
-											<span class="truncate max-w-[150px]">{incident.Monitor.Name}</span>
+											<span class="truncate max-w-36">{incident.Monitor.Name}</span>
 										</a>
 									{/if}
 								</div>
@@ -378,175 +315,21 @@
 							</div>
 						</div>
 
-						<!-- Right Actions Group -->
-						<div class="flex items-center gap-2.5 shrink-0 self-end md:self-center">
-							{#if isOngoing}
-								{#if incident.Assignees?.some((a) => a.UserID === currentUserId)}
-									<button
-										class="px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-semibold hover:bg-primary-container transition-colors shadow-sm cursor-pointer"
-										onclick={() => {
-											updatingIncidentId = updatingIncidentId === incident.ID ? null : incident.ID;
-											updateMessage = '';
-										}}
-									>
-										Update Status
-									</button>
-								{:else}
-									<button
-										class="px-3 py-1.5 border border-white/10 text-white rounded-lg text-xs font-semibold hover:bg-white/5 transition-colors flex items-center gap-1.5 cursor-pointer"
-										onclick={() => handleJoin(incident.ID)}
-									>
-										<Users class="size-3.5 text-primary" />
-										Join Bridge
-									</button>
-								{/if}
-							{/if}
-
-							<!-- View Timeline Toggle Button -->
-							<button
-								class="px-3 py-1.5 text-xs font-medium text-on-surface-variant hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
-								onclick={() => toggleTimeline(incident.ID)}
+						<!-- Right Actions Group: Direct link to Incident Command Room -->
+						<div
+							class="flex items-center gap-2.5 shrink-0 self-end md:self-center group transition-colors"
+						>
+							<a
+								href="/dashboard/incidents/{incident.ID}"
+								class="px-3.5 py-1.5 text-white/60 group-hover:text-white text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
 							>
-								<span>Timeline</span>
-								{#if isExpanded}
-									<ChevronUp class="size-3.5" />
-								{:else}
-									<ChevronDown class="size-3.5" />
-								{/if}
-							</button>
+								<span>Command Room</span>
+								<ChevronRight
+									class="size-3.5 text-white/60 group-hover:text-white transition-colors"
+								/>
+							</a>
 						</div>
 					</div>
-
-					<!-- Inline Update Form (Active Incident) -->
-					{#if updatingIncidentId === incident.ID}
-						<div class="px-5 pb-5 pt-1 bg-black/30 border-t border-white/5">
-							<div class="bg-black/50 border border-white/10 rounded-xl p-4 space-y-3">
-								<span class="text-xs font-semibold text-white">Post Incident Status Update</span>
-								<textarea
-									bind:value={updateMessage}
-									placeholder="Describe current status, root cause findings, or mitigation steps..."
-									class="w-full bg-black/60 border border-white/10 rounded-lg p-3 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-primary transition-colors resize-none"
-									rows="3"
-								></textarea>
-								<div class="flex justify-end gap-2">
-									<button
-										class="px-3 py-1.5 text-xs font-medium text-on-surface-variant hover:text-white transition-colors cursor-pointer"
-										onclick={() => {
-											updatingIncidentId = null;
-											updateMessage = '';
-										}}
-									>
-										Cancel
-									</button>
-									<button
-										class="bg-primary text-white px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-primary-container transition-colors flex items-center gap-2 disabled:opacity-50 cursor-pointer"
-										disabled={!updateMessage.trim() || isUpdating}
-										onclick={() => handleUpdate(incident.ID)}
-									>
-										{#if isUpdating}
-											<div
-												class="size-3 border-2 border-white border-t-transparent rounded-full animate-spin"
-											></div>
-											Posting...
-										{:else}
-											Post Update
-										{/if}
-									</button>
-								</div>
-							</div>
-						</div>
-					{/if}
-
-					<!-- Inline Expandable Timeline Drawer -->
-					{#if isExpanded}
-						<div class="px-5 pb-5 pt-2 bg-black/40 border-t border-white/5">
-							<div class="bg-black/30 rounded-xl p-4 border border-white/8 space-y-3">
-								<h4 class="text-xs font-semibold text-white flex items-center gap-2">
-									<Activity class="size-3.5 text-primary" />
-									Incident Activity & Timeline
-								</h4>
-
-								{#if loadingUpdates[incident.ID]}
-									<div class="text-xs text-on-surface-variant text-center py-4 font-mono">
-										Loading timeline events...
-									</div>
-								{:else if incidentUpdates[incident.ID] && incidentUpdates[incident.ID].length > 0}
-									<div class="relative pl-4 border-l border-white/10 space-y-4 my-2">
-										{#each incidentUpdates[incident.ID] as update, i}
-											<div class="relative">
-												<div
-													class="absolute -left-[21px] top-1 size-2.5 rounded-full ring-4 ring-[#161618] {i ===
-													0
-														? 'bg-primary'
-														: 'bg-white/40'}"
-												></div>
-												<div class="flex justify-between items-baseline mb-1 gap-2">
-													<span class="text-xs font-medium text-white"
-														>{update.message.split('\n')[0]}</span
-													>
-													<span class="text-[10.5px] font-mono text-on-surface-variant shrink-0"
-														>{formatTimeOnly(update.createAt)}</span
-													>
-												</div>
-
-												{#if update.message.includes('\n')}
-													<div
-														class="text-[11px] font-mono text-on-surface-variant mt-1 bg-black/40 p-2 rounded border border-white/5 overflow-hidden text-ellipsis whitespace-nowrap"
-													>
-														{update.message.split('\n').slice(1).join(' ').replace(/`/g, '')}
-													</div>
-												{/if}
-
-												<div class="flex items-center gap-2 mt-1.5">
-													{#if update.avatarUrl}
-														<img
-															alt="Avatar"
-															class="size-4 rounded-full object-cover grayscale opacity-80"
-															src={update.avatarUrl}
-														/>
-													{/if}
-													<span class="text-[11px] text-on-surface-variant"
-														>{update.username || 'System'}</span
-													>
-												</div>
-											</div>
-										{/each}
-
-										<!-- Initial Alert Triggered Event -->
-										<div class="relative pt-1">
-											<div
-												class="absolute -left-[21px] top-2 size-2.5 rounded-full bg-rose-500 ring-4 ring-[#161618]"
-											></div>
-											<div class="flex justify-between items-baseline">
-												<span class="text-xs font-medium text-rose-400"
-													>Incident Triggered</span
-												>
-												<span class="text-[10.5px] font-mono text-on-surface-variant"
-													>{fmtTimeOnly(incident.StartedAt)}</span
-												>
-											</div>
-										</div>
-									</div>
-								{:else}
-									<div class="relative pl-4 border-l border-white/10 space-y-4 my-2">
-										<div class="relative pt-1">
-											<div
-												class="absolute -left-[21px] top-2 size-2.5 rounded-full bg-rose-500 ring-4 ring-[#161618]"
-											></div>
-											<div class="flex justify-between items-baseline">
-												<span class="text-xs font-medium text-rose-400"
-													>Incident Triggered</span
-												>
-												<span class="text-[10.5px] font-mono text-on-surface-variant"
-													>{fmtTimeOnly(incident.StartedAt)}</span
-												>
-											</div>
-										</div>
-									</div>
-								{/if}
-							</div>
-						</div>
-					{/if}
 				</div>
 			{/each}
 

@@ -7,7 +7,6 @@
 	import MonitorDetailHeader from '$lib/components/monitor/MonitorDetailHeader.svelte';
 	import MonitorStatsGrid from '$lib/components/monitor/MonitorStatsGrid.svelte';
 	import MonitorLatencyChart from '$lib/components/monitor/MonitorLatencyChart.svelte';
-	import MonitorUptimeBar from '$lib/components/monitor/MonitorUptimeBar.svelte';
 	import MonitorDetailSkeleton from '$lib/components/skeletons/MonitorDetailSkeleton.svelte';
 	import { AlertTriangle, CheckCircle2, Clock, Calendar, Activity, Loader2 } from 'lucide-svelte';
 	import { formatDateOnly, formatDateTime } from '$lib/utils/datetime';
@@ -93,16 +92,6 @@
 			label: formatDateOnly(s.Date, tz),
 			value: s.AvgLatencyMs,
 			status: (s.DownChecks > 0 ? 'down' : 'up') as 'up' | 'down'
-		}));
-	});
-
-	// Daily Heatmap Bar Points
-	let heatmapStats = $derived.by(() => {
-		return stats.map((s) => ({
-			date: formatDateOnly(s.Date, tz),
-			uptimePercentage: s.UptimePercentage,
-			totalChecks: s.TotalChecks,
-			hasDowntime: s.DownChecks > 0
 		}));
 	});
 
@@ -268,10 +257,7 @@
 			height={240}
 		/>
 
-		<!-- 5. Daily Status Heatmap Bar -->
-		<MonitorUptimeBar stats={heatmapStats} daysCount={periodDays} />
-
-		<!-- 6. Recent Incident Logs History -->
+		<!-- 5. Recent Incident Logs History -->
 		<div class="bg-[#161618] border border-white/8 rounded-2xl p-5 md:p-6 shadow-xl space-y-4">
 			<div class="flex items-center justify-between">
 				<h3 class="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
