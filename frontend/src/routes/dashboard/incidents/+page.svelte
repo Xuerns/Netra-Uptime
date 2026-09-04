@@ -118,13 +118,6 @@
 	<title>Incident Command Board - PulseWatch</title>
 </svelte:head>
 
-<div class="mb-6">
-	<h1 class="text-3xl font-semibold text-on-surface mb-2 tracking-tight">Incident Command Board</h1>
-	<p class="text-[15px] text-on-surface-variant">
-		Real-time triage, communication, and resolution tracking across all microservices.
-	</p>
-</div>
-
 {#if isLoading}
 	<IncidentSkeleton />
 {:else if error}

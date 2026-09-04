@@ -19,7 +19,6 @@
 	let incidents = $state<Incident[]>([]);
 	let activePeriod = $state<'24h' | '7d' | '30d' | '90d' | '1y'>('30d');
 	let isLoading = $state(true);
-	let isRefreshing = $state(false);
 	let fetchError = $state('');
 
 	let tz = $derived($userTimezone);
@@ -115,7 +114,6 @@
 
 	async function loadMonitorData(silent = false) {
 		if (!silent) isLoading = true;
-		else isRefreshing = true;
 		fetchError = '';
 
 		try {
@@ -142,7 +140,6 @@
 			fetchError = err.message || 'Failed to load monitor data';
 		} finally {
 			isLoading = false;
-			isRefreshing = false;
 		}
 	}
 
@@ -212,8 +209,6 @@
 			{monitor}
 			onPauseResume={handlePauseResume}
 			onDelete={handleDelete}
-			onRefresh={() => loadMonitorData(true)}
-			{isRefreshing}
 		/>
 
 		<!-- 2. Time Range Selector Control Bar -->

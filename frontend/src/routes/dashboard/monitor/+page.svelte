@@ -8,7 +8,6 @@
 		Search,
 		LayoutGrid,
 		List,
-		RefreshCw,
 		Pause,
 		ShieldCheck,
 		ChevronDown,
@@ -32,7 +31,6 @@
 	let viewMode = $state<ViewMode>('grid');
 	let statusFilter = $state<StatusFilter>('all');
 	let searchQuery = $state('');
-	let isRefreshing = $state(false);
 	let openDropdownId = $state<string | null>(null);
 	let collapsedOrgs = $state<Set<string>>(new Set());
 
@@ -110,7 +108,6 @@
 
 	async function loadMonitors(silent = false) {
 		if (!silent) isLoading = true;
-		else isRefreshing = true;
 		fetchError = '';
 		try {
 			const res = await MonitorAPI.getAllByUser();
@@ -119,13 +116,7 @@
 			fetchError = err.message || 'Failed to fetch monitors.';
 		} finally {
 			isLoading = false;
-			isRefreshing = false;
 		}
-	}
-
-	async function handleRefresh() {
-		if (isRefreshing) return;
-		await loadMonitors(true);
 	}
 
 	function setViewMode(mode: ViewMode) {
@@ -174,16 +165,6 @@
 		</div>
 
 		<div class="flex items-center gap-2 flex-wrap">
-			<!-- Refresh -->
-			<button
-				class="flex items-center justify-center size-9 rounded-lg border border-white/10 bg-white/3 text-on-surface-variant hover:text-on-surface hover:bg-white/6 transition-colors disabled:opacity-40"
-				onclick={handleRefresh}
-				disabled={isRefreshing}
-				aria-label="Refresh monitors"
-			>
-				<RefreshCw class="size-4 {isRefreshing ? 'animate-spin' : ''}" />
-			</button>
-
 			<!-- Search + Filter Chips — only when we have data -->
 			{#if monitors.length > 0}
 				<!-- Search bar -->

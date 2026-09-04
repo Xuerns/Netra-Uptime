@@ -8,17 +8,13 @@
 		onPauseResume?: () => void;
 		onEdit?: () => void;
 		onDelete?: () => void;
-		onRefresh?: () => void;
-		isRefreshing?: boolean;
 	}
 
 	let {
 		monitor,
 		onPauseResume,
 		onEdit,
-		onDelete,
-		onRefresh,
-		isRefreshing = false
+		onDelete
 	}: Props = $props();
 
 	let statusColor = $derived.by(() => {

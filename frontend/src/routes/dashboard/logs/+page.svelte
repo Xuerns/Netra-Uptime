@@ -14,7 +14,6 @@
 		Globe,
 		CreditCard,
 		ShieldAlert,
-		RotateCw,
 		CheckCircle2,
 		AlertCircle,
 		Info,
@@ -333,7 +332,7 @@
 	<title>Audit Logs • PulseWatch</title>
 </svelte:head>
 
-<div class="text-on-surface antialiased max-w-7xl mx-auto w-full flex-1 flex flex-col min-h-full">
+<div class="text-on-surface antialiased mx-auto w-full flex-1 flex flex-col min-h-full">
 	<!-- Page Header (Only shown when organization is selected) -->
 	{#if selectedOrgId}
 		<header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
@@ -395,15 +394,6 @@
 							{/each}
 						</DropdownMenu.Content>
 					</DropdownMenu.Root>
-
-					<Button
-						variant="ghost"
-						class="h-9 px-2.5 text-xs text-on-surface-variant hover:text-white border border-white/8 hover:bg-white/5 rounded-lg"
-						onclick={fetchAuditLogs}
-						title="Refresh Logs"
-					>
-						<RotateCw class="size-3.5 {isLoadingLogs ? 'animate-spin' : ''}" />
-					</Button>
 				</div>
 			{/if}
 		</header>
@@ -568,7 +558,7 @@
 			</div>
 		{:else}
 			<div
-				class="border border-white/8 rounded-lg bg-white/3 backdrop-blur-md overflow-hidden flex flex-col max-h-[600px]"
+				class="border border-white/8 rounded-lg bg-white/3 backdrop-blur-md overflow-hidden flex flex-col max-h-[calc(100vh-16rem)]"
 			>
 				<!-- Table Column Headers -->
 				<div class="log-table-header sticky top-0 bg-[#161618] z-10">

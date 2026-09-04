@@ -8,7 +8,6 @@
 		Search,
 		LayoutGrid,
 		List,
-		RefreshCw,
 		ExternalLink
 	} from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -26,7 +25,6 @@
 	let fetchError = $state('');
 	let viewMode = $state<ViewMode>('grid');
 	let searchQuery = $state('');
-	let isRefreshing = $state(false);
 
 	// ── Derived ───────────────────────────────────────────────────────────────
 	let counts = $derived({
@@ -45,7 +43,6 @@
 	// ── Data ──────────────────────────────────────────────────────────────────
 	async function loadStatusPages(silent = false) {
 		if (!silent) isLoading = true;
-		else isRefreshing = true;
 		fetchError = '';
 		try {
 			const res = await StatusPageAPI.getAllByUser();
@@ -54,13 +51,7 @@
 			fetchError = err.message || 'Failed to fetch status pages.';
 		} finally {
 			isLoading = false;
-			isRefreshing = false;
 		}
-	}
-
-	async function handleRefresh() {
-		if (isRefreshing) return;
-		await loadStatusPages(true);
 	}
 
 	function setViewMode(mode: ViewMode) {
@@ -92,16 +83,6 @@
 		</div>
 
 		<div class="flex items-center gap-3">
-			<!-- Refresh -->
-			<button
-				class="flex items-center justify-center size-9 rounded-lg border border-white/10 bg-white/3 text-on-surface-variant hover:text-on-surface hover:bg-white/6 transition-colors disabled:opacity-40"
-				onclick={handleRefresh}
-				disabled={isRefreshing}
-				aria-label="Refresh status pages"
-			>
-				<RefreshCw class="size-4 {isRefreshing ? 'animate-spin' : ''}" />
-			</button>
-
 			<!-- View toggle -->
 			{#if statusPages.length > 0}
 				<div
