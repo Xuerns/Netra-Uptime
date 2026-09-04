@@ -105,15 +105,6 @@
 <main
 	class="min-h-screen flex items-center justify-center p-sm md:p-md text-on-surface antialiased w-full relative"
 >
-	{#if !isSelfHosted()}
-		<a
-			href="/"
-			class="absolute top-6 left-6 md:top-8 md:left-8 flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors font-body-md group focus:outline-none focus:ring-2 focus:ring-primary rounded-lg px-2 py-1"
-		>
-			<ArrowLeft class="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-			<span>Back</span>
-		</a>
-	{/if}
 	<div class="w-full max-w-[448px] bg-[#131314] rounded-xl border border-[#2a2a2b] p-lg shadow-sm animate-fade-in">
 		<form class="space-y-md" onsubmit={handleLogin}>
 			<div class="flex flex-col items-center mb-lg">

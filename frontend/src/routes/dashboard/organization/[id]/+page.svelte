@@ -481,14 +481,6 @@
 							>
 								<UserPlus class="mr-2 size-4 text-primary" /> Invite Member
 							</DropdownMenu.Item>
-							{#if !isSelfHosted()}
-								<DropdownMenu.Item
-									class="hover:bg-white/10 cursor-pointer rounded-md p-2 flex items-center"
-									onclick={() => goto(`/dashboard/organization/${orgId}/subscription`)}
-								>
-									<CreditCard class="mr-2 size-4 text-primary" /> Billing & Subscription
-								</DropdownMenu.Item>
-							{/if}
 							<DropdownMenu.Item
 								class="hover:bg-white/10 cursor-pointer rounded-md p-2 flex items-center"
 								onclick={() => goto(`/dashboard/organization/${orgId}/settings`)}

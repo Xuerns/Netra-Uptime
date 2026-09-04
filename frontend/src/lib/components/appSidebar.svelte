@@ -48,7 +48,6 @@
 	const navSettings = [
 		{ title: 'Organization', url: '/dashboard/organization', icon: Users, isExternal: false },
 		{ title: 'Logs', url: '/dashboard/logs', icon: logs, isExternal: false },
-		...(!isSelfHosted() ? [{ title: 'Billing', url: '/dashboard/billing', icon: CreditCard, isExternal: false }] : []),
 		{ title: 'Documentation', url: 'https://pulsewatch-dev.dmmaulana06.workers.dev/docs', icon: BookOpen, isExternal: true }
 	];
 
@@ -69,7 +68,7 @@
 			const res = await apiFetch(`${API_Route}/auth/logout`, { method: 'POST' });
 
 			if (res.ok) {
-				window.location.href = isSelfHosted() ? '/auth/login' : '/';
+				window.location.href = '/auth/login';
 			}
 		} catch (err: any) {
 			console.error(err.message);

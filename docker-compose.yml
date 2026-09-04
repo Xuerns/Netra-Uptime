@@ -55,7 +55,6 @@ services:
       - .env
     environment:
       - APP_ENV=${APP_ENV:-development}
-      - APP_MODE=${APP_MODE:-selfhosted}
       - PORT=${PORT:-8080}
       - DB_HOST=postgres
       - DB_PORT=5432
