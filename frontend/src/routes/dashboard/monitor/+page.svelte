@@ -10,7 +10,9 @@
 		List,
 		RefreshCw,
 		Pause,
-		ShieldCheck
+		ShieldCheck,
+		ChevronDown,
+		ChevronRight
 	} from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { MonitorAPI, type Monitor } from '$lib/api/monitor';
@@ -32,8 +34,35 @@
 	let searchQuery = $state('');
 	let isRefreshing = $state(false);
 	let openDropdownId = $state<string | null>(null);
+	let collapsedOrgs = $state<Set<string>>(new Set());
 
 	// ── Derived ───────────────────────────────────────────────────────────────
+	type OrgGroup = { name: string; slug: string; monitors: Monitor[] };
+
+	let grouped = $derived.by<OrgGroup[]>(() => {
+		const map = new Map<string, { slug: string; monitors: Monitor[] }>();
+		for (const m of filtered) {
+			const orgName = m.Organization?.Name ?? 'Unknown';
+			const orgSlug = m.Organization?.Slug ?? '';
+			const entry = map.get(orgName) ?? { slug: orgSlug, monitors: [] };
+			entry.monitors.push(m);
+			map.set(orgName, entry);
+		}
+		return Array.from(map.entries()).map(([name, data]) => ({
+			name,
+			slug: data.slug,
+			monitors: data.monitors
+		}));
+	});
+
+	function toggleOrg(name: string) {
+		collapsedOrgs = new Set(
+			collapsedOrgs.has(name)
+				? [...collapsedOrgs].filter((n) => n !== name)
+				: [...collapsedOrgs, name]
+		);
+	}
+
 	let counts = $derived({
 		total: monitors.length,
 		up: monitors.filter((m) => m.Status === 'up').length,
@@ -324,11 +353,30 @@
 			<!-- ── Grid view ─────────────────────────────────────────────────────── -->
 		{:else if viewMode === 'grid'}
 			<div class="monitors-scroll-area">
-				<div data-lenis-prevent class="grid grid-cols-[repeat(auto-fill,minmax(450px,1fr))] gap-6">
-					{#each filtered as monitor (monitor.ID)}
-						<div animate:flip={{ duration: 250 }} class="flex w-full h-full">
-							<MonitorCard {monitor} />
-						</div>
+				<div data-lenis-prevent class="flex flex-col gap-0.5">
+					{#each grouped as orgGroup (orgGroup.name)}
+						<section class="org-group">
+							<button class="org-group__header" onclick={() => toggleOrg(orgGroup.name)}>
+								<div class="flex items-center gap-2">
+									{#if collapsedOrgs.has(orgGroup.name)}
+										<ChevronRight class="size-3.5 text-on-surface-variant/60" />
+									{:else}
+										<ChevronDown class="size-3.5 text-on-surface-variant/60" />
+									{/if}
+									<span class="org-group__name">{orgGroup.name}</span>
+								</div>
+								<span class="org-group__count">{orgGroup.monitors.length}</span>
+							</button>
+							{#if !collapsedOrgs.has(orgGroup.name)}
+								<div class="org-group__grid">
+									{#each orgGroup.monitors as monitor (monitor.ID)}
+										<div animate:flip={{ duration: 250 }} class="flex w-full h-full">
+											<MonitorCard {monitor} />
+										</div>
+									{/each}
+								</div>
+							{/if}
+						</section>
 					{/each}
 				</div>
 			</div>
@@ -336,22 +384,41 @@
 			<!-- ── List view ─────────────────────────────────────────────────────── -->
 		{:else}
 			<div class="monitors-scroll-area">
-				<div
-					class="flex flex-col divide-y divide-white/6 border border-white/8 rounded-xl overflow-hidden bg-white/2"
-				>
-					<!-- Header row -->
-					<div class="list-row list-row--header" aria-hidden="true">
-						<span>Monitor</span>
-						<span>Status</span>
-						<span>Response</span>
-						<span>Uptime 30d</span>
-						<span>Interval</span>
-						<span>Last check</span>
-						<span></span>
-					</div>
+				<div data-lenis-prevent class="flex flex-col gap-0.5">
+					{#each grouped as orgGroup (orgGroup.name)}
+						<section class="org-group">
+							<button class="org-group__header" onclick={() => toggleOrg(orgGroup.name)}>
+								<div class="flex items-center gap-2">
+									{#if collapsedOrgs.has(orgGroup.name)}
+										<ChevronRight class="size-3.5 text-on-surface-variant/60" />
+									{:else}
+										<ChevronDown class="size-3.5 text-on-surface-variant/60" />
+									{/if}
+									<span class="org-group__name">{orgGroup.name}</span>
+								</div>
+								<span class="org-group__count">{orgGroup.monitors.length}</span>
+							</button>
+							{#if !collapsedOrgs.has(orgGroup.name)}
+								<div
+									class="flex flex-col divide-y divide-white/6 border border-white/8 rounded-xl overflow-hidden bg-white/2"
+								>
+									<!-- Header row -->
+									<div class="list-row list-row--header" aria-hidden="true">
+										<span>Monitor</span>
+										<span>Status</span>
+										<span>Response</span>
+										<span>Uptime 30d</span>
+										<span>Interval</span>
+										<span>Last check</span>
+										<span></span>
+									</div>
 
-					{#each filtered as monitor (monitor.ID)}
-						<MonitorListRow {monitor} />
+									{#each orgGroup.monitors as monitor (monitor.ID)}
+										<MonitorListRow {monitor} />
+									{/each}
+								</div>
+							{/if}
+						</section>
 					{/each}
 				</div>
 			</div>
@@ -465,6 +532,47 @@
 
 	.monitors-scroll-area::-webkit-scrollbar-thumb:hover {
 		background: rgba(255, 255, 255, 0.2);
+	}
+
+	/* ── Org groups ──────────────────────────────────────────────────────── */
+	.org-group__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		width: 100%;
+		padding: 8px 12px;
+		margin-bottom: 10px;
+		border-radius: 8px;
+		background: rgba(255, 255, 255, 0.03);
+		border: 1px solid rgba(255, 255, 255, 0.06);
+		cursor: pointer;
+		transition: background 140ms ease;
+	}
+
+	.org-group__header:hover {
+		background: rgba(255, 255, 255, 0.06);
+	}
+
+	.org-group__name {
+		font-size: 13px;
+		font-weight: 600;
+		color: var(--color-on-surface);
+	}
+
+	.org-group__count {
+		font-size: 11px;
+		font-weight: 600;
+		color: var(--color-on-surface-variant);
+		padding: 1px 7px;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.06);
+		border: 1px solid rgba(255, 255, 255, 0.08);
+	}
+
+	.org-group__grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+		gap: 6px;
 	}
 
 	/* ── Reduced motion ───────────────────────────────────────────────────── */
