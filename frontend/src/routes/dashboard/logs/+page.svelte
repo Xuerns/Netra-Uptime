@@ -443,6 +443,7 @@
 				<!-- Organization List -->
 				{#if filteredOrgs.length === 0}
 					<div
+						data-lenis-prevent
 						class="py-6 px-4 w-full text-center text-xs text-on-surface-variant/60 bg-black/20 rounded-lg border border-white/5"
 					>
 						{orgSearchQuery
@@ -450,7 +451,10 @@
 							: 'No organizations found.'}
 					</div>
 				{:else}
-					<div class="flex flex-col gap-1.5 w-full max-h-[260px] overflow-y-auto pr-0.5">
+					<div
+						data-lenis-prevent
+						class="flex flex-col gap-1.5 w-full max-h-[260px] overflow-y-auto pr-0.5"
+					>
 						{#each filteredOrgs as org}
 							<button
 								type="button"

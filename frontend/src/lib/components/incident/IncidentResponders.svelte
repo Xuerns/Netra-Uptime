@@ -21,14 +21,18 @@
 	</div>
 
 	{#if assignees.length === 0}
-		<div class="p-4 bg-black/20 border border-white/5 rounded-lg text-center text-xs text-on-surface-variant">
-			No responders have joined this incident bridge yet.
+		<div
+			class="p-4 bg-black/20 border border-white/5 rounded-lg text-center text-xs text-on-surface-variant"
+		>
+			No responders yet.
 		</div>
 	{:else}
-		<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+		<div class="space-y-2">
 			{#each assignees as assignee}
 				<div class="bg-black/30 border border-white/5 rounded-lg p-3 flex items-center gap-3">
-					<div class="size-8 rounded-lg bg-primary/20 border border-primary/30 text-primary font-bold text-xs flex items-center justify-center shrink-0 font-mono">
+					<div
+						class="size-8 rounded-lg bg-primary/20 border border-primary/30 text-primary font-bold text-xs flex items-center justify-center shrink-0 font-mono"
+					>
 						{#if assignee.User?.Avatar}
 							<img
 								src={assignee.User.Avatar}

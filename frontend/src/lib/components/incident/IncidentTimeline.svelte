@@ -28,7 +28,9 @@
 	</div>
 
 	{#if isLoading}
-		<div class="flex items-center justify-center py-8 text-xs text-on-surface-variant gap-2 font-mono">
+		<div
+			class="flex items-center justify-center py-8 text-xs text-on-surface-variant gap-2 font-mono"
+		>
 			<Loader2 class="size-4 animate-spin text-primary" />
 			<span>Loading incident timeline updates...</span>
 		</div>
@@ -40,23 +42,34 @@
 			</p>
 		</div>
 	{:else}
-		<div class="space-y-3 relative before:absolute before:left-4 before:top-3 before:bottom-3 before:w-0.5 before:bg-white/10">
+		<div
+			class="space-y-3 relative before:absolute before:left-4 before:top-3 before:bottom-3 before:w-0.5 before:bg-white/10"
+		>
 			{#each updates as update}
 				<div class="relative pl-9 space-y-1">
 					<!-- Timeline Dot Node -->
-					<div class="absolute left-2.5 top-2.5 -translate-x-1/2 size-3 rounded-full bg-[#161618] border-2 border-primary"></div>
+					<div
+						class="absolute left-2.5 top-2.5 -translate-x-1/2 size-3 rounded-full bg-[#161618] border-2 border-primary"
+					></div>
 
 					<div class="bg-black/30 border border-white/5 rounded-lg p-3.5 space-y-2">
 						<div class="flex items-center justify-between text-xs font-mono">
 							<div class="flex items-center gap-2">
-								<div class="size-5 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
+								<div
+									class="size-5 rounded-full bg-white/10 flex items-center justify-center overflow-hidden"
+								>
 									{#if update.avatarUrl}
-										<img src={update.avatarUrl} alt={update.username} class="size-full object-cover" />
+										<img
+											src={update.avatarUrl}
+											alt={update.username}
+											class="size-full object-cover"
+										/>
 									{:else}
 										<User class="size-3 text-white/60" />
 									{/if}
 								</div>
-								<span class="font-semibold text-white">{update.username || 'System Responder'}</span>
+								<span class="font-semibold text-white">{update.username || 'System Responder'}</span
+								>
 							</div>
 
 							<span class="text-[11px] text-on-surface-variant flex items-center gap-1">

@@ -8,7 +8,6 @@
 
 	// Sub-components for page sections
 	import IncidentDetailHeader from '$lib/components/incident/IncidentDetailHeader.svelte';
-	import IncidentInfoCard from '$lib/components/incident/IncidentInfoCard.svelte';
 	import IncidentResponders from '$lib/components/incident/IncidentResponders.svelte';
 	import IncidentTimeline from '$lib/components/incident/IncidentTimeline.svelte';
 	import IncidentUpdateForm from '$lib/components/incident/IncidentUpdateForm.svelte';
@@ -115,21 +114,26 @@
 			{incident}
 			{currentUserId}
 			{isJoining}
+			{tz}
 			onJoin={handleJoinBridge}
 		/>
 
-		<!-- 2. Incident Information & Target Monitor Card Component -->
-		<IncidentInfoCard {incident} {tz} />
+		<!-- 2. Communication Feed & Responders Side by Side -->
+		<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+			<!-- Timeline Feed (75%) -->
+			<div class="lg:col-span-3">
+				<IncidentTimeline {updates} isLoading={isLoadingUpdates} {tz} />
+			</div>
 
-		<!-- 3. Command Responders Component -->
-		<IncidentResponders assignees={incident.Assignees} />
+			<!-- Command Responders & PIC (25%) -->
+			<div class="lg:col-span-1">
+				<IncidentResponders assignees={incident.Assignees} />
+			</div>
+		</div>
 
-		<!-- 4. Post Status Update Form Component (Active Ongoing Incident) -->
+		<!-- 3. Post Status Update Form (Active Ongoing Incident) -->
 		{#if incident.Status === 'ongoing'}
 			<IncidentUpdateForm {isPosting} onPostUpdate={handlePostUpdate} />
 		{/if}
-
-		<!-- 5. Timeline Feed Component -->
-		<IncidentTimeline {updates} isLoading={isLoadingUpdates} {tz} />
 	</div>
 {/if}
