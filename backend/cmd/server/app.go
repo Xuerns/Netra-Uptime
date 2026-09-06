@@ -11,7 +11,6 @@ import (
 	"PulseWatch/internal/publicapi"
 	"PulseWatch/internal/router"
 	"PulseWatch/internal/statuspage"
-	"PulseWatch/internal/subscription"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -42,10 +41,6 @@ func BuildHandler(db *gorm.DB, rdb *redis.Client) router.Handlers {
 	statuspageService := statuspage.NewStatusPageService(statuspageRepo, organizationRepo, rdb, auditService)
 	statuspageHandler := statuspage.NewStatusPageHandler(statuspageService)
 
-	SubcriptionRepo := subscription.NewSubscriptionRepository(db)
-	subscriptionService := subscription.NewSubscriptionService(SubcriptionRepo, rdb, auditService)
-	subscriptionHandler := subscription.NewSubscriptionHandler(subscriptionService)
-
 	apiKeyRepo := apikey.NewAPIKeyRepository(db)
 	apiKeyService := apikey.NewAPIKeyService(apiKeyRepo, auditService)
 	apiKeyHandler := apikey.NewAPIKeyHandler(apiKeyService)
@@ -62,7 +57,6 @@ func BuildHandler(db *gorm.DB, rdb *redis.Client) router.Handlers {
 		MonitorHandler:      monitorHandler,
 		IncidentHandler:     incidentHandler,
 		StatusPageHandler:   statuspageHandler,
-		SubscriptionHandler: subscriptionHandler,
 		AuditHandler:        auditHandler,
 		APIKeyHandler:       apiKeyHandler,
 		PublicAPIHandler:    publicAPIHandler,

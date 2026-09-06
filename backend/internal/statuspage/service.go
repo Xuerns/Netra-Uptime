@@ -3,6 +3,7 @@ package statuspage
 import (
 	"PulseWatch/internal/audit"
 	"PulseWatch/internal/model"
+	"PulseWatch/config"
 	"context"
 	"encoding/json"
 	"errors"
@@ -52,11 +53,16 @@ func (s *StatusPageServiceImpl) Create(orgID, userID, ipAddress string, req *Cre
 	}
 
 	maxStatusPage := 1
-	switch subs.Plan {
-	case "pro":
-		maxStatusPage = 3
-	case "max":
-		maxStatusPage = 5
+	cfg := config.Load()
+	if cfg.AppMode == "selfhosted" {
+		maxStatusPage = 999999 // no limit in selfhosted
+	} else {
+		switch subs.Plan {
+		case "pro":
+			maxStatusPage = 3
+		case "max":
+			maxStatusPage = 5
+		}
 	}
 
 	if totalStatuspage >= int64(maxStatusPage) {

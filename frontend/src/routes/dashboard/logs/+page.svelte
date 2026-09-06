@@ -12,7 +12,6 @@
 		Activity,
 		Users,
 		Globe,
-		CreditCard,
 		ShieldAlert,
 		CheckCircle2,
 		AlertCircle,
@@ -63,7 +62,7 @@
 	let totalCount = $state(0);
 
 	let searchQuery = $state('');
-	let selectedCategory = $state<'ALL' | 'MONITOR' | 'MEMBER' | 'STATUSPAGE' | 'SUBSCRIPTION'>(
+	let selectedCategory = $state<'ALL' | 'MONITOR' | 'MEMBER' | 'STATUSPAGE'>(
 		'ALL'
 	);
 	let selectedAction = $state('');
@@ -73,8 +72,7 @@
 		{ id: 'ALL', label: 'All Actions', icon: ScrollText },
 		{ id: 'MONITOR', label: 'Monitors', icon: Activity },
 		{ id: 'MEMBER', label: 'Members', icon: Users },
-		{ id: 'STATUSPAGE', label: 'Status Pages', icon: Globe },
-		{ id: 'SUBSCRIPTION', label: 'Subscription', icon: CreditCard }
+		{ id: 'STATUSPAGE', label: 'Status Pages', icon: Globe }
 	];
 
 	// ── Action Filter Definitions (grouped by category) ────────────────────────
@@ -122,19 +120,14 @@
 				{ value: 'API_KEY_REVOKE', label: 'Key Revoke' }
 			]
 		},
-		{
-			label: 'Subscription',
-			actions: [{ value: 'SUBSCRIPTION_UPGRADE', label: 'Subscription Upgrade' }]
-		}
 	];
 
 	// Map category to which action groups to show
 	const categoryToGroupLabels: Record<string, string[]> = {
-		ALL: ['Monitor', 'Organization', 'Members', 'Status Page', 'API Key', 'Subscription'],
+		ALL: ['Monitor', 'Organization', 'Members', 'Status Page', 'API Key'],
 		MONITOR: ['Monitor'],
 		MEMBER: ['Organization', 'Members'],
-		STATUSPAGE: ['Status Page'],
-		SUBSCRIPTION: ['Subscription']
+		STATUSPAGE: ['Status Page']
 	};
 
 	let visibleActionGroups = $derived(
@@ -244,9 +237,6 @@
 					case 'STATUSPAGE':
 						entityTypeFilter = 'status_page';
 						break;
-					case 'SUBSCRIPTION':
-						entityTypeFilter = 'subscription';
-						break;
 				}
 			}
 
@@ -290,7 +280,7 @@
 		fetchAuditLogs();
 	}
 
-	function handleCategoryChange(cat: 'ALL' | 'MONITOR' | 'MEMBER' | 'STATUSPAGE' | 'SUBSCRIPTION') {
+	function handleCategoryChange(cat: 'ALL' | 'MONITOR' | 'MEMBER' | 'STATUSPAGE') {
 		selectedCategory = cat;
 		currentPage = 1;
 

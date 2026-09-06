@@ -12,7 +12,6 @@ import (
 	"PulseWatch/internal/publicapi"
 	"PulseWatch/internal/static"
 	"PulseWatch/internal/statuspage"
-	"PulseWatch/internal/subscription"
 	"PulseWatch/internal/websocket"
 	"time"
 
@@ -22,17 +21,16 @@ import (
 )
 
 type Handlers struct {
-	AuthHandler            auth.AuthHandler
-	OrganizationHandler    organization.OrganizationHandler
-	MonitorHandler         monitor.MonitorHandler
-	IncidentHandler        incident.Incidenthandler
-	StatusPageHandler      statuspage.StatusPageHandler
-	SubscriptionHandler    subscription.SubscriptionHandler
-	AuditHandler           audit.AuditHandler
-	APIKeyHandler          *apikey.APIKeyHandler
-	PublicAPIHandler       *publicapi.PublicAPIHandler
-	APIKeyService          apikey.APIKeyService
-	NotificationHandler    *notification.ChannelHandler
+	AuthHandler         auth.AuthHandler
+	OrganizationHandler organization.OrganizationHandler
+	MonitorHandler      monitor.MonitorHandler
+	IncidentHandler     incident.Incidenthandler
+	StatusPageHandler   statuspage.StatusPageHandler
+	AuditHandler        audit.AuditHandler
+	APIKeyHandler       *apikey.APIKeyHandler
+	PublicAPIHandler    *publicapi.PublicAPIHandler
+	APIKeyService       apikey.APIKeyService
+	NotificationHandler *notification.ChannelHandler
 }
 
 func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, wsHandler *websocket.WsHandler) {
@@ -44,7 +42,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 	authLimiter := middleware.RateLimiter(redis, 5, 1*time.Minute)
 	resetLimiter := middleware.RateLimiter(redis, 3, 15*time.Minute)
 
-	r.POST("api/webhook/midtrans", h.SubscriptionHandler.MidtransWebHookHandler)
+
 
 	// Public API
 	api.POST("/auth/register", authLimiter, h.AuthHandler.Register)
@@ -111,10 +109,6 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 	orgRoutes.GET("/statuspage/:statusPageId/monitors", h.StatusPageHandler.GetStatusPageMonitor)
 	orgRoutes.DELETE("/statuspage/:statusPageId", h.StatusPageHandler.DeleteStatusPage)
 	orgRoutes.PUT("/statuspage/:statusPageId", h.StatusPageHandler.UpdateStatusPage)
-
-	// Subscription
-	protected.GET("/subscription", h.SubscriptionHandler.GetSubByUser)
-	orgRoutes.POST("/subscription", middleware.RequireRole("owner", "admin"), h.SubscriptionHandler.CreateSubcriptionTransaction)
 
 	// Audit Logs
 	orgRoutes.GET("/audit-logs", h.AuditHandler.GetOrgAuditLogs)
