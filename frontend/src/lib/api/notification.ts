@@ -68,16 +68,18 @@ export const NotificationAPI = {
 	},
 
 	getChannel: async (orgId: string, channelId: string): Promise<NotificationChannel> => {
-		const res = await apiFetch(
-			`${API}/organization/${orgId}/notifications/channels/${channelId}`,
-			{ method: 'GET' }
-		);
+		const res = await apiFetch(`${API}/organization/${orgId}/notifications/channels/${channelId}`, {
+			method: 'GET'
+		});
 		if (!res.ok) throw new Error('Failed to fetch notification channel');
 		const json = await res.json();
 		return json.data;
 	},
 
-	createChannel: async (orgId: string, payload: CreateChannelPayload): Promise<NotificationChannel> => {
+	createChannel: async (
+		orgId: string,
+		payload: CreateChannelPayload
+	): Promise<NotificationChannel> => {
 		const res = await apiFetch(`${API}/organization/${orgId}/notifications/channels`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -93,24 +95,20 @@ export const NotificationAPI = {
 		channelId: string,
 		payload: UpdateChannelPayload
 	): Promise<NotificationChannel> => {
-		const res = await apiFetch(
-			`${API}/organization/${orgId}/notifications/channels/${channelId}`,
-			{
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(payload)
-			}
-		);
+		const res = await apiFetch(`${API}/organization/${orgId}/notifications/channels/${channelId}`, {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload)
+		});
 		const json = await res.json();
 		if (!res.ok) throw new Error(json.error ?? 'Failed to update notification channel');
 		return json.data;
 	},
 
 	deleteChannel: async (orgId: string, channelId: string): Promise<void> => {
-		const res = await apiFetch(
-			`${API}/organization/${orgId}/notifications/channels/${channelId}`,
-			{ method: 'DELETE' }
-		);
+		const res = await apiFetch(`${API}/organization/${orgId}/notifications/channels/${channelId}`, {
+			method: 'DELETE'
+		});
 		if (!res.ok) {
 			const json = await res.json().catch(() => ({}));
 			throw new Error(json.error ?? 'Failed to delete notification channel');

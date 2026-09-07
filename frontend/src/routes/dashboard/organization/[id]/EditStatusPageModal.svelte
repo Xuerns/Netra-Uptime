@@ -99,11 +99,11 @@
 
 <Dialog.Root bind:open={isOpen}>
 	<Dialog.Content
-		class="sm:max-w-[750px] bg-[rgba(255,255,255,0.06)]! backdrop-blur-[20px] bg-gradient-to-b from-transparent to-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.08)] shadow-[0_0_20px_rgba(78,222,163,0.05)] text-white p-6 rounded-2xl"
+		class="sm:max-w-[750px] bg-glass-card-bg! backdrop-blur-[20px] bg-gradient-to-b from-transparent to-[rgba(255,255,255,0.02)] border border-glass-card-border shadow-[0_0_20px_rgba(var(--ring),0.05)] text-foreground p-6 rounded-2xl"
 	>
 		<Dialog.Header>
 			<Dialog.Title class="text-xl font-semibold tracking-tight">Edit Status Page</Dialog.Title>
-			<Dialog.Description class="text-[#bbcabf] text-sm">
+			<Dialog.Description class="text-muted-foreground text-sm">
 				Update your public status page details.
 			</Dialog.Description>
 		</Dialog.Header>
@@ -119,7 +119,7 @@
 		>
 			{#if error}
 				<div
-					class="p-3 text-[13px] text-[#690005] bg-[#ffb4ab] border border-[#93000a] rounded-lg font-medium flex items-center gap-2"
+					class="p-3 text-[13px] text-destructive bg-destructive/10 border border-destructive/20 rounded-lg font-medium flex items-center gap-2"
 				>
 					<TriangleAlert class="size-4 shrink-0" />
 					<p class="m-0">{error}</p>
@@ -131,32 +131,33 @@
 				<div class="space-y-5">
 					<div class="space-y-2">
 						<Label for="edit-title" class="text-sm font-medium text-[#e5e2e3]"
-							>Title <span class="text-error font-bold">*</span></Label
+							>Title <span class="text-destructive font-bold">*</span></Label
 						>
 						<Input
 							id="edit-title"
 							bind:value={title}
 							placeholder="e.g. Acme Status"
 							required
-							class="bg-[rgba(0,0,0,0.2)] border-white/10 text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#3B82F6] focus-visible:border-[#3B82F6] rounded-lg h-10"
+							class="bg-background border-border text-foreground placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10"
 						/>
 					</div>
 
 					<div class="space-y-2">
 						<Label for="edit-description" class="text-sm font-medium text-[#e5e2e3]"
-							>Description <span class="text-white/40 text-xs font-normal">(Optional)</span></Label
+							>Description <span class="text-foreground/40 text-xs font-normal">(Optional)</span
+							></Label
 						>
 						<textarea
 							id="edit-description"
 							bind:value={description}
 							placeholder="e.g. Current status of all our core systems."
-							class="flex min-h-[80px] w-full rounded-lg border border-white/10 bg-[rgba(0,0,0,0.2)] px-3 py-2 text-sm text-white placeholder:text-white/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#3B82F6] focus-visible:border-[#3B82F6] disabled:cursor-not-allowed disabled:opacity-50"
+							class="flex min-h-[80px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-white/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50"
 						></textarea>
 					</div>
 
 					<div class="space-y-2">
 						<Label for="edit-subdomain" class="text-sm font-medium text-[#e5e2e3]"
-							>Subdomain <span class="text-error font-bold">*</span></Label
+							>Subdomain <span class="text-destructive font-bold">*</span></Label
 						>
 						<div class="flex items-center">
 							<Input
@@ -164,10 +165,10 @@
 								bind:value={subdomain}
 								placeholder="acme"
 								required
-								class="bg-[rgba(0,0,0,0.2)] border-white/10 border-r-0 rounded-r-none text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#3B82F6] focus-visible:border-[#3B82F6] h-10 z-10"
+								class="bg-background border-border border-r-0 rounded-r-none text-foreground placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary h-10 z-10"
 							/>
 							<div
-								class="bg-[rgba(0,0,0,0.4)] border border-white/10 border-l-0 px-3 h-10 flex items-center rounded-r-lg text-white/50 text-sm font-mono whitespace-nowrap"
+								class="bg-background/80 border border-border border-l-0 px-3 h-10 flex items-center rounded-r-lg text-foreground/50 text-sm font-mono whitespace-nowrap"
 							>
 								.pulsewatch.com
 							</div>
@@ -175,11 +176,11 @@
 					</div>
 
 					<div
-						class="flex items-center justify-between p-4 bg-[rgba(0,0,0,0.2)] border border-white/10 rounded-lg"
+						class="flex items-center justify-between p-4 bg-background border border-border rounded-lg"
 					>
 						<div class="space-y-0.5">
 							<Label class="text-sm font-medium text-[#e5e2e3]">Public Visibility</Label>
-							<p class="text-xs text-white/40">Anyone with the link can view this page.</p>
+							<p class="text-xs text-foreground/40">Anyone with the link can view this page.</p>
 						</div>
 						<Switch bind:checked={isPublic} />
 					</div>
@@ -189,14 +190,14 @@
 				<div class="space-y-3 flex flex-col h-full">
 					<div class="flex items-center justify-between">
 						<Label class="text-sm font-medium text-[#e5e2e3]">Select Monitors</Label>
-						<span class="text-xs text-white/40">Choose monitors to display</span>
+						<span class="text-xs text-foreground/40">Choose monitors to display</span>
 					</div>
 
 					<div
-						class="flex-1 min-h-[250px] max-h-[300px] overflow-y-auto bg-[rgba(0,0,0,0.2)] border border-white/10 rounded-lg p-2 space-y-1"
+						class="flex-1 min-h-[250px] max-h-[300px] overflow-y-auto bg-background border border-border rounded-lg p-2 space-y-1"
 					>
 						{#if monitors.length === 0}
-							<div class="p-6 text-center text-sm text-white/40">
+							<div class="p-6 text-center text-sm text-foreground/40">
 								No monitors available. Add monitors to your organization first.
 							</div>
 						{:else}
@@ -208,14 +209,16 @@
 								>
 									<!-- Icon for Monitor -->
 									<div
-										class="size-8 rounded-full flex items-center justify-center font-semibold text-[12.5px] shrink-0 border bg-white/5 text-white/80 border-white/10"
+										class="size-8 rounded-full flex items-center justify-center font-semibold text-[12.5px] shrink-0 border bg-white/5 text-foreground/80 border-border"
 									>
 										<Activity class="size-4" />
 									</div>
 
 									<div class="flex flex-col flex-1 min-w-0">
-										<span class="text-[13px] font-medium text-white truncate">{monitor.Name}</span>
-										<span class="text-[11px] text-white/40 font-mono truncate"
+										<span class="text-[13px] font-medium text-foreground truncate"
+											>{monitor.Name}</span
+										>
+										<span class="text-[11px] text-foreground/40 font-mono truncate"
 											>{monitor.Target}</span
 										>
 									</div>
@@ -229,7 +232,7 @@
 									<div
 										class="w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all {isSelected
 											? 'bg-primary border-primary'
-											: 'bg-white/5 border-white/20'}"
+											: 'bg-white/5 border-border'}"
 									>
 										{#if isSelected}
 											<svg
@@ -254,12 +257,12 @@
 			</div>
 
 			<Dialog.Footer
-				class="gap-2 sm:justify-end border-t border-white/10 py-4 pb-0 bg-transparent! mt-4"
+				class="gap-2 sm:justify-end border-t border-border py-4 pb-0 bg-transparent! mt-4"
 			>
 				<Button
 					type="button"
 					variant="ghost"
-					class="text-white h-11 px-6 hover:text-white hover:bg-white/10"
+					class="text-foreground h-11 px-6 hover:text-foreground hover:bg-accent"
 					onclick={() => (isOpen = false)}
 					disabled={loading}
 				>
@@ -268,7 +271,7 @@
 				<Button
 					type="submit"
 					disabled={loading}
-					class="bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 h-11 px-6 font-medium shadow-sm"
+					class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-11 px-6 font-medium shadow-sm"
 				>
 					{loading ? 'Saving...' : 'Save Changes'}
 				</Button>

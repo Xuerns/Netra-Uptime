@@ -124,17 +124,17 @@
 
 <div class="flex flex-col gap-6 w-full">
 	<!-- Header & Action -->
-	<div class="flex items-center justify-between gap-4 flex-wrap pb-4 border-b border-white/8">
+	<div class="flex items-center justify-between gap-4 flex-wrap pb-4 border-b border-border">
 		<div>
-			<h2 class="text-lg font-semibold text-on-surface flex items-center gap-2">API Keys</h2>
-			<p class="text-xs text-on-surface-variant/70 mt-0.5">
+			<h2 class="text-lg font-semibold text-foreground flex items-center gap-2">API Keys</h2>
+			<p class="text-xs text-muted-foreground/70 mt-0.5">
 				Manage API keys for programmatically accessing the PulseWatch REST API.
 			</p>
 		</div>
 
 		{#if canManage}
 			<Button
-				class="bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 h-9 px-4 text-xs font-medium shadow-sm rounded-lg flex items-center gap-1.5"
+				class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 text-xs font-medium shadow-sm rounded-lg flex items-center gap-1.5"
 				onclick={() => (isCreateOpen = true)}
 			>
 				<Plus class="size-4" /> Create API Key
@@ -145,7 +145,7 @@
 	<!-- Content Area -->
 	{#if isLoading}
 		<div
-			class="p-8 text-center text-xs text-on-surface-variant/60 bg-white/2 border border-white/6 rounded-lg"
+			class="p-8 text-center text-xs text-muted-foreground/60 bg-white/2 border border-border rounded-lg"
 		>
 			Loading API keys...
 		</div>
@@ -158,23 +158,23 @@
 		</div>
 	{:else if apiKeys.length === 0}
 		<div
-			class="p-10 text-center flex flex-col items-center justify-center gap-3 bg-white/2 border border-white/6 rounded-lg"
+			class="p-10 text-center flex flex-col items-center justify-center gap-3 bg-white/2 border border-border rounded-lg"
 		>
 			<div
-				class="size-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-on-surface-variant"
+				class="size-10 rounded-full bg-white/5 border border-border flex items-center justify-center text-muted-foreground"
 			>
 				<Key class="size-5" />
 			</div>
 			<div>
-				<h3 class="text-sm font-semibold text-on-surface">No API keys created yet</h3>
-				<p class="text-xs text-on-surface-variant/70 mt-1">
+				<h3 class="text-sm font-semibold text-foreground">No API keys created yet</h3>
+				<p class="text-xs text-muted-foreground/70 mt-1">
 					Create an API key to allow CI/CD scripts, bots, or custom services to access your monitors
 					and incidents.
 				</p>
 			</div>
 			{#if canManage}
 				<Button
-					class="mt-2 bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 h-9 px-4 text-xs font-medium shadow-sm rounded-lg flex items-center gap-1.5"
+					class="mt-2 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 text-xs font-medium shadow-sm rounded-lg flex items-center gap-1.5"
 					onclick={() => (isCreateOpen = true)}
 				>
 					<Plus class="size-3.5" /> Create First Key
@@ -186,11 +186,11 @@
 		<div class="flex flex-col gap-3">
 			{#each apiKeys as key (key.id)}
 				<div
-					class="p-4 rounded-lg bg-white/3 border border-white/8 flex items-center justify-between gap-4 flex-wrap transition-colors hover:border-white/14"
+					class="p-4 rounded-lg bg-white/3 border border-border flex items-center justify-between gap-4 flex-wrap transition-colors hover:border-border"
 				>
 					<div class="flex flex-col gap-1 min-w-0">
 						<div class="flex items-center gap-2.5 flex-wrap">
-							<span class="text-sm font-semibold text-on-surface truncate">{key.name}</span>
+							<span class="text-sm font-semibold text-foreground truncate">{key.name}</span>
 
 							<!-- Scope Badge -->
 							<span
@@ -204,15 +204,15 @@
 						</div>
 
 						<div
-							class="flex items-center gap-4 text-[11.5px] font-mono text-on-surface-variant/70 flex-wrap"
+							class="flex items-center gap-4 text-[11.5px] font-mono text-muted-foreground/70 flex-wrap"
 						>
 							<span
-								class="bg-white/5 px-2 py-0.5 rounded border border-white/8 text-on-surface font-semibold"
+								class="bg-white/5 px-2 py-0.5 rounded border border-border text-foreground font-semibold"
 							>
 								{key.key_prefix}...****
 							</span>
 							<span class="flex items-center gap-1">
-								Created by <strong class="text-on-surface-variant">{key.created_by}</strong>
+								Created by <strong class="text-muted-foreground">{key.created_by}</strong>
 							</span>
 							<span class="flex items-center gap-1">
 								<Clock class="size-3 shrink-0 opacity-60" /> Expires: {formatDate(key.expires_at)}
@@ -221,7 +221,7 @@
 					</div>
 
 					<div class="flex items-center gap-3 shrink-0">
-						<div class="text-right text-[11px] text-on-surface-variant/60 hidden sm:block">
+						<div class="text-right text-[11px] text-muted-foreground/60 hidden sm:block">
 							{#if key.last_used_at}
 								Last used {new Date(key.last_used_at).toLocaleDateString()}
 								{#if key.last_used_ip}
@@ -233,7 +233,7 @@
 
 						{#if canManage}
 							<button
-								class="p-2 rounded-lg text-on-surface-variant/70 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+								class="p-2 rounded-lg text-muted-foreground/70 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
 								title="Revoke API key"
 								onclick={() => {
 									keyToRevoke = key;
@@ -253,13 +253,13 @@
 <!-- Modal 1: Create API Key -->
 <Dialog.Root bind:open={isCreateOpen}>
 	<Dialog.Content
-		class="sm:max-w-[480px] bg-[#161618] border border-white/10 text-white p-6 rounded-lg shadow-xl"
+		class="sm:max-w-[480px] bg-card border border-border text-foreground p-6 rounded-lg shadow-xl"
 	>
 		<Dialog.Header>
 			<Dialog.Title class="text-lg font-semibold flex items-center gap-2">
 				<Key class="size-5 text-primary" /> Create New API Key
 			</Dialog.Title>
-			<Dialog.Description class="text-xs text-on-surface-variant/70 mt-1">
+			<Dialog.Description class="text-xs text-muted-foreground/70 mt-1">
 				Generate an API key for automated access. You will only be shown the key once.
 			</Dialog.Description>
 		</Dialog.Header>
@@ -272,7 +272,7 @@
 			{/if}
 
 			<div class="space-y-1.5">
-				<Label for="keyName" class="text-xs font-semibold text-on-surface"
+				<Label for="keyName" class="text-xs font-semibold text-foreground"
 					>Key Name <span class="text-rose-400">*</span></Label
 				>
 				<Input
@@ -280,12 +280,12 @@
 					placeholder="e.g., GitHub Actions CI/CD"
 					bind:value={name}
 					required
-					class="bg-white/5 border-white/10 text-xs focus:border-primary rounded-lg"
+					class="bg-white/5 border-border text-xs focus:border-primary rounded-lg"
 				/>
 			</div>
 
 			<div class="space-y-1.5">
-				<Label class="text-xs font-semibold text-on-surface">Scope / Permissions</Label>
+				<Label class="text-xs font-semibold text-foreground">Scope / Permissions</Label>
 				<div class="grid grid-cols-2 gap-3">
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -293,7 +293,7 @@
 						class="p-3 rounded-lg border text-left cursor-pointer transition-all {permissions ===
 						'read'
 							? 'bg-primary/10 border-primary text-primary'
-							: 'bg-white/3 border-white/8 text-on-surface-variant hover:bg-white/5'}"
+							: 'bg-white/3 border-border text-muted-foreground hover:bg-white/5'}"
 						onclick={() => (permissions = 'read')}
 					>
 						<div class="flex items-center gap-1.5 font-semibold text-xs mb-1">
@@ -310,7 +310,7 @@
 						class="p-3 rounded-lg border text-left cursor-pointer transition-all {permissions ===
 						'write'
 							? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
-							: 'bg-white/3 border-white/8 text-on-surface-variant hover:bg-white/5'}"
+							: 'bg-white/3 border-border text-muted-foreground hover:bg-white/5'}"
 						onclick={() => (permissions = 'write')}
 					>
 						<div class="flex items-center gap-1.5 font-semibold text-xs mb-1">
@@ -324,11 +324,11 @@
 			</div>
 
 			<div class="space-y-1.5">
-				<Label for="expiration" class="text-xs font-semibold text-on-surface">Expiration</Label>
+				<Label for="expiration" class="text-xs font-semibold text-foreground">Expiration</Label>
 				<select
 					id="expiration"
 					bind:value={expiresInDays}
-					class="w-full p-2.5 text-xs bg-[#1a1a1c] border border-white/10 rounded-lg text-on-surface focus:outline-none focus:border-primary"
+					class="w-full p-2.5 text-xs bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:border-primary"
 				>
 					<option value={null}>Never (Recommended for CI/CD)</option>
 					<option value={30}>30 Days</option>
@@ -337,11 +337,11 @@
 				</select>
 			</div>
 
-			<div class="flex justify-end gap-2 pt-3 border-t border-white/8">
+			<div class="flex justify-end gap-2 pt-3 border-t border-border">
 				<Button
 					type="button"
 					variant="ghost"
-					class="text-white h-11 px-6 hover:text-white hover:bg-white/10 rounded-lg text-xs font-medium"
+					class="text-foreground h-11 px-6 hover:text-foreground hover:bg-accent rounded-lg text-xs font-medium"
 					onclick={() => (isCreateOpen = false)}
 				>
 					Cancel
@@ -349,7 +349,7 @@
 				<Button
 					type="submit"
 					disabled={isSubmitting || !name.trim()}
-					class="h-11 px-6 rounded-lg text-xs font-medium bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 shadow-sm disabled:opacity-50"
+					class="h-11 px-6 rounded-lg text-xs font-medium bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 shadow-sm disabled:opacity-50"
 				>
 					{isSubmitting ? 'Generating...' : 'Generate API Key'}
 				</Button>
@@ -361,13 +361,13 @@
 <!-- Modal 2: Show Plaintext API Key Once -->
 <Dialog.Root bind:open={isShowKeyOpen}>
 	<Dialog.Content
-		class="sm:max-w-[500px] bg-[#161618] border border-white/10 text-white p-6 rounded-lg shadow-xl"
+		class="sm:max-w-[500px] bg-card border border-border text-foreground p-6 rounded-lg shadow-xl"
 	>
 		<Dialog.Header>
 			<Dialog.Title class="text-lg font-semibold text-emerald-400 flex items-center gap-2">
 				<Check class="size-5" /> API Key Created Successfully
 			</Dialog.Title>
-			<Dialog.Description class="text-xs text-on-surface-variant/70 mt-1">
+			<Dialog.Description class="text-xs text-muted-foreground/70 mt-1">
 				Please copy your API key now. For your security, <strong class="text-rose-400"
 					>it will not be shown again!</strong
 				>
@@ -376,12 +376,12 @@
 
 		<div class="flex flex-col gap-4 mt-4">
 			<div
-				class="p-3 bg-black/40 border border-white/10 rounded-lg font-mono text-xs text-primary break-all flex items-center justify-between gap-3"
+				class="p-3 bg-foreground/20 border border-border rounded-lg font-mono text-xs text-primary break-all flex items-center justify-between gap-3"
 			>
 				<span>{createdPlaintextKey}</span>
 				<Button
 					size="sm"
-					class="shrink-0 gap-1.5 bg-[#1A1A1B] border border-[#2A2A2B] text-slate-300 hover:text-white hover:bg-[#2A2A2B] active:scale-[0.98] transition-all duration-200 rounded-lg text-xs font-medium"
+					class="shrink-0 gap-1.5 bg-secondary border border-border text-muted-foreground hover:text-foreground hover:bg-accent active:scale-[0.98] transition-all duration-200 rounded-lg text-xs font-medium"
 					onclick={handleCopyKey}
 				>
 					{#if isCopied}
@@ -404,7 +404,7 @@
 
 			<div class="flex justify-end pt-2">
 				<Button
-					class="bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 h-9 px-5 text-xs font-medium rounded-lg shadow-sm"
+					class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-9 px-5 text-xs font-medium rounded-lg shadow-sm"
 					onclick={() => {
 						isShowKeyOpen = false;
 						createdPlaintextKey = '';

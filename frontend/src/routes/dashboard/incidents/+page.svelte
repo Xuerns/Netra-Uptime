@@ -129,19 +129,19 @@
 	<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
 		<!-- Search Input -->
 		<div class="relative flex-1">
-			<Search class="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-on-surface-variant" />
+			<Search class="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
 			<input
 				type="text"
 				bind:value={searchQuery}
 				placeholder="Search incidents by summary, monitor, or ID..."
-				class="w-full bg-[#161618] border border-white/10 rounded-xl pl-10 pr-3.5 py-2 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-primary transition-colors shadow-sm"
+				class="w-full bg-card border border-border rounded-xl pl-10 pr-3.5 py-2 text-xs text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary transition-colors shadow-sm"
 			/>
 		</div>
 
 		<!-- Severity Filter Select Dropdown -->
 		<select
 			bind:value={severityFilter}
-			class="bg-[#161618] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-primary transition-colors cursor-pointer capitalize shadow-sm shrink-0"
+			class="bg-card border border-border rounded-xl px-3.5 py-2 text-xs text-foreground focus:outline-none focus:border-primary transition-colors cursor-pointer capitalize shadow-sm shrink-0"
 		>
 			<option value="all">All Severities</option>
 			<option value="sev1">Sev 1 (Critical)</option>
@@ -151,31 +151,31 @@
 	</div>
 
 	<!-- GitHub Style Table List Box -->
-	<div class="bg-[#161618] border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+	<div class="bg-card border border-border rounded-2xl overflow-hidden shadow-xl">
 		<!-- Table Header Bar with GitHub-Style Active/Resolved Toggles -->
 		<div
-			class="bg-white/3 border-b border-white/10 px-5 py-3.5 flex items-center justify-between text-xs text-on-surface-variant"
+			class="bg-white/3 border-b border-border px-5 py-3.5 flex items-center justify-between text-xs text-muted-foreground"
 		>
 			<!-- Left: GitHub-style Status Filter Tabs (Active vs Resolved) -->
 			<div class="flex items-center gap-6">
 				<!-- Active / Open Tab -->
 				<button
 					class="flex items-center gap-2 transition-colors cursor-pointer {activeFilter === 'active'
-						? 'font-bold text-white'
-						: 'font-medium text-white/40 hover:text-white/70'}"
+						? 'font-bold text-foreground'
+						: 'font-medium text-foreground/40 hover:text-foreground/70'}"
 					onclick={() => (activeFilter = 'active')}
 				>
 					<Radio
 						class="size-3.5 {activeFilter === 'active'
 							? 'text-rose-400 animate-pulse'
-							: 'text-white/40'}"
+							: 'text-foreground/40'}"
 					/>
 					<span>Active</span>
 					<span
 						class="px-2 py-0.5 text-[11px] rounded-full font-mono font-semibold transition-colors {activeFilter ===
 						'active'
 							? 'bg-rose-500/20 text-rose-300'
-							: 'bg-white/5 text-white/40'}"
+							: 'bg-white/5 text-foreground/40'}"
 					>
 						{activeCount}
 					</span>
@@ -185,19 +185,21 @@
 				<button
 					class="flex items-center gap-2 transition-colors cursor-pointer {activeFilter ===
 					'resolved'
-						? 'font-bold text-white'
-						: 'font-medium text-white/40 hover:text-white/70'}"
+						? 'font-bold text-foreground'
+						: 'font-medium text-foreground/40 hover:text-foreground/70'}"
 					onclick={() => (activeFilter = 'resolved')}
 				>
 					<CheckCircle2
-						class="size-3.5 {activeFilter === 'resolved' ? 'text-emerald-400' : 'text-white/40'}"
+						class="size-3.5 {activeFilter === 'resolved'
+							? 'text-emerald-400'
+							: 'text-foreground/40'}"
 					/>
 					<span>Resolved</span>
 					<span
 						class="px-2 py-0.5 text-[11px] rounded-full font-mono font-semibold transition-colors {activeFilter ===
 						'resolved'
 							? 'bg-emerald-500/20 text-emerald-300'
-							: 'bg-white/5 text-white/40'}"
+							: 'bg-white/5 text-foreground/40'}"
 					>
 						{resolvedCount}
 					</span>
@@ -205,7 +207,7 @@
 			</div>
 
 			<!-- Right: Stats & Ordering -->
-			<div class="flex items-center gap-3 text-[11.5px] font-mono text-white/40">
+			<div class="flex items-center gap-3 text-[11.5px] font-mono text-foreground/40">
 				<span
 					>Showing {filteredIncidents.length} incident{filteredIncidents.length === 1
 						? ''
@@ -258,7 +260,7 @@
 									<!-- Title / Summary -->
 									<a
 										href="/dashboard/incidents/{incident.ID}"
-										class="text-sm font-semibold text-white hover:text-primary transition-colors truncate"
+										class="text-sm font-semibold text-foreground hover:text-primary transition-colors truncate"
 									>
 										{incident.Summary || 'Service Disruption'}
 									</a>
@@ -267,7 +269,7 @@
 									{#if incident.Monitor}
 										<a
 											href="/dashboard/monitor/{incident.MonitorID}"
-											class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/5 border border-white/8 text-[11px] font-mono text-on-surface-variant hover:text-white hover:border-white/20 transition-all"
+											class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/5 border border-border text-[11px] font-mono text-muted-foreground hover:text-foreground hover:border-border transition-all"
 										>
 											<Server class="size-3 text-primary" />
 											<span class="truncate max-w-36">{incident.Monitor.Name}</span>
@@ -277,9 +279,9 @@
 
 								<!-- Meta Details Row -->
 								<div
-									class="flex items-center gap-3 text-xs text-on-surface-variant flex-wrap font-mono"
+									class="flex items-center gap-3 text-xs text-muted-foreground flex-wrap font-mono"
 								>
-									<span class="text-white/40">#{incident.ID.substring(0, 8)}</span>
+									<span class="text-foreground/40">#{incident.ID.substring(0, 8)}</span>
 									<span>&middot;</span>
 									<span class="flex items-center gap-1">
 										<Clock class="size-3" />
@@ -314,11 +316,11 @@
 						>
 							<a
 								href="/dashboard/incidents/{incident.ID}"
-								class="px-3.5 py-1.5 text-white/60 group-hover:text-white text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+								class="px-3.5 py-1.5 text-foreground/60 group-hover:text-foreground text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
 							>
 								<span>Command Room</span>
 								<ChevronRight
-									class="size-3.5 text-white/60 group-hover:text-white transition-colors"
+									class="size-3.5 text-foreground/60 group-hover:text-foreground transition-colors"
 								/>
 							</a>
 						</div>
@@ -331,15 +333,15 @@
 				<div class="p-12 text-center space-y-3">
 					{#if activeFilter === 'active' && activeCount === 0}
 						<CheckCircle2 class="size-10 text-emerald-400 mx-auto opacity-90" />
-						<h3 class="text-base font-semibold text-white">All Systems Operational</h3>
-						<p class="text-xs text-on-surface-variant max-w-110 mx-auto">
+						<h3 class="text-base font-semibold text-foreground">All Systems Operational</h3>
+						<p class="text-xs text-muted-foreground max-w-110 mx-auto">
 							No active incidents recorded at this time. All microservices are operating within
 							healthy metrics.
 						</p>
 					{:else}
-						<AlertTriangle class="size-10 text-on-surface-variant mx-auto opacity-50" />
-						<h3 class="text-base font-semibold text-white">No Incidents Found</h3>
-						<p class="text-xs text-on-surface-variant max-w-110 mx-auto">
+						<AlertTriangle class="size-10 text-muted-foreground mx-auto opacity-50" />
+						<h3 class="text-base font-semibold text-foreground">No Incidents Found</h3>
+						<p class="text-xs text-muted-foreground max-w-110 mx-auto">
 							No incident records match your current search query or filter criteria.
 						</p>
 					{/if}
@@ -350,19 +352,20 @@
 		<!-- Pagination Footer Bar -->
 		{#if filteredIncidents.length > 0}
 			<div
-				class="bg-white/3 border-t border-white/10 px-5 py-3 flex items-center justify-between text-xs text-on-surface-variant flex-wrap gap-3"
+				class="bg-white/3 border-t border-border px-5 py-3 flex items-center justify-between text-xs text-muted-foreground flex-wrap gap-3"
 			>
 				<div class="font-mono">
-					Showing <span class="text-white">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
-					<span class="text-white"
+					Showing <span class="text-foreground">{(currentPage - 1) * itemsPerPage + 1}</span>
+					to{' '}
+					<span class="text-foreground"
 						>{Math.min(currentPage * itemsPerPage, filteredIncidents.length)}</span
 					>
-					of <span class="text-white">{filteredIncidents.length}</span> incidents
+					of <span class="text-foreground">{filteredIncidents.length}</span> incidents
 				</div>
 
 				<div class="flex items-center gap-2">
 					<button
-						class="p-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+						class="p-1.5 rounded-lg border border-border bg-white/5 hover:bg-white/10 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
 						disabled={currentPage <= 1}
 						onclick={() => (currentPage = Math.max(1, currentPage - 1))}
 						aria-label="Previous page"
@@ -370,12 +373,12 @@
 						<ChevronLeft class="size-4" />
 					</button>
 
-					<span class="font-mono text-xs text-white px-2">
+					<span class="font-mono text-xs text-foreground px-2">
 						Page {currentPage} of {totalPages}
 					</span>
 
 					<button
-						class="p-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+						class="p-1.5 rounded-lg border border-border bg-white/5 hover:bg-white/10 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
 						disabled={currentPage >= totalPages}
 						onclick={() => (currentPage = Math.min(totalPages, currentPage + 1))}
 						aria-label="Next page"

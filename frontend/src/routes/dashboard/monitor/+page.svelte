@@ -152,14 +152,14 @@
 	<title>Monitors • PulseWatch</title>
 </svelte:head>
 
-<div class="monitors-page text-on-surface antialiased">
+<div class="monitors-page text-foreground antialiased">
 	<!-- ── Page Header ──────────────────────────────────────────────────────── -->
 	<header class="flex flex-wrap items-start justify-between gap-4 mb-6">
 		<div>
-			<h1 class="text-[28px] font-semibold leading-tight tracking-tight text-on-surface mb-1">
+			<h1 class="text-[28px] font-semibold leading-tight tracking-tight text-foreground mb-1">
 				Monitors
 			</h1>
-			<p class="text-[14px] leading-relaxed text-on-surface-variant max-w-[52ch]">
+			<p class="text-[14px] leading-relaxed text-muted-foreground max-w-[52ch]">
 				All monitors across your organizations. Spot issues before they become incidents.
 			</p>
 		</div>
@@ -170,13 +170,13 @@
 				<!-- Search bar -->
 				<div class="relative">
 					<Search
-						class="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-on-surface-variant/50 pointer-events-none"
+						class="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/50 pointer-events-none"
 					/>
 					<input
 						type="search"
 						placeholder="Search monitors…"
 						bind:value={searchQuery}
-						class="w-[200px] h-9 pl-8 pr-3 bg-black/20 border border-white/10 rounded-lg text-[13px] text-on-surface placeholder:text-on-surface-variant/35 outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-colors"
+						class="w-[200px] h-9 pl-8 pr-3 bg-foreground/10 border border-border rounded-lg text-[13px] text-foreground placeholder:text-muted-foreground/35 outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-colors"
 					/>
 				</div>
 
@@ -226,14 +226,14 @@
 
 				<!-- View toggle -->
 				<div
-					class="flex items-center bg-black/20 border border-white/10 rounded-lg p-0.5"
+					class="flex items-center bg-foreground/10 border border-border rounded-lg p-0.5"
 					role="group"
 					aria-label="View mode"
 				>
 					<button
 						class="p-1.5 rounded-md transition-colors {viewMode === 'grid'
-							? 'bg-white/10 text-on-surface shadow-sm'
-							: 'text-on-surface-variant hover:text-on-surface hover:bg-white/5'}"
+							? 'bg-white/10 text-foreground shadow-sm'
+							: 'text-muted-foreground hover:text-foreground hover:bg-white/5'}"
 						onclick={() => setViewMode('grid')}
 						aria-label="Grid view"
 						aria-pressed={viewMode === 'grid'}
@@ -242,8 +242,8 @@
 					</button>
 					<button
 						class="p-1.5 rounded-md transition-colors {viewMode === 'list'
-							? 'bg-white/10 text-on-surface shadow-sm'
-							: 'text-on-surface-variant hover:text-on-surface hover:bg-white/5'}"
+							? 'bg-white/10 text-foreground shadow-sm'
+							: 'text-muted-foreground hover:text-foreground hover:bg-white/5'}"
 						onclick={() => setViewMode('list')}
 						aria-label="List view"
 						aria-pressed={viewMode === 'list'}
@@ -254,7 +254,7 @@
 			{/if}
 
 			<Button
-				class="bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 h-9 px-4 gap-1.5 font-medium shadow-sm"
+				class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 gap-1.5 font-medium shadow-sm"
 				href="/dashboard/organization"
 			>
 				<Plus class="size-4" />
@@ -270,12 +270,12 @@
 		<!-- ── Error state ────────────────────────────────────────────────────────── -->
 	{:else if fetchError}
 		<div
-			class="flex flex-col items-center justify-center gap-3 py-24 border border-white/8 rounded-xl bg-white/3"
+			class="flex flex-col items-center justify-center gap-3 py-24 border border-border rounded-xl bg-white/3"
 		>
-			<TriangleAlert class="size-8 text-error" />
-			<p class="text-sm text-on-surface-variant">{fetchError}</p>
+			<TriangleAlert class="size-8 text-destructive" />
+			<p class="text-sm text-muted-foreground">{fetchError}</p>
 			<Button
-				class="bg-[#1A1A1B] border border-[#2A2A2B] text-slate-300 hover:text-white hover:bg-[#2A2A2B] active:scale-[0.98] transition-all duration-200 h-9 px-4 font-medium shadow-sm"
+				class="bg-secondary border border-border text-muted-foreground hover:text-foreground hover:bg-accent active:scale-[0.98] transition-all duration-200 h-9 px-4 font-medium shadow-sm"
 				onclick={() => loadMonitors()}
 			>
 				Try again
@@ -287,19 +287,19 @@
 		<!-- Empty state (no monitors at all) -->
 		{#if monitors.length === 0}
 			<div
-				class="flex flex-col items-center text-center py-24 px-4 border border-white/8 rounded-xl bg-white/3"
+				class="flex flex-col items-center text-center py-24 px-4 border border-border rounded-xl bg-white/3"
 			>
 				<div
 					class="flex items-center justify-center size-14 rounded-xl bg-primary/10 border border-primary/20 mb-4 text-primary"
 				>
 					<Activity class="size-6" />
 				</div>
-				<h3 class="text-xl font-semibold text-on-surface mb-1.5">No monitors yet</h3>
-				<p class="text-[14px] text-on-surface-variant max-w-[38ch] mb-6 leading-relaxed">
+				<h3 class="text-xl font-semibold text-foreground mb-1.5">No monitors yet</h3>
+				<p class="text-[14px] text-muted-foreground max-w-[38ch] mb-6 leading-relaxed">
 					Create a monitor inside an organization to start tracking uptime and response times.
 				</p>
 				<Button
-					class="bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 h-9 px-4 gap-1.5 font-medium shadow-sm"
+					class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 gap-1.5 font-medium shadow-sm"
 					href="/dashboard/organization"
 				>
 					<Plus class="size-4" />
@@ -310,12 +310,12 @@
 			<!-- Search / filter no-results -->
 		{:else if filtered.length === 0}
 			<div
-				class="flex flex-col items-center text-center py-16 border border-white/6 rounded-xl bg-white/2"
+				class="flex flex-col items-center text-center py-16 border border-border rounded-xl bg-white/2"
 			>
-				<Search class="size-6 text-on-surface-variant/30 mb-3" />
-				<p class="text-[14px] text-on-surface-variant">
+				<Search class="size-6 text-muted-foreground/30 mb-3" />
+				<p class="text-[14px] text-muted-foreground">
 					No monitors match
-					<strong class="text-on-surface font-medium"
+					<strong class="text-foreground font-medium"
 						>{searchQuery === '' ? '' : `"${searchQuery}"`}</strong
 					>
 					{statusFilter !== 'all' ? `with status "${statusFilter}"` : ''}
@@ -334,15 +334,15 @@
 			<!-- ── Grid view ─────────────────────────────────────────────────────── -->
 		{:else if viewMode === 'grid'}
 			<div class="monitors-scroll-area">
-				<div data-lenis-prevent class="flex flex-col gap-0.5">
-					{#each grouped as orgGroup (orgGroup.name)}
-						<section class="org-group">
+				<div data-lenis-prevent class="flex flex-col gap-1">
+					{#each grouped as orgGroup, i (orgGroup.name)}
+						<section class={`org-group ${i > 0 ? 'mt-1' : ''}`}>
 							<button class="org-group__header" onclick={() => toggleOrg(orgGroup.name)}>
 								<div class="flex items-center gap-2">
 									{#if collapsedOrgs.has(orgGroup.name)}
-										<ChevronRight class="size-3.5 text-on-surface-variant/60" />
+										<ChevronRight class="size-3.5 text-muted-foreground/60" />
 									{:else}
-										<ChevronDown class="size-3.5 text-on-surface-variant/60" />
+										<ChevronDown class="size-3.5 text-muted-foreground/60" />
 									{/if}
 									<span class="org-group__name">{orgGroup.name}</span>
 								</div>
@@ -365,15 +365,15 @@
 			<!-- ── List view ─────────────────────────────────────────────────────── -->
 		{:else}
 			<div class="monitors-scroll-area">
-				<div data-lenis-prevent class="flex flex-col gap-0.5">
-					{#each grouped as orgGroup (orgGroup.name)}
-						<section class="org-group">
+				<div data-lenis-prevent class="flex flex-col gap-1">
+					{#each grouped as orgGroup, i (orgGroup.name)}
+						<section class={`org-group ${i > 0 ? 'mt-1' : ''}`}>
 							<button class="org-group__header" onclick={() => toggleOrg(orgGroup.name)}>
 								<div class="flex items-center gap-2">
 									{#if collapsedOrgs.has(orgGroup.name)}
-										<ChevronRight class="size-3.5 text-on-surface-variant/60" />
+										<ChevronRight class="size-3.5 text-muted-foreground/60" />
 									{:else}
-										<ChevronDown class="size-3.5 text-on-surface-variant/60" />
+										<ChevronDown class="size-3.5 text-muted-foreground/60" />
 									{/if}
 									<span class="org-group__name">{orgGroup.name}</span>
 								</div>
@@ -381,7 +381,7 @@
 							</button>
 							{#if !collapsedOrgs.has(orgGroup.name)}
 								<div
-									class="flex flex-col divide-y divide-white/6 border border-white/8 rounded-xl overflow-hidden bg-white/2"
+									class="flex flex-col divide-y divide-border border border-border rounded-xl overflow-hidden bg-white/2"
 								>
 									<!-- Header row -->
 									<div class="list-row list-row--header" aria-hidden="true">
@@ -420,7 +420,7 @@
 		font-weight: 500;
 		border: 1px solid transparent;
 		background: transparent;
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--color-muted-foreground);
 		transition:
 			background 140ms ease,
 			border-color 140ms ease,
@@ -429,14 +429,14 @@
 	}
 
 	.stat-chip:hover:not(.stat-chip--active) {
-		background: rgba(255, 255, 255, 0.05);
-		color: rgba(255, 255, 255, 0.7);
+		background: var(--color-accent);
+		color: var(--color-foreground);
 	}
 
 	.stat-chip--active {
-		background: rgba(255, 255, 255, 0.1);
-		border-color: rgba(255, 255, 255, 0.18);
-		color: #ffffff;
+		background: var(--color-accent);
+		border-color: var(--color-border);
+		color: var(--color-foreground);
 		font-weight: 700;
 	}
 
@@ -446,7 +446,7 @@
 		font-size: 11.5px;
 		padding: 1px 6px;
 		border-radius: 999px;
-		background: rgba(255, 255, 255, 0.08);
+		background: var(--color-muted);
 	}
 
 	/* ── List view ────────────────────────────────────────────────────────── */
@@ -461,27 +461,26 @@
 	}
 
 	.list-row:hover {
-		background: rgba(255, 255, 255, 0.025);
+		background: var(--color-accent);
 	}
 
 	.list-row--header {
 		padding: 7px 16px;
 		font-size: 11px;
 		font-weight: 500;
-		color: var(--color-on-surface-variant);
+		color: var(--color-muted-foreground);
 		text-transform: uppercase;
 		letter-spacing: 0.06em;
-		background: rgba(255, 255, 255, 0.02);
+		background: var(--color-muted);
 		opacity: 0.65;
 	}
 
 	.list-row--header:hover {
-		background: rgba(255, 255, 255, 0.02);
+		background: var(--color-muted);
 	}
 
 	/* ── Monitors page layout ────────────────────────────────────────────── */
 	.monitors-page {
-		/* 48px topbar (h-12) + 24px padding-top + 24px padding-bottom dari p-6 layout */
 		height: calc(100vh - 96px);
 		display: flex;
 		flex-direction: column;
@@ -495,7 +494,7 @@
 		overflow-y: auto;
 		padding: 4px;
 		scrollbar-width: thin;
-		scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+		scrollbar-color: var(--color-muted-foreground) transparent;
 	}
 
 	.monitors-scroll-area::-webkit-scrollbar {
@@ -507,12 +506,13 @@
 	}
 
 	.monitors-scroll-area::-webkit-scrollbar-thumb {
-		background: rgba(255, 255, 255, 0.12);
+		background: var(--color-muted-foreground);
+		opacity: 0.3;
 		border-radius: 999px;
 	}
 
 	.monitors-scroll-area::-webkit-scrollbar-thumb:hover {
-		background: rgba(255, 255, 255, 0.2);
+		opacity: 0.5;
 	}
 
 	/* ── Org groups ──────────────────────────────────────────────────────── */
@@ -524,30 +524,30 @@
 		padding: 8px 12px;
 		margin-bottom: 10px;
 		border-radius: 8px;
-		background: rgba(255, 255, 255, 0.03);
-		border: 1px solid rgba(255, 255, 255, 0.06);
+		background: var(--color-secondary);
+		border: 1px solid var(--color-border);
 		cursor: pointer;
 		transition: background 140ms ease;
 	}
 
 	.org-group__header:hover {
-		background: rgba(255, 255, 255, 0.06);
+		background: var(--color-accent);
 	}
 
 	.org-group__name {
 		font-size: 13px;
 		font-weight: 600;
-		color: var(--color-on-surface);
+		color: var(--color-foreground);
 	}
 
 	.org-group__count {
 		font-size: 11px;
 		font-weight: 600;
-		color: var(--color-on-surface-variant);
+		color: var(--color-muted-foreground);
 		padding: 1px 7px;
 		border-radius: 999px;
-		background: rgba(255, 255, 255, 0.06);
-		border: 1px solid rgba(255, 255, 255, 0.08);
+		background: var(--color-muted);
+		border: 1px solid var(--color-border);
 	}
 
 	.org-group__grid {

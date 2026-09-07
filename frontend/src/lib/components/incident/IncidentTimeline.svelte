@@ -16,28 +16,28 @@
 	}
 </script>
 
-<div class="bg-[#161618] border border-white/10 rounded-lg p-5 space-y-4">
+<div class="bg-card border border-border rounded-lg p-5 space-y-4">
 	<div class="flex items-center justify-between">
-		<h2 class="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
+		<h2 class="text-sm font-semibold text-foreground tracking-tight flex items-center gap-2">
 			<MessageSquare class="size-4 text-primary" />
 			<span>Incident Communication Feed & Timeline</span>
 		</h2>
-		<span class="text-xs font-mono text-on-surface-variant">
+		<span class="text-xs font-mono text-muted-foreground">
 			{updates.length} message{updates.length === 1 ? '' : 's'}
 		</span>
 	</div>
 
 	{#if isLoading}
 		<div
-			class="flex items-center justify-center py-8 text-xs text-on-surface-variant gap-2 font-mono"
+			class="flex items-center justify-center py-8 text-xs text-muted-foreground gap-2 font-mono"
 		>
 			<Loader2 class="size-4 animate-spin text-primary" />
 			<span>Loading incident timeline updates...</span>
 		</div>
 	{:else if updates.length === 0}
-		<div class="p-6 bg-black/20 border border-white/5 rounded-lg text-center space-y-1">
-			<p class="text-xs text-white font-medium">No updates recorded yet</p>
-			<p class="text-[11.5px] text-on-surface-variant">
+		<div class="p-6 bg-foreground/10 border border-border rounded-lg text-center space-y-1">
+			<p class="text-xs text-foreground font-medium">No updates recorded yet</p>
+			<p class="text-[11.5px] text-muted-foreground">
 				Responders will post status findings and resolution updates here.
 			</p>
 		</div>
@@ -49,10 +49,10 @@
 				<div class="relative pl-9 space-y-1">
 					<!-- Timeline Dot Node -->
 					<div
-						class="absolute left-2.5 top-2.5 -translate-x-1/2 size-3 rounded-full bg-[#161618] border-2 border-primary"
+						class="absolute left-2.5 top-2.5 -translate-x-1/2 size-3 rounded-full bg-card border-2 border-primary"
 					></div>
 
-					<div class="bg-black/30 border border-white/5 rounded-lg p-3.5 space-y-2">
+					<div class="bg-foreground/15 border border-border rounded-lg p-3.5 space-y-2">
 						<div class="flex items-center justify-between text-xs font-mono">
 							<div class="flex items-center gap-2">
 								<div
@@ -65,20 +65,21 @@
 											class="size-full object-cover"
 										/>
 									{:else}
-										<User class="size-3 text-white/60" />
+										<User class="size-3 text-foreground/60" />
 									{/if}
 								</div>
-								<span class="font-semibold text-white">{update.username || 'System Responder'}</span
+								<span class="font-semibold text-foreground"
+									>{update.username || 'System Responder'}</span
 								>
 							</div>
 
-							<span class="text-[11px] text-on-surface-variant flex items-center gap-1">
+							<span class="text-[11px] text-muted-foreground flex items-center gap-1">
 								<Clock class="size-3" />
 								<span>{fmtDateTime(update.createAt)}</span>
 							</span>
 						</div>
 
-						<p class="text-xs text-on-surface leading-relaxed whitespace-pre-line">
+						<p class="text-xs text-foreground leading-relaxed whitespace-pre-line">
 							{update.message}
 						</p>
 					</div>

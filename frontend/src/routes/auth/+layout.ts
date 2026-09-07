@@ -6,10 +6,14 @@ import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = async ({ fetch }) => {
 	try {
-		const res = await apiFetch(`${env.PUBLIC_API_URL}/auth/profile`, {
-			credentials: 'include',
-			redirectOnFail: false
-		}, fetch);
+		const res = await apiFetch(
+			`${env.PUBLIC_API_URL}/auth/profile`,
+			{
+				credentials: 'include',
+				redirectOnFail: false
+			},
+			fetch
+		);
 
 		if (res.ok) {
 			throw redirect(302, '/dashboard/monitor');
@@ -20,6 +24,6 @@ export const load: LayoutLoad = async ({ fetch }) => {
 		}
 		// ignore
 	}
-	
+
 	return {};
 };

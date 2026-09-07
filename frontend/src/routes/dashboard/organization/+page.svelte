@@ -196,7 +196,11 @@
 
 	// ── Derived ──────────────────────────────────────────────────────────────────
 	let canSubmit = $derived(
-		orgName.trim().length >= 3 && orgSlug.length >= 6 && !isSubmitting && !fieldErrors.orgName && !fieldErrors.orgSlug
+		orgName.trim().length >= 3 &&
+			orgSlug.length >= 6 &&
+			!isSubmitting &&
+			!fieldErrors.orgName &&
+			!fieldErrors.orgSlug
 	);
 	let filteredResults = $derived(
 		searchResults.filter((r) => !invitedUsers.some((u) => u.id === r.id))
@@ -271,14 +275,14 @@
 	<title>Organizations • PulseWatch</title>
 </svelte:head>
 
-<div class="text-on-surface antialiased">
+<div class="text-foreground antialiased">
 	<!-- Page Header -->
 	<header class="flex flex-wrap items-start justify-between gap-4 mb-6">
 		<div>
-			<h1 class="text-[32px] font-semibold leading-tight tracking-tight text-on-surface mb-1.5">
+			<h1 class="text-[32px] font-semibold leading-tight tracking-tight text-foreground mb-1.5">
 				Organizations
 			</h1>
-			<p class="text-base leading-relaxed text-on-surface-variant max-w-[46ch]">
+			<p class="text-base leading-relaxed text-muted-foreground max-w-[46ch]">
 				Every workspace you're part of. Switch between teams and keep an eye on what each one is
 				watching.
 			</p>
@@ -286,11 +290,11 @@
 		<div class="flex items-center gap-3">
 			<!-- View Toggle -->
 			{#if orgs.length > 0}
-				<div class="flex items-center bg-black/20 border border-white/10 rounded-lg p-0.5">
+				<div class="flex items-center bg-foreground/10 border border-border rounded-lg p-0.5">
 					<button
 						class="p-1.5 rounded-md transition-colors {viewMode === 'grid'
-							? 'bg-white/10 text-on-surface shadow-sm'
-							: 'text-on-surface-variant hover:text-on-surface hover:bg-white/5'}"
+							? 'bg-white/10 text-foreground shadow-sm'
+							: 'text-muted-foreground hover:text-foreground hover:bg-white/5'}"
 						onclick={() => setViewMode('grid')}
 						aria-label="Grid view"
 					>
@@ -298,8 +302,8 @@
 					</button>
 					<button
 						class="p-1.5 rounded-md transition-colors {viewMode === 'list'
-							? 'bg-white/10 text-on-surface shadow-sm'
-							: 'text-on-surface-variant hover:text-on-surface hover:bg-white/5'}"
+							? 'bg-white/10 text-foreground shadow-sm'
+							: 'text-muted-foreground hover:text-foreground hover:bg-white/5'}"
 						onclick={() => setViewMode('list')}
 						aria-label="List view"
 					>
@@ -309,7 +313,7 @@
 			{/if}
 
 			<Button
-				class="bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 h-9 px-4 font-medium shadow-sm"
+				class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 font-medium shadow-sm"
 				onclick={openDialog}
 			>
 				<Plus class="size-4" />
@@ -325,12 +329,12 @@
 		<!-- Fetch error state -->
 	{:else if fetchError}
 		<div
-			class="flex flex-col items-center justify-center gap-3 py-24 border border-white/8 rounded-lg bg-white/3"
+			class="flex flex-col items-center justify-center gap-3 py-24 border border-border rounded-lg bg-white/3"
 		>
-			<TriangleAlert class="size-8 text-error" />
-			<p class="text-sm text-on-surface-variant">{fetchError}</p>
+			<TriangleAlert class="size-8 text-destructive" />
+			<p class="text-sm text-muted-foreground">{fetchError}</p>
 			<Button
-				class="bg-[#1A1A1B] border border-[#2A2A2B] text-slate-300 hover:text-white hover:bg-[#2A2A2B] active:scale-[0.98] transition-all duration-200 h-9 px-4 font-medium shadow-sm"
+				class="bg-secondary border border-border text-muted-foreground hover:text-foreground hover:bg-accent active:scale-[0.98] transition-all duration-200 h-9 px-4 font-medium shadow-sm"
 				onclick={loadOrgs}
 			>
 				Try again
@@ -340,20 +344,20 @@
 		<!-- Empty state -->
 	{:else if orgs.length === 0}
 		<div
-			class="flex flex-col items-center text-center py-24 px-4 border border-white/8 rounded-lg bg-white/3 backdrop-blur-md"
+			class="flex flex-col items-center text-center py-24 px-4 border border-border rounded-lg bg-white/3 backdrop-blur-md"
 		>
 			<div
 				class="flex items-center justify-center size-14 rounded-lg bg-primary/10 border border-primary/20 mb-4 text-primary"
 			>
 				<Building2 class="size-6" />
 			</div>
-			<h3 class="text-xl font-semibold text-on-surface mb-1.5">No organizations yet</h3>
-			<p class="text-body-md text-on-surface-variant max-w-[40ch] mb-6">
+			<h3 class="text-xl font-semibold text-foreground mb-1.5">No organizations yet</h3>
+			<p class="text-body-md text-muted-foreground max-w-[40ch] mb-6">
 				Create an organization to start adding monitors, inviting your team, and watching uptime
 				together.
 			</p>
 			<Button
-				class="bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 h-9 px-4 font-medium shadow-sm"
+				class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 font-medium shadow-sm"
 				onclick={openDialog}
 			>
 				<Plus class="size-4" />
@@ -367,7 +371,7 @@
 			<div class="grid grid-cols-[repeat(auto-fill,minmax(430px,1fr))] gap-5">
 				{#each orgs as org}
 					<article
-						class="relative flex flex-col gap-2 p-4 bg-white/3 border border-white/8 rounded-lg backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-white/16 hover:shadow-[0_12px_28px_-14px_rgba(0,0,0,0.6)] group"
+						class="relative flex flex-col gap-2 p-4 bg-white/3 border border-border rounded-lg backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-border hover:shadow-[0_12px_28px_-14px_rgba(0,0,0,0.6)] group"
 					>
 						<div class="flex items-start gap-3">
 							<div
@@ -376,11 +380,11 @@
 								{initials(org.Name)}
 							</div>
 							<div class="min-w-0 flex-1">
-								<h3 class="text-[17px] font-semibold text-on-surface leading-tight mb-0.5 truncate">
+								<h3 class="text-[17px] font-semibold text-foreground leading-tight mb-0.5 truncate">
 									{org.Name}
 								</h3>
 								<div
-									class="flex items-center gap-1.5 text-[12.5px] text-on-surface-variant font-mono truncate"
+									class="flex items-center gap-1.5 text-[12.5px] text-muted-foreground font-mono truncate"
 								>
 									<Link2 class="size-3.5 opacity-70 shrink-0" />
 									<span class="truncate">pulsewatch.app/o/{org.Slug}</span>
@@ -392,28 +396,44 @@
 
 						<div class="flex gap-6">
 							<div class="flex items-center gap-2">
-								<Users class="size-[15px] text-on-surface-variant shrink-0" />
-								<span class="font-mono font-medium text-body-md text-on-surface">{org.OrganizationMembers?.length || 0}</span>
-								<span class="text-[13px] text-on-surface-variant">member{org.OrganizationMembers?.length === 1 ? '' : 's'}</span>
+								<Users class="size-[15px] text-muted-foreground shrink-0" />
+								<span class="font-mono font-medium text-body-md text-foreground"
+									>{org.OrganizationMembers?.length || 0}</span
+								>
+								<span class="text-[13px] text-muted-foreground"
+									>member{org.OrganizationMembers?.length === 1 ? '' : 's'}</span
+								>
 							</div>
 							<div class="flex items-center gap-2">
-								<Activity class="size-[15px] text-on-surface-variant shrink-0" />
-								<span class="font-mono font-medium text-body-md text-on-surface">{org.Monitors?.length || 0}</span>
-								<span class="text-[13px] text-on-surface-variant">monitor{org.Monitors?.length === 1 ? '' : 's'}</span>
+								<Activity class="size-[15px] text-muted-foreground shrink-0" />
+								<span class="font-mono font-medium text-body-md text-foreground"
+									>{org.Monitors?.length || 0}</span
+								>
+								<span class="text-[13px] text-muted-foreground"
+									>monitor{org.Monitors?.length === 1 ? '' : 's'}</span
+								>
 							</div>
 						</div>
 
 						<!-- Status Monitor (Opsi 1) -->
 						<div class="mt-4 flex flex-col gap-2">
 							<div class="flex items-center justify-between text-[13px]">
-								<span class="text-on-surface-variant font-medium">Status monitor</span>
+								<span class="text-muted-foreground font-medium">Status monitor</span>
 								{#if (org.Monitors?.length || 0) > 0}
-									<span class="{(org.Monitors?.filter(m => m.Status !== 'down').length || 0) === (org.Monitors?.length || 0) ? 'text-primary' : 'text-error'} font-semibold flex items-center gap-1.5 tracking-wide">
+									<span
+										class="{(org.Monitors?.filter((m) => m.Status !== 'down').length || 0) ===
+										(org.Monitors?.length || 0)
+											? 'text-primary'
+											: 'text-destructive'} font-semibold flex items-center gap-1.5 tracking-wide"
+									>
 										<Activity class="size-3.5" />
-										{org.Monitors?.filter(m => m.Status !== 'down').length || 0}/{org.Monitors?.length || 0} aktif
+										{org.Monitors?.filter((m) => m.Status !== 'down').length || 0}/{org.Monitors
+											?.length || 0} aktif
 									</span>
 								{:else}
-									<span class="text-on-surface-variant/50 font-semibold flex items-center gap-1.5 tracking-wide">
+									<span
+										class="text-muted-foreground/50 font-semibold flex items-center gap-1.5 tracking-wide"
+									>
 										<Activity class="size-3.5" />
 										0/0 aktif
 									</span>
@@ -422,7 +442,11 @@
 							<div class="flex items-center gap-1 h-[14px]" aria-hidden="true">
 								{#if org.Monitors && org.Monitors.length > 0}
 									{#each org.Monitors as monitor}
-										<span class="flex-1 h-full rounded-[2px] {monitor.Status === 'down' ? 'bg-error' : 'bg-primary'} min-w-[4px]"></span>
+										<span
+											class="flex-1 h-full rounded-[2px] {monitor.Status === 'down'
+												? 'bg-destructive'
+												: 'bg-primary'} min-w-[4px]"
+										></span>
 									{/each}
 								{:else}
 									<span class="flex-1 h-full rounded-[2px] bg-white/10"></span>
@@ -432,12 +456,12 @@
 
 						<div class="flex items-center justify-between mt-2">
 							<span
-								class="text-[12px] font-medium text-on-surface-variant bg-white/5 border border-white/10 px-2.5 py-1 rounded-md"
+								class="text-[12px] font-medium text-muted-foreground bg-white/5 border border-border px-2.5 py-1 rounded-md"
 							>
 								Owner
 							</span>
 							<button
-								class="text-[13px] font-medium text-on-surface hover:text-white transition-colors bg-transparent border border-white/10 hover:bg-white/5 px-3 py-1.5 rounded-md flex items-center gap-2"
+								class="text-[13px] font-medium text-foreground hover:text-foreground transition-colors bg-transparent border border-border hover:bg-white/5 px-3 py-1.5 rounded-md flex items-center gap-2"
 							>
 								<a href={`/dashboard/organization/${org.ID}`}> View organization &rarr; </a>
 							</button>
@@ -449,7 +473,7 @@
 			<div class="flex flex-col gap-2">
 				{#each orgs as org}
 					<article
-						class="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-5 p-3 lg:py-2 lg:px-5 bg-white/3 border border-white/8 rounded-lg backdrop-blur-md transition-all hover:-translate-y-px hover:border-white/16 hover:shadow-[0_10px_22px_-14px_rgba(0,0,0,0.55)] group"
+						class="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-5 p-3 lg:py-2 lg:px-5 bg-white/3 border border-border rounded-lg backdrop-blur-md transition-all hover:-translate-y-px hover:border-border hover:shadow-[0_10px_22px_-14px_rgba(0,0,0,0.55)] group"
 					>
 						<div class="flex items-start lg:items-center gap-3 flex-1 min-w-[240px]">
 							<div
@@ -458,11 +482,11 @@
 								{initials(org.Name)}
 							</div>
 							<div class="min-w-0 flex-1">
-								<h3 class="text-[17px] font-semibold text-on-surface leading-tight mb-0.5 truncate">
+								<h3 class="text-[17px] font-semibold text-foreground leading-tight mb-0.5 truncate">
 									{org.Name}
 								</h3>
 								<div
-									class="flex items-center gap-1.5 text-[12.5px] text-on-surface-variant font-mono truncate"
+									class="flex items-center gap-1.5 text-[12.5px] text-muted-foreground font-mono truncate"
 								>
 									<Link2 class="size-3.5 opacity-70 shrink-0" />
 									<span class="truncate">pulsewatch.app/o/{org.Slug}</span>
@@ -472,28 +496,40 @@
 
 						<div class="h-px bg-white/8 w-full lg:hidden"></div>
 
-						<div class="flex gap-5 lg:w-[180px] lg:pl-5 lg:border-l lg:border-white/8 shrink-0">
+						<div class="flex gap-5 lg:w-[180px] lg:pl-5 lg:border-l lg:border-border shrink-0">
 							<div class="flex items-center gap-1.5">
-								<Users class="size-[15px] text-on-surface-variant shrink-0" />
-								<span class="font-mono font-medium text-body-md text-on-surface">{org.OrganizationMembers?.length || 0}</span>
-								<span class="text-[12px] text-on-surface-variant">member{org.OrganizationMembers?.length === 1 ? '' : 's'}</span>
+								<Users class="size-[15px] text-muted-foreground shrink-0" />
+								<span class="font-mono font-medium text-body-md text-foreground"
+									>{org.OrganizationMembers?.length || 0}</span
+								>
+								<span class="text-[12px] text-muted-foreground"
+									>member{org.OrganizationMembers?.length === 1 ? '' : 's'}</span
+								>
 							</div>
 							<div class="flex items-center gap-1.5">
-								<Activity class="size-[15px] text-on-surface-variant shrink-0" />
-								<span class="font-mono font-medium text-body-md text-on-surface">{org.Monitors?.length || 0}</span>
-								<span class="text-[12px] text-on-surface-variant">monitor{org.Monitors?.length === 1 ? '' : 's'}</span>
+								<Activity class="size-[15px] text-muted-foreground shrink-0" />
+								<span class="font-mono font-medium text-body-md text-foreground"
+									>{org.Monitors?.length || 0}</span
+								>
+								<span class="text-[12px] text-muted-foreground"
+									>monitor{org.Monitors?.length === 1 ? '' : 's'}</span
+								>
 							</div>
 						</div>
 
 						<div class="h-px bg-white/8 w-full lg:hidden my-0.5"></div>
 
 						<div
-							class="flex items-center justify-between lg:w-[320px] lg:pl-5 lg:border-l lg:border-white/8 shrink-0"
+							class="flex items-center justify-between lg:w-[320px] lg:pl-5 lg:border-l lg:border-border shrink-0"
 						>
 							<div class="flex items-end gap-0.5 h-[22px] w-[140px]" aria-hidden="true">
 								{#if org.Monitors && org.Monitors.length > 0}
 									{#each org.Monitors as monitor}
-										<span class="flex-1 h-full rounded-[1px] {monitor.Status === 'down' ? 'bg-error' : 'bg-primary'} opacity-85 min-w-[2px]"></span>
+										<span
+											class="flex-1 h-full rounded-[1px] {monitor.Status === 'down'
+												? 'bg-destructive'
+												: 'bg-primary'} opacity-85 min-w-[2px]"
+										></span>
 									{/each}
 								{:else}
 									<span class="flex-1 h-full rounded-[1px] bg-white/10"></span>
@@ -502,12 +538,12 @@
 
 							<div class="flex items-center gap-2">
 								<span
-									class="text-[12px] font-medium text-on-surface-variant bg-white/5 border border-white/10 px-2.5 py-1 rounded-md hidden md:inline-flex"
+									class="text-[12px] font-medium text-muted-foreground bg-white/5 border border-border px-2.5 py-1 rounded-md hidden md:inline-flex"
 								>
 									Owner
 								</span>
 								<button
-									class="text-[13px] font-medium text-on-surface hover:text-white transition-colors bg-transparent border border-white/10 hover:bg-white/5 px-3 py-1.5 rounded-md flex items-center"
+									class="text-[13px] font-medium text-foreground hover:text-foreground transition-colors bg-transparent border border-border hover:bg-white/5 px-3 py-1.5 rounded-md flex items-center"
 								>
 									<a href={`/dashboard/organization/${org.ID}`}>View &rarr;</a>
 								</button>
@@ -522,15 +558,13 @@
 
 <!-- ── Create Organization Dialog ──────────────────────────────────────────── -->
 <Dialog.Root bind:open={dialogOpen}>
-	<Dialog.Content
-		class="bg-[#1c1b1c]! border-white/8! p-0! gap-0! text-on-surface w-full max-w-[480px]!"
-	>
+	<Dialog.Content class="bg-card! border-border! p-0! gap-0! text-foreground w-full max-w-[480px]!">
 		<!-- Header -->
 		<div class="px-6 pt-6 pb-5">
-			<Dialog.Title class="text-[17px] font-semibold text-on-surface leading-snug">
+			<Dialog.Title class="text-[17px] font-semibold text-foreground leading-snug">
 				New organization
 			</Dialog.Title>
-			<p class="text-sm text-on-surface-variant mt-1 leading-relaxed">
+			<p class="text-sm text-muted-foreground mt-1 leading-relaxed">
 				Set up your workspace and optionally invite teammates right away.
 			</p>
 		</div>
@@ -542,11 +576,11 @@
 			<!-- Organization name -->
 			<div class="flex flex-col gap-2">
 				<div class="flex items-center gap-3">
-					<label class="text-[13px] font-medium text-on-surface-variant" for="orgName">
-						Organization name <span class="text-error font-bold">*</span>
+					<label class="text-[13px] font-medium text-muted-foreground" for="orgName">
+						Organization name <span class="text-destructive font-bold">*</span>
 					</label>
 					{#if fieldErrors.orgName}
-						<span class="text-xs text-error font-medium">{fieldErrors.orgName}</span>
+						<span class="text-xs text-destructive font-medium">{fieldErrors.orgName}</span>
 					{/if}
 				</div>
 				<Input
@@ -556,7 +590,9 @@
 					autocomplete="off"
 					bind:value={orgName}
 					oninput={handleNameInput}
-					class="h-10 bg-black/25 border-white/10 text-on-surface text-sm placeholder:text-on-surface-variant/40 focus-visible:border-[#3b82f6] focus-visible:ring-1 focus-visible:ring-[#3b82f6]/25 transition-colors {fieldErrors.orgName ? 'border-error/70 focus-visible:border-error focus-visible:ring-error' : ''} {shake.orgName ? 'animate-shake' : ''}"
+					class="h-10 bg-foreground/10 border-border text-foreground text-sm placeholder:text-muted-foreground/40 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/25 transition-colors {fieldErrors.orgName
+						? 'border-destructive/70 focus-visible:border-destructive focus-visible:ring-error'
+						: ''} {shake.orgName ? 'animate-shake' : ''}"
 				/>
 			</div>
 
@@ -564,20 +600,22 @@
 			<div class="flex flex-col gap-2">
 				<div class="flex items-baseline justify-between">
 					<div class="flex items-center gap-3">
-						<label class="text-[13px] font-medium text-on-surface-variant" for="orgSlug">
-							URL slug <span class="text-error font-bold">*</span>
+						<label class="text-[13px] font-medium text-muted-foreground" for="orgSlug">
+							URL slug <span class="text-destructive font-bold">*</span>
 						</label>
 						{#if fieldErrors.orgSlug}
-							<span class="text-xs text-error font-medium">{fieldErrors.orgSlug}</span>
+							<span class="text-xs text-destructive font-medium">{fieldErrors.orgSlug}</span>
 						{/if}
 					</div>
-					<span class="text-[11px] text-on-surface-variant/50">min. 6 characters</span>
+					<span class="text-[11px] text-muted-foreground/50">min. 6 characters</span>
 				</div>
 				<div
-					class="flex items-stretch h-10 rounded-lg border border-white/10 bg-black/25 overflow-hidden transition-colors focus-within:border-[#3b82f6] focus-within:ring-1 focus-within:ring-[#3b82f6]/25 {fieldErrors.orgSlug ? 'border-error/70 focus-within:border-error focus-within:ring-error' : ''} {shake.orgSlug ? 'animate-shake' : ''}"
+					class="flex items-stretch h-10 rounded-lg border border-border bg-foreground/10 overflow-hidden transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/25 {fieldErrors.orgSlug
+						? 'border-destructive/70 focus-within:border-destructive focus-within:ring-error'
+						: ''} {shake.orgSlug ? 'animate-shake' : ''}"
 				>
 					<span
-						class="flex items-center px-3 text-[12px] text-on-surface-variant/50 font-mono bg-white/4 border-r border-white/8 select-none shrink-0 whitespace-nowrap"
+						class="flex items-center px-3 text-[12px] text-muted-foreground/50 font-mono bg-white/4 border-r border-border select-none shrink-0 whitespace-nowrap"
 					>
 						pulsewatch.app/o/
 					</span>
@@ -588,7 +626,7 @@
 						autocomplete="off"
 						bind:value={orgSlug}
 						oninput={() => handleSlugValidation(orgSlug)}
-						class="flex-1 px-3 bg-transparent border-none outline-none text-primary text-[13px] font-mono placeholder:text-on-surface-variant/30 min-w-0"
+						class="flex-1 px-3 bg-transparent border-none outline-none text-primary text-[13px] font-mono placeholder:text-muted-foreground/30 min-w-0"
 					/>
 				</div>
 			</div>
@@ -597,7 +635,7 @@
 			<div class="flex items-center gap-3">
 				<div class="h-px flex-1 bg-white/8"></div>
 				<span
-					class="text-[11px] text-on-surface-variant/50 uppercase tracking-widest font-medium shrink-0"
+					class="text-[11px] text-muted-foreground/50 uppercase tracking-widest font-medium shrink-0"
 				>
 					Invite teammates
 				</span>
@@ -609,14 +647,14 @@
 				<div class="relative">
 					<!-- Search input -->
 					<div
-						class="flex items-center h-10 rounded-lg border border-white/10 bg-black/25 overflow-hidden transition-colors focus-within:border-[#3b82f6] focus-within:ring-1 focus-within:ring-[#3b82f6]/25 gap-2 px-3"
+						class="flex items-center h-10 rounded-lg border border-border bg-foreground/10 overflow-hidden transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/25 gap-2 px-3"
 					>
 						{#if isSearching}
 							<div
-								class="size-4 rounded-full border-2 border-white/20 border-t-primary animate-spin shrink-0"
+								class="size-4 rounded-full border-2 border-border border-t-primary animate-spin shrink-0"
 							></div>
 						{:else}
-							<Search class="size-4 text-on-surface-variant/50 shrink-0" />
+							<Search class="size-4 text-muted-foreground/50 shrink-0" />
 						{/if}
 						<input
 							type="text"
@@ -631,17 +669,17 @@
 								setTimeout(() => {
 									showDropdown = false;
 								}, 150)}
-							class="flex-1 h-full bg-transparent border-none outline-none text-on-surface text-[13px] placeholder:text-on-surface-variant/35 min-w-0"
+							class="flex-1 h-full bg-transparent border-none outline-none text-foreground text-[13px] placeholder:text-muted-foreground/35 min-w-0"
 						/>
 					</div>
 
 					<!-- Results dropdown -->
 					{#if showDropdown && searchQuery.trim()}
 						<div
-							class="absolute top-[calc(100%+4px)] left-0 right-0 rounded-lg border border-white/10 bg-[#1c1b1c] z-10 overflow-hidden"
+							class="absolute top-[calc(100%+4px)] left-0 right-0 rounded-lg border border-border bg-card z-10 overflow-hidden"
 						>
 							{#if isSearching}
-								<div class="px-4 py-3 text-[13px] text-on-surface-variant/60">Searching...</div>
+								<div class="px-4 py-3 text-[13px] text-muted-foreground/60">Searching...</div>
 							{:else if filteredResults.length > 0}
 								<ul class="max-h-60 overflow-y-auto" onscroll={handleScroll}>
 									{#each filteredResults as user}
@@ -665,7 +703,7 @@
 													</div>
 												{/if}
 												<div class="min-w-0">
-													<p class="text-[13px] text-on-surface font-medium truncate">
+													<p class="text-[13px] text-foreground font-medium truncate">
 														{user.name}
 													</p>
 												</div>
@@ -675,8 +713,8 @@
 								</ul>
 							{:else}
 								<div class="px-4 py-4 flex flex-col items-center gap-1.5 text-center">
-									<UserPlus class="size-5 text-on-surface-variant/40" />
-									<p class="text-[13px] text-on-surface-variant/60">
+									<UserPlus class="size-5 text-muted-foreground/40" />
+									<p class="text-[13px] text-muted-foreground/60">
 										No users found for "{searchQuery}"
 									</p>
 								</div>
@@ -690,7 +728,7 @@
 					<ul class="flex flex-col gap-1.5 mt-1">
 						{#each invitedUsers as user}
 							<li
-								class="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/4 border border-white/8"
+								class="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/4 border border-border"
 							>
 								<!-- Avatar -->
 								{#if user.avatar_url}
@@ -709,7 +747,7 @@
 
 								<!-- Name -->
 								<div class="min-w-0 flex-1">
-									<p class="text-[13px] text-on-surface font-medium truncate">{user.name}</p>
+									<p class="text-[13px] text-foreground font-medium truncate">{user.name}</p>
 								</div>
 
 								<!-- Role selector -->
@@ -718,8 +756,8 @@
 										type="button"
 										class="h-6 px-2 rounded text-[11px] font-medium transition-colors {user.role ===
 										'member'
-											? 'bg-white/10 text-on-surface'
-											: 'text-on-surface-variant/50 hover:text-on-surface hover:bg-white/5'}"
+											? 'bg-white/10 text-foreground'
+											: 'text-muted-foreground/50 hover:text-foreground hover:bg-white/5'}"
 										onclick={() => setRole(user.id, 'member')}
 									>
 										Member
@@ -729,7 +767,7 @@
 										class="h-6 px-2 rounded text-[11px] font-medium transition-colors {user.role ===
 										'admin'
 											? 'bg-secondary/20 text-secondary'
-											: 'text-on-surface-variant/50 hover:text-on-surface hover:bg-white/5'}"
+											: 'text-muted-foreground/50 hover:text-foreground hover:bg-white/5'}"
 										onclick={() => setRole(user.id, 'admin')}
 									>
 										Admin
@@ -739,7 +777,7 @@
 								<!-- Remove -->
 								<button
 									type="button"
-									class="size-6 flex items-center justify-center rounded text-on-surface-variant/40 hover:text-on-surface hover:bg-white/8 transition-colors shrink-0"
+									class="size-6 flex items-center justify-center rounded text-muted-foreground/40 hover:text-foreground hover:bg-white/8 transition-colors shrink-0"
 									onclick={() => removeInvite(user.id)}
 									aria-label="Remove {user.name}"
 								>
@@ -754,10 +792,10 @@
 			<!-- Error message -->
 			{#if createError}
 				<div
-					class="flex items-start gap-2 rounded-lg bg-error/8 border border-error/20 px-3 py-2.5"
+					class="flex items-start gap-2 rounded-lg bg-destructive/8 border border-destructive/20 px-3 py-2.5"
 				>
-					<TriangleAlert class="size-3.5 shrink-0 text-error mt-0.5" />
-					<p class="text-[13px] text-error leading-snug">{createError}</p>
+					<TriangleAlert class="size-3.5 shrink-0 text-destructive mt-0.5" />
+					<p class="text-[13px] text-destructive leading-snug">{createError}</p>
 				</div>
 			{/if}
 		</div>
@@ -766,7 +804,7 @@
 
 		<!-- Footer -->
 		<div class="px-6 py-4 flex items-center justify-between">
-			<p class="text-[12px] text-on-surface-variant/50">
+			<p class="text-[12px] text-muted-foreground/50">
 				{#if invitedUsers.length > 0}
 					{invitedUsers.length} teammate{invitedUsers.length > 1 ? 's' : ''} will be invited
 				{:else}
@@ -777,13 +815,13 @@
 				<Button
 					type="button"
 					variant="ghost"
-					class="h-9 px-4 text-sm text-white hover:text-white hover:bg-white/10 transition-colors"
+					class="h-9 px-4 text-sm text-foreground hover:text-foreground hover:bg-white/10 transition-colors"
 					onclick={() => (dialogOpen = false)}
 				>
 					Cancel
 				</Button>
 				<Button
-					class="bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 h-9 px-4 text-sm font-medium shadow-sm disabled:opacity-50"
+					class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 text-sm font-medium shadow-sm disabled:opacity-50"
 					disabled={!canSubmit}
 					onclick={handleCreate}
 				>

@@ -46,10 +46,16 @@ function mapOrganization(org: any): any {
 		ActiveMonitors: org.active_monitors ?? org.ActiveMonitors,
 		TotalMember: org.total_member ?? org.TotalMember,
 		// Provide Fallback arrays if UI relies on .length or .filter
-		OrganizationMembers: org.organization_members ?? org.OrganizationMembers ?? new Array(org.total_member || 0).fill({}),
-		Monitors: org.monitors ?? org.Monitors ?? Array.from({ length: org.total_monitors || 0 }, (_, i) => ({
-			Status: i < (org.active_monitors ?? 0) ? 'up' : 'down'
-		}))
+		OrganizationMembers:
+			org.organization_members ??
+			org.OrganizationMembers ??
+			new Array(org.total_member || 0).fill({}),
+		Monitors:
+			org.monitors ??
+			org.Monitors ??
+			Array.from({ length: org.total_monitors || 0 }, (_, i) => ({
+				Status: i < (org.active_monitors ?? 0) ? 'up' : 'down'
+			}))
 	};
 }
 

@@ -43,9 +43,11 @@
 </script>
 
 <AlertDialog.Root bind:open>
-	<AlertDialog.Content class={destructive ? "bg-[#131314]" : ""}>
+	<AlertDialog.Content class={destructive ? 'bg-card' : ''}>
 		<AlertDialog.Header>
-			<AlertDialog.Title class={destructive ? "text-red-500 flex items-center gap-2" : ""}>{title}</AlertDialog.Title>
+			<AlertDialog.Title class={destructive ? 'text-red-500 flex items-center gap-2' : ''}
+				>{title}</AlertDialog.Title
+			>
 			{#if children}
 				{@render children()}
 			{:else}
@@ -53,16 +55,24 @@
 			{/if}
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
-			<AlertDialog.Cancel onclick={handleCancel} disabled={isConfirming} class="text-white hover:text-white h-9 hover:bg-white/10 transition-colors">
+			<AlertDialog.Cancel
+				onclick={handleCancel}
+				disabled={isConfirming}
+				class="text-foreground hover:text-foreground h-9 hover:bg-white/10 transition-colors"
+			>
 				{cancelText}
 			</AlertDialog.Cancel>
 			<AlertDialog.Action
 				onclick={handleConfirm}
-				class={destructive ? 'bg-[#1A1A1B] border h-9 border-[#2A2A2B] text-red-500 hover:bg-red-600 hover:border-red-600 hover:text-white transition-all duration-200 active:scale-[0.98] font-medium shadow-sm' : ''}
+				class={destructive
+					? 'bg-secondary border h-9 border-border text-red-500 hover:bg-red-600 hover:border-red-600 hover:text-foreground transition-all duration-200 active:scale-[0.98] font-medium shadow-sm'
+					: ''}
 				disabled={isConfirming}
 			>
 				{#if isConfirming}
-					<div class="size-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></div>
+					<div
+						class="size-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"
+					></div>
 				{/if}
 				{confirmText}
 			</AlertDialog.Action>

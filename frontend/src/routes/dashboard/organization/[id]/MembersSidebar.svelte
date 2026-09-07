@@ -61,15 +61,15 @@
 </script>
 
 <div
-	class="shrink-0 overflow-hidden transition-all duration-250 ease-in-out border-l border-white/8 bg-[#161618]
+	class="shrink-0 overflow-hidden transition-all duration-250 ease-in-out border-l border-border bg-card
 	{panelOpen ? 'w-[300px] opacity-100' : 'w-0 opacity-0 pointer-events-none'}"
 >
 	<div class="w-[300px] flex flex-col gap-3.5 h-full p-5 overflow-y-auto">
 		<!-- Panel Header -->
 		<div class="flex items-center justify-between">
 			<div class="flex flex-col">
-				<span class="text-body-md font-semibold text-on-surface">Members</span>
-				<span class="font-mono text-[11.5px] text-on-surface-variant">
+				<span class="text-body-md font-semibold text-foreground">Members</span>
+				<span class="font-mono text-[11.5px] text-muted-foreground">
 					{#if isLoadingMembers}
 						Loading...
 					{:else}
@@ -82,19 +82,21 @@
 		{#if isLoadingMembers}
 			<MemberSkeleton />
 		{:else if membersError}
-			<p class="text-[12px] text-error">{membersError}</p>
+			<p class="text-[12px] text-destructive">{membersError}</p>
 		{:else}
 			<div class="flex flex-col gap-1">
 				<!-- ── OWNER section ────────────────────────────────────── -->
 				{#if owners.length > 0}
 					<p
-						class="text-[10px] font-semibold uppercase tracking-widest text-on-surface-variant/50 px-2 pt-1 pb-0.5"
+						class="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50 px-2 pt-1 pb-0.5"
 					>
 						Owner
 					</p>
 
 					{#each owners as member (member.ID)}
-						<div class="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-white/4 transition-colors">
+						<div
+							class="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-white/4 transition-colors"
+						>
 							<!-- Avatar -->
 							{#if member.User?.AvatarURL}
 								<img
@@ -113,12 +115,14 @@
 							{/if}
 							<!-- Info -->
 							<div class="flex-1 min-w-0">
-								<p class="text-[13px] font-medium text-on-surface truncate m-0">
+								<p class="text-[13px] font-medium text-foreground truncate m-0">
 									{member.User?.Name ?? 'Unknown'}
 								</p>
 							</div>
 							<!-- Badge -->
-							<span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/14 text-primary whitespace-nowrap shrink-0">
+							<span
+								class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/14 text-primary whitespace-nowrap shrink-0"
+							>
 								Owner
 							</span>
 						</div>
@@ -133,13 +137,15 @@
 				<!-- ── ADMIN section ────────────────────────────────────── -->
 				{#if admins.length > 0}
 					<p
-						class="text-[10px] font-semibold uppercase tracking-widest text-on-surface-variant/50 px-2 pt-1 pb-0.5"
+						class="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50 px-2 pt-1 pb-0.5"
 					>
 						Admins
 					</p>
 
 					{#each admins as member (member.ID)}
-						<div class="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-white/4 transition-colors">
+						<div
+							class="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-white/4 transition-colors"
+						>
 							<!-- Avatar -->
 							{#if member.User?.AvatarURL}
 								<img
@@ -158,20 +164,22 @@
 							{/if}
 							<!-- Info -->
 							<div class="flex-1 min-w-0">
-								<p class="text-[13px] font-medium text-on-surface truncate m-0">
+								<p class="text-[13px] font-medium text-foreground truncate m-0">
 									{member.User?.Name ?? 'Unknown'}
 								</p>
 							</div>
 							<!-- Role badge + dropdown -->
 							<div class="flex items-center gap-1 shrink-0">
-								<span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-500/14 text-blue-500 whitespace-nowrap">
+								<span
+									class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-500/14 text-blue-500 whitespace-nowrap"
+								>
 									Admin
 								</span>
 								<!-- Dots menu -->
 								{#if currentUserRole === 'owner'}
 									<div class="relative">
 										<button
-											class="flex items-center justify-center size-6 rounded-md text-on-surface-variant hover:bg-white/8 hover:text-on-surface transition-colors"
+											class="flex items-center justify-center size-6 rounded-md text-muted-foreground hover:bg-white/8 hover:text-foreground transition-colors"
 											aria-label="Admin options"
 											onclick={(e) => {
 												e.stopPropagation();
@@ -182,13 +190,13 @@
 										</button>
 
 										{#if openDropdownId === 'member-' + member.ID}
-											<div 
-												class="absolute bottom-full right-0 mb-1.5 min-w-[170px] bg-[rgba(255,255,255,0.06)] backdrop-blur-xl border border-white/8 rounded-lg p-1.5 z-20"
+											<div
+												class="absolute bottom-full right-0 mb-1.5 min-w-[170px] bg-glass-card-bg backdrop-blur-xl border border-border rounded-lg p-1.5 z-20"
 												role="presentation"
 												onclick={(e) => e.stopPropagation()}
 											>
 												<button
-													class="flex items-center gap-2 px-2.5 py-2 rounded-md text-[13px] text-on-surface hover:bg-white/7 transition-colors text-left w-full whitespace-nowrap"
+													class="flex items-center gap-2 px-2.5 py-2 rounded-md text-[13px] text-foreground hover:bg-white/7 transition-colors text-left w-full whitespace-nowrap"
 													onclick={(e) => {
 														e.preventDefault();
 														toggleDropdown('');
@@ -199,7 +207,7 @@
 													Demote to Member
 												</button>
 												<button
-													class="flex items-center gap-2 px-2.5 py-2 rounded-md text-[13px] text-error hover:bg-white/7 transition-colors text-left w-full whitespace-nowrap"
+													class="flex items-center gap-2 px-2.5 py-2 rounded-md text-[13px] text-destructive hover:bg-white/7 transition-colors text-left w-full whitespace-nowrap"
 													onclick={(e) => {
 														e.preventDefault();
 														toggleDropdown('');
@@ -229,13 +237,15 @@
 				<!-- ── MEMBERS section ───────────────────────────────────── -->
 				{#if regularMembers.length > 0}
 					<p
-						class="text-[10px] font-semibold uppercase tracking-widest text-on-surface-variant/50 px-2 pt-1 pb-0.5"
+						class="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50 px-2 pt-1 pb-0.5"
 					>
 						Members
 					</p>
 
 					{#each regularMembers as member (member.ID)}
-						<div class="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-white/4 transition-colors">
+						<div
+							class="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-white/4 transition-colors"
+						>
 							<!-- Avatar -->
 							{#if member.User?.AvatarURL}
 								<img
@@ -254,20 +264,22 @@
 							{/if}
 							<!-- Info -->
 							<div class="flex-1 min-w-0">
-								<p class="text-[13px] font-medium text-on-surface truncate m-0">
+								<p class="text-[13px] font-medium text-foreground truncate m-0">
 									{member.User?.Name ?? 'Unknown'}
 								</p>
 							</div>
 							<!-- Role badge + dropdown -->
 							<div class="flex items-center gap-1 shrink-0">
-								<span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/7 text-on-surface-variant whitespace-nowrap">
+								<span
+									class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/7 text-muted-foreground whitespace-nowrap"
+								>
 									Member
 								</span>
 								<!-- Dots menu -->
 								{#if currentUserRole === 'owner' || currentUserRole === 'admin'}
 									<div class="relative">
 										<button
-											class="flex items-center justify-center size-6 rounded-md text-on-surface-variant hover:bg-white/8 hover:text-on-surface transition-colors"
+											class="flex items-center justify-center size-6 rounded-md text-muted-foreground hover:bg-white/8 hover:text-foreground transition-colors"
 											aria-label="Member options"
 											onclick={(e) => {
 												e.stopPropagation();
@@ -278,13 +290,13 @@
 										</button>
 
 										{#if openDropdownId === 'member-' + member.ID}
-											<div 
-												class="absolute bottom-full right-0 mb-1.5 min-w-[170px] bg-[rgba(255,255,255,0.06)] backdrop-blur-xl border border-white/8 rounded-lg p-1.5 z-20"
+											<div
+												class="absolute bottom-full right-0 mb-1.5 min-w-[170px] bg-glass-card-bg backdrop-blur-xl border border-border rounded-lg p-1.5 z-20"
 												role="presentation"
 												onclick={(e) => e.stopPropagation()}
 											>
 												<button
-													class="flex items-center gap-2 px-2.5 py-2 rounded-md text-[13px] text-on-surface hover:bg-white/7 transition-colors text-left w-full whitespace-nowrap"
+													class="flex items-center gap-2 px-2.5 py-2 rounded-md text-[13px] text-foreground hover:bg-white/7 transition-colors text-left w-full whitespace-nowrap"
 													onclick={(e) => {
 														e.preventDefault();
 														toggleDropdown('');
@@ -295,7 +307,7 @@
 													Promote to Admin
 												</button>
 												<button
-													class="flex items-center gap-2 px-2.5 py-2 rounded-md text-[13px] text-error hover:bg-white/7 transition-colors text-left w-full whitespace-nowrap"
+													class="flex items-center gap-2 px-2.5 py-2 rounded-md text-[13px] text-destructive hover:bg-white/7 transition-colors text-left w-full whitespace-nowrap"
 													onclick={(e) => {
 														e.preventDefault();
 														toggleDropdown('');
@@ -319,7 +331,7 @@
 
 				<!-- Empty members -->
 				{#if !isLoadingMembers && members.length === 0}
-					<p class="text-[12px] text-on-surface-variant text-center py-4">No members found.</p>
+					<p class="text-[12px] text-muted-foreground text-center py-4">No members found.</p>
 				{/if}
 			</div>
 		{/if}

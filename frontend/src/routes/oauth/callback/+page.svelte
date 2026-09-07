@@ -65,15 +65,15 @@
 </svelte:head>
 
 <main
-	class="min-h-screen flex items-center justify-center p-sm md:p-md text-on-surface antialiased w-full"
+	class="min-h-screen flex items-center justify-center p-sm md:p-md text-foreground antialiased w-full auth-bg"
 >
 	<div
-		class="w-full max-w-[448px] bg-[#131314] rounded-xl border border-[#2a2a2b] p-lg shadow-sm text-center"
+		class="w-full max-w-[448px] bg-card rounded-xl border border-border p-lg shadow-sm text-center"
 	>
 		{#if error}
 			<div class="flex flex-col items-center gap-4">
 				<div
-					class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center text-red-500"
+					class="w-12 h-12 rounded-full bg-destructive/20 flex items-center justify-center text-destructive"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -93,11 +93,11 @@
 						/></svg
 					>
 				</div>
-				<h1 class="font-headline-sm font-semibold text-on-surface">Authentication Failed</h1>
-				<p class="font-body-md text-on-surface-variant">{error}</p>
+				<h1 class="font-headline-sm font-semibold text-foreground">Authentication Failed</h1>
+				<p class="font-body-md text-muted-foreground">{error}</p>
 				<a
 					href="/auth/login"
-					class="mt-4 px-4 py-2 bg-primary text-on-primary rounded-lg font-label-md hover:bg-primary-container transition-colors"
+					class="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-label-md hover:bg-primary/90 transition-colors"
 				>
 					Return to Login
 				</a>
@@ -105,10 +105,10 @@
 		{:else}
 			<div class="flex flex-col items-center gap-4">
 				<div
-					class="w-12 h-12 border-4 border-[#2a2a2b] border-t-primary rounded-full animate-spin"
+					class="w-12 h-12 border-4 border-border border-t-primary rounded-full animate-spin"
 				></div>
-				<h1 class="font-headline-sm font-semibold text-on-surface">Authenticating</h1>
-				<p class="font-body-md text-on-surface-variant">
+				<h1 class="font-headline-sm font-semibold text-foreground">Authenticating</h1>
+				<p class="font-body-md text-muted-foreground">
 					Please wait while we verify your credentials...
 				</p>
 			</div>
@@ -117,9 +117,12 @@
 </main>
 
 <style>
-	main {
-		background-color: #0e0e0f;
-		background-image: radial-gradient(rgba(1, 101, 53, 0.462) 1.5px, transparent 1.5px);
+	.auth-bg {
+		background-color: var(--background);
+		background-image: radial-gradient(var(--border) 1.5px, transparent 1.5px);
 		background-size: 24px 24px;
+	}
+	:global(.dark) .auth-bg {
+		background-image: radial-gradient(rgba(1, 101, 53, 0.462) 1.5px, transparent 1.5px);
 	}
 </style>

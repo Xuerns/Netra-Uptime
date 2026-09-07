@@ -45,10 +45,10 @@ function mapStatusPage(sp: any): StatusPage {
 		OrganizationID: sp.organization_id ?? sp.OrganizationID,
 		Organization: sp.organization
 			? {
-				ID: sp.organization.id ?? sp.organization.ID,
-				Name: sp.organization.name ?? sp.organization.Name,
-				Slug: sp.organization.slug ?? sp.organization.Slug
-			}
+					ID: sp.organization.id ?? sp.organization.ID,
+					Name: sp.organization.name ?? sp.organization.Name,
+					Slug: sp.organization.slug ?? sp.organization.Slug
+				}
 			: sp.Organization,
 		Subdomain: sp.subdomain ?? sp.Subdomain,
 		Title: sp.title ?? sp.Title,
@@ -86,9 +86,12 @@ export const StatusPageAPI = {
 	},
 
 	getMonitors: async (orgId: string, statusPageId: string) => {
-		const res = await apiFetch(`${API_Route}/organization/${orgId}/statuspage/${statusPageId}/monitors`, {
-			method: 'GET'
-		});
+		const res = await apiFetch(
+			`${API_Route}/organization/${orgId}/statuspage/${statusPageId}/monitors`,
+			{
+				method: 'GET'
+			}
+		);
 		if (!res.ok) throw new Error('Failed to fetch status page monitors');
 		const json = await res.json();
 		return {

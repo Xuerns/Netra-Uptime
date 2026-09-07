@@ -41,25 +41,31 @@
 	let hoveredBar = $state<DayStat | null>(null);
 </script>
 
-<div class="bg-[#161618] border border-white/8 rounded-2xl p-5 md:p-6 shadow-xl flex flex-col space-y-4">
+<div class="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-xl flex flex-col space-y-4">
 	<div class="flex items-center justify-between min-h-7">
 		<div class="flex items-center gap-2">
-			<h3 class="text-sm font-semibold text-white tracking-tight">Daily Status Heatmap</h3>
-			<span class="text-xs text-on-surface-variant font-mono">({daysCount} Days)</span>
+			<h3 class="text-sm font-semibold text-foreground tracking-tight">Daily Status Heatmap</h3>
+			<span class="text-xs text-muted-foreground font-mono">({daysCount} Days)</span>
 		</div>
 
 		<div class="min-h-7 flex items-center shrink-0">
 			{#if hoveredBar}
-				<div class="text-xs font-mono text-white bg-white/5 border border-white/10 px-2.5 py-1 rounded-md transition-all">
-					{hoveredBar.date}: 
+				<div
+					class="text-xs font-mono text-foreground bg-white/5 border border-border px-2.5 py-1 rounded-md transition-all"
+				>
+					{hoveredBar.date}:
 					{#if hoveredBar.totalChecks === 0}
-						<span class="font-bold text-on-surface-variant">No Data</span>
+						<span class="font-bold text-muted-foreground">No Data</span>
 					{:else}
-						<span class="font-bold {hoveredBar.uptimePercentage < 99 ? 'text-rose-400' : 'text-emerald-400'}">{hoveredBar.uptimePercentage.toFixed(1)}% Uptime</span>
+						<span
+							class="font-bold {hoveredBar.uptimePercentage < 99
+								? 'text-rose-400'
+								: 'text-emerald-400'}">{hoveredBar.uptimePercentage.toFixed(1)}% Uptime</span
+						>
 					{/if}
 				</div>
 			{:else}
-				<span class="text-xs text-on-surface-variant/40 font-mono">Hover a bar for info</span>
+				<span class="text-xs text-muted-foreground/40 font-mono">Hover a bar for info</span>
 			{/if}
 		</div>
 	</div>
@@ -68,7 +74,8 @@
 	<div class="flex items-center gap-1 w-full overflow-x-auto py-2">
 		{#each bars as bar}
 			<div
-				class="flex-1 min-w-1 h-9 rounded-sm transition-all cursor-pointer hover:opacity-80 hover:scale-y-110 {bar.totalChecks === 0
+				class="flex-1 min-w-1 h-9 rounded-sm transition-all cursor-pointer hover:opacity-80 hover:scale-y-110 {bar.totalChecks ===
+				0
 					? 'bg-white/10'
 					: bar.uptimePercentage >= 99.5
 						? 'bg-emerald-500/80'
@@ -85,7 +92,9 @@
 	</div>
 
 	<!-- Legend -->
-	<div class="flex items-center justify-between text-[11px] text-on-surface-variant pt-1 border-t border-white/5">
+	<div
+		class="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border"
+	>
 		<span>{daysCount} days ago</span>
 		<div class="flex items-center gap-3">
 			<div class="flex items-center gap-1.5">

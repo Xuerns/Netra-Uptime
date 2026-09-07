@@ -48,7 +48,12 @@
 	const navSettings = [
 		{ title: 'Organization', url: '/dashboard/organization', icon: Users, isExternal: false },
 		{ title: 'Logs', url: '/dashboard/logs', icon: logs, isExternal: false },
-		{ title: 'Documentation', url: 'https://pulsewatch-dev.dmmaulana06.workers.dev/docs', icon: BookOpen, isExternal: true }
+		{
+			title: 'Documentation',
+			url: 'https://pulsewatch-dev.dmmaulana06.workers.dev/docs',
+			icon: BookOpen,
+			isExternal: true
+		}
 	];
 
 	let {
@@ -76,17 +81,15 @@
 	}
 </script>
 
-<!-- Glassmorphic Modernism styling according to DESIGN.md -->
 <Sidebar.Root
 	collapsible="icon"
-	class="bg-[#161618]! !border-r !border-[rgba(255,255,255,0.08)] text-white shadow-[2px_0_30px_rgba(0,0,0,0.5)]"
+	class="bg-sidebar! !border-r !border-sidebar-border text-sidebar-foreground shadow-[2px_0_30px_rgba(0,0,0,0.15)] dark:shadow-[2px_0_30px_rgba(0,0,0,0.5)]"
 >
 	<!-- Header: Team Switcher -->
-	<Sidebar.Header class="p-3 border-b border-[rgba(255,255,255,0.08)]">
+	<Sidebar.Header class="p-3 border-b border-sidebar-border">
 		<div
 			class="flex items-center gap-3 p-2 rounded-xl transition-all duration-300 text-left w-full border border-transparent group group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
 		>
-			<!-- Monitoring Blue accent (#3B82F6) -->
 			{#if typeof activeTeam.logo === 'string'}
 				<img src={activeTeam.logo} alt="Logo" class="size-8 object-contain drop-shadow-md" />
 			{:else}
@@ -94,7 +97,9 @@
 			{/if}
 
 			<div class="grid flex-1 text-left text-lg leading-tight group-data-[collapsible=icon]:hidden">
-				<span class="truncate font-semibold text-white tracking-tight">{activeTeam.name}</span>
+				<span class="truncate font-semibold text-sidebar-foreground tracking-tight"
+					>{activeTeam.name}</span
+				>
 			</div>
 		</div>
 	</Sidebar.Header>
@@ -104,7 +109,7 @@
 		<!-- Monitoring Group -->
 		<Sidebar.Group>
 			<Sidebar.GroupLabel
-				class="px-3 text-xs font-semibold text-[#94A3B8] tracking-widest uppercase group-data-[collapsible=icon]:hidden"
+				class="px-3 text-xs font-semibold text-muted-foreground tracking-widest uppercase group-data-[collapsible=icon]:hidden"
 				>Monitoring</Sidebar.GroupLabel
 			>
 			<Sidebar.GroupContent class="mt-2">
@@ -113,14 +118,14 @@
 						{@const isActive =
 							$page.url.pathname === item.url || $page.url.pathname.startsWith(item.url + '/')}
 						<Sidebar.MenuItem
-							class="group/nav relative flex items-center justify-between rounded-xl border border-transparent hover:border-[rgba(255,255,255,0.08)] transition-all duration-300 {isActive
-								? 'bg-[rgba(255,255,255,0.08)]'
-								: 'hover:bg-[rgba(255,255,255,0.06)]'}"
+							class="group/nav relative flex items-center justify-between rounded-xl border border-transparent hover:border-sidebar-border transition-all duration-300 {isActive
+								? 'bg-sidebar-accent'
+								: 'hover:bg-sidebar-accent/60'}"
 						>
 							<Sidebar.MenuButton
 								class="w-full flex-1 h-10 {isActive
-									? 'text-white!'
-									: 'text-[#94A3B8]! hover:text-white!'}"
+									? 'text-sidebar-foreground!'
+									: 'text-muted-foreground! hover:text-sidebar-foreground!'}"
 							>
 								{#snippet child({ props })}
 									<a
@@ -128,11 +133,10 @@
 										{...props}
 										class="flex items-center gap-3.5 w-full px-2.5 py-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
 									>
-										<!-- Use pure white on hover for high contrast -->
 										<item.icon
 											class="size-5 shrink-0 transition-colors {isActive
-												? 'text-white'
-												: 'text-[#94A3B8] group-hover/nav:text-white'}"
+												? 'text-sidebar-foreground'
+												: 'text-muted-foreground group-hover/nav:text-sidebar-foreground'}"
 										/>
 										<span class="font-medium flex-1 text-md group-data-[collapsible=icon]:hidden"
 											>{item.title}</span
@@ -140,8 +144,8 @@
 										{#if item.hasSub}
 											<ChevronRight
 												class="size-4 shrink-0 transition-colors group-data-[collapsible=icon]:hidden {isActive
-													? 'text-white'
-													: 'text-[#94A3B8] group-hover/nav:text-white'}"
+													? 'text-sidebar-foreground'
+													: 'text-muted-foreground group-hover/nav:text-sidebar-foreground'}"
 											/>
 										{/if}
 									</a>
@@ -156,7 +160,7 @@
 		<!-- Settings Group -->
 		<Sidebar.Group class="mt-4">
 			<Sidebar.GroupLabel
-				class="px-3 text-xs font-semibold text-[#94A3B8] tracking-widest uppercase group-data-[collapsible=icon]:hidden"
+				class="px-3 text-xs font-semibold text-muted-foreground tracking-widest uppercase group-data-[collapsible=icon]:hidden"
 				>Organization</Sidebar.GroupLabel
 			>
 			<Sidebar.GroupContent class="mt-2">
@@ -165,14 +169,14 @@
 						{@const isActive =
 							$page.url.pathname === item.url || $page.url.pathname.startsWith(item.url + '/')}
 						<Sidebar.MenuItem
-							class="group/item relative flex items-center justify-between rounded-xl border border-transparent hover:border-[rgba(255,255,255,0.08)] transition-all duration-300 {isActive
-								? 'bg-[rgba(255,255,255,0.08)]'
-								: 'hover:bg-[rgba(255,255,255,0.06)]'}"
+							class="group/item relative flex items-center justify-between rounded-xl border border-transparent hover:border-sidebar-border transition-all duration-300 {isActive
+								? 'bg-sidebar-accent'
+								: 'hover:bg-sidebar-accent/60'}"
 						>
 							<Sidebar.MenuButton
 								class="w-full flex-1 h-10 {isActive
-									? 'text-white!'
-									: 'text-[#94A3B8]! hover:text-white!'}"
+									? 'text-sidebar-foreground!'
+									: 'text-muted-foreground! hover:text-sidebar-foreground!'}"
 							>
 								{#snippet child({ props })}
 									<a
@@ -184,15 +188,15 @@
 									>
 										<item.icon
 											class="size-4.5 shrink-0 transition-colors {isActive
-												? 'text-white'
-												: 'text-[#94A3B8] group-hover/item:text-white'}"
+												? 'text-sidebar-foreground'
+												: 'text-muted-foreground group-hover/item:text-sidebar-foreground'}"
 										/>
 										<span class="text-md font-medium flex-1 group-data-[collapsible=icon]:hidden"
 											>{item.title}</span
 										>
 										{#if item.isExternal}
 											<ExternalLink
-												class="size-3.5 text-[#94A3B8] group-hover/item:text-white transition-colors group-data-[collapsible=icon]:hidden"
+												class="size-3.5 text-muted-foreground group-hover/item:text-sidebar-foreground transition-colors group-data-[collapsible=icon]:hidden"
 											/>
 										{/if}
 									</a>
@@ -206,15 +210,14 @@
 	</Sidebar.Content>
 
 	<!-- Footer: User Switcher -->
-	<Sidebar.Footer class="p-3 border-t border-[rgba(255,255,255,0.08)]">
+	<Sidebar.Footer class="p-3 border-t border-sidebar-border">
 		<DropdownMenu.Root>
 			<DropdownMenu.Trigger class="w-full focus:outline-none">
 				<div
-					class="flex items-center gap-3 p-2 hover:bg-[rgba(255,255,255,0.06)] rounded-xl transition-all duration-300 text-left w-full border border-transparent hover:border-[rgba(255,255,255,0.08)] group group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
+					class="flex items-center gap-3 p-2 hover:bg-sidebar-accent/60 rounded-xl transition-all duration-300 text-left w-full border border-transparent hover:border-sidebar-border group group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
 				>
-					<!-- Primary Uptime Green (#10B981) for Avatar fallback -->
 					<div
-						class="relative size-9 rounded-xl overflow-hidden shrink-0 border border-[rgba(255,255,255,0.1)] shadow-[0_0_10px_rgba(16,185,129,0.2)] flex items-center justify-center bg-[#10B981] text-[#003824] font-bold"
+						class="relative size-9 rounded-xl overflow-hidden shrink-0 border border-primary/20 shadow-[0_0_10px_rgba(16,185,129,0.2)] flex items-center justify-center bg-primary text-primary-foreground font-bold"
 					>
 						<span class="z-0">{user.name ? user.name.slice(0, 2).toUpperCase() : ''}</span>
 						{#if user.avatar}
@@ -229,22 +232,23 @@
 					<div
 						class="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden"
 					>
-						<span class="truncate font-semibold text-white group-hover:text-white transition-colors"
+						<span
+							class="truncate font-semibold text-sidebar-foreground group-hover:text-sidebar-foreground transition-colors"
 							>{user.name}</span
 						>
 						<span
-							class="truncate text-xs text-[#94A3B8] group-hover:text-[#bbcabf] transition-colors"
+							class="truncate text-xs text-muted-foreground group-hover:text-muted-foreground transition-colors"
 							>{user.email}</span
 						>
 					</div>
 					<ChevronsUpDown
-						class="ml-auto size-4 text-[#94A3B8] shrink-0 group-hover:text-white transition-colors group-data-[collapsible=icon]:hidden"
+						class="ml-auto size-4 text-muted-foreground shrink-0 group-hover:text-sidebar-foreground transition-colors group-data-[collapsible=icon]:hidden"
 					/>
 				</div>
 			</DropdownMenu.Trigger>
 
 			<DropdownMenu.Content
-				class="w-56 !bg-[rgba(255,255,255,0.06)] backdrop-blur-[20px] !border-[rgba(255,255,255,0.08)] text-white shadow-[0_0_20px_rgba(16,185,129,0.05)]"
+				class="w-56 !bg-popover backdrop-blur-[20px] !border-border text-popover-foreground shadow-xl"
 				side={sidebar.state === 'collapsed' ? 'right' : 'top'}
 				align="end"
 				sideOffset={4}
@@ -252,7 +256,7 @@
 				<DropdownMenu.Label class="font-normal">
 					<div class="flex items-center gap-3 px-1.5 py-2 text-left text-sm">
 						<div
-							class="relative size-9 rounded-xl overflow-hidden shrink-0 border border-[rgba(255,255,255,0.1)] flex items-center justify-center bg-[#10B981] text-[#003824] font-bold"
+							class="relative size-9 rounded-xl overflow-hidden shrink-0 border border-primary/20 flex items-center justify-center bg-primary text-primary-foreground font-bold"
 						>
 							<span class="z-0">{user.name ? user.name.slice(0, 2).toUpperCase() : ''}</span>
 							{#if user.avatar}
@@ -265,35 +269,35 @@
 							{/if}
 						</div>
 						<div class="grid flex-1 text-left text-sm leading-tight">
-							<span class="truncate font-semibold text-white">{user.name}</span>
-							<span class="truncate text-xs text-[#94A3B8]">{user.email}</span>
+							<span class="truncate font-semibold text-popover-foreground">{user.name}</span>
+							<span class="truncate text-xs text-muted-foreground">{user.email}</span>
 						</div>
 					</div>
 				</DropdownMenu.Label>
-				<DropdownMenu.Separator class="bg-[rgba(255,255,255,0.08)]" />
+				<DropdownMenu.Separator class="bg-border" />
 				<DropdownMenu.Group>
 					<a href="/dashboard/profile">
 						<DropdownMenu.Item
-							class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg hover:!bg-[rgba(255,255,255,0.08)] hover:!text-white"
+							class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg hover:!bg-accent hover:!text-accent-foreground"
 							><BadgeCheck class="size-4" />Profile</DropdownMenu.Item
 						>
 					</a>
 					<DropdownMenu.Item
-						class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg hover:!bg-[rgba(255,255,255,0.08)] hover:!text-white"
-						onclick={() => isSettingsOpen = true}
+						class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg hover:!bg-accent hover:!text-accent-foreground"
+						onclick={() => (isSettingsOpen = true)}
 						><Settings2 class="size-4" /> User Settings</DropdownMenu.Item
 					>
 					<a class="" href="/dashboard/notification">
 						<DropdownMenu.Item
-							class="cursor-pointer rounded-lg p-2 flex items-center gap-2.5 hover:!bg-[rgba(255,255,255,0.08)] hover:!text-white"
+							class="cursor-pointer rounded-lg p-2 flex items-center gap-2.5 hover:!bg-accent hover:!text-accent-foreground"
 							><Bell class="size-4" /> Notifications
 						</DropdownMenu.Item></a
 					>
 				</DropdownMenu.Group>
-				<DropdownMenu.Separator class="bg-[rgba(255,255,255,0.08)]" />
+				<DropdownMenu.Separator class="bg-border" />
 				<DropdownMenu.Item
 					onclick={handleLogout}
-					class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg text-[#ffb4ab] hover:!text-[#ffb4ab] hover:!bg-[#93000a]/30"
+					class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg text-destructive hover:!text-destructive hover:!bg-destructive/10"
 					><LogOut class="size-4" /> Log out</DropdownMenu.Item
 				>
 			</DropdownMenu.Content>

@@ -62,9 +62,7 @@
 	let totalCount = $state(0);
 
 	let searchQuery = $state('');
-	let selectedCategory = $state<'ALL' | 'MONITOR' | 'MEMBER' | 'STATUSPAGE'>(
-		'ALL'
-	);
+	let selectedCategory = $state<'ALL' | 'MONITOR' | 'MEMBER' | 'STATUSPAGE'>('ALL');
 	let selectedAction = $state('');
 
 	// ── Category Filters Definition ────────────────────────────────────────────
@@ -119,7 +117,7 @@
 				{ value: 'API_KEY_CREATE', label: 'Key Create' },
 				{ value: 'API_KEY_REVOKE', label: 'Key Revoke' }
 			]
-		},
+		}
 	];
 
 	// Map category to which action groups to show
@@ -178,9 +176,9 @@
 			};
 		}
 		return {
-			bg: 'bg-white/10 border-white/15 text-slate-300',
+			bg: 'bg-white/10 border-border text-muted-foreground',
 			dot: 'bg-slate-400',
-			textColor: 'text-slate-300'
+			textColor: 'text-muted-foreground'
 		};
 	}
 
@@ -322,17 +320,17 @@
 	<title>Audit Logs • PulseWatch</title>
 </svelte:head>
 
-<div class="text-on-surface antialiased mx-auto w-full flex-1 flex flex-col min-h-full">
+<div class="text-foreground antialiased mx-auto w-full flex-1 flex flex-col min-h-full">
 	<!-- Page Header (Only shown when organization is selected) -->
 	{#if selectedOrgId}
 		<header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
 			<div>
 				<div class="flex items-center gap-2 mb-1">
-					<h1 class="text-[28px] font-semibold leading-tight tracking-tight text-on-surface">
+					<h1 class="text-[28px] font-semibold leading-tight tracking-tight text-foreground">
 						Audit Logs
 					</h1>
 				</div>
-				<p class="text-sm text-on-surface-variant max-w-[54ch]">
+				<p class="text-sm text-muted-foreground max-w-[54ch]">
 					Traceable, real-time audit trail of all actions and security events across your
 					organization.
 				</p>
@@ -345,25 +343,25 @@
 						<DropdownMenu.Trigger class="focus:outline-none">
 							<button
 								type="button"
-								class="flex items-center gap-2.5 px-3 py-2 bg-white/5 border border-white/10 hover:border-white/20 rounded-lg transition-all text-left text-sm"
+								class="flex items-center gap-2.5 px-3 py-2 bg-white/5 border border-border hover:border-border rounded-lg transition-all text-left text-sm"
 							>
 								<div
 									class="size-6 rounded-md bg-primary/20 text-primary font-bold text-xs flex items-center justify-center"
 								>
 									{initials(selectedOrg?.Name)}
 								</div>
-								<span class="font-medium text-white max-w-[160px] truncate"
+								<span class="font-medium text-foreground max-w-[160px] truncate"
 									>{selectedOrg?.Name}</span
 								>
-								<ChevronsUpDown class="size-4 text-on-surface-variant shrink-0" />
+								<ChevronsUpDown class="size-4 text-muted-foreground shrink-0" />
 							</button>
 						</DropdownMenu.Trigger>
 						<DropdownMenu.Content
-							class="w-60 bg-[#1A1A1B] border-white/10 text-white shadow-lg rounded-lg p-1"
+							class="w-60 bg-secondary border-border text-foreground shadow-lg rounded-lg p-1"
 							align="end"
 						>
 							<DropdownMenu.Label
-								class="text-xs text-on-surface-variant font-medium px-2 py-1.5 uppercase tracking-wider"
+								class="text-xs text-muted-foreground font-medium px-2 py-1.5 uppercase tracking-wider"
 							>
 								Select Organization
 							</DropdownMenu.Label>
@@ -395,28 +393,26 @@
 	{:else if !selectedOrgId}
 		<div class="flex-1 min-h-[calc(100vh-10rem)] flex flex-col items-center justify-center py-6">
 			<div
-				class="w-full max-w-[420px] bg-[#161618] border border-white/10 rounded-lg p-6 shadow-2xl backdrop-blur-xl flex flex-col items-center text-center"
+				class="w-full max-w-[420px] bg-card border border-border rounded-lg p-6 shadow-2xl backdrop-blur-xl flex flex-col items-center text-center"
 			>
 				<!-- Header Icon Badge -->
 				<div
-					class="size-11 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-primary mb-4 shadow-sm"
+					class="size-11 rounded-lg bg-white/5 border border-border flex items-center justify-center text-primary mb-4 shadow-sm"
 				>
 					<ScrollText class="size-5" />
 				</div>
 
-				<h2 class="text-lg font-semibold text-white tracking-tight mb-1">Continue to Logs</h2>
-				<p class="text-xs text-on-surface-variant mb-5">
-					Choose an organization to view audit logs
-				</p>
+				<h2 class="text-lg font-semibold text-foreground tracking-tight mb-1">Continue to Logs</h2>
+				<p class="text-xs text-muted-foreground mb-5">Choose an organization to view audit logs</p>
 
 				<!-- Search Organization Input -->
 				<div class="relative w-full mb-3">
-					<Search class="absolute left-3 top-2.5 size-4 text-on-surface-variant/50" />
+					<Search class="absolute left-3 top-2.5 size-4 text-muted-foreground/50" />
 					<Input
 						type="text"
 						placeholder="Find organization..."
 						bind:value={orgSearchQuery}
-						class="pl-9 h-9 text-xs bg-black/40 border-white/10 focus-visible:border-primary text-white rounded-lg placeholder:text-on-surface-variant/40"
+						class="pl-9 h-9 text-xs bg-black/40 border-border focus-visible:border-primary text-foreground rounded-lg placeholder:text-muted-foreground/40"
 					/>
 				</div>
 
@@ -424,7 +420,7 @@
 				{#if filteredOrgs.length === 0}
 					<div
 						data-lenis-prevent
-						class="py-6 px-4 w-full text-center text-xs text-on-surface-variant/60 bg-black/20 rounded-lg border border-white/5"
+						class="py-6 px-4 w-full text-center text-xs text-muted-foreground/60 bg-black/20 rounded-lg border border-border"
 					>
 						{orgSearchQuery
 							? `No organization matching "${orgSearchQuery}"`
@@ -438,7 +434,7 @@
 						{#each filteredOrgs as org}
 							<button
 								type="button"
-								class="w-full flex items-center justify-between p-2.5 bg-white/4 hover:bg-white/8 border border-white/8 hover:border-primary/40 rounded-lg transition-all text-left group"
+								class="w-full flex items-center justify-between p-2.5 bg-white/4 hover:bg-white/8 border border-border hover:border-primary/40 rounded-lg transition-all text-left group"
 								onclick={() => selectOrganization(org.ID)}
 							>
 								<div class="flex items-center gap-3 min-w-0">
@@ -449,17 +445,17 @@
 									</div>
 									<div class="min-w-0 text-left">
 										<p
-											class="text-xs font-semibold text-white truncate group-hover:text-primary transition-colors"
+											class="text-xs font-semibold text-foreground truncate group-hover:text-primary transition-colors"
 										>
 											{org.Name}
 										</p>
-										<p class="text-[11px] text-on-surface-variant/70 font-mono truncate">
+										<p class="text-[11px] text-muted-foreground/70 font-mono truncate">
 											pulsewatch.app/o/{org.Slug}
 										</p>
 									</div>
 								</div>
 								<ChevronRight
-									class="size-4 text-on-surface-variant/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 ml-2"
+									class="size-4 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 ml-2"
 								/>
 							</button>
 						{/each}
@@ -471,7 +467,7 @@
 
 				<a
 					href="/dashboard/organization"
-					class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium text-on-surface-variant hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all"
+					class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 border border-transparent hover:border-border transition-all"
 				>
 					<Plus class="size-3.5" />
 					Create Organization
@@ -484,17 +480,17 @@
 		<!-- Controls: Search & Category Chips -->
 		<div class="flex flex-col gap-4 mb-6">
 			<div
-				class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 bg-white/3 border border-white/8 rounded-lg backdrop-blur-md"
+				class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 bg-white/3 border border-border rounded-lg backdrop-blur-md"
 			>
 				<!-- Search Input -->
 				<div class="relative flex-1 min-w-[240px]">
-					<Search class="absolute left-3 top-2.5 size-4 text-on-surface-variant/50" />
+					<Search class="absolute left-3 top-2.5 size-4 text-muted-foreground/50" />
 					<Input
 						type="text"
 						placeholder="Search logs by action or description..."
 						bind:value={searchQuery}
 						oninput={handleSearchInput}
-						class="pl-9 h-9 text-sm bg-black/30 border-white/10 focus-visible:border-primary text-white rounded-lg placeholder:text-on-surface-variant/40"
+						class="pl-9 h-9 text-sm bg-black/30 border-border focus-visible:border-primary text-foreground rounded-lg placeholder:text-muted-foreground/40"
 					/>
 				</div>
 
@@ -505,11 +501,11 @@
 						<button
 							type="button"
 							class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all whitespace-nowrap border cursor-pointer {isSelected
-								? 'font-bold text-white bg-white/10 border-white/18 shadow-sm'
-								: 'font-medium text-white/40 border-transparent bg-transparent hover:text-white/70 hover:bg-white/5'}"
+								? 'font-bold text-foreground bg-white/10 border-border shadow-sm'
+								: 'font-medium text-foreground/40 border-transparent bg-transparent hover:text-foreground/70 hover:bg-white/5'}"
 							onclick={() => handleCategoryChange(cat.id as any)}
 						>
-							<cat.icon class="size-3.5 {isSelected ? 'text-primary' : 'text-white/40'}" />
+							<cat.icon class="size-3.5 {isSelected ? 'text-primary' : 'text-foreground/40'}" />
 							{cat.label}
 						</button>
 					{/each}
@@ -532,15 +528,15 @@
 			<LogsSkeleton />
 		{:else if logs.length === 0}
 			<div
-				class="w-full border border-white/8 rounded-lg bg-white/3 p-10 md:p-14 text-center flex flex-col items-center justify-center min-h-[260px]"
+				class="w-full border border-border rounded-lg bg-white/3 p-10 md:p-14 text-center flex flex-col items-center justify-center min-h-[260px]"
 			>
 				<div
-					class="size-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-on-surface-variant mb-3 font-semibold"
+					class="size-12 rounded-lg bg-white/5 border border-border flex items-center justify-center text-muted-foreground mb-3 font-semibold"
 				>
 					<ScrollText class="size-6 opacity-60" />
 				</div>
-				<h3 class="text-base font-semibold text-white mb-1.5">No Audit Logs Found</h3>
-				<p class="text-sm text-on-surface-variant max-w-[440px] w-full leading-relaxed mx-auto">
+				<h3 class="text-base font-semibold text-foreground mb-1.5">No Audit Logs Found</h3>
+				<p class="text-sm text-muted-foreground max-w-[440px] w-full leading-relaxed mx-auto">
 					{searchQuery
 						? `No activity matching "${searchQuery}" in this organization.`
 						: 'No recorded activity events for this organization yet.'}
@@ -548,10 +544,10 @@
 			</div>
 		{:else}
 			<div
-				class="border border-white/8 rounded-lg bg-white/3 backdrop-blur-md overflow-hidden flex flex-col max-h-[calc(100vh-16rem)]"
+				class="border border-border rounded-lg bg-white/3 backdrop-blur-md overflow-hidden flex flex-col max-h-[calc(100vh-16rem)]"
 			>
 				<!-- Table Column Headers -->
-				<div class="log-table-header sticky top-0 bg-[#161618] z-10">
+				<div class="log-table-header sticky top-0 bg-card z-10">
 					<div class="log-col-actor">Actor</div>
 					<div class="log-col-action">
 						<DropdownMenu.Root>
@@ -559,7 +555,7 @@
 								<span
 									class="flex items-center gap-1.5 transition-colors {selectedAction
 										? 'text-primary'
-										: 'text-inherit hover:text-white'}"
+										: 'text-inherit hover:text-foreground'}"
 								>
 									<span>{selectedAction || 'Action'}</span>
 									{#if selectedAction}
@@ -588,7 +584,7 @@
 							</DropdownMenu.Trigger>
 							<DropdownMenu.Content
 								data-lenis-prevent
-								class="w-56 max-h-[360px] overflow-y-auto bg-[#1A1A1B] border-white/10 text-white shadow-xl rounded-lg p-1"
+								class="w-56 max-h-[360px] overflow-y-auto bg-secondary border-border text-foreground shadow-xl rounded-lg p-1"
 								align="start"
 								sideOffset={6}
 							>
@@ -609,7 +605,7 @@
 								{#each visibleActionGroups as group}
 									<DropdownMenu.Separator class="bg-white/8 my-1" />
 									<DropdownMenu.Label
-										class="text-[10px] text-on-surface-variant font-medium px-2.5 py-1 uppercase tracking-wider"
+										class="text-[10px] text-muted-foreground font-medium px-2.5 py-1 uppercase tracking-wider"
 									>
 										{group.label}
 									</DropdownMenu.Label>
@@ -644,7 +640,7 @@
 				<!-- Scrollable Rows Container -->
 				<div
 					data-lenis-prevent
-					class="log-scroll-container overflow-y-auto flex-1 divide-y divide-white/6"
+					class="log-scroll-container overflow-y-auto flex-1 divide-y divide-border"
 				>
 					{#each logs as log (log.id)}
 						{@const badgeStyle = getActionStyle(log.action)}
@@ -655,7 +651,7 @@
 									<img
 										src={log.user_avatar_url}
 										alt={log.user_name || log.user_email || 'User'}
-										class="size-7 rounded-md object-cover border border-white/10 shrink-0"
+										class="size-7 rounded-md object-cover border border-border shrink-0"
 										onerror={(e) => {
 											const el = e.currentTarget as HTMLImageElement;
 											el.style.display = 'none';
@@ -676,7 +672,7 @@
 										{initials(log.user_name || log.user_email)}
 									</div>
 								{/if}
-								<span class="text-[13px] font-medium text-white truncate">
+								<span class="text-[13px] font-medium text-foreground truncate">
 									{log.user_name || log.user_email || 'Unknown'}
 								</span>
 							</div>
@@ -692,7 +688,7 @@
 
 							<!-- Description -->
 							<div class="log-col-description">
-								<p class="text-[13px] text-slate-300 leading-snug line-clamp-2">
+								<p class="text-[13px] text-muted-foreground leading-snug line-clamp-2">
 									{log.description}
 								</p>
 							</div>
@@ -700,7 +696,7 @@
 							<!-- IP Address -->
 							<div class="log-col-ip">
 								<span
-									class="font-mono text-[11px] px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-slate-400 whitespace-nowrap"
+									class="font-mono text-[11px] px-2 py-0.5 rounded-md bg-white/5 border border-border text-muted-foreground whitespace-nowrap"
 								>
 									{log.ip_address || 'Internal'}
 								</span>
@@ -708,10 +704,10 @@
 
 							<!-- Timestamp -->
 							<div class="log-col-timestamp" title={fmtFullDate(log.created_at)}>
-								<span class="text-[13px] text-slate-300 font-medium whitespace-nowrap">
+								<span class="text-[13px] text-muted-foreground font-medium whitespace-nowrap">
 									{fmtTimeAgo(log.created_at)}
 								</span>
-								<span class="text-[10px] text-on-surface-variant/55 font-mono block mt-0.5">
+								<span class="text-[10px] text-muted-foreground/55 font-mono block mt-0.5">
 									{fmtFullDate(log.created_at)}
 								</span>
 							</div>
@@ -722,22 +718,22 @@
 				<!-- Pagination Footer -->
 				{#if totalPages > 1}
 					<div
-						class="px-4 py-3 bg-white/4 border-t border-white/8 flex items-center justify-between text-xs text-on-surface-variant sticky bottom-0 bg-[#161618]"
+						class="px-4 py-3 bg-white/4 border-t border-border flex items-center justify-between text-xs text-muted-foreground sticky bottom-0 bg-card"
 					>
 						<span>Page {currentPage} of {totalPages} ({totalCount} items)</span>
 						<div class="flex items-center gap-1">
 							<Button
 								variant="ghost"
-								class="h-8 w-8 p-0 border border-white/10 rounded-md text-white hover:bg-white/10 disabled:opacity-30"
+								class="h-8 w-8 p-0 border border-border rounded-md text-foreground hover:bg-white/10 disabled:opacity-30"
 								disabled={currentPage <= 1}
 								onclick={() => goToPage(currentPage - 1)}
 							>
 								<ChevronLeft class="size-4" />
 							</Button>
-							<span class="px-2 font-mono text-white">{currentPage}</span>
+							<span class="px-2 font-mono text-foreground">{currentPage}</span>
 							<Button
 								variant="ghost"
-								class="h-8 w-8 p-0 border border-white/10 rounded-md text-white hover:bg-white/10 disabled:opacity-30"
+								class="h-8 w-8 p-0 border border-border rounded-md text-foreground hover:bg-white/10 disabled:opacity-30"
 								disabled={currentPage >= totalPages}
 								onclick={() => goToPage(currentPage + 1)}
 							>
@@ -764,13 +760,13 @@
 
 	.log-table-header {
 		padding: 8px 16px;
-		background: rgba(255, 255, 255, 0.04);
-		border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+		background: var(--color-muted);
+		border-bottom: 1px solid var(--color-border);
 		font-size: 11px;
 		font-weight: 600;
 		text-transform: uppercase;
 		letter-spacing: 0.07em;
-		color: var(--color-on-surface-variant, #888);
+		color: var(--color-muted-foreground);
 	}
 
 	.log-table-row {
@@ -779,7 +775,7 @@
 	}
 
 	.log-table-row:hover {
-		background: rgba(255, 255, 255, 0.035);
+		background: var(--color-accent);
 	}
 
 	/* Column cells are just referenced by class name, alignment handled by grid */
@@ -807,7 +803,7 @@
 	/* ── Scrollable Log Container ──────────────────────────────────────── */
 	.log-scroll-container {
 		scrollbar-width: thin;
-		scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+		scrollbar-color: var(--color-muted-foreground) transparent;
 	}
 
 	.log-scroll-container::-webkit-scrollbar {
@@ -819,11 +815,12 @@
 	}
 
 	.log-scroll-container::-webkit-scrollbar-thumb {
-		background: rgba(255, 255, 255, 0.12);
+		background: var(--color-muted-foreground);
+		opacity: 0.3;
 		border-radius: 3px;
 	}
 
 	.log-scroll-container::-webkit-scrollbar-thumb:hover {
-		background: rgba(255, 255, 255, 0.25);
+		opacity: 0.5;
 	}
 </style>

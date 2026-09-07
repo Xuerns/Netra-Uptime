@@ -1,18 +1,18 @@
 <script lang="ts">
-	import { AlertDialog as AlertDialogPrimitive } from "bits-ui";
-	import AlertDialogPortal from "./alert-dialog-portal.svelte";
-	import AlertDialogOverlay from "./alert-dialog-overlay.svelte";
-	import { cn, type WithoutChild, type WithoutChildrenOrChild } from "$lib/helper/utils";
-	import type { ComponentProps } from "svelte";
+	import { AlertDialog as AlertDialogPrimitive } from 'bits-ui';
+	import AlertDialogPortal from './alert-dialog-portal.svelte';
+	import AlertDialogOverlay from './alert-dialog-overlay.svelte';
+	import { cn, type WithoutChild, type WithoutChildrenOrChild } from '$lib/helper/utils';
+	import type { ComponentProps } from 'svelte';
 
 	let {
 		ref = $bindable(null),
 		class: className,
-		size = "default",
+		size = 'default',
 		portalProps,
 		...restProps
 	}: WithoutChild<AlertDialogPrimitive.ContentProps> & {
-		size?: "default" | "sm";
+		size?: 'default' | 'sm';
 		portalProps?: WithoutChildrenOrChild<ComponentProps<typeof AlertDialogPortal>>;
 	} = $props();
 </script>
@@ -24,7 +24,7 @@
 		data-slot="alert-dialog-content"
 		data-size={size}
 		class={cn(
-			"data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 bg-[#1c1b1c] text-on-surface border border-white/8 gap-4 rounded-xl p-6 shadow-2xl duration-200 data-[size=default]:max-w-[440px] data-[size=sm]:max-w-xs group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 outline-none",
+			'data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 bg-popover text-foreground border border-border gap-4 rounded-xl p-6 shadow-2xl duration-200 data-[size=default]:max-w-[440px] data-[size=sm]:max-w-xs group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 outline-none',
 			className
 		)}
 		{...restProps}

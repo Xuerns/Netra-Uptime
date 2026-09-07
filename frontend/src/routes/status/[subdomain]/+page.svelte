@@ -14,21 +14,19 @@
 </svelte:head>
 
 <div
-	class="min-h-screen relative overflow-x-hidden text-on-surface bg-background pattern-bg flex flex-col"
+	class="min-h-screen relative overflow-x-hidden text-foreground bg-background pattern-bg flex flex-col"
 >
 	<!-- Top Navigation Bar -->
-	<nav
-		class="sticky top-0 w-full z-50 bg-transparent border-b border-[rgba(255,255,255,0.08)] backdrop-blur-sm"
-	>
+	<nav class="sticky top-0 w-full z-50 bg-transparent border-b border-border backdrop-blur-sm">
 		<div class="flex justify-between items-center px-6 py-4 w-full">
 			<div class="flex items-center gap-3">
 				<img class="h-8 w-8 object-contain" src={logo} />
 				<div class="flex flex-col">
-					<span class="font-headline-md text-headline-md font-bold text-on-surface"
+					<span class="font-headline-md text-headline-md font-bold text-foreground"
 						>{statusPage.title}</span
 					>
 					{#if statusPage.description}
-						<span class="text-sm text-on-surface-variant font-body-md mt-0.5"
+						<span class="text-sm text-muted-foreground font-body-md mt-0.5"
 							>{statusPage.description}</span
 						>
 					{/if}
@@ -53,18 +51,18 @@
 
 							<!-- Monitor Card -->
 							<div
-								class="relative bg-white/3 border border-white/8 rounded-lg p-5 flex flex-col gap-3.5 backdrop-blur-md"
+								class="relative bg-white/3 border border-border rounded-lg p-5 flex flex-col gap-3.5 backdrop-blur-md"
 							>
 								<!-- Card Top -->
 								<div class="flex items-start justify-between gap-2">
 									<div class="min-w-0">
-										<p class="text-body-md font-semibold text-on-surface truncate m-0">
+										<p class="text-body-md font-semibold text-foreground truncate m-0">
 											{monitor.name}
 										</p>
 									</div>
 									<div class="flex items-center gap-2 shrink-0">
 										<span
-											class="text-[11px] font-mono px-1.5 py-0.5 bg-surface-dim text-on-surface-variant uppercase border border-outline-variant rounded-sm"
+											class="text-[11px] font-mono px-1.5 py-0.5 bg-surface-dim text-muted-foreground uppercase border border-outline-variant rounded-sm"
 										>
 											{monitor.type}
 										</span>
@@ -72,24 +70,24 @@
 								</div>
 
 								<!-- Status Row -->
-								<div class="flex items-center gap-1.5 text-[12.5px] text-on-surface-variant mb-1">
+								<div class="flex items-center gap-1.5 text-[12.5px] text-muted-foreground mb-1">
 									{#if isUp}
 										<span
 											class="size-2 rounded-full bg-primary shrink-0 animate-[pulseGlow_2.4s_ease-in-out_infinite]"
 										></span>
 										<span class="text-primary">Operational</span>
 									{:else}
-										<span class="size-2 rounded-full bg-error shrink-0"></span>
-										<span class="text-error">Down</span>
+										<span class="size-2 rounded-full bg-destructive shrink-0"></span>
+										<span class="text-destructive">Down</span>
 									{/if}
 								</div>
 
 								<!-- Graphics -->
-								<div class="mt-auto pt-2 border-t border-white/5">
+								<div class="mt-auto pt-2 border-t border-border">
 									<div
-										class="flex justify-between font-mono-data text-[10px] text-on-surface-variant mb-1.5"
+										class="flex justify-between font-mono-data text-[10px] text-muted-foreground mb-1.5"
 									>
-										<span class={isUp ? 'text-primary' : 'text-error'}
+										<span class={isUp ? 'text-primary' : 'text-destructive'}
 											>{isUp ? 'Operational' : 'Degraded'}</span
 										>
 									</div>
@@ -101,7 +99,7 @@
 												height={32}
 											/>
 										{:else}
-											<div class="text-[10px] text-on-surface-variant w-full text-center pb-1">
+											<div class="text-[10px] text-muted-foreground w-full text-center pb-1">
 												No data available
 											</div>
 										{/if}
@@ -112,7 +110,7 @@
 					</div>
 				{:else}
 					<div
-						class="bg-surface-container border-dashed border border-white/10 rounded p-8 text-center text-on-surface-variant font-body-md"
+						class="bg-surface-container border-dashed border border-border rounded p-8 text-center text-muted-foreground font-body-md"
 					>
 						No services are currently being monitored for this status page.
 					</div>
@@ -122,9 +120,9 @@
 	</main>
 
 	<!-- Footer -->
-	<footer class="w-full mt-auto border-t border-[rgba(255,255,255,0.08)] bg-transparent">
+	<footer class="w-full mt-auto border-t border-border bg-transparent">
 		<div class="flex flex-col md:flex-row justify-center items-center px-6 py-6 w-full">
-			<span class="font-body-md text-sm text-on-surface-variant mb-4 md:mb-0"
+			<span class="font-body-md text-sm text-muted-foreground mb-4 md:mb-0"
 				>© 2026 {statusPage.title} Monitoring. All systems operational.</span
 			>
 		</div>
@@ -133,6 +131,11 @@
 
 <style>
 	.pattern-bg {
+		background-color: #f8fafc;
+		background-image: radial-gradient(#e2e8f0 0.75px, transparent 0.75px);
+		background-size: 20px 20px;
+	}
+	:global(.dark) .pattern-bg {
 		background-color: #131314;
 		background-image:
 			conic-gradient(

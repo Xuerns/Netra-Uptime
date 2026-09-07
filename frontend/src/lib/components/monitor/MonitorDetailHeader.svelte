@@ -10,12 +10,7 @@
 		onDelete?: () => void;
 	}
 
-	let {
-		monitor,
-		onPauseResume,
-		onEdit,
-		onDelete
-	}: Props = $props();
+	let { monitor, onPauseResume, onEdit, onDelete }: Props = $props();
 
 	let statusColor = $derived.by(() => {
 		switch (monitor.Status) {
@@ -56,7 +51,7 @@
 	<div class="flex items-center justify-between">
 		<a
 			href="/dashboard/monitor"
-			class="inline-flex items-center gap-2 text-sm text-on-surface-variant hover:text-white transition-colors group"
+			class="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
 		>
 			<ArrowLeft class="size-4 group-hover:-translate-x-1 transition-transform" />
 			<span>Back to Monitors</span>
@@ -65,12 +60,12 @@
 
 	<!-- Monitor Header Banner -->
 	<div
-		class="bg-[#161618] border border-white/8 rounded-2xl p-5 md:p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4"
+		class="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4"
 	>
 		<div class="flex items-start gap-4">
 			<!-- Monitor Icon Box -->
 			<div
-				class="size-12 rounded-xl bg-white/5 border border-white/8 flex items-center justify-center shrink-0"
+				class="size-12 rounded-xl bg-white/5 border border-border flex items-center justify-center shrink-0"
 			>
 				<Globe class="size-6 text-primary" />
 			</div>
@@ -78,7 +73,9 @@
 			<!-- Title & Target Info -->
 			<div class="space-y-1">
 				<div class="flex items-center gap-3 flex-wrap">
-					<h1 class="text-xl md:text-2xl font-bold text-white tracking-tight">{monitor.Name}</h1>
+					<h1 class="text-xl md:text-2xl font-bold text-foreground tracking-tight">
+						{monitor.Name}
+					</h1>
 
 					<!-- Status Badge -->
 					<div
@@ -89,7 +86,7 @@
 				</div>
 
 				<!-- Target URL & Metadata Badges -->
-				<div class="flex items-center gap-4 text-xs text-on-surface-variant flex-wrap pt-1">
+				<div class="flex items-center gap-4 text-xs text-muted-foreground flex-wrap pt-1">
 					<a
 						href={monitor.Target.startsWith('http') ? monitor.Target : `http://${monitor.Target}`}
 						target="_blank"
@@ -106,7 +103,7 @@
 					</div>
 
 					<div
-						class="uppercase px-2 py-0.5 rounded bg-white/5 border border-white/8 font-mono text-[11px]"
+						class="uppercase px-2 py-0.5 rounded bg-white/5 border border-border font-mono text-[11px]"
 					>
 						{monitor.Type}
 					</div>

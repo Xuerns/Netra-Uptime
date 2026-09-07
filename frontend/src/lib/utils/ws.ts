@@ -69,7 +69,7 @@ class WebSocketClient {
 		if (this.subscribers.size === 1) {
 			this.connect();
 		}
-		
+
 		return () => {
 			this.subscribers.delete(callback);
 			if (this.subscribers.size === 0) {
@@ -92,7 +92,7 @@ class WebSocketClient {
 
 		const delay = Math.min(1000 * 2 ** this.reconnectAttempts, 10000); // Exponential backoff
 		this.reconnectAttempts++;
-		
+
 		console.log(`[WebSocket] Reconnecting in ${delay}ms... (Attempt ${this.reconnectAttempts})`);
 		setTimeout(() => this.connect(), delay);
 	}

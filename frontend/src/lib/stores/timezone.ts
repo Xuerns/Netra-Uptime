@@ -29,7 +29,11 @@ export const POPULAR_TIMEZONES = [
 	{ value: 'America/New_York', label: 'America/New_York — ET (UTC−5/−4)', region: 'Americas' },
 	{ value: 'America/Chicago', label: 'America/Chicago — CT (UTC−6/−5)', region: 'Americas' },
 	{ value: 'America/Denver', label: 'America/Denver — MT (UTC−7/−6)', region: 'Americas' },
-	{ value: 'America/Los_Angeles', label: 'America/Los_Angeles — PT (UTC−8/−7)', region: 'Americas' },
+	{
+		value: 'America/Los_Angeles',
+		label: 'America/Los_Angeles — PT (UTC−8/−7)',
+		region: 'Americas'
+	},
 	{ value: 'America/Sao_Paulo', label: 'America/Sao_Paulo — BRT (UTC−3)', region: 'Americas' },
 	{ value: 'America/Toronto', label: 'America/Toronto — ET (UTC−5/−4)', region: 'Americas' },
 	{ value: 'America/Vancouver', label: 'America/Vancouver — PT (UTC−8/−7)', region: 'Americas' },
@@ -66,7 +70,11 @@ export const POPULAR_TIMEZONES = [
 
 	// Australia & Pacific
 	{ value: 'Australia/Perth', label: 'Australia/Perth — AWST (UTC+8)', region: 'Pacific' },
-	{ value: 'Australia/Sydney', label: 'Australia/Sydney — AEDT/AEST (UTC+11/+10)', region: 'Pacific' },
+	{
+		value: 'Australia/Sydney',
+		label: 'Australia/Sydney — AEDT/AEST (UTC+11/+10)',
+		region: 'Pacific'
+	},
 	{ value: 'Pacific/Auckland', label: 'Pacific/Auckland — NZST (UTC+12)', region: 'Pacific' },
 	{ value: 'Pacific/Honolulu', label: 'Pacific/Honolulu — HST (UTC−10)', region: 'Pacific' }
 ] as const;

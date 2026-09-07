@@ -2,7 +2,13 @@
 	import Logo from '$lib/assets/Logo.svg';
 	import { ArrowLeft, Eye, EyeOff } from 'lucide-svelte';
 	import { env } from '$env/dynamic/public';
-	import { validateEmail, validatePassword, validateName, validateConfirmPassword, debounce } from '$lib/utils/validation';
+	import {
+		validateEmail,
+		validatePassword,
+		validateName,
+		validateConfirmPassword,
+		debounce
+	} from '$lib/utils/validation';
 	import { isSelfHosted } from '$lib/utils/appMode';
 
 	let name = $state('');
@@ -140,29 +146,33 @@
 </svelte:head>
 
 <main
-	class="min-h-screen flex items-center justify-center p-sm md:p-md text-on-surface antialiased w-full relative"
+	class="min-h-screen flex items-center justify-center p-sm md:p-md text-foreground antialiased w-full relative auth-bg"
 >
-	<div class="w-full max-w-[448px] bg-[#131314] rounded-xl border border-[#2a2a2b] p-lg shadow-sm animate-fade-in">
+	<div
+		class="w-full max-w-[448px] bg-card rounded-xl border border-border p-lg shadow-sm animate-fade-in"
+	>
 		<form class="space-y-md" onsubmit={handleRegister}>
 			<div class="flex flex-col items-center mb-lg">
 				<div class="mb-sm">
 					<img alt="Pulsewatch Logo" class="h-10 w-auto" src={Logo} />
 				</div>
 				<h1
-					class="font-headline-lg text-[24px] font-semibold text-on-surface tracking-tight"
+					class="font-headline-lg text-[24px] font-semibold text-foreground tracking-tight"
 					style="text-wrap: balance;"
 				>
 					Create your account
 				</h1>
-				<p class="font-body-md text-on-surface-variant text-center mt-xs">
+				<p class="font-body-md text-muted-foreground text-center mt-xs">
 					Start monitoring your systems today.
 				</p>
 			</div>
 
 			<!-- Error Banner -->
 			{#if error}
-				<div class="flex items-start gap-2 p-3 rounded-lg bg-error/10 border border-error/20 animate-fade-in">
-					<p class="font-body-md text-sm text-error">{error}</p>
+				<div
+					class="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 animate-fade-in"
+				>
+					<p class="font-body-md text-sm text-destructive">{error}</p>
 				</div>
 			{/if}
 
@@ -170,15 +180,17 @@
 			<div class="space-y-sm">
 				<div class="flex flex-col gap-1">
 					<div class="flex items-center gap-3">
-						<label class="font-label-md text-on-surface-variant" for="name"> Full Name </label>
+						<label class="font-label-md text-muted-foreground" for="name"> Full Name </label>
 						{#if fieldErrors.name}
-							<span class="text-xs text-error font-medium">{fieldErrors.name}</span>
+							<span class="text-xs text-destructive font-medium">{fieldErrors.name}</span>
 						{/if}
 					</div>
 					<input
 						bind:value={name}
 						oninput={() => handleNameInput(name)}
-						class="w-full rounded-lg px-3 py-2.5 bg-[#0e0e0f] border border-[#2a2a2b] text-on-surface font-body-md placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors {fieldErrors.name ? 'border-error/70 focus:border-error focus:ring-error' : ''} {shake.name ? 'animate-shake' : ''}"
+						class="w-full rounded-lg px-3 py-2.5 bg-background border border-border text-foreground font-body-md placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors {fieldErrors.name
+							? 'border-destructive/70 focus:border-destructive focus:ring-destructive'
+							: ''} {shake.name ? 'animate-shake' : ''}"
 						id="name"
 						name="name"
 						placeholder="John Doe"
@@ -188,15 +200,17 @@
 				</div>
 				<div class="flex flex-col gap-1">
 					<div class="flex items-center gap-3">
-						<label class="font-label-md text-on-surface-variant" for="email"> Work Email </label>
+						<label class="font-label-md text-muted-foreground" for="email"> Work Email </label>
 						{#if fieldErrors.email}
-							<span class="text-xs text-error font-medium">{fieldErrors.email}</span>
+							<span class="text-xs text-destructive font-medium">{fieldErrors.email}</span>
 						{/if}
 					</div>
 					<input
 						bind:value={email}
 						oninput={() => handleEmailInput(email)}
-						class="w-full rounded-lg px-3 py-2.5 bg-[#0e0e0f] border border-[#2a2a2b] text-on-surface font-body-md placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors {fieldErrors.email ? 'border-error/70 focus:border-error focus:ring-error' : ''} {shake.email ? 'animate-shake' : ''}"
+						class="w-full rounded-lg px-3 py-2.5 bg-background border border-border text-foreground font-body-md placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors {fieldErrors.email
+							? 'border-destructive/70 focus:border-destructive focus:ring-destructive'
+							: ''} {shake.email ? 'animate-shake' : ''}"
 						id="email"
 						name="email"
 						placeholder="john@company.com"
@@ -206,16 +220,18 @@
 				</div>
 				<div class="flex flex-col gap-1">
 					<div class="flex items-center gap-3">
-						<label class="font-label-md text-on-surface-variant" for="password"> Password </label>
+						<label class="font-label-md text-muted-foreground" for="password"> Password </label>
 						{#if fieldErrors.password}
-							<span class="text-xs text-error font-medium">{fieldErrors.password}</span>
+							<span class="text-xs text-destructive font-medium">{fieldErrors.password}</span>
 						{/if}
 					</div>
 					<div class="relative">
 						<input
 							bind:value={password}
 							oninput={() => handlePasswordInput(password, confirmPassword)}
-							class="w-full rounded-lg px-3 py-2.5 bg-[#0e0e0f] border border-[#2a2a2b] text-on-surface font-body-md placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors pr-10 {fieldErrors.password ? 'border-error/70 focus:border-error focus:ring-error' : ''} {shake.password ? 'animate-shake' : ''}"
+							class="w-full rounded-lg px-3 py-2.5 bg-background border border-border text-foreground font-body-md placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors pr-10 {fieldErrors.password
+								? 'border-destructive/70 focus:border-destructive focus:ring-destructive'
+								: ''} {shake.password ? 'animate-shake' : ''}"
 							id="password"
 							name="password"
 							placeholder="••••••••"
@@ -224,7 +240,7 @@
 						/>
 						<button
 							type="button"
-							class="absolute inset-y-0 right-0 pr-3 flex items-center text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none"
+							class="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
 							onclick={() => (showPassword = !showPassword)}
 							tabindex="-1"
 						>
@@ -238,18 +254,21 @@
 				</div>
 				<div class="flex flex-col gap-1">
 					<div class="flex items-center gap-3">
-						<label class="font-label-md text-on-surface-variant" for="confirmPassword">
+						<label class="font-label-md text-muted-foreground" for="confirmPassword">
 							Confirm Password
 						</label>
 						{#if fieldErrors.confirmPassword}
-							<span class="text-xs text-error font-medium">{fieldErrors.confirmPassword}</span>
+							<span class="text-xs text-destructive font-medium">{fieldErrors.confirmPassword}</span
+							>
 						{/if}
 					</div>
 					<div class="relative">
 						<input
 							bind:value={confirmPassword}
 							oninput={() => handleConfirmPasswordInput(password, confirmPassword)}
-							class="w-full rounded-lg px-3 py-2.5 bg-[#0e0e0f] border border-[#2a2a2b] text-on-surface font-body-md placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors pr-10 {fieldErrors.confirmPassword ? 'border-error/70 focus:border-error focus:ring-error' : ''} {shake.confirmPassword ? 'animate-shake' : ''}"
+							class="w-full rounded-lg px-3 py-2.5 bg-background border border-border text-foreground font-body-md placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors pr-10 {fieldErrors.confirmPassword
+								? 'border-destructive/70 focus:border-destructive focus:ring-destructive'
+								: ''} {shake.confirmPassword ? 'animate-shake' : ''}"
 							id="confirmPassword"
 							name="confirmPassword"
 							placeholder="••••••••"
@@ -258,7 +277,7 @@
 						/>
 						<button
 							type="button"
-							class="absolute inset-y-0 right-0 pr-3 flex items-center text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none"
+							class="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
 							onclick={() => (showConfirmPassword = !showConfirmPassword)}
 							tabindex="-1"
 						>
@@ -275,7 +294,7 @@
 			<!-- Submit -->
 			<div class="pt-2">
 				<button
-					class="w-full bg-primary hover:bg-primary-container text-on-primary font-label-md font-semibold py-2.5 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-[#131314]"
+					class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-label-md font-semibold py-2.5 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
 					type="submit"
 					disabled={loading}
 				>
@@ -286,16 +305,16 @@
 			{#if !isSelfHosted()}
 				<!-- Separator -->
 				<div class="relative py-2 flex items-center">
-					<div class="grow h-px bg-[#2a2a2b]"></div>
-					<span class="shrink-0 mx-4 text-label-md text-on-surface-variant">or</span>
-					<div class="grow h-px bg-[#2a2a2b]"></div>
+					<div class="grow h-px bg-border"></div>
+					<span class="shrink-0 mx-4 text-label-md text-muted-foreground">or</span>
+					<div class="grow h-px bg-border"></div>
 				</div>
 
 				<!-- Google Auth Button -->
 				<button
 					type="button"
 					onclick={loginWithGoogle}
-					class="w-full bg-transparent hover:bg-white/5 text-on-surface font-label-md py-2.5 px-4 rounded-lg border border-[#2a2a2b] transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-[#131314]"
+					class="w-full bg-transparent hover:bg-accent text-foreground font-label-md py-2.5 px-4 rounded-lg border border-border transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
 				>
 					<svg class="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
 						<path
@@ -320,7 +339,7 @@
 			{/if}
 		</form>
 
-		<p class="mt-lg text-center font-body-md text-sm text-on-surface-variant">
+		<p class="mt-lg text-center font-body-md text-sm text-muted-foreground">
 			Already have an account? <a
 				class="text-primary hover:underline underline-offset-4"
 				href="/auth/login">Log in</a
@@ -330,9 +349,12 @@
 </main>
 
 <style>
-	main {
-		background-color: #0e0e0f;
-		background-image: radial-gradient(rgba(1, 101, 53, 0.15) 1.5px, transparent 1.5px);
+	.auth-bg {
+		background-color: var(--background);
+		background-image: radial-gradient(var(--border) 1.5px, transparent 1.5px);
 		background-size: 24px 24px;
+	}
+	:global(.dark) .auth-bg {
+		background-image: radial-gradient(rgba(1, 101, 53, 0.15) 1.5px, transparent 1.5px);
 	}
 </style>

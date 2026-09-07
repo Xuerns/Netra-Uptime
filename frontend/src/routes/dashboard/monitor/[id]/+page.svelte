@@ -194,26 +194,22 @@
 			class="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-8 text-center space-y-3 max-w-lg mx-auto"
 		>
 			<AlertTriangle class="size-10 text-rose-400 mx-auto" />
-			<h2 class="text-lg font-bold text-white">Failed to Load Monitor</h2>
-			<p class="text-xs text-on-surface-variant">{fetchError || 'Monitor not found'}</p>
+			<h2 class="text-lg font-bold text-foreground">Failed to Load Monitor</h2>
+			<p class="text-xs text-muted-foreground">{fetchError || 'Monitor not found'}</p>
 			<a
 				href="/dashboard/monitor"
-				class="inline-block bg-primary text-on-primary font-medium text-xs px-4 py-2 rounded-lg hover:bg-primary-container transition-colors"
+				class="inline-block bg-primary text-primary-foreground font-medium text-xs px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
 			>
 				Back to Monitors
 			</a>
 		</div>
 	{:else}
 		<!-- 1. Header & Actions Banner -->
-		<MonitorDetailHeader
-			{monitor}
-			onPauseResume={handlePauseResume}
-			onDelete={handleDelete}
-		/>
+		<MonitorDetailHeader {monitor} onPauseResume={handlePauseResume} onDelete={handleDelete} />
 
 		<!-- 2. Time Range Selector Control Bar -->
 		<div
-			class="flex items-center justify-between bg-[#161618] border border-white/8 rounded-xl p-1.5 flex-wrap gap-2"
+			class="flex items-center justify-between bg-card border border-border rounded-xl p-1.5 flex-wrap gap-2"
 		>
 			<div class="flex items-center gap-1.5">
 				{#each ['24h', '7d', '30d', '90d', '1y'] as period}
@@ -221,8 +217,8 @@
 						type="button"
 						class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all {activePeriod ===
 						period
-							? 'bg-primary text-on-primary shadow-sm'
-							: 'text-on-surface-variant hover:text-white hover:bg-white/5'}"
+							? 'bg-primary text-primary-foreground shadow-sm'
+							: 'text-muted-foreground hover:text-foreground hover:bg-white/5'}"
 						onclick={() => (activePeriod = period as any)}
 					>
 						{period.toUpperCase()}
@@ -230,7 +226,7 @@
 				{/each}
 			</div>
 
-			<div class="text-xs text-on-surface-variant font-mono px-3 hidden sm:block">
+			<div class="text-xs text-muted-foreground font-mono px-3 hidden sm:block">
 				Showing analytics for last {periodDays} day{periodDays > 1 ? 's' : ''}
 			</div>
 		</div>
@@ -253,14 +249,14 @@
 		/>
 
 		<!-- 5. Recent Incident Logs History -->
-		<div class="bg-[#161618] border border-white/8 rounded-2xl p-5 md:p-6 shadow-xl space-y-4">
+		<div class="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-xl space-y-4">
 			<div class="flex items-center justify-between">
-				<h3 class="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
+				<h3 class="text-sm font-semibold text-foreground tracking-tight flex items-center gap-2">
 					<AlertTriangle class="size-4 text-amber-400" />
 					<span>Recent Outages & Incidents</span>
 				</h3>
 
-				<span class="text-xs text-on-surface-variant font-mono">
+				<span class="text-xs text-muted-foreground font-mono">
 					{incidents.length} incident{incidents.length === 1 ? '' : 's'} recorded
 				</span>
 			</div>
@@ -268,8 +264,8 @@
 			{#if incidents.length === 0}
 				<div class="bg-white/5 rounded-xl p-6 text-center space-y-2">
 					<CheckCircle2 class="size-8 text-emerald-400 mx-auto" />
-					<p class="text-sm font-medium text-white">All Systems Operational</p>
-					<p class="text-xs text-on-surface-variant">
+					<p class="text-sm font-medium text-foreground">All Systems Operational</p>
+					<p class="text-xs text-muted-foreground">
 						No downtime incidents recorded during this timeframe.
 					</p>
 				</div>
@@ -277,7 +273,7 @@
 				<div class="space-y-2">
 					{#each incidents as inc}
 						<div
-							class="flex items-center justify-between bg-white/5 border border-white/8 rounded-xl p-4 transition-colors hover:bg-white/8"
+							class="flex items-center justify-between bg-white/5 border border-border rounded-xl p-4 transition-colors hover:bg-white/8"
 						>
 							<div class="space-y-1">
 								<div class="flex items-center gap-2">
@@ -286,18 +282,18 @@
 											? 'bg-emerald-400'
 											: 'bg-rose-500'}"
 									></span>
-									<span class="text-sm font-semibold text-white"
+									<span class="text-sm font-semibold text-foreground"
 										>{inc.Summary || 'Service Disruption'}</span
 									>
 									<span
-										class="uppercase text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-on-surface-variant"
+										class="uppercase text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 border border-border text-muted-foreground"
 									>
 										{inc.Status}
 									</span>
 								</div>
 							</div>
 
-							<div class="text-right text-xs text-on-surface-variant font-mono shrink-0">
+							<div class="text-right text-xs text-muted-foreground font-mono shrink-0">
 								<div>Started: {formatDateTime(inc.StartedAt, tz)}</div>
 								{#if inc.ResolvedAt}
 									<div class="text-emerald-400">Resolved: {formatDateTime(inc.ResolvedAt, tz)}</div>

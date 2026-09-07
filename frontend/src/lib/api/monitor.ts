@@ -92,7 +92,8 @@ function mapMonitor(m: any): Monitor {
 		Status: m.status ?? m.Status,
 		IntervalSeconds: m.interval_seconds ?? m.IntervalSeconds,
 		TimeoutSeconds: m.timeout_seconds ?? m.TimeoutSeconds,
-		ExpectedStatusCode: m.expectation_status_code ?? m.expectation_status_code ?? m.ExpectedStatusCode,
+		ExpectedStatusCode:
+			m.expectation_status_code ?? m.expectation_status_code ?? m.ExpectedStatusCode,
 		OrganizationID: m.organization_id ?? m.OrganizationID,
 		Organization: m.organization
 			? {
@@ -203,7 +204,9 @@ export const MonitorAPI = {
 	},
 
 	getDailyStats: async (orgId: string, monitorId: string, days = 30) => {
-		const res = await apiFetch(`${API_Route}/organization/${orgId}/monitors/${monitorId}/stats?days=${days}`);
+		const res = await apiFetch(
+			`${API_Route}/organization/${orgId}/monitors/${monitorId}/stats?days=${days}`
+		);
 		if (!res.ok) throw new Error('Failed to fetch monitor daily stats');
 		return res.json();
 	}

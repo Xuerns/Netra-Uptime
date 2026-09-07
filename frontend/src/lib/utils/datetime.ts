@@ -59,12 +59,13 @@ export function formatTimeOnly(dateStr: string | undefined | null, timezone = 'U
 		}).format(new Date(dateStr));
 
 		// Ambil abbreviasi timezone (misal "WIB", "EST", "UTC")
-		const tzAbbr = new Intl.DateTimeFormat('en-US', {
-			timeZoneName: 'short',
-			timeZone: timezone
-		})
-			.formatToParts(new Date(dateStr))
-			.find((p) => p.type === 'timeZoneName')?.value ?? timezone;
+		const tzAbbr =
+			new Intl.DateTimeFormat('en-US', {
+				timeZoneName: 'short',
+				timeZone: timezone
+			})
+				.formatToParts(new Date(dateStr))
+				.find((p) => p.type === 'timeZoneName')?.value ?? timezone;
 
 		return `${time} ${tzAbbr}`;
 	} catch {

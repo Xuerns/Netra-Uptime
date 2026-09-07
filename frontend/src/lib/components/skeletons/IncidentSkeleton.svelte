@@ -2,15 +2,15 @@
 	<!-- Search & Filter Control Bar Skeleton -->
 	<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
 		<!-- Search Input Skeleton -->
-		<div class="h-9 flex-1 bg-[#161618] border border-white/10 rounded-xl animate-pulse"></div>
+		<div class="h-9 flex-1 bg-card border border-border rounded-xl animate-pulse"></div>
 		<!-- Severity Filter Select Skeleton -->
-		<div class="h-9 w-36 bg-[#161618] border border-white/10 rounded-xl animate-pulse shrink-0"></div>
+		<div class="h-9 w-36 bg-card border border-border rounded-xl animate-pulse shrink-0"></div>
 	</div>
 
 	<!-- GitHub-Style Table List Box Skeleton -->
-	<div class="bg-[#161618] border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+	<div class="bg-card border border-border rounded-2xl overflow-hidden shadow-xl">
 		<!-- Table Header Bar Skeleton -->
-		<div class="bg-white/3 border-b border-white/10 px-5 py-3.5 flex items-center justify-between">
+		<div class="bg-white/3 border-b border-border px-5 py-3.5 flex items-center justify-between">
 			<!-- Filter Tabs Skeleton (Active / Resolved) -->
 			<div class="flex items-center gap-6">
 				<div class="flex items-center gap-2">

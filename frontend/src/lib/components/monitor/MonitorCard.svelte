@@ -1,5 +1,16 @@
 <script lang="ts">
-	import { CircleDot, Clock, ArrowUpRight, MoreVertical, Edit2, Trash2, ShieldCheck, Globe, Pause, Play } from 'lucide-svelte';
+	import {
+		CircleDot,
+		Clock,
+		ArrowUpRight,
+		MoreVertical,
+		Edit2,
+		Trash2,
+		ShieldCheck,
+		Globe,
+		Pause,
+		Play
+	} from 'lucide-svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import Sparkline from '$lib/components/Sparkline.svelte';
 	import type { Monitor } from '$lib/api/monitor';
@@ -13,14 +24,14 @@
 		trimTarget
 	} from '$lib/utils/monitor';
 
-	let { 
+	let {
 		monitor,
 		openDropdownId,
 		toggleDropdown,
 		handleDeleteMonitor,
 		handleEditMonitor,
 		handleTogglePause
-	} = $props<{ 
+	} = $props<{
 		monitor: Monitor;
 		openDropdownId?: string | null;
 		toggleDropdown?: (id: string) => void;
@@ -64,12 +75,12 @@
 			</div>
 
 			<div class="min-w-0 flex-1">
-				<h3 class="text-[15px] font-semibold text-on-surface leading-tight truncate mb-0.5">
+				<h3 class="text-[15px] font-semibold text-foreground leading-tight truncate mb-0.5">
 					<a href="/dashboard/monitor/{monitor.ID}" class="hover:text-primary transition-colors">
 						{monitor.Name}
 					</a>
 				</h3>
-				<p class="text-[12px] font-mono text-on-surface-variant/70 truncate" title={monitor.Target}>
+				<p class="text-[12px] font-mono text-muted-foreground/70 truncate" title={monitor.Target}>
 					{trimTarget(monitor.Target)}
 				</p>
 			</div>
@@ -88,7 +99,7 @@
 				{#if toggleDropdown}
 					<div class="relative">
 						<button
-							class="flex items-center justify-center size-7 rounded-md text-on-surface-variant hover:bg-white/10 hover:text-on-surface transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+							class="flex items-center justify-center size-7 rounded-md text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
 							aria-label="Monitor options"
 							onclick={(e) => {
 								e.preventDefault();
@@ -101,13 +112,13 @@
 
 						{#if openDropdownId === 'monitor-' + monitor.ID}
 							<div
-								class="absolute top-full right-0 mt-1 min-w-[140px] bg-[rgba(255,255,255,0.06)] backdrop-blur-xl border border-white/8 rounded-lg p-1.5 z-20 shadow-xl"
+								class="absolute top-full right-0 mt-1 min-w-[140px] bg-glass-card-bg backdrop-blur-xl border border-border rounded-lg p-1.5 z-20 shadow-xl"
 								role="presentation"
 								onclick={(e) => e.stopPropagation()}
 							>
 								{#if handleTogglePause}
 									<button
-										class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[13px] text-on-surface hover:bg-white/10 transition-colors text-left w-full"
+										class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[13px] text-foreground hover:bg-white/10 transition-colors text-left w-full"
 										onclick={() => {
 											toggleDropdown('');
 											handleTogglePause(monitor);
@@ -124,7 +135,7 @@
 								{/if}
 								{#if handleEditMonitor}
 									<button
-										class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[13px] text-on-surface hover:bg-white/10 transition-colors text-left w-full"
+										class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[13px] text-foreground hover:bg-white/10 transition-colors text-left w-full"
 										onclick={() => {
 											toggleDropdown('');
 											handleEditMonitor(monitor);
@@ -136,7 +147,7 @@
 								{/if}
 								{#if handleDeleteMonitor}
 									<button
-										class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[13px] text-error hover:bg-white/10 transition-colors text-left w-full mt-0.5"
+										class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[13px] text-destructive hover:bg-white/10 transition-colors text-left w-full mt-0.5"
 										onclick={(e) => {
 											e.preventDefault();
 											toggleDropdown('');
@@ -180,7 +191,7 @@
 
 			<div class="flex flex-col gap-0.5 ml-auto text-right">
 				<span class="metric-label">Interval</span>
-				<span class="metric-value text-on-surface-variant">
+				<span class="metric-value text-muted-foreground">
 					{formatInterval(monitor.IntervalSeconds)}
 				</span>
 			</div>
@@ -188,11 +199,19 @@
 
 		<!-- SSL & Domain Expiry Row -->
 		{#if monitor.Type === 'http' && (monitor.EnableSSLDomainCheck ?? true)}
-			<div class="flex items-center gap-2 text-[11px] pt-1.5 border-t border-white/6 flex-wrap">
+			<div class="flex items-center gap-2 text-[11px] pt-1.5 border-t border-border flex-wrap">
 				{#if monitor.SSLStatus && monitor.SSLStatus !== 'none'}
 					<span
-						class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono font-medium {monitor.SSLStatus === 'valid' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : monitor.SSLStatus === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}"
-						title={monitor.SSLError || (monitor.SSLExpiresAt ? `SSL Expires: ${new Date(monitor.SSLExpiresAt).toLocaleDateString()}` : '')}
+						class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono font-medium {monitor.SSLStatus ===
+						'valid'
+							? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+							: monitor.SSLStatus === 'warning'
+								? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+								: 'bg-rose-500/10 border-rose-500/20 text-rose-400'}"
+						title={monitor.SSLError ||
+							(monitor.SSLExpiresAt
+								? `SSL Expires: ${new Date(monitor.SSLExpiresAt).toLocaleDateString()}`
+								: '')}
 					>
 						<ShieldCheck class="size-3 shrink-0" />
 						{#if monitor.SSLStatus === 'valid'}
@@ -209,8 +228,16 @@
 
 				{#if monitor.DomainStatus && monitor.DomainStatus !== 'none'}
 					<span
-						class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono font-medium {monitor.DomainStatus === 'valid' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : monitor.DomainStatus === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}"
-						title={monitor.DomainError || (monitor.DomainExpiresAt ? `Domain Expires: ${new Date(monitor.DomainExpiresAt).toLocaleDateString()}` : '')}
+						class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono font-medium {monitor.DomainStatus ===
+						'valid'
+							? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+							: monitor.DomainStatus === 'warning'
+								? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+								: 'bg-rose-500/10 border-rose-500/20 text-rose-400'}"
+						title={monitor.DomainError ||
+							(monitor.DomainExpiresAt
+								? `Domain Expires: ${new Date(monitor.DomainExpiresAt).toLocaleDateString()}`
+								: '')}
 					>
 						<Globe class="size-3 shrink-0" />
 						{#if monitor.DomainStatus === 'valid'}
@@ -232,13 +259,13 @@
 			<div class="flex items-center gap-1.5 min-w-0">
 				{#if monitor.Organization}
 					<span
-						class="text-[11px] font-medium text-on-surface-variant bg-white/5 border border-white/8 px-2 py-0.5 rounded-full truncate max-w-[120px]"
+						class="text-[11px] font-medium text-muted-foreground bg-white/5 border border-border px-2 py-0.5 rounded-full truncate max-w-[120px]"
 						title={monitor.Organization.Name}
 					>
 						{monitor.Organization.Name}
 					</span>
 				{/if}
-				<span class="text-[11px] text-on-surface-variant/40 flex items-center gap-1">
+				<span class="text-[11px] text-muted-foreground/40 flex items-center gap-1">
 					<Clock class="size-3" aria-hidden="true" />
 					{formatLastChecked(monitor.LastCheckedAt)}
 				</span>
@@ -246,7 +273,7 @@
 
 			<a
 				href="/dashboard/monitor/{monitor.ID}"
-				class="flex items-center gap-1 text-[12px] font-medium text-on-surface-variant hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
+				class="flex items-center gap-1 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
 				aria-label="View {monitor.Name} details"
 			>
 				View <ArrowUpRight class="size-3.5" />
@@ -268,8 +295,8 @@
 <style>
 	.monitor-card {
 		position: relative;
-		background: rgba(255, 255, 255, 0.025);
-		border: 1px solid rgba(255, 255, 255, 0.08);
+		background: var(--color-card);
+		border: 1px solid var(--color-border);
 		border-radius: 12px;
 		overflow: hidden;
 		transition:
@@ -280,21 +307,25 @@
 
 	.monitor-card:hover {
 		transform: translateY(-1px);
-		box-shadow: 0 12px 28px -12px rgba(0, 0, 0, 0.55);
+		box-shadow: 0 12px 28px -12px rgba(0, 0, 0, 0.15);
 	}
 
 	.monitor-card[data-status='up']:hover {
 		border-color: rgba(78, 222, 163, 0.35);
-		box-shadow: 0 12px 28px -12px rgba(0, 0, 0, 0.55), 0 0 20px rgba(78, 222, 163, 0.08);
+		box-shadow:
+			0 12px 28px -12px rgba(0, 0, 0, 0.15),
+			0 0 20px rgba(78, 222, 163, 0.08);
 	}
 
 	.monitor-card[data-status='down'] {
-		border-color: rgba(255, 107, 107, 0.15);
+		border-color: rgba(255, 107, 107, 0.25);
 	}
 
 	.monitor-card[data-status='down']:hover {
 		border-color: rgba(255, 107, 107, 0.4);
-		box-shadow: 0 12px 28px -12px rgba(0, 0, 0, 0.55), 0 0 20px rgba(255, 107, 107, 0.15);
+		box-shadow:
+			0 12px 28px -12px rgba(0, 0, 0, 0.15),
+			0 0 20px rgba(255, 107, 107, 0.1);
 	}
 
 	:global(.monitor-card[data-status='up'] .monitor-card__accent) {
@@ -321,9 +352,9 @@
 		width: 32px;
 		height: 32px;
 		border-radius: 8px;
-		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255, 255, 255, 0.08);
-		color: var(--color-on-surface-variant);
+		background: var(--color-secondary);
+		border: 1px solid var(--color-border);
+		color: var(--color-muted-foreground);
 	}
 
 	/* ── Metric labels / values ───────────────────────────────────────────── */
@@ -331,7 +362,7 @@
 		font-size: 11px;
 		text-transform: uppercase;
 		letter-spacing: 0.06em;
-		color: var(--color-on-surface-variant);
+		color: var(--color-muted-foreground);
 		opacity: 0.6;
 	}
 
@@ -339,7 +370,7 @@
 		font-family: 'JetBrains Mono', monospace;
 		font-size: 14px;
 		font-weight: 500;
-		color: var(--color-on-surface);
+		color: var(--color-foreground);
 	}
 
 	/* ── Status badge ─────────────────────────────────────────────────────── */
@@ -357,25 +388,25 @@
 	}
 
 	.status-badge--up {
-		color: #4edea3;
+		color: var(--color-primary);
 		background: rgba(78, 222, 163, 0.1);
 		border-color: rgba(78, 222, 163, 0.22);
 	}
 
 	.status-badge--down {
-		color: #ff6b6b;
+		color: var(--color-destructive);
 		background: rgba(255, 107, 107, 0.1);
 		border-color: rgba(255, 107, 107, 0.22);
 	}
 
 	.status-badge--paused {
-		color: #888899;
+		color: var(--color-muted-foreground);
 		background: rgba(136, 136, 153, 0.1);
 		border-color: rgba(136, 136, 153, 0.2);
 	}
 
 	.status-badge--pending {
-		color: #adc6ff;
+		color: var(--color-muted-foreground);
 		background: rgba(173, 198, 255, 0.1);
 		border-color: rgba(173, 198, 255, 0.2);
 	}

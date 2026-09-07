@@ -115,15 +115,17 @@
 	<title>Notification • PulseWatch</title>
 </svelte:head>
 
-<div class="w-full text-on-surface antialiased py-4">
+<div class="w-full text-foreground antialiased py-4">
 	{#if errorMsg}
-		<div class="p-4 mb-6 rounded-lg bg-error/10 border border-error/20 text-error text-[13px]">
+		<div
+			class="p-4 mb-6 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-[13px]"
+		>
 			{errorMsg}
 		</div>
 	{/if}
 
 	<div class="flex flex-col gap-4">
-		<h2 class="text-sm font-medium text-on-surface-variant uppercase tracking-wider mb-2">
+		<h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-2">
 			Organization Invitations
 		</h2>
 
@@ -131,22 +133,22 @@
 			<NotificationSkeleton />
 		{:else if !invitations || invitations.length === 0}
 			<div
-				class="flex flex-col items-center justify-center py-12 px-4 rounded-xl border border-white/8 border-dashed bg-white/1"
+				class="flex flex-col items-center justify-center py-12 px-4 rounded-xl border border-border border-dashed bg-white/1"
 			>
 				<div
-					class="flex items-center justify-center size-12 rounded-full bg-white/5 text-on-surface-variant/50 mb-4"
+					class="flex items-center justify-center size-12 rounded-full bg-white/5 text-muted-foreground/50 mb-4"
 				>
 					<Bell class="size-5" />
 				</div>
-				<p class="text-[14px] font-medium text-on-surface">No pending invitations</p>
-				<p class="text-[13px] text-on-surface-variant mt-1 text-center">
+				<p class="text-[14px] font-medium text-foreground">No pending invitations</p>
+				<p class="text-[13px] text-muted-foreground mt-1 text-center">
 					When you are invited to join an organization, it will appear here.
 				</p>
 			</div>
 		{:else}
 			{#each invitations as invite (invite.ID)}
 				<div
-					class="flex flex-wrap items-center justify-between gap-6 p-5 rounded-xl bg-white/2 border border-white/8 hover:bg-white/4 transition-colors"
+					class="flex flex-wrap items-center justify-between gap-6 p-5 rounded-xl bg-white/2 border border-border hover:bg-white/4 transition-colors"
 				>
 					<div class="flex items-center gap-4 min-w-0">
 						<!-- Inviter Avatar -->
@@ -167,15 +169,15 @@
 						{/if}
 
 						<div class="flex flex-col min-w-0">
-							<p class="text-[14.5px] text-on-surface m-0 leading-snug">
+							<p class="text-[14.5px] text-foreground m-0 leading-snug">
 								<span class="font-semibold">{invite.Inviter?.name || 'Someone'}</span>
-								<span class="text-on-surface-variant">invited you to join</span>
+								<span class="text-muted-foreground">invited you to join</span>
 								<span class="font-semibold text-primary"
 									>{invite.Organization?.name || 'an organization'}</span
 								>
 							</p>
-							<p class="text-[12.5px] text-on-surface-variant m-0 mt-1">
-								Role: <span class="capitalize text-on-surface">{invite.Role}</span>
+							<p class="text-[12.5px] text-muted-foreground m-0 mt-1">
+								Role: <span class="capitalize text-foreground">{invite.Role}</span>
 							</p>
 						</div>
 					</div>
@@ -183,7 +185,7 @@
 					{#if invite.Status === 'pending'}
 						<div class="flex items-center gap-2 shrink-0 ml-auto">
 							<button
-								class="flex items-center justify-center size-9 rounded-lg border border-white/10 bg-white/2 text-on-surface-variant hover:bg-error/15 hover:text-error hover:border-error/20 transition-all"
+								class="flex items-center justify-center size-9 rounded-lg border border-border bg-white/2 text-muted-foreground hover:bg-destructive/15 hover:text-destructive hover:border-destructive/20 transition-all"
 								onclick={() => handleAction(invite.ID, 'reject')}
 								aria-label="Reject"
 								title="Reject invitation"
@@ -191,7 +193,7 @@
 								<X class="size-[18px]" />
 							</button>
 							<button
-								class="flex items-center gap-2 h-9 px-4 rounded-lg bg-primary text-on-primary font-medium text-[13.5px] hover:bg-[#12c98d] transition-colors"
+								class="flex items-center gap-2 h-9 px-4 rounded-lg bg-primary text-primary-foreground font-medium text-[13.5px] hover:bg-[#12c98d] transition-colors"
 								onclick={() => handleAction(invite.ID, 'accept')}
 							>
 								<Check class="size-sm" />
@@ -202,7 +204,9 @@
 						<div class="shrink-0 ml-auto">
 							<span
 								class="text-[12px] font-medium px-3 py-1 rounded-full uppercase tracking-wider
-								{invite.Status === 'accepted' ? 'bg-primary/10 text-primary' : 'bg-error/10 text-error'}"
+								{invite.Status === 'accepted'
+									? 'bg-primary/10 text-primary'
+									: 'bg-destructive/10 text-destructive'}"
 							>
 								{invite.Status}
 							</span>

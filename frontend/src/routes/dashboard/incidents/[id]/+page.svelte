@@ -81,7 +81,7 @@
 			isPosting = true;
 			await IncidentAPI.addUpdate(currentOrgId, incidentId, { message });
 			toast.success('Incident status update posted successfully');
-			
+
 			// Refresh updates list
 			const updatesRes = await IncidentAPI.getUpdates(currentOrgId, incidentId);
 			updates = updatesRes.data || [];
@@ -98,7 +98,11 @@
 </script>
 
 <svelte:head>
-	<title>{incident ? `Incident #${incident.ID.substring(0, 8)} - PulseWatch` : 'Incident Detail - PulseWatch'}</title>
+	<title
+		>{incident
+			? `Incident #${incident.ID.substring(0, 8)} - PulseWatch`
+			: 'Incident Detail - PulseWatch'}</title
+	>
 </svelte:head>
 
 {#if isLoading}
@@ -110,13 +114,7 @@
 {:else if incident}
 	<div class="space-y-6">
 		<!-- 1. Header Section Component -->
-		<IncidentDetailHeader
-			{incident}
-			{currentUserId}
-			{isJoining}
-			{tz}
-			onJoin={handleJoinBridge}
-		/>
+		<IncidentDetailHeader {incident} {currentUserId} {isJoining} {tz} onJoin={handleJoinBridge} />
 
 		<!-- 2. Communication Feed & Responders Side by Side -->
 		<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">

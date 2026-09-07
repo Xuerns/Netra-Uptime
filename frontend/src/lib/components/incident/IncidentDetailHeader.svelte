@@ -36,14 +36,14 @@
 	<!-- Breadcrumb -->
 	<a
 		href="/dashboard/incidents"
-		class="inline-flex items-center gap-2 text-xs font-mono text-on-surface-variant hover:text-white transition-colors"
+		class="inline-flex items-center gap-2 text-xs font-mono text-muted-foreground hover:text-foreground transition-colors"
 	>
 		<ArrowLeft class="size-3.5" />
 		<span>Back to Incidents</span>
 	</a>
 
 	<!-- Header Content Block -->
-	<div class="bg-[#161618] border border-white/10 rounded-lg p-5 md:p-6 space-y-4">
+	<div class="bg-card border border-border rounded-lg p-5 md:p-6 space-y-4">
 		<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 			<!-- Title & Badges -->
 			<div class="space-y-2">
@@ -77,10 +77,10 @@
 						</span>
 					{/if}
 
-					<span class="text-xs text-white/40 font-mono">#{incident.ID.substring(0, 8)}</span>
+					<span class="text-xs text-foreground/40 font-mono">#{incident.ID.substring(0, 8)}</span>
 				</div>
 
-				<h1 class="text-xl md:text-2xl font-semibold text-white tracking-tight">
+				<h1 class="text-xl md:text-2xl font-semibold text-foreground tracking-tight">
 					{incident.Summary || 'Service Disruption'}
 				</h1>
 			</div>
@@ -97,7 +97,7 @@
 						</div>
 					{:else}
 						<button
-							class="px-4 py-2 bg-primary text-on-primary rounded-lg text-xs font-semibold hover:bg-primary-container transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
+							class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-semibold hover:bg-primary/90 transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
 							disabled={isJoining}
 							onclick={onJoin}
 						>
@@ -118,33 +118,36 @@
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
 			<!-- Target Monitor -->
 			<div>
-				<span class="text-white/40 block text-[11px] uppercase tracking-wider">Target Monitor</span>
+				<span class="text-foreground/40 block text-[11px] uppercase tracking-wider"
+					>Target Monitor</span
+				>
 				{#if incident.Monitor}
 					<a
 						href="/dashboard/monitor/{incident.MonitorID}"
-						class="inline-flex items-center gap-1.5 text-white hover:text-primary font-semibold transition-colors mt-0.5"
+						class="inline-flex items-center gap-1.5 text-foreground hover:text-primary font-semibold transition-colors mt-0.5"
 					>
 						<Server class="size-3.5 text-primary" />
 						<span class="truncate">{incident.Monitor.Name}</span>
-						<ExternalLink class="size-3 text-white/40" />
+						<ExternalLink class="size-3 text-foreground/40" />
 					</a>
-					<div class="text-[11px] text-on-surface-variant truncate">
+					<div class="text-[11px] text-muted-foreground truncate">
 						{incident.Monitor.Target}
 					</div>
 				{:else}
-					<span class="text-white/60">Unknown Monitor ({incident.MonitorID})</span>
+					<span class="text-foreground/60">Unknown Monitor ({incident.MonitorID})</span>
 				{/if}
 			</div>
 
 			<!-- Timeline Status -->
 			<div>
-				<span class="text-white/40 block text-[11px] uppercase tracking-wider">Timeline Status</span
+				<span class="text-foreground/40 block text-[11px] uppercase tracking-wider"
+					>Timeline Status</span
 				>
-				<div class="flex items-center gap-1.5 text-white font-semibold">
+				<div class="flex items-center gap-1.5 text-foreground font-semibold">
 					<Clock class="size-3.5 text-amber-400" />
 					<span>Started: {formattedStartedAt}</span>
 				</div>
-				<div class="text-[11px] text-on-surface-variant">
+				<div class="text-[11px] text-muted-foreground">
 					{#if formattedResolvedAt}
 						<span class="text-emerald-400">Resolved at {formattedResolvedAt}</span>
 					{:else}

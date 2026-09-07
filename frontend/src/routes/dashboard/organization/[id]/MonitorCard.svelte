@@ -54,17 +54,17 @@
 
 <!-- Monitor Card -->
 <div
-	class="relative w-full bg-white/3 border border-white/8 rounded-lg p-5 flex flex-col gap-3.5 backdrop-blur-md transition-all duration-250 ease-in-out"
+	class="relative w-full bg-white/3 border border-border rounded-lg p-5 flex flex-col gap-3.5 backdrop-blur-md transition-all duration-250 ease-in-out"
 >
 	<!-- Card Top -->
 	<div class="flex items-start justify-between gaep-2">
 		<div class="min-w-0">
-			<p class="text-body-md font-semibold text-on-surface truncate m-0">
+			<p class="text-body-md font-semibold text-foreground truncate m-0">
 				<a href="/dashboard/monitor/{monitor.ID}" class="hover:text-primary transition-colors">
 					{monitor.Name}
 				</a>
 			</p>
-			<p class="font-mono text-[12px] text-on-surface-variant truncate mt-1 m-0">
+			<p class="font-mono text-[12px] text-muted-foreground truncate mt-1 m-0">
 				{monitor.Target}
 			</p>
 		</div>
@@ -80,7 +80,7 @@
 			<!-- Kebab Menu -->
 			<div class="relative">
 				<button
-					class="flex items-center justify-center size-7 rounded-lg border border-transparent text-on-surface-variant hover:bg-white/7 hover:text-on-surface hover:border-white/10 transition-colors"
+					class="flex items-center justify-center size-7 rounded-lg border border-transparent text-muted-foreground hover:bg-white/7 hover:text-foreground hover:border-border transition-colors"
 					aria-label="Monitor options"
 					onclick={(e) => {
 						e.stopPropagation();
@@ -94,11 +94,11 @@
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div
-						class="absolute top-full right-0 mt-1.5 min-w-[152px] bg-[#161618] shadow-xl border border-white/8 rounded-lg p-1.5 flex flex-col gap-0.5 z-20"
+						class="absolute top-full right-0 mt-1.5 min-w-[152px] bg-card shadow-xl border border-border rounded-lg p-1.5 flex flex-col gap-0.5 z-20"
 						onclick={(e) => e.stopPropagation()}
 					>
 						<button
-							class="flex items-center gap-2 px-2.5 py-2 rounded-md text-[13px] text-on-surface hover:bg-white/7 transition-colors text-left w-full"
+							class="flex items-center gap-2 px-2.5 py-2 rounded-md text-[13px] text-foreground hover:bg-white/7 transition-colors text-left w-full"
 							onclick={(e) => {
 								e.preventDefault();
 								e.stopPropagation();
@@ -110,7 +110,7 @@
 							Edit monitor
 						</button>
 						<button
-							class="flex items-center gap-2 px-2.5 py-2 rounded-md text-[13px] text-error hover:bg-error/10 transition-colors text-left w-full"
+							class="flex items-center gap-2 px-2.5 py-2 rounded-md text-[13px] text-destructive hover:bg-destructive/10 transition-colors text-left w-full"
 							onclick={() => {
 								toggleDropdown(monitor.ID);
 								isConfirmDeleteOpen = true;
@@ -126,7 +126,7 @@
 	</div>
 
 	<!-- Status Row -->
-	<div class="flex items-center gap-1.5 text-[12.5px] text-on-surface-variant">
+	<div class="flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
 		{#if monitor.Status === 'paused' || !monitor.IsActive}
 			<span class="size-2 rounded-full bg-amber-400 shrink-0"></span>
 			<span class="text-amber-400 font-medium">Paused</span>
@@ -134,8 +134,8 @@
 			<span class="size-2 rounded-full bg-primary shrink-0"></span>
 			<span class="text-primary">Operational</span>
 		{:else}
-			<span class="size-2 rounded-full bg-error shrink-0"></span>
-			<span class="text-error">Down</span>
+			<span class="size-2 rounded-full bg-destructive shrink-0"></span>
+			<span class="text-destructive">Down</span>
 		{/if}
 	</div>
 
@@ -146,11 +146,19 @@
 
 	<!-- SSL & Domain Expiry Row (for HTTP monitors) -->
 	{#if monitor.Type === 'http' && (monitor.EnableSSLDomainCheck ?? true)}
-		<div class="flex items-center gap-2 text-[11px] pt-2 border-t border-white/8 flex-wrap">
+		<div class="flex items-center gap-2 text-[11px] pt-2 border-t border-border flex-wrap">
 			{#if monitor.SSLStatus && monitor.SSLStatus !== 'none'}
 				<span
-					class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono font-medium {monitor.SSLStatus === 'valid' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : monitor.SSLStatus === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}"
-					title={monitor.SSLError || (monitor.SSLExpiresAt ? `SSL Expires: ${new Date(monitor.SSLExpiresAt).toLocaleDateString()}` : '')}
+					class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono font-medium {monitor.SSLStatus ===
+					'valid'
+						? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+						: monitor.SSLStatus === 'warning'
+							? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+							: 'bg-rose-500/10 border-rose-500/20 text-rose-400'}"
+					title={monitor.SSLError ||
+						(monitor.SSLExpiresAt
+							? `SSL Expires: ${new Date(monitor.SSLExpiresAt).toLocaleDateString()}`
+							: '')}
 				>
 					<ShieldCheck class="size-3 shrink-0" />
 					{#if monitor.SSLStatus === 'valid'}
@@ -167,8 +175,16 @@
 
 			{#if monitor.DomainStatus && monitor.DomainStatus !== 'none'}
 				<span
-					class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono font-medium {monitor.DomainStatus === 'valid' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : monitor.DomainStatus === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}"
-					title={monitor.DomainError || (monitor.DomainExpiresAt ? `Domain Expires: ${new Date(monitor.DomainExpiresAt).toLocaleDateString()}` : '')}
+					class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono font-medium {monitor.DomainStatus ===
+					'valid'
+						? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+						: monitor.DomainStatus === 'warning'
+							? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+							: 'bg-rose-500/10 border-rose-500/20 text-rose-400'}"
+					title={monitor.DomainError ||
+						(monitor.DomainExpiresAt
+							? `Domain Expires: ${new Date(monitor.DomainExpiresAt).toLocaleDateString()}`
+							: '')}
 				>
 					<Globe class="size-3 shrink-0" />
 					{#if monitor.DomainStatus === 'valid'}
@@ -186,28 +202,28 @@
 	{/if}
 
 	<!-- Metrics Row -->
-	<div class="flex justify-between gap-3 pt-3 border-t border-white/8 items-end">
+	<div class="flex justify-between gap-3 pt-3 border-t border-border items-end">
 		<div class="flex flex-col gap-0.5">
 			<span
 				class="font-mono text-[17px] font-medium {monitor.Status === 'down'
-					? 'text-error'
-					: 'text-on-surface'}"
+					? 'text-destructive'
+					: 'text-foreground'}"
 			>
 				{formatResponseTime(monitor.ResponseTimeMs)}
 			</span>
-			<span class="text-[10.5px] uppercase tracking-wide text-on-surface-variant">Response</span>
+			<span class="text-[10.5px] uppercase tracking-wide text-muted-foreground">Response</span>
 		</div>
 		<div class="flex flex-col gap-0.5">
 			<span class="font-mono text-[17px] font-medium {uptimeColor(monitor.UptimePercent)}">
 				{monitor.UptimePercent != null ? monitor.UptimePercent.toFixed(2) + '%' : '—'}
 			</span>
-			<span class="text-[10.5px] uppercase tracking-wide text-on-surface-variant">Uptime 30d</span>
+			<span class="text-[10.5px] uppercase tracking-wide text-muted-foreground">Uptime 30d</span>
 		</div>
 		<div class="flex flex-col gap-0.5 text-right">
-			<span class="font-mono text-[17px] font-medium text-on-surface">
+			<span class="font-mono text-[17px] font-medium text-foreground">
 				{formatInterval(monitor.IntervalSeconds)}
 			</span>
-			<span class="text-[10.5px] uppercase tracking-wide text-on-surface-variant">Interval</span>
+			<span class="text-[10.5px] uppercase tracking-wide text-muted-foreground">Interval</span>
 		</div>
 	</div>
 </div>

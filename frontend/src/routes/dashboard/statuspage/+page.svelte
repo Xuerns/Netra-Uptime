@@ -70,14 +70,14 @@
 	<title>Status Pages • PulseWatch</title>
 </svelte:head>
 
-<div class="statuspages-page text-on-surface antialiased">
+<div class="statuspages-page text-foreground antialiased">
 	<!-- ── Page Header ──────────────────────────────────────────────────────── -->
 	<header class="flex flex-wrap items-start justify-between gap-4 mb-6">
 		<div>
-			<h1 class="text-headline-lg font-semibold leading-tight tracking-tight text-on-surface mb-1">
+			<h1 class="text-headline-lg font-semibold leading-tight tracking-tight text-foreground mb-1">
 				Status Pages
 			</h1>
-			<p class="text-[14px] leading-relaxed text-on-surface-variant max-w-[52ch]">
+			<p class="text-[14px] leading-relaxed text-muted-foreground max-w-[52ch]">
 				Manage and monitor all status pages across your organizations.
 			</p>
 		</div>
@@ -86,14 +86,14 @@
 			<!-- View toggle -->
 			{#if statusPages.length > 0}
 				<div
-					class="flex items-center bg-black/20 border border-white/10 rounded-lg p-0.5"
+					class="flex items-center bg-foreground/10 border border-border rounded-lg p-0.5"
 					role="group"
 					aria-label="View mode"
 				>
 					<button
 						class="p-1.5 rounded-md transition-colors {viewMode === 'grid'
-							? 'bg-white/10 text-on-surface shadow-sm'
-							: 'text-on-surface-variant hover:text-on-surface hover:bg-white/5'}"
+							? 'bg-white/10 text-foreground shadow-sm'
+							: 'text-muted-foreground hover:text-foreground hover:bg-white/5'}"
 						onclick={() => setViewMode('grid')}
 						aria-label="Grid view"
 					>
@@ -101,8 +101,8 @@
 					</button>
 					<button
 						class="p-1.5 rounded-md transition-colors {viewMode === 'list'
-							? 'bg-white/10 text-on-surface shadow-sm'
-							: 'text-on-surface-variant hover:text-on-surface hover:bg-white/5'}"
+							? 'bg-white/10 text-foreground shadow-sm'
+							: 'text-muted-foreground hover:text-foreground hover:bg-white/5'}"
 						onclick={() => setViewMode('list')}
 						aria-label="List view"
 					>
@@ -112,7 +112,7 @@
 			{/if}
 
 			<Button
-				class="bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 h-9 px-4 gap-1.5 font-medium shadow-sm"
+				class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 gap-1.5 font-medium shadow-sm"
 				href="/dashboard/organization"
 			>
 				<Plus class="size-4" />
@@ -124,34 +124,34 @@
 	<!-- ── Loading ──────────────────────────────────────────────────────────── -->
 	{#if isLoading}
 		<StatusPageSkeleton {viewMode} />
-	<!-- ── Error state ──────────────────────────────────────────────────────── -->
+		<!-- ── Error state ──────────────────────────────────────────────────────── -->
 	{:else if fetchError}
 		<div
-			class="flex flex-col items-center justify-center gap-3 py-24 border border-white/8 rounded-xl bg-white/3"
+			class="flex flex-col items-center justify-center gap-3 py-24 border border-border rounded-xl bg-white/3"
 		>
-			<TriangleAlert class="size-8 text-error" />
-			<p class="text-sm text-on-surface-variant">{fetchError}</p>
+			<TriangleAlert class="size-8 text-destructive" />
+			<p class="text-sm text-muted-foreground">{fetchError}</p>
 			<Button
-				class="bg-[#1A1A1B] border border-[#2A2A2B] text-slate-300 hover:text-white hover:bg-[#2A2A2B] active:scale-[0.98] transition-all duration-200 h-9 px-4 font-medium shadow-sm"
+				class="bg-secondary border border-border text-muted-foreground hover:text-foreground hover:bg-accent active:scale-[0.98] transition-all duration-200 h-9 px-4 font-medium shadow-sm"
 				onclick={() => loadStatusPages()}
 			>
 				Try again
 			</Button>
 		</div>
 
-	<!-- ── Data ────────────────────────────────────────────────────────────── -->
+		<!-- ── Data ────────────────────────────────────────────────────────────── -->
 	{:else}
 		{#if statusPages.length > 0}
 			<!-- Search bar -->
 			<div class="relative w-full max-w-80 mb-6">
 				<Search
-					class="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-on-surface-variant/50 pointer-events-none"
+					class="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/50 pointer-events-none"
 				/>
 				<input
 					type="search"
 					placeholder="Search status pages…"
 					bind:value={searchQuery}
-					class="w-full h-9 pl-8 pr-3 bg-black/20 border border-white/10 rounded-lg text-[13px] text-on-surface placeholder:text-on-surface-variant/35 outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-colors"
+					class="w-full h-9 pl-8 pr-3 bg-foreground/10 border border-border rounded-lg text-[13px] text-foreground placeholder:text-muted-foreground/35 outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-colors"
 				/>
 			</div>
 		{/if}
@@ -159,19 +159,19 @@
 		<!-- Empty state (no status pages) -->
 		{#if statusPages.length === 0}
 			<div
-				class="flex flex-col items-center text-center py-24 px-4 border border-white/8 rounded-xl bg-white/3"
+				class="flex flex-col items-center text-center py-24 px-4 border border-border rounded-xl bg-white/3"
 			>
 				<div
 					class="flex items-center justify-center size-14 rounded-xl bg-primary/10 border border-primary/20 mb-4 text-primary"
 				>
 					<Globe class="size-6" />
 				</div>
-				<h3 class="text-xl font-semibold text-on-surface mb-1.5">No status pages yet</h3>
-				<p class="text-[14px] text-on-surface-variant max-w-[38ch] mb-6 leading-relaxed">
+				<h3 class="text-xl font-semibold text-foreground mb-1.5">No status pages yet</h3>
+				<p class="text-[14px] text-muted-foreground max-w-[38ch] mb-6 leading-relaxed">
 					Create a status page inside an organization to share system status with your customers.
 				</p>
 				<Button
-					class="bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 h-9 px-4 gap-1.5 font-medium shadow-sm"
+					class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 gap-1.5 font-medium shadow-sm"
 					href="/dashboard/organization"
 				>
 					<Plus class="size-4" />
@@ -179,15 +179,15 @@
 				</Button>
 			</div>
 
-		<!-- Search / filter no-results -->
+			<!-- Search / filter no-results -->
 		{:else if filtered.length === 0}
 			<div
-				class="flex flex-col items-center text-center py-16 border border-white/6 rounded-xl bg-white/2"
+				class="flex flex-col items-center text-center py-16 border border-border rounded-xl bg-white/2"
 			>
-				<Search class="size-6 text-on-surface-variant/30 mb-3" />
-				<p class="text-[14px] text-on-surface-variant">
+				<Search class="size-6 text-muted-foreground/30 mb-3" />
+				<p class="text-[14px] text-muted-foreground">
 					No status pages match
-					<strong class="text-on-surface font-medium"
+					<strong class="text-foreground font-medium"
 						>{searchQuery === '' ? '' : `"${searchQuery}"`}</strong
 					>
 				</p>
@@ -199,7 +199,8 @@
 				>
 					Clear filters
 				</button>
-			</div>		<!-- ── Grid view ─────────────────────────────────────────────────────── -->
+			</div>
+			<!-- ── Grid view ─────────────────────────────────────────────────────── -->
 		{:else if viewMode === 'grid'}
 			<div class="grid grid-cols-[repeat(auto-fill,minmax(450px,1fr))] gap-6">
 				{#each filtered as sp (sp.ID)}
@@ -209,10 +210,10 @@
 				{/each}
 			</div>
 
-		<!-- ── List view ─────────────────────────────────────────────────────── -->
+			<!-- ── List view ─────────────────────────────────────────────────────── -->
 		{:else}
 			<div
-				class="flex flex-col divide-y divide-white/6 border border-white/8 rounded-xl overflow-hidden bg-white/2"
+				class="flex flex-col divide-y divide-border border border-border rounded-xl overflow-hidden bg-white/2"
 			>
 				<div class="list-row list-row--header" aria-hidden="true">
 					<span>Status Page</span>
@@ -242,22 +243,22 @@
 	}
 
 	.list-row:hover {
-		background: rgba(255, 255, 255, 0.025);
+		background: var(--color-accent);
 	}
 
 	.list-row--header {
 		padding: 10px 20px;
 		font-size: 11px;
 		font-weight: 500;
-		color: var(--color-on-surface-variant);
+		color: var(--color-muted-foreground);
 		text-transform: uppercase;
 		letter-spacing: 0.06em;
-		background: rgba(255, 255, 255, 0.02);
+		background: var(--color-muted);
 		opacity: 0.65;
 	}
 
 	.list-row--header:hover {
-		background: rgba(255, 255, 255, 0.02);
+		background: var(--color-muted);
 	}
 
 	@media (prefers-reduced-motion: reduce) {

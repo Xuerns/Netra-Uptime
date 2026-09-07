@@ -155,29 +155,29 @@
 
 <div class="p-6 max-w-4xl mx-auto space-y-3">
 	<div>
-		<h1 class="text-2xl font-bold tracking-tight text-white mb-2">Profile Settings</h1>
-		<p class="text-slate-400">Manage your personal information and account security.</p>
+		<h1 class="text-2xl font-bold tracking-tight text-foreground mb-2">Profile Settings</h1>
+		<p class="text-muted-foreground">Manage your personal information and account security.</p>
 	</div>
 
 	<!-- Personal Information -->
-	<Card.Root class="bg-[#131314] border-[#2A2A2B]">
+	<Card.Root class="bg-card border-border">
 		<Card.Header>
-			<Card.Title class="text-white flex items-center gap-2">Personal Information</Card.Title>
-			<Card.Description class="text-slate-400">
+			<Card.Title class="text-foreground flex items-center gap-2">Personal Information</Card.Title>
+			<Card.Description class="text-muted-foreground">
 				Update your display name and view your registered email.
 			</Card.Description>
 		</Card.Header>
 		<Card.Content class="space-y-6">
 			<div class="flex items-center gap-6">
-				<Avatar.Root class="w-20 h-20 border border-[#2A2A2B]">
+				<Avatar.Root class="w-20 h-20 border border-border">
 					<Avatar.Image src={user?.avatar} alt={user?.name} />
-					<Avatar.Fallback class="bg-indigo-900 text-indigo-300 text-xl font-bold">
+					<Avatar.Fallback class="bg-primary/20 text-primary text-xl font-bold">
 						{user?.name?.charAt(0)?.toUpperCase()}
 					</Avatar.Fallback>
 				</Avatar.Root>
 				<div class="space-y-1">
-					<h3 class="font-medium text-white text-lg">{user?.name}</h3>
-					<p class="text-sm text-slate-400">{user?.email}</p>
+					<h3 class="font-medium text-foreground text-lg">{user?.name}</h3>
+					<p class="text-sm text-muted-foreground">{user?.email}</p>
 				</div>
 			</div>
 
@@ -189,30 +189,32 @@
 				class="space-y-4"
 			>
 				<div class="space-y-2">
-					<Label for="name" class="text-slate-300">Display Name</Label>
+					<Label for="name" class="text-muted-foreground">Display Name</Label>
 					<Input
 						id="name"
 						bind:value={formData.name}
 						placeholder="Your full name"
-						class="bg-[#1A1A1B] border-[#2A2A2B] text-white placeholder:text-slate-500 focus-visible:ring-emerald-500 h-11 transition-colors"
+						class="bg-secondary border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-primary h-11 transition-colors"
 					/>
 				</div>
 				<div class="space-y-2">
-					<Label for="email" class="text-slate-300">Email Address</Label>
+					<Label for="email" class="text-muted-foreground">Email Address</Label>
 					<Input
 						id="email"
 						value={user?.email}
 						disabled
-						class="bg-[#151516] border-[#2A2A2B] text-slate-300 cursor-not-allowed h-11"
+						class="bg-muted border-border text-muted-foreground cursor-not-allowed h-11"
 					/>
-					<p class="text-xs text-slate-500">Email address cannot be changed at this moment.</p>
+					<p class="text-xs text-muted-foreground">
+						Email address cannot be changed at this moment.
+					</p>
 				</div>
 
 				<div class="flex justify-end pt-2">
 					<Button
 						type="submit"
 						disabled={isUpdatingProfile}
-						class="bg-[#1A1A1B] border border-[#2A2A2B] text-emerald-500 hover:bg-emerald-600 hover:border-emerald-600 hover:text-white active:scale-[0.98] transition-all duration-200 h-11 px-6 font-medium shadow-sm"
+						class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-11 px-6 font-medium shadow-sm"
 					>
 						{#if isUpdatingProfile}
 							<Loader2 class="w-4 h-4 mr-2 animate-spin" />
@@ -227,31 +229,35 @@
 	</Card.Root>
 
 	<!-- Account Security -->
-	<Card.Root class="bg-[#131314] border-[#2A2A2B] p-0 gap-0">
+	<Card.Root class="bg-card border-border p-0 gap-0">
 		<button
 			type="button"
-			class="w-full text-left flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-white/[0.02] transition-colors rounded-t-xl"
+			class="w-full text-left flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-accent transition-colors rounded-t-xl"
 			onclick={() => (isSecurityOpen = !isSecurityOpen)}
 		>
 			<div class="space-y-1.5">
-				<Card.Title class="text-white flex items-center gap-2">Account Security</Card.Title>
-				<Card.Description class="text-slate-400">
+				<Card.Title class="text-foreground flex items-center gap-2">Account Security</Card.Title>
+				<Card.Description class="text-muted-foreground">
 					Update your password to keep your account secure.
 				</Card.Description>
 			</div>
-			<ChevronDown class="size-5 text-slate-400 transition-transform duration-200 {isSecurityOpen ? 'rotate-180' : ''}" />
+			<ChevronDown
+				class="size-5 text-muted-foreground transition-transform duration-200 {isSecurityOpen
+					? 'rotate-180'
+					: ''}"
+			/>
 		</button>
-		
+
 		{#if isSecurityOpen}
 			<div transition:slide={{ duration: 200 }}>
-				<Card.Content class="pt-0 border-t border-[#2A2A2B]">
+				<Card.Content class="pt-0 border-t border-border">
 					<div class="pt-6">
 						{#if user?.auth_provider === 'google' || user?.auth_provider === 'github'}
-							<div class="bg-[#1A1A1B] border border-[#2A2A2B] rounded-lg p-4 text-center">
-								<p class="text-slate-300">
+							<div class="bg-secondary border border-border rounded-lg p-4 text-center">
+								<p class="text-muted-foreground">
 									You are signed in using
-									<span class="font-semibold text-white capitalize">{user.auth_provider}</span>. Password
-									changes are managed by your provider.
+									<span class="font-semibold text-foreground capitalize">{user.auth_provider}</span
+									>. Password changes are managed by your provider.
 								</p>
 							</div>
 						{:else}
@@ -264,20 +270,22 @@
 									class="space-y-4"
 								>
 									<div class="space-y-2">
-										<Label for="currentPassword" class="text-slate-300">Current Password</Label>
+										<Label for="currentPassword" class="text-muted-foreground"
+											>Current Password</Label
+										>
 										<div class="relative">
 											<Input
 												id="currentPassword"
-												type={showCurrentPassword ? "text" : "password"}
+												type={showCurrentPassword ? 'text' : 'password'}
 												bind:value={passwordData.currentPassword}
 												placeholder="Enter current password"
 												required
-												class="bg-[#1A1A1B] border-[#2A2A2B] text-white placeholder:text-slate-500 focus-visible:ring-emerald-500 h-11 pr-10 transition-colors"
+												class="bg-secondary border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-primary h-11 pr-10 transition-colors"
 											/>
 											<button
 												type="button"
-												class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
-												onclick={() => showCurrentPassword = !showCurrentPassword}
+												class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+												onclick={() => (showCurrentPassword = !showCurrentPassword)}
 											>
 												{#if showCurrentPassword}
 													<EyeOff class="w-4 h-4" />
@@ -288,20 +296,20 @@
 										</div>
 									</div>
 									<div class="space-y-2">
-										<Label for="newPassword" class="text-slate-300">New Password</Label>
+										<Label for="newPassword" class="text-muted-foreground">New Password</Label>
 										<div class="relative">
 											<Input
 												id="newPassword"
-												type={showNewPassword ? "text" : "password"}
+												type={showNewPassword ? 'text' : 'password'}
 												bind:value={passwordData.newPassword}
 												placeholder="Minimum 8 characters"
 												required
-												class="bg-[#1A1A1B] border-[#2A2A2B] text-white placeholder:text-slate-500 focus-visible:ring-emerald-500 h-11 pr-10 transition-colors"
+												class="bg-secondary border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-primary h-11 pr-10 transition-colors"
 											/>
 											<button
 												type="button"
-												class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
-												onclick={() => showNewPassword = !showNewPassword}
+												class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+												onclick={() => (showNewPassword = !showNewPassword)}
 											>
 												{#if showNewPassword}
 													<EyeOff class="w-4 h-4" />
@@ -313,24 +321,28 @@
 									</div>
 									<div class="space-y-2">
 										<div class="flex justify-between items-center">
-											<Label for="confirmPassword" class="text-slate-300">Confirm New Password</Label>
+											<Label for="confirmPassword" class="text-muted-foreground"
+												>Confirm New Password</Label
+											>
 											{#if passwordData.confirmPassword && passwordData.newPassword !== passwordData.confirmPassword}
-												<span class="text-xs font-medium text-red-500">Passwords do not match</span>
+												<span class="text-xs font-medium text-destructive"
+													>Passwords do not match</span
+												>
 											{/if}
 										</div>
 										<div class="relative">
 											<Input
 												id="confirmPassword"
-												type={showConfirmPassword ? "text" : "password"}
+												type={showConfirmPassword ? 'text' : 'password'}
 												bind:value={passwordData.confirmPassword}
 												placeholder="Confirm new password"
 												required
-												class="bg-[#1A1A1B] border-[#2A2A2B] text-white placeholder:text-slate-500 focus-visible:ring-emerald-500 h-11 pr-10 transition-colors"
+												class="bg-secondary border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-primary h-11 pr-10 transition-colors"
 											/>
 											<button
 												type="button"
-												class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
-												onclick={() => showConfirmPassword = !showConfirmPassword}
+												class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+												onclick={() => (showConfirmPassword = !showConfirmPassword)}
 											>
 												{#if showConfirmPassword}
 													<EyeOff class="w-4 h-4" />
@@ -344,7 +356,7 @@
 										<Button
 											type="submit"
 											disabled={isChangingPassword}
-											class="bg-[#1A1A1B] border border-[#2A2A2B] text-emerald-500 hover:bg-emerald-600 hover:border-emerald-600 hover:text-white active:scale-[0.98] transition-all duration-200 h-11 px-6 font-medium shadow-sm"
+											class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-11 px-6 font-medium shadow-sm"
 										>
 											{#if isChangingPassword}
 												<Loader2 class="w-4 h-4 mr-2 animate-spin" />
@@ -364,12 +376,13 @@
 									class="space-y-4"
 								>
 									<div class="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4 mb-4">
-										<p class="text-indigo-200 text-sm">
-											We've sent a 6-digit verification code to your email. Please enter it below to confirm your password change.
+										<p class="text-primary text-sm">
+											We've sent a 6-digit verification code to your email. Please enter it below to
+											confirm your password change.
 										</p>
 									</div>
 									<div class="space-y-2">
-										<Label for="code" class="text-slate-300">Verification Code</Label>
+										<Label for="code" class="text-muted-foreground">Verification Code</Label>
 										<Input
 											id="code"
 											type="text"
@@ -377,22 +390,25 @@
 											placeholder="123456"
 											maxlength={6}
 											required
-											class="bg-[#1A1A1B] border-[#2A2A2B] text-white text-center text-xl tracking-widest placeholder:text-slate-500 focus-visible:ring-emerald-500 h-12 transition-colors uppercase font-mono"
+											class="bg-secondary border-border text-foreground text-center text-xl tracking-widest placeholder:text-muted-foreground focus-visible:ring-primary h-12 transition-colors uppercase font-mono"
 										/>
 									</div>
 									<div class="flex justify-end gap-3 pt-2">
 										<Button
 											type="button"
 											variant="ghost"
-											onclick={() => { passwordStep = 'init'; passwordData.code = ''; }}
-											class="text-slate-400 hover:text-white h-11"
+											onclick={() => {
+												passwordStep = 'init';
+												passwordData.code = '';
+											}}
+											class="text-muted-foreground hover:text-foreground h-11"
 										>
 											Cancel
 										</Button>
 										<Button
 											type="submit"
 											disabled={isChangingPassword || passwordData.code.length !== 6}
-											class="bg-[#1A1A1B] border border-[#2A2A2B] text-emerald-500 hover:bg-emerald-600 hover:border-emerald-600 hover:text-white active:scale-[0.98] transition-all duration-200 h-11 px-6 font-medium shadow-sm"
+											class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-11 px-6 font-medium shadow-sm"
 										>
 											{#if isChangingPassword}
 												<Loader2 class="w-4 h-4 mr-2 animate-spin" />
@@ -412,23 +428,23 @@
 	</Card.Root>
 
 	<!-- Danger Zone -->
-	<Card.Root class="bg-[#131314] border border-red-900/30">
+	<Card.Root class="bg-card border border-destructive/30">
 		<Card.Header>
-			<Card.Title class="text-red-500 flex items-center gap-2">Danger Zone</Card.Title>
-			<Card.Description class="text-slate-400">
+			<Card.Title class="text-destructive flex items-center gap-2">Danger Zone</Card.Title>
+			<Card.Description class="text-muted-foreground">
 				Irreversible and destructive actions for your account.
 			</Card.Description>
 		</Card.Header>
 		<Card.Content>
 			<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4">
 				<div class="space-y-1">
-					<h4 class="font-medium text-white">Delete Account</h4>
-					<p class="text-sm text-slate-400">
+					<h4 class="font-medium text-foreground">Delete Account</h4>
+					<p class="text-sm text-muted-foreground">
 						Permanently delete your account and all associated data. This action cannot be undone.
 					</p>
 				</div>
 				<Button
-					class="shrink-0 h-11 px-6 bg-[#1A1A1B] border border-[#2A2A2B] text-red-500 hover:bg-red-600 hover:border-red-600 hover:text-white transition-all duration-200 active:scale-[0.98] font-medium shadow-sm"
+					class="shrink-0 h-11 px-6 bg-secondary border border-border text-destructive hover:bg-destructive hover:border-destructive hover:text-foreground transition-all duration-200 active:scale-[0.98] font-medium shadow-sm"
 					onclick={() => (isDeleteDialogOpen = true)}
 				>
 					Delete Account

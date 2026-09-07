@@ -155,9 +155,9 @@
 			case 'tcp':
 				return 'bg-violet-500/14 text-violet-300';
 			case 'ping':
-				return 'bg-white/8 text-on-surface-variant';
+				return 'bg-white/8 text-muted-foreground';
 			default:
-				return 'bg-white/8 text-on-surface-variant';
+				return 'bg-white/8 text-muted-foreground';
 		}
 	}
 
@@ -358,28 +358,26 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-	class="flex items-stretch h-[calc(100vh-3rem)] -m-6 overflow-x-hidden text-on-surface antialiased"
+	class="flex items-stretch h-[calc(100vh-3rem)] -m-6 overflow-x-hidden text-foreground antialiased"
 	onclick={closeDropdowns}
 >
 	<!-- ── Left Column (Header & Main Content) ────────────────────────────────── -->
 	<div class="flex-1 flex flex-col min-w-0">
 		<!-- ── Page Header ────────────────────────────────────────────────────── -->
-		<header
-			class="flex items-center justify-between h-[72px] px-6 border-b border-white/8 shrink-0"
-		>
+		<header class="flex items-center justify-between h-[72px] px-6 border-b border-border shrink-0">
 			<div>
 				<div class="flex items-center gap-3">
-					<h1 class="text-2xl font-semibold leading-tight tracking-tight text-on-surface">
+					<h1 class="text-2xl font-semibold leading-tight tracking-tight text-foreground">
 						{orgName}
 					</h1>
 					<a
 						href="/dashboard/organization/{orgId}/settings"
-						class="text-on-surface-variant hover:text-on-surface transition-colors p-1 mt-1"
+						class="text-muted-foreground hover:text-foreground transition-colors p-1 mt-1"
 						title="Organization Settings"
 					>
 					</a>
 				</div>
-				<p class="font-mono text-[13px] text-on-surface-variant mt-1">
+				<p class="font-mono text-[13px] text-muted-foreground mt-1">
 					{#if isLoadingMonitors}
 						Loading monitors...
 					{:else}
@@ -387,7 +385,7 @@
 						{#if monitors.length > 0}
 							· <span class="text-primary">{upCount} up</span>
 							{#if downCount > 0}
-								· <span class="text-error">{downCount} down</span>
+								· <span class="text-destructive">{downCount} down</span>
 							{/if}
 						{/if}
 					{/if}
@@ -400,7 +398,7 @@
 					class="flex items-center justify-center size-9 rounded-lg border transition-colors
 				{panelOpen
 						? 'bg-primary/12 border-primary/40 text-primary'
-						: 'bg-white/2 border-white/10 text-on-surface-variant hover:bg-white/7 hover:text-on-surface'}"
+						: 'bg-white/2 border-border text-muted-foreground hover:bg-white/7 hover:text-foreground'}"
 					onclick={(e) => {
 						e.stopPropagation();
 						panelOpen = !panelOpen;
@@ -415,7 +413,7 @@
 				{#if activeTab === 'monitors' && currentUserRole === 'owner'}
 					<DropdownMenu.Root>
 						<DropdownMenu.Trigger
-							class="flex items-center gap-1.5 h-9 px-4 rounded-lg bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 font-medium text-sm shadow-sm"
+							class="flex items-center gap-1.5 h-9 px-4 rounded-lg bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 font-medium text-sm shadow-sm"
 							onclick={(e) => e.stopPropagation()}
 						>
 							<Plus class="size-4" />
@@ -423,7 +421,7 @@
 						</DropdownMenu.Trigger>
 						<DropdownMenu.Content
 							align="end"
-							class="bg-[#161618] border-white/8 text-white min-w-[160px] p-1.5"
+							class="bg-card border-border text-foreground min-w-[160px] p-1.5"
 						>
 							<DropdownMenu.Item
 								class="hover:bg-white/10 cursor-pointer rounded-md p-2"
@@ -449,7 +447,7 @@
 
 				{#if activeTab === 'statuspages' && currentUserRole === 'owner'}
 					<button
-						class="flex items-center gap-1.5 h-9 px-4 rounded-lg bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 font-medium text-sm shadow-sm"
+						class="flex items-center gap-1.5 h-9 px-4 rounded-lg bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 font-medium text-sm shadow-sm"
 						onclick={(e) => {
 							e.stopPropagation();
 							isAddStatusPageOpen = true;
@@ -463,14 +461,14 @@
 				{#if currentUserRole === 'owner'}
 					<DropdownMenu.Root>
 						<DropdownMenu.Trigger
-							class="flex items-center justify-center size-9 rounded-lg border bg-white/2 border-white/10 text-on-surface-variant hover:bg-white/7 hover:text-on-surface transition-colors"
+							class="flex items-center justify-center size-9 rounded-lg border bg-white/2 border-border text-muted-foreground hover:bg-white/7 hover:text-foreground transition-colors"
 							onclick={(e) => e.stopPropagation()}
 						>
 							<MoreVertical class="size-[18px]" />
 						</DropdownMenu.Trigger>
 						<DropdownMenu.Content
 							align="end"
-							class="bg-[#161618] border-white/8 text-white min-w-[200px] p-1.5"
+							class="bg-card border-border text-foreground min-w-[200px] p-1.5"
 						>
 							<DropdownMenu.Item
 								class="hover:bg-white/10 cursor-pointer rounded-md p-2 flex items-center"
@@ -503,29 +501,29 @@
 					<Tabs.Trigger
 						value="monitors"
 						class="relative rounded-t-lg rounded-b-none px-5 py-2.5 text-[13px] font-medium transition-all duration-200 shadow-none
-						data-[state=active]:bg-white/6 data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-white/8 data-[state=active]:border-b-transparent data-[state=active]:-mb-px
-						data-[state=inactive]:bg-transparent data-[state=inactive]:text-on-surface-variant data-[state=inactive]:border data-[state=inactive]:border-transparent data-[state=inactive]:hover:text-white/80 data-[state=inactive]:hover:bg-white/3"
+						data-[state=active]:bg-white/6 data-[state=active]:text-foreground data-[state=active]:border data-[state=active]:border-border data-[state=active]:border-b-transparent data-[state=active]:-mb-px
+						data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:border data-[state=inactive]:border-transparent data-[state=inactive]:hover:text-white/80 data-[state=inactive]:hover:bg-white/3"
 						>Monitors</Tabs.Trigger
 					>
 					<Tabs.Trigger
 						value="statuspages"
 						class="relative rounded-t-lg rounded-b-none px-5 py-2.5 text-[13px] font-medium transition-all duration-200 shadow-none
-						data-[state=active]:bg-white/6 data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-white/8 data-[state=active]:border-b-transparent data-[state=active]:-mb-px
-						data-[state=inactive]:bg-transparent data-[state=inactive]:text-on-surface-variant data-[state=inactive]:border data-[state=inactive]:border-transparent data-[state=inactive]:hover:text-white/80 data-[state=inactive]:hover:bg-white/3"
+						data-[state=active]:bg-white/6 data-[state=active]:text-foreground data-[state=active]:border data-[state=active]:border-border data-[state=active]:border-b-transparent data-[state=active]:-mb-px
+						data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:border data-[state=inactive]:border-transparent data-[state=inactive]:hover:text-white/80 data-[state=inactive]:hover:bg-white/3"
 						>Status Pages</Tabs.Trigger
 					>
 					<Tabs.Trigger
 						value="apikeys"
 						class="relative rounded-t-lg rounded-b-none px-5 py-2.5 text-[13px] font-medium transition-all duration-200 shadow-none
-						data-[state=active]:bg-white/6 data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-white/8 data-[state=active]:border-b-transparent data-[state=active]:-mb-px
-						data-[state=inactive]:bg-transparent data-[state=inactive]:text-on-surface-variant data-[state=inactive]:border data-[state=inactive]:border-transparent data-[state=inactive]:hover:text-white/80 data-[state=inactive]:hover:bg-white/3"
+						data-[state=active]:bg-white/6 data-[state=active]:text-foreground data-[state=active]:border data-[state=active]:border-border data-[state=active]:border-b-transparent data-[state=active]:-mb-px
+						data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:border data-[state=inactive]:border-transparent data-[state=inactive]:hover:text-white/80 data-[state=inactive]:hover:bg-white/3"
 						>API Keys</Tabs.Trigger
 					>
 					<Tabs.Trigger
 						value="notifications"
 						class="relative rounded-t-lg rounded-b-none px-5 py-2.5 text-[13px] font-medium transition-all duration-200 shadow-none
-						data-[state=active]:bg-white/6 data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-white/8 data-[state=active]:border-b-transparent data-[state=active]:-mb-px
-						data-[state=inactive]:bg-transparent data-[state=inactive]:text-on-surface-variant data-[state=inactive]:border data-[state=inactive]:border-transparent data-[state=inactive]:hover:text-white/80 data-[state=inactive]:hover:bg-white/3"
+						data-[state=active]:bg-white/6 data-[state=active]:text-foreground data-[state=active]:border data-[state=active]:border-border data-[state=active]:border-b-transparent data-[state=active]:-mb-px
+						data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:border data-[state=inactive]:border-transparent data-[state=inactive]:hover:text-white/80 data-[state=inactive]:hover:bg-white/3"
 						>Notifications</Tabs.Trigger
 					>
 				</Tabs.List>
@@ -541,7 +539,7 @@
 					<div class="grid grid-cols-[repeat(auto-fill,minmax(270px,1fr))] gap-6">
 						{#each Array(3) as _}
 							<div
-								class="bg-white/3 border border-white/8 rounded-lg p-5 flex flex-col gap-3.5 animate-pulse"
+								class="bg-white/3 border border-border rounded-lg p-5 flex flex-col gap-3.5 animate-pulse"
 							>
 								<div class="flex justify-between">
 									<div class="flex flex-col gap-1.5 flex-1">
@@ -552,7 +550,7 @@
 								</div>
 								<div class="h-2 bg-white/8 rounded w-1/3"></div>
 								<div class="h-9 bg-white/5 rounded w-full"></div>
-								<div class="flex justify-between pt-3 border-t border-white/8">
+								<div class="flex justify-between pt-3 border-t border-border">
 									<div class="h-4 w-14 bg-white/8 rounded"></div>
 									<div class="h-4 w-14 bg-white/8 rounded"></div>
 								</div>
@@ -563,12 +561,12 @@
 					<!-- Monitors error -->
 				{:else if monitorsError}
 					<div
-						class="flex flex-col items-center justify-center gap-3 py-24 border border-white/8 rounded-lg bg-white/3"
+						class="flex flex-col items-center justify-center gap-3 py-24 border border-border rounded-lg bg-white/3"
 					>
-						<TriangleAlert class="size-8 text-error" />
-						<p class="text-sm text-on-surface-variant">{monitorsError}</p>
+						<TriangleAlert class="size-8 text-destructive" />
+						<p class="text-sm text-muted-foreground">{monitorsError}</p>
 						<button
-							class="h-9 px-4 text-sm bg-[#1A1A1B] border border-[#2A2A2B] text-slate-300 rounded-lg hover:text-white hover:bg-[#2A2A2B] active:scale-[0.98] transition-all duration-200 shadow-sm"
+							class="h-9 px-4 text-sm bg-secondary border border-border text-muted-foreground rounded-lg hover:text-foreground hover:bg-accent active:scale-[0.98] transition-all duration-200 shadow-sm"
 							onclick={loadMonitors}
 						>
 							Try again
@@ -578,15 +576,15 @@
 					<!-- Empty state -->
 				{:else if monitors.length === 0}
 					<div
-						class="flex flex-col items-center justify-center text-center py-24 px-6 gap-3.5 bg-white/3 border border-white/8 rounded-lg backdrop-blur-md"
+						class="flex flex-col items-center justify-center text-center py-24 px-6 gap-3.5 bg-white/3 border border-border rounded-lg backdrop-blur-md"
 					>
 						<div
 							class="flex items-center justify-center size-[60px] rounded-lg bg-primary/8 text-primary"
 						>
 							<Activity class="size-6" />
 						</div>
-						<h2 class="text-[19px] font-semibold text-on-surface m-0">No monitors yet</h2>
-						<p class="text-sm leading-relaxed text-on-surface-variant max-w-[360px] m-0">
+						<h2 class="text-[19px] font-semibold text-foreground m-0">No monitors yet</h2>
+						<p class="text-sm leading-relaxed text-muted-foreground max-w-[360px] m-0">
 							{#if currentUserRole === 'owner'}
 								Add your first monitor to start tracking uptime for websites, APIs, or servers.
 							{:else}
@@ -596,14 +594,14 @@
 						{#if currentUserRole === 'owner'}
 							<DropdownMenu.Root>
 								<DropdownMenu.Trigger
-									class="flex items-center gap-2 h-10 px-5 rounded-lg bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 font-medium text-[14px] shadow-sm"
+									class="flex items-center gap-2 h-10 px-5 rounded-lg bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 font-medium text-[14px] shadow-sm"
 								>
 									<Plus class="size-4" />
 									<span>Add monitor</span>
 								</DropdownMenu.Trigger>
 								<DropdownMenu.Content
 									align="center"
-									class="bg-[#161618] border-white/8 text-white min-w-[160px] p-1.5"
+									class="bg-card border-border text-foreground min-w-[160px] p-1.5"
 								>
 									<DropdownMenu.Item
 										class="hover:bg-white/10 cursor-pointer rounded-md p-2"
@@ -713,25 +711,25 @@
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
-		class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm"
+		class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/25 backdrop-blur-sm"
 		onclick={(e) => {
 			if (e.target === e.currentTarget) closeInviteDialog();
 		}}
 	>
 		<div
-			class="w-full max-w-[420px] bg-[#1c1b1c] border border-white/8 rounded-lg"
+			class="w-full max-w-[420px] bg-card border border-border rounded-lg"
 			onclick={(e) => e.stopPropagation()}
 		>
 			<!-- Modal Header -->
 			<div class="flex items-center justify-between px-5 pt-5 pb-4">
 				<div>
-					<h3 class="text-[16px] font-semibold text-on-surface m-0">Invite member</h3>
-					<p class="text-[13px] text-on-surface-variant mt-0.5 m-0">
+					<h3 class="text-[16px] font-semibold text-foreground m-0">Invite member</h3>
+					<p class="text-[13px] text-muted-foreground mt-0.5 m-0">
 						Search and invite people to this organization.
 					</p>
 				</div>
 				<button
-					class="flex items-center justify-center size-7 rounded-lg text-on-surface-variant hover:bg-white/8 hover:text-on-surface transition-colors shrink-0"
+					class="flex items-center justify-center size-7 rounded-lg text-muted-foreground hover:bg-white/8 hover:text-foreground transition-colors shrink-0"
 					onclick={closeInviteDialog}
 					aria-label="Close"
 				>
@@ -745,19 +743,19 @@
 			<div class="px-5 py-4 flex flex-col gap-4">
 				<!-- Search input -->
 				<div class="flex flex-col gap-1.5">
-					<label class="text-[12px] font-medium text-on-surface-variant" for="inviteSearch">
+					<label class="text-[12px] font-medium text-muted-foreground" for="inviteSearch">
 						Search by name
 					</label>
 					<div class="relative">
 						<div
-							class="flex items-center h-10 rounded-lg border border-white/10 bg-black/25 transition-colors focus-within:border-[#3b82f6] focus-within:ring-1 focus-within:ring-[#3b82f6]/25 gap-2 px-3"
+							class="flex items-center h-10 rounded-lg border border-border bg-foreground/10 transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/25 gap-2 px-3"
 						>
 							{#if isSearchingInvite}
 								<div
-									class="size-4 rounded-full border-2 border-white/20 border-t-primary animate-spin shrink-0"
+									class="size-4 rounded-full border-2 border-border border-t-primary animate-spin shrink-0"
 								></div>
 							{:else}
-								<Search class="size-4 text-on-surface-variant/50 shrink-0" />
+								<Search class="size-4 text-muted-foreground/50 shrink-0" />
 							{/if}
 							<input
 								id="inviteSearch"
@@ -773,17 +771,17 @@
 									setTimeout(() => {
 										showInviteDropdown = false;
 									}, 150)}
-								class="flex-1 h-full bg-transparent border-none outline-none text-on-surface text-[13px] placeholder:text-on-surface-variant/35 min-w-0"
+								class="flex-1 h-full bg-transparent border-none outline-none text-foreground text-[13px] placeholder:text-muted-foreground/35 min-w-0"
 							/>
 						</div>
 
 						<!-- Results dropdown -->
 						{#if showInviteDropdown && inviteQuery.trim()}
 							<div
-								class="absolute top-[calc(100%+4px)] left-0 right-0 rounded-lg border border-white/10 bg-[#1c1b1c] z-10 overflow-hidden"
+								class="absolute top-[calc(100%+4px)] left-0 right-0 rounded-lg border border-border bg-card z-10 overflow-hidden"
 							>
 								{#if isSearchingInvite}
-									<div class="px-4 py-3 text-[13px] text-on-surface-variant/60">Searching...</div>
+									<div class="px-4 py-3 text-[13px] text-muted-foreground/60">Searching...</div>
 								{:else if filteredInviteResults.length > 0}
 									<ul class="max-h-52 overflow-y-auto">
 										{#each filteredInviteResults as user (user.id)}
@@ -808,18 +806,18 @@
 															{initials(user.name)}
 														</div>
 													{/if}
-													<span class="text-[13px] text-on-surface font-medium truncate">
+													<span class="text-[13px] text-foreground font-medium truncate">
 														{user.name}
 													</span>
-													<Plus class="size-3.5 text-on-surface-variant ml-auto shrink-0" />
+													<Plus class="size-3.5 text-muted-foreground ml-auto shrink-0" />
 												</button>
 											</li>
 										{/each}
 									</ul>
 								{:else}
 									<div class="px-4 py-4 flex flex-col items-center gap-1.5 text-center">
-										<UserPlus class="size-5 text-on-surface-variant/40" />
-										<p class="text-[13px] text-on-surface-variant/60 m-0">
+										<UserPlus class="size-5 text-muted-foreground/40" />
+										<p class="text-[13px] text-muted-foreground/60 m-0">
 											No users found for "{inviteQuery}"
 										</p>
 									</div>
@@ -834,7 +832,7 @@
 					<ul class="flex flex-col gap-1.5">
 						{#each inviteList as user (user.id)}
 							<li
-								class="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/4 border border-white/8"
+								class="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/4 border border-border"
 							>
 								{#if user.avatar_url}
 									<img
@@ -851,17 +849,17 @@
 										{initials(user.name)}
 									</div>
 								{/if}
-								<span class="text-[13px] text-on-surface font-medium flex-1 truncate">
+								<span class="text-[13px] text-foreground font-medium flex-1 truncate">
 									{user.name}
 								</span>
 								<span
-									class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/7 text-on-surface-variant shrink-0"
+									class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/7 text-muted-foreground shrink-0"
 								>
 									Member
 								</span>
 								<button
 									type="button"
-									class="size-6 flex items-center justify-center rounded text-on-surface-variant/40 hover:text-on-surface hover:bg-white/8 transition-colors shrink-0"
+									class="size-6 flex items-center justify-center rounded text-muted-foreground/40 hover:text-foreground hover:bg-white/8 transition-colors shrink-0"
 									onclick={() => removeFromInviteList(user.id)}
 									aria-label="Remove {user.name}"
 								>
@@ -875,10 +873,10 @@
 				<!-- Error -->
 				{#if inviteError}
 					<div
-						class="flex items-start gap-2 rounded-lg bg-error/8 border border-error/20 px-3 py-2.5"
+						class="flex items-start gap-2 rounded-lg bg-destructive/8 border border-destructive/20 px-3 py-2.5"
 					>
-						<TriangleAlert class="size-3.5 shrink-0 text-error mt-0.5" />
-						<p class="text-[13px] text-error leading-snug m-0">{inviteError}</p>
+						<TriangleAlert class="size-3.5 shrink-0 text-destructive mt-0.5" />
+						<p class="text-[13px] text-destructive leading-snug m-0">{inviteError}</p>
 					</div>
 				{/if}
 			</div>
@@ -887,7 +885,7 @@
 
 			<!-- Modal Footer -->
 			<div class="px-5 py-3.5 flex items-center justify-between">
-				<p class="text-[12px] text-on-surface-variant/50 m-0">
+				<p class="text-[12px] text-muted-foreground/50 m-0">
 					{#if inviteList.length > 0}
 						{inviteList.length} person{inviteList.length > 1 ? 's' : ''} will be invited
 					{:else}
@@ -896,13 +894,13 @@
 				</p>
 				<div class="flex items-center gap-2">
 					<button
-						class="h-8 px-3.5 text-[13px] text-white hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+						class="h-8 px-3.5 text-[13px] text-foreground hover:text-foreground hover:bg-white/10 rounded-lg transition-colors"
 						onclick={closeInviteDialog}
 					>
 						Cancel
 					</button>
 					<button
-						class="bg-[#1A1A1B] border border-[#2A2A2B] text-primary hover:bg-primary hover:border-primary hover:text-white active:scale-[0.98] transition-all duration-200 h-8 px-3.5 text-[13px] font-medium rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+						class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-8 px-3.5 text-[13px] font-medium rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
 						disabled={inviteList.length === 0 || isSubmittingInvite}
 						onclick={handleSubmitInvite}
 					>

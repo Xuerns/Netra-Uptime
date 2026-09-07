@@ -7,7 +7,9 @@
 {#if viewMode === 'grid'}
 	<div class="grid grid-cols-[repeat(auto-fill,minmax(450px,1fr))] gap-6">
 		{#each Array(6) as _}
-			<div class="h-[148px] rounded-xl bg-white/4 border border-white/6 animate-pulse p-5 flex flex-col justify-between">
+			<div
+				class="h-[148px] rounded-xl bg-white/4 border border-border animate-pulse p-5 flex flex-col justify-between"
+			>
 				<div class="flex justify-between items-start">
 					<div class="space-y-2">
 						<div class="h-5 w-40 bg-white/10 rounded animate-pulse"></div>
@@ -15,7 +17,7 @@
 					</div>
 					<div class="h-6 w-16 bg-white/5 rounded-full animate-pulse"></div>
 				</div>
-				<div class="flex items-center justify-between pt-3 border-t border-white/6">
+				<div class="flex items-center justify-between pt-3 border-t border-border">
 					<div class="h-4 w-24 bg-white/5 rounded animate-pulse"></div>
 					<div class="h-4 w-20 bg-white/10 rounded animate-pulse"></div>
 				</div>
@@ -23,10 +25,14 @@
 		{/each}
 	</div>
 {:else}
-	<div class="flex flex-col divide-y divide-white/6 border border-white/8 rounded-xl overflow-hidden bg-white/2">
-		<div class="h-[42px] bg-white/5 animate-pulse border-b border-white/10"></div>
+	<div
+		class="flex flex-col divide-y divide-border border border-border rounded-xl overflow-hidden bg-white/2"
+	>
+		<div class="h-[42px] bg-white/5 animate-pulse border-b border-border"></div>
 		{#each Array(5) as _}
-			<div class="h-[56px] border-b border-white/6 bg-white/4 animate-pulse px-4 flex items-center justify-between">
+			<div
+				class="h-[56px] border-b border-border bg-white/4 animate-pulse px-4 flex items-center justify-between"
+			>
 				<div class="flex items-center gap-3">
 					<div class="size-8 rounded-lg bg-white/6 animate-pulse"></div>
 					<div class="h-4 w-36 bg-white/10 rounded animate-pulse"></div>

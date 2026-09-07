@@ -5,6 +5,7 @@
 	import Lenis from 'lenis';
 	import 'lenis/dist/lenis.css';
 	import { Toaster } from '$lib/components/ui/sonner/index.js';
+	import { ModeWatcher, mode } from 'mode-watcher';
 
 	let { children } = $props();
 
@@ -20,5 +21,6 @@
 </script>
 
 <svelte:head><link rel="icon" href={PulseWatchLogo} /></svelte:head>
-<Toaster position="bottom-right" richColors theme="dark" />
+<ModeWatcher defaultMode="dark" track={true} />
+<Toaster position="bottom-right" richColors theme={mode.current} />
 {@render children()}
