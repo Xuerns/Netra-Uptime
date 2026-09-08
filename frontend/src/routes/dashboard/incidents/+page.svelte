@@ -151,7 +151,7 @@
 	</div>
 
 	<!-- GitHub Style Table List Box -->
-	<div class="bg-card border border-border rounded-2xl overflow-hidden shadow-xl">
+	<div class="bg-card border border-border rounded-2xl overflow-hidden shadow-lg">
 		<!-- Table Header Bar with GitHub-Style Active/Resolved Toggles -->
 		<div
 			class="bg-white/3 border-b border-border px-5 py-3.5 flex items-center justify-between text-xs text-muted-foreground"

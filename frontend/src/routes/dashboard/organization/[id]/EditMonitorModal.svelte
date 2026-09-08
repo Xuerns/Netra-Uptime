@@ -195,7 +195,7 @@
 
 <Dialog.Root bind:open={isOpen}>
 	<Dialog.Content
-		class="sm:max-w-[750px] bg-glass-card-bg! backdrop-blur-[20px] bg-gradient-to-b from-transparent to-[rgba(255,255,255,0.02)] border border-glass-card-border shadow-[0_0_20px_rgba(var(--ring),0.05)] text-foreground p-6 rounded-2xl"
+		class="sm:max-w-[750px] bg-card border border-border shadow-lg text-foreground p-6 rounded-2xl"
 	>
 		<Dialog.Header>
 			<Dialog.Title class="text-xl font-semibold tracking-tight">Edit Monitor</Dialog.Title>
@@ -204,7 +204,7 @@
 			</Dialog.Description>
 		</Dialog.Header>
 
-		<div class="h-px w-full bg-white/10 my-4"></div>
+		<div class="h-px w-full bg-border my-4"></div>
 
 		<form onsubmit={handleSubmit} class="flex flex-col gap-5">
 			{#if error}
@@ -220,7 +220,7 @@
 				<div class="space-y-5">
 					<div class="space-y-2">
 						<div class="flex items-center gap-3">
-							<Label for="edit-name" class="text-sm font-medium text-[#e5e2e3]"
+							<Label for="edit-name" class="text-sm font-medium text-foreground"
 								>Monitor Name <span class="text-destructive font-bold">*</span></Label
 							>
 							{#if fieldErrors.name}
@@ -233,7 +233,7 @@
 							bind:value={name}
 							oninput={() => handleNameValidation(name)}
 							required
-							class="bg-background border-border text-foreground placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 {fieldErrors.name
+							class="bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 {fieldErrors.name
 								? 'border-destructive/70 focus-visible:border-destructive focus-visible:ring-error'
 								: ''} {shake.name ? 'animate-shake' : ''}"
 						/>
@@ -241,7 +241,7 @@
 
 					<div class="space-y-2">
 						<div class="flex items-center gap-3">
-							<Label for="edit-target" class="text-sm font-medium text-[#e5e2e3]"
+							<Label for="edit-target" class="text-sm font-medium text-foreground"
 								>Target / URL <span class="text-destructive font-bold">*</span></Label
 							>
 							{#if fieldErrors.target}
@@ -253,7 +253,7 @@
 							bind:value={target}
 							oninput={() => handleTargetValidation(target)}
 							required
-							class="bg-background border-border text-foreground placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 font-mono {fieldErrors.target
+							class="bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 font-mono {fieldErrors.target
 								? 'border-destructive/70 focus-visible:border-destructive focus-visible:ring-error'
 								: ''} {shake.target ? 'animate-shake' : ''}"
 						/>
@@ -261,7 +261,7 @@
 
 					{#if monitor?.Type === 'http'}
 						<div class="space-y-2">
-							<Label class="text-sm font-medium text-[#e5e2e3]">Expected Status Code</Label>
+							<Label class="text-sm font-medium text-foreground">Expected Status Code</Label>
 							<Select.Root type="single" bind:value={expectedStatusCodeStr}>
 								<Select.Trigger
 									class="bg-background border-border text-foreground focus:ring-1 focus:ring-primary focus:border-primary rounded-lg h-10 w-full"
@@ -304,7 +304,7 @@
 
 					<!-- Criticality -->
 					<div class="space-y-2">
-						<Label class="text-sm font-medium text-[#e5e2e3]">Criticality Level</Label>
+						<Label class="text-sm font-medium text-foreground">Criticality Level</Label>
 						<Select.Root type="single" bind:value={criticality}>
 							<Select.Trigger
 								class="bg-background border-border text-foreground focus:ring-1 focus:ring-primary focus:border-primary rounded-lg h-10 w-full capitalize"
@@ -386,7 +386,7 @@
 					<div class="grid grid-cols-2 gap-4">
 						<div class="space-y-2">
 							<div class="flex items-center gap-3">
-								<Label for="edit-interval" class="text-sm font-medium text-[#e5e2e3]"
+								<Label for="edit-interval" class="text-sm font-medium text-foreground"
 									>Check Interval (sec) <span class="text-destructive font-bold">*</span></Label
 								>
 								{#if fieldErrors.intervalSeconds}
@@ -402,7 +402,7 @@
 								bind:value={intervalSeconds}
 								oninput={() => handleIntervalValidation(intervalSeconds)}
 								required
-								class="bg-background border-border text-foreground placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none {fieldErrors.intervalSeconds
+								class="bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none {fieldErrors.intervalSeconds
 									? 'border-destructive/70 focus-visible:border-destructive focus-visible:ring-error'
 									: ''} {shake.intervalSeconds ? 'animate-shake' : ''}"
 							/>
@@ -410,7 +410,7 @@
 
 						<div class="space-y-2">
 							<div class="flex items-center gap-3">
-								<Label for="edit-timeout" class="text-sm font-medium text-[#e5e2e3]"
+								<Label for="edit-timeout" class="text-sm font-medium text-foreground"
 									>Timeout (sec) <span class="text-destructive font-bold">*</span></Label
 								>
 								{#if fieldErrors.timeoutSeconds}
@@ -427,7 +427,7 @@
 								bind:value={timeoutSeconds}
 								oninput={() => handleTimeoutValidation(timeoutSeconds)}
 								required
-								class="bg-background border-border text-foreground placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none {fieldErrors.timeoutSeconds
+								class="bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none {fieldErrors.timeoutSeconds
 									? 'border-destructive/70 focus-visible:border-destructive focus-visible:ring-error'
 									: ''} {shake.timeoutSeconds ? 'animate-shake' : ''}"
 							/>
@@ -438,7 +438,7 @@
 				<!-- Right Column: PIC Settings -->
 				<div class="space-y-3 flex flex-col h-full">
 					<div class="flex items-center justify-between">
-						<Label class="text-sm font-medium text-[#e5e2e3]"
+						<Label class="text-sm font-medium text-foreground"
 							>Person in Charge (PIC) <span class="text-destructive font-bold">*</span></Label
 						>
 						<span class="text-xs text-foreground/40">Select 1-2 PICs</span>

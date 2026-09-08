@@ -249,7 +249,7 @@
 		/>
 
 		<!-- 5. Recent Incident Logs History -->
-		<div class="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-xl space-y-4">
+		<div class="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-lg space-y-4">
 			<div class="flex items-center justify-between">
 				<h3 class="text-sm font-semibold text-foreground tracking-tight flex items-center gap-2">
 					<AlertTriangle class="size-4 text-amber-400" />

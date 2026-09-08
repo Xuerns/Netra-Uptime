@@ -253,7 +253,7 @@
 <!-- Modal 1: Create API Key -->
 <Dialog.Root bind:open={isCreateOpen}>
 	<Dialog.Content
-		class="sm:max-w-[480px] bg-card border border-border text-foreground p-6 rounded-lg shadow-xl"
+		class="sm:max-w-[480px] bg-card border border-border text-foreground p-6 rounded-lg shadow-lg"
 	>
 		<Dialog.Header>
 			<Dialog.Title class="text-lg font-semibold flex items-center gap-2">
@@ -361,7 +361,7 @@
 <!-- Modal 2: Show Plaintext API Key Once -->
 <Dialog.Root bind:open={isShowKeyOpen}>
 	<Dialog.Content
-		class="sm:max-w-[500px] bg-card border border-border text-foreground p-6 rounded-lg shadow-xl"
+		class="sm:max-w-[500px] bg-card border border-border text-foreground p-6 rounded-lg shadow-lg"
 	>
 		<Dialog.Header>
 			<Dialog.Title class="text-lg font-semibold text-emerald-400 flex items-center gap-2">

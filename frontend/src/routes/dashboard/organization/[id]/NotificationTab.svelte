@@ -215,7 +215,7 @@
 			<button
 				class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors
 					{activeSubTab === 'channels'
-					? 'bg-white/10 text-foreground font-semibold'
+					? 'bg-border text-foreground font-semibold'
 					: 'text-muted-foreground hover:text-foreground hover:bg-white/5'}"
 				onclick={() => (activeSubTab = 'channels')}
 			>
@@ -224,7 +224,7 @@
 			<button
 				class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors
 					{activeSubTab === 'history'
-					? 'bg-white/10 text-foreground font-semibold'
+					? 'bg-border text-foreground font-semibold'
 					: 'text-muted-foreground hover:text-foreground hover:bg-white/5'}"
 				onclick={() => (activeSubTab = 'history')}
 			>
@@ -484,7 +484,7 @@
      ╚══════════════════════════════════════════════════════════════════════╝ -->
 <Dialog.Root bind:open={isAddModalOpen}>
 	<Dialog.Content
-		class="sm:max-w-[520px] bg-glass-card-bg! backdrop-blur-[20px] bg-gradient-to-b from-transparent to-[rgba(255,255,255,0.02)] border border-glass-card-border shadow-[0_0_20px_rgba(78,222,163,0.05)] text-foreground p-6 rounded-2xl"
+		class="sm:max-w-[520px] bg-card border border-border shadow-lg text-foreground p-6 rounded-2xl"
 	>
 		<Dialog.Header>
 			<Dialog.Title class="text-xl font-semibold tracking-tight"
@@ -495,7 +495,7 @@
 			</Dialog.Description>
 		</Dialog.Header>
 
-		<div class="h-px w-full bg-white/10 my-4"></div>
+		<div class="h-px w-full bg-border my-4"></div>
 
 		{#if createError}
 			<div
@@ -509,21 +509,21 @@
 		<form onsubmit={handleCreateChannel} class="flex flex-col gap-5">
 			<!-- Name -->
 			<div class="space-y-2">
-				<Label for="ch-name" class="text-sm font-medium text-[#e5e2e3]"
+				<Label for="ch-name" class="text-sm font-medium text-foreground"
 					>Channel Name <span class="text-destructive font-bold">*</span></Label
 				>
 				<Input
 					id="ch-name"
 					bind:value={newName}
 					placeholder="e.g. Team Slack Alerts, Ops Webhook"
-					class="bg-background border-border text-foreground placeholder:text-foreground/30 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 text-sm"
+					class="bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 text-sm"
 					required
 				/>
 			</div>
 
 			<!-- Type Selection -->
 			<div class="space-y-2">
-				<Label class="text-sm font-medium text-[#e5e2e3]"
+				<Label class="text-sm font-medium text-foreground"
 					>Channel Type <span class="text-destructive font-bold">*</span></Label
 				>
 				<div class="grid grid-cols-4 gap-2">
@@ -554,7 +554,7 @@
 			<!-- Dynamic Input -->
 			{#if newType === 'email'}
 				<div class="space-y-2">
-					<Label for="ch-email" class="text-sm font-medium text-[#e5e2e3]"
+					<Label for="ch-email" class="text-sm font-medium text-foreground"
 						>Recipient Email <span class="text-destructive font-bold">*</span></Label
 					>
 					<Input
@@ -562,13 +562,13 @@
 						type="email"
 						bind:value={newEmail}
 						placeholder="alerts@company.com"
-						class="bg-background border-border text-foreground placeholder:text-foreground/30 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 text-sm"
+						class="bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 text-sm"
 						required
 					/>
 				</div>
 			{:else if newType === 'slack'}
 				<div class="space-y-2">
-					<Label for="ch-slack" class="text-sm font-medium text-[#e5e2e3]"
+					<Label for="ch-slack" class="text-sm font-medium text-foreground"
 						>Slack Incoming Webhook URL <span class="text-destructive font-bold">*</span></Label
 					>
 					<Input
@@ -576,14 +576,14 @@
 						type="url"
 						bind:value={newSlackUrl}
 						placeholder="https://hooks.slack.com/services/..."
-						class="bg-background border-border text-foreground placeholder:text-foreground/30 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 text-sm font-mono"
+						class="bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 text-sm font-mono"
 						required
 					/>
 					<span class="text-xs text-foreground/40 block">Must be an HTTPS Slack Webhook URL.</span>
 				</div>
 			{:else if newType === 'discord'}
 				<div class="space-y-2">
-					<Label for="ch-discord" class="text-sm font-medium text-[#e5e2e3]"
+					<Label for="ch-discord" class="text-sm font-medium text-foreground"
 						>Discord Webhook URL <span class="text-destructive font-bold">*</span></Label
 					>
 					<Input
@@ -591,7 +591,7 @@
 						type="url"
 						bind:value={newDiscordUrl}
 						placeholder="https://discord.com/api/webhooks/..."
-						class="bg-background border-border text-foreground placeholder:text-foreground/30 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 text-sm font-mono"
+						class="bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 text-sm font-mono"
 						required
 					/>
 					<span class="text-xs text-foreground/40 block">Must be an HTTPS Discord Webhook URL.</span
@@ -599,7 +599,7 @@
 				</div>
 			{:else}
 				<div class="space-y-2">
-					<Label for="ch-webhook" class="text-sm font-medium text-[#e5e2e3]"
+					<Label for="ch-webhook" class="text-sm font-medium text-foreground"
 						>Webhook Destination URL <span class="text-destructive font-bold">*</span></Label
 					>
 					<Input
@@ -607,7 +607,7 @@
 						type="url"
 						bind:value={newWebhookUrl}
 						placeholder="https://api.yourdomain.com/webhooks/pulsewatch"
-						class="bg-background border-border text-foreground placeholder:text-foreground/30 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 text-sm font-mono"
+						class="bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 text-sm font-mono"
 						required
 					/>
 					<span class="text-xs text-foreground/40 block"

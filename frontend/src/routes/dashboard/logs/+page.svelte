@@ -393,7 +393,7 @@
 	{:else if !selectedOrgId}
 		<div class="flex-1 min-h-[calc(100vh-10rem)] flex flex-col items-center justify-center py-6">
 			<div
-				class="w-full max-w-[420px] bg-card border border-border rounded-lg p-6 shadow-2xl backdrop-blur-xl flex flex-col items-center text-center"
+				class="w-full max-w-[420px] bg-card border border-border rounded-lg p-6 shadow-lg backdrop-blur-xl flex flex-col items-center text-center"
 			>
 				<!-- Header Icon Badge -->
 				<div
@@ -412,7 +412,7 @@
 						type="text"
 						placeholder="Find organization..."
 						bind:value={orgSearchQuery}
-						class="pl-9 h-9 text-xs bg-black/40 border-border focus-visible:border-primary text-foreground rounded-lg placeholder:text-muted-foreground/40"
+						class="pl-9 h-9 text-xs bg-muted/50 border-border focus-visible:border-primary text-foreground rounded-lg placeholder:text-muted-foreground/40"
 					/>
 				</div>
 
@@ -480,7 +480,7 @@
 		<!-- Controls: Search & Category Chips -->
 		<div class="flex flex-col gap-4 mb-6">
 			<div
-				class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 bg-white/3 border border-border rounded-lg backdrop-blur-md"
+				class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 bg-card border border-border rounded-lg"
 			>
 				<!-- Search Input -->
 				<div class="relative flex-1 min-w-[240px]">
@@ -490,7 +490,7 @@
 						placeholder="Search logs by action or description..."
 						bind:value={searchQuery}
 						oninput={handleSearchInput}
-						class="pl-9 h-9 text-sm bg-black/30 border-border focus-visible:border-primary text-foreground rounded-lg placeholder:text-muted-foreground/40"
+						class="pl-9 h-9 text-sm bg-muted/50 border-border focus-visible:border-primary text-foreground rounded-lg placeholder:text-muted-foreground/40"
 					/>
 				</div>
 
@@ -584,7 +584,7 @@
 							</DropdownMenu.Trigger>
 							<DropdownMenu.Content
 								data-lenis-prevent
-								class="w-56 max-h-[360px] overflow-y-auto bg-secondary border-border text-foreground shadow-xl rounded-lg p-1"
+								class="w-56 max-h-[360px] overflow-y-auto bg-secondary border-border text-foreground shadow-lg rounded-lg p-1"
 								align="start"
 								sideOffset={6}
 							>

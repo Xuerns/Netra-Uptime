@@ -371,7 +371,7 @@
 			<div class="grid grid-cols-[repeat(auto-fill,minmax(430px,1fr))] gap-5">
 				{#each orgs as org}
 					<article
-						class="relative flex flex-col gap-2 p-4 bg-white/3 border border-border rounded-lg backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-border hover:shadow-[0_12px_28px_-14px_rgba(0,0,0,0.6)] group"
+						class="relative flex flex-col gap-2 p-4 bg-white/3 border border-border rounded-lg backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-border hover:shadow-[0_12px_28px_-14px_rgba(0,0,0,0.25)] group"
 					>
 						<div class="flex items-start gap-3">
 							<div
@@ -473,7 +473,7 @@
 			<div class="flex flex-col gap-2">
 				{#each orgs as org}
 					<article
-						class="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-5 p-3 lg:py-2 lg:px-5 bg-white/3 border border-border rounded-lg backdrop-blur-md transition-all hover:-translate-y-px hover:border-border hover:shadow-[0_10px_22px_-14px_rgba(0,0,0,0.55)] group"
+						class="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-5 p-3 lg:py-2 lg:px-5 bg-white/3 border border-border rounded-lg backdrop-blur-md transition-all hover:-translate-y-px hover:border-border hover:shadow-[0_10px_22px_-14px_rgba(0,0,0,0.2)] group"
 					>
 						<div class="flex items-start lg:items-center gap-3 flex-1 min-w-[240px]">
 							<div

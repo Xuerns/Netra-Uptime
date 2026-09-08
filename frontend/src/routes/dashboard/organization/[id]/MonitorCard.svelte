@@ -94,7 +94,7 @@
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div
-						class="absolute top-full right-0 mt-1.5 min-w-[152px] bg-card shadow-xl border border-border rounded-lg p-1.5 flex flex-col gap-0.5 z-20"
+						class="absolute top-full right-0 mt-1.5 min-w-[152px] bg-card shadow-lg border border-border rounded-lg p-1.5 flex flex-col gap-0.5 z-20"
 						onclick={(e) => e.stopPropagation()}
 					>
 						<button

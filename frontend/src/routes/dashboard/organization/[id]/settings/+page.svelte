@@ -442,7 +442,7 @@
 				<div class="fixed inset-0 z-40" onclick={() => (isDropdownOpen = false)}></div>
 
 				<div
-					class="absolute z-50 w-full mt-1 bg-secondary border border-border rounded-md shadow-lg max-h-60 overflow-auto"
+					class="absolute z-50 w-full mt-1 bg-secondary border border-border rounded-md shadow-md max-h-60 overflow-auto"
 				>
 					{#each eligibleMembers as member}
 						<button

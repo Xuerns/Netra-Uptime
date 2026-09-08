@@ -99,7 +99,7 @@
 
 <Dialog.Root bind:open={isOpen}>
 	<Dialog.Content
-		class="sm:max-w-[750px] bg-glass-card-bg! backdrop-blur-[20px] bg-gradient-to-b from-transparent to-[rgba(255,255,255,0.02)] border border-glass-card-border shadow-[0_0_20px_rgba(var(--ring),0.05)] text-foreground p-6 rounded-2xl"
+		class="sm:max-w-[750px] bg-card border border-border shadow-lg text-foreground p-6 rounded-2xl"
 	>
 		<Dialog.Header>
 			<Dialog.Title class="text-xl font-semibold tracking-tight">Edit Status Page</Dialog.Title>
@@ -108,7 +108,7 @@
 			</Dialog.Description>
 		</Dialog.Header>
 
-		<div class="h-px w-full bg-white/10 my-4"></div>
+		<div class="h-px w-full bg-border my-4"></div>
 
 		<form
 			class="flex flex-col gap-5"
@@ -130,7 +130,7 @@
 				<!-- Left Column: Settings -->
 				<div class="space-y-5">
 					<div class="space-y-2">
-						<Label for="edit-title" class="text-sm font-medium text-[#e5e2e3]"
+						<Label for="edit-title" class="text-sm font-medium text-foreground"
 							>Title <span class="text-destructive font-bold">*</span></Label
 						>
 						<Input
@@ -138,12 +138,12 @@
 							bind:value={title}
 							placeholder="e.g. Acme Status"
 							required
-							class="bg-background border-border text-foreground placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10"
+							class="bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10"
 						/>
 					</div>
 
 					<div class="space-y-2">
-						<Label for="edit-description" class="text-sm font-medium text-[#e5e2e3]"
+						<Label for="edit-description" class="text-sm font-medium text-foreground"
 							>Description <span class="text-foreground/40 text-xs font-normal">(Optional)</span
 							></Label
 						>
@@ -151,12 +151,12 @@
 							id="edit-description"
 							bind:value={description}
 							placeholder="e.g. Current status of all our core systems."
-							class="flex min-h-[80px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-white/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50"
+							class="flex min-h-[80px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50"
 						></textarea>
 					</div>
 
 					<div class="space-y-2">
-						<Label for="edit-subdomain" class="text-sm font-medium text-[#e5e2e3]"
+						<Label for="edit-subdomain" class="text-sm font-medium text-foreground"
 							>Subdomain <span class="text-destructive font-bold">*</span></Label
 						>
 						<div class="flex items-center">
@@ -165,7 +165,7 @@
 								bind:value={subdomain}
 								placeholder="acme"
 								required
-								class="bg-background border-border border-r-0 rounded-r-none text-foreground placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary h-10 z-10"
+								class="bg-background border-border border-r-0 rounded-r-none text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary h-10 z-10"
 							/>
 							<div
 								class="bg-background/80 border border-border border-l-0 px-3 h-10 flex items-center rounded-r-lg text-foreground/50 text-sm font-mono whitespace-nowrap"
@@ -179,7 +179,7 @@
 						class="flex items-center justify-between p-4 bg-background border border-border rounded-lg"
 					>
 						<div class="space-y-0.5">
-							<Label class="text-sm font-medium text-[#e5e2e3]">Public Visibility</Label>
+							<Label class="text-sm font-medium text-foreground">Public Visibility</Label>
 							<p class="text-xs text-foreground/40">Anyone with the link can view this page.</p>
 						</div>
 						<Switch bind:checked={isPublic} />
@@ -189,7 +189,7 @@
 				<!-- Right Column: Select Monitors -->
 				<div class="space-y-3 flex flex-col h-full">
 					<div class="flex items-center justify-between">
-						<Label class="text-sm font-medium text-[#e5e2e3]">Select Monitors</Label>
+						<Label class="text-sm font-medium text-foreground">Select Monitors</Label>
 						<span class="text-xs text-foreground/40">Choose monitors to display</span>
 					</div>
 
