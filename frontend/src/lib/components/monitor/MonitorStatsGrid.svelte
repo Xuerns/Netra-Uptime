@@ -48,11 +48,6 @@
 			<span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
 				>Uptime Rate</span
 			>
-			<div
-				class="size-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center"
-			>
-				<ShieldCheck class="size-4 text-emerald-400" />
-			</div>
 		</div>
 		<div>
 			<div class="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
@@ -74,11 +69,6 @@
 			<span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
 				>Avg Latency</span
 			>
-			<div
-				class="size-8 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center"
-			>
-				<Zap class="size-4 text-sky-400" />
-			</div>
 		</div>
 		<div>
 			<div class="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
@@ -101,11 +91,6 @@
 			<span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
 				>Min / Max Peak</span
 			>
-			<div
-				class="size-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center"
-			>
-				<TrendingUp class="size-4 text-purple-400" />
-			</div>
 		</div>
 		<div>
 			<div class="flex items-center gap-3 text-lg font-bold text-foreground">
@@ -131,11 +116,6 @@
 			<span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
 				>Total Outages</span
 			>
-			<div
-				class="size-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center"
-			>
-				<AlertTriangle class="size-4 text-amber-400" />
-			</div>
 		</div>
 		<div>
 			<div class="text-2xl md:text-3xl font-bold text-foreground tracking-tight">

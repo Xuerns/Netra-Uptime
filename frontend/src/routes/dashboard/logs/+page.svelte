@@ -143,11 +143,7 @@
 			act.includes('UPGRADE') ||
 			act.includes('ACCEPT')
 		) {
-			return {
-				bg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
-				dot: 'bg-emerald-400',
-				textColor: 'text-emerald-400'
-			};
+			return 'text-emerald-400';
 		}
 		if (
 			act.includes('UPDATE') ||
@@ -155,11 +151,7 @@
 			act.includes('PROMOTE') ||
 			act.includes('DEMOTE')
 		) {
-			return {
-				bg: 'bg-sky-500/10 border-sky-500/20 text-sky-400',
-				dot: 'bg-sky-400',
-				textColor: 'text-sky-400'
-			};
+			return 'text-sky-400';
 		}
 		if (
 			act.includes('DELETE') ||
@@ -169,17 +161,9 @@
 			act.includes('REJECT') ||
 			act.includes('LEAVE')
 		) {
-			return {
-				bg: 'bg-rose-500/10 border-rose-500/20 text-rose-400',
-				dot: 'bg-rose-400',
-				textColor: 'text-rose-400'
-			};
+			return 'text-rose-400';
 		}
-		return {
-			bg: 'bg-white/10 border-border text-muted-foreground',
-			dot: 'bg-slate-400',
-			textColor: 'text-muted-foreground'
-		};
+		return 'text-muted-foreground';
 	}
 
 	function initials(name?: string): string {
@@ -366,7 +350,7 @@
 								Select Organization
 							</DropdownMenu.Label>
 							<DropdownMenu.Separator class="bg-white/8 my-1" />
-							{#each orgs as org}
+							{#each orgs as org (org.ID)}
 								<DropdownMenu.Item
 									class="cursor-pointer flex items-center justify-between px-2.5 py-2 rounded-md hover:bg-white/8 text-sm font-medium {org.ID ===
 									selectedOrgId
@@ -431,7 +415,7 @@
 						data-lenis-prevent
 						class="flex flex-col gap-1.5 w-full max-h-[260px] overflow-y-auto pr-0.5"
 					>
-						{#each filteredOrgs as org}
+						{#each filteredOrgs as org (org.ID)}
 							<button
 								type="button"
 								class="w-full flex items-center justify-between p-2.5 bg-white/4 hover:bg-white/8 border border-border hover:border-primary/40 rounded-lg transition-all text-left group"
@@ -496,7 +480,7 @@
 
 				<!-- Category Filter Buttons (GitHub Style) -->
 				<div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
-					{#each categories as cat}
+					{#each categories as cat (cat.id)}
 						{@const isSelected = selectedCategory === cat.id}
 						<button
 							type="button"
@@ -602,14 +586,14 @@
 									{/if}
 								</DropdownMenu.Item>
 
-								{#each visibleActionGroups as group}
+								{#each visibleActionGroups as group (group.label)} 
 									<DropdownMenu.Separator class="bg-white/8 my-1" />
 									<DropdownMenu.Label
 										class="text-[10px] text-muted-foreground font-medium px-2.5 py-1 uppercase tracking-wider"
 									>
 										{group.label}
 									</DropdownMenu.Label>
-									{#each group.actions as action}
+									{#each group.actions as action (action.label)}
 										{@const style = getActionStyle(action.value)}
 										<DropdownMenu.Item
 											class="cursor-pointer flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md hover:bg-white/8 text-xs {selectedAction ===
@@ -619,7 +603,7 @@
 											onclick={() => handleActionFilterChange(action.value)}
 										>
 											<span
-												class="text-[11px] font-mono font-medium {style.textColor} whitespace-nowrap"
+												class="text-[11px] font-mono font-medium {style} whitespace-nowrap"
 											>
 												{action.value}
 											</span>
@@ -680,7 +664,7 @@
 							<!-- Action -->
 							<div class="log-col-action">
 								<span
-									class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold border {badgeStyle.bg} whitespace-nowrap"
+									class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold {badgeStyle} whitespace-nowrap"
 								>
 									{log.action}
 								</span>
