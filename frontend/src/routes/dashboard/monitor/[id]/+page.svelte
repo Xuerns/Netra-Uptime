@@ -7,6 +7,7 @@
 	import MonitorDetailHeader from '$lib/components/monitor/MonitorDetailHeader.svelte';
 	import MonitorStatsGrid from '$lib/components/monitor/MonitorStatsGrid.svelte';
 	import MonitorLatencyChart from '$lib/components/monitor/MonitorLatencyChart.svelte';
+	import Button from '$lib/components/ui/button/button.svelte';
 	import MonitorDetailSkeleton from '$lib/components/skeletons/MonitorDetailSkeleton.svelte';
 	import { AlertTriangle, CheckCircle2, Clock, Calendar, Activity, Loader2 } from 'lucide-svelte';
 	import { formatDateOnly, formatDateTime } from '$lib/utils/datetime';
@@ -191,17 +192,17 @@
 		<MonitorDetailSkeleton />
 	{:else if fetchError || !monitor}
 		<div
-			class="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-8 text-center space-y-3 max-w-lg mx-auto"
+			class="border border-border rounded-xl bg-white/3 p-8 text-center space-y-3 max-w-full mx-auto"
 		>
-			<AlertTriangle class="size-10 text-rose-400 mx-auto" />
+			<AlertTriangle class="size-10 text-primary mx-auto" />
 			<h2 class="text-lg font-bold text-foreground">Failed to Load Monitor</h2>
 			<p class="text-xs text-muted-foreground">{fetchError || 'Monitor not found'}</p>
-			<a
+			<Button
 				href="/dashboard/monitor"
-				class="inline-block bg-primary text-primary-foreground font-medium text-xs px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+				class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 gap-1.5 font-medium shadow-sm"
 			>
 				Back to Monitors
-			</a>
+			</Button>
 		</div>
 	{:else}
 		<!-- 1. Header & Actions Banner -->

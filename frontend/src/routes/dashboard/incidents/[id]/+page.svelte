@@ -5,7 +5,8 @@
 	import { OrgAPI } from '$lib/api/organization';
 	import { userTimezone } from '$lib/stores/timezone';
 	import { toast } from 'svelte-sonner';
-
+	import { AlertTriangle } from 'lucide-svelte';
+	import Button from '$lib/components/ui/button/button.svelte';
 	// Sub-components for page sections
 	import IncidentDetailHeader from '$lib/components/incident/IncidentDetailHeader.svelte';
 	import IncidentResponders from '$lib/components/incident/IncidentResponders.svelte';
@@ -108,8 +109,16 @@
 {#if isLoading}
 	<IncidentDetailSkeleton />
 {:else if error}
-	<div class="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg font-mono text-xs">
-		{error}
+	<div class="border border-border rounded-xl bg-white/3 p-8 text-center space-y-3">
+		<AlertTriangle class="size-10 text-primary mx-auto" />
+		<h2 class="text-lg font-bold text-foreground">Failed to Load Incident</h2>
+		<p class="text-xs text-muted-foreground">Incident not found.</p>
+		<Button
+			href="/dashboard/incidents"
+			class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 gap-1.5 font-medium shadow-sm"
+		>
+			Back to Incidents
+		</Button>
 	</div>
 {:else if incident}
 	<div class="space-y-6">
