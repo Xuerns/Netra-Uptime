@@ -12,7 +12,6 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/redis/go-redis/v9 v9.21.0
-	github.com/resend/resend-go/v3 v3.9.2
 	github.com/wneessen/go-mail v0.8.0
 	golang.org/x/crypto v0.53.0
 	golang.org/x/oauth2 v0.36.0

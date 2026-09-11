@@ -33,9 +33,9 @@ func main() {
 		&model.NotificationLog{}, &model.Organization{}, &model.OrganizationMember{}, &model.RefreshToken{}, &model.StatusPage{}, &model.StatusPageMonitor{},
 		&model.Subscription{}, &model.OrganizationInvitation{}, &model.PasswordResetToken{}, &model.IncidentAssignee{}, &model.MonitorPIC{}, &model.AuditLog{}, &model.APIKey{}, &model.MonitorDailyStat{})
 
-	sender, err := email.NewResendSender()
+	sender, err := email.NewSMTPSender()
 	if err != nil {
-		log.Fatalf("Failed to initialize email sender: %v\n", err)
+		log.Printf("Warning: Failed to initialize SMTP email sender: %v (email alerts may be disabled)\n", err)
 	}
 
 	wsHub := websocket.NewHub()

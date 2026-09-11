@@ -95,10 +95,10 @@ func sendExpiryNotification(db *gorm.DB, emailSender email.EmailSender, dispatch
 		expiresStr = expiresAt.Format("2006-01-02")
 	}
 
-	// Send to PICs/admins via Resend email
+	// Send to PICs/admins via email sender
 	if len(recipients) > 0 {
-		if resendSender, ok := emailSender.(*email.ResendSender); ok {
-			_, err := resendSender.SendExpiryReminder(recipients, monitor.Name, monitor.Target, expiryType, daysLeft, expiresStr)
+		if emailSender != nil {
+			_, err := emailSender.SendExpiryReminder(recipients, monitor.Name, monitor.Target, expiryType, daysLeft, expiresStr)
 			if err != nil {
 				log.Printf("[SSL/Domain Expiry Error] Failed to send email to %v: %v", recipients, err)
 			} else {

@@ -27,19 +27,13 @@ func RegisterStaticRoutes(r *gin.Engine) {
 	// at runtime via environment variable without rebuilding the image.
 	r.GET("/_app/env.js", func(c *gin.Context) {
 		apiURL := os.Getenv("PUBLIC_API_URL")
-		if apiURL == "" {
-			apiURL = "http://localhost:8080/api/v1"
-		}
-
 		googleClientID := os.Getenv("PUBLIC_GOOGLE_CLIENT_ID")
 		googleRedirectURL := os.Getenv("PUBLIC_GOOGLE_REDIRECT_URL")
-		if googleRedirectURL == "" {
-			googleRedirectURL = fmt.Sprintf("%s/auth/callback/google", strings.TrimSuffix(apiURL, "/api/v1"))
-		}
+		appMode := os.Getenv("PUBLIC_APP_MODE")
 
 		js := fmt.Sprintf(
-			`export const env={PUBLIC_API_URL:%q,PUBLIC_GOOGLE_CLIENT_ID:%q,PUBLIC_GOOGLE_REDIRECT_URL:%q}`,
-			apiURL, googleClientID, googleRedirectURL,
+			`export const env={PUBLIC_API_URL:%q,PUBLIC_GOOGLE_CLIENT_ID:%q,PUBLIC_GOOGLE_REDIRECT_URL:%q,PUBLIC_APP_MODE:%q}`,
+			apiURL, googleClientID, googleRedirectURL, appMode,
 		)
 
 		c.Header("Content-Type", "application/javascript; charset=utf-8")
