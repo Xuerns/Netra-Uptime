@@ -253,7 +253,7 @@
 
 									<!-- Title / Summary -->
 									<a
-										href="/dashboard/incidents/{incident.ID}"
+										href="/dashboard/org/{currentOrgId}/incidents/{incident.ID}"
 										class="text-sm font-semibold text-foreground hover:text-primary transition-colors truncate"
 									>
 										{incident.Summary || 'Service Disruption'}
@@ -262,7 +262,7 @@
 									<!-- Target Monitor Tag -->
 									{#if incident.Monitor}
 										<a
-											href="/dashboard/monitor/{incident.MonitorID}"
+											href="/dashboard/org/{currentOrgId}/monitors/{incident.MonitorID}"
 											class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/5 border border-border text-[11px] font-mono text-muted-foreground hover:text-foreground hover:border-border transition-all"
 										>
 											<Server class="size-3 text-primary" />
@@ -309,7 +309,7 @@
 							class="flex items-center gap-2.5 shrink-0 self-end md:self-center group transition-colors"
 						>
 							<a
-								href="/dashboard/incidents/{incident.ID}"
+								href="/dashboard/org/{currentOrgId}/incidents/{incident.ID}"
 								class="px-3.5 py-1.5 text-foreground/60 group-hover:text-foreground text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
 							>
 								<span>Command Room</span>

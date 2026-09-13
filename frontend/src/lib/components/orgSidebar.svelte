@@ -15,6 +15,7 @@
 	import Globe from 'lucide-svelte/icons/globe';
 	import LogsIcon from 'lucide-svelte/icons/logs';
 	import Settings from 'lucide-svelte/icons/settings';
+	import Key from 'lucide-svelte/icons/key';
 
 	// Footer Icons
 	import LogOut from 'lucide-svelte/icons/log-out';
@@ -63,6 +64,8 @@
 
 	const navOrganization = [
 		{ title: 'Logs', icon: LogsIcon, segment: 'logs' },
+		{ title: 'Notifications', icon: Bell, segment: 'notifications' },
+		{ title: 'API Keys', icon: Key, segment: 'api-keys' },
 		{ title: 'Settings', icon: Settings, segment: 'settings' }
 	];
 
@@ -80,6 +83,14 @@
 			localStorage.setItem('pulsewatch_last_org', newOrgId);
 		}
 		goto(`/dashboard/org/${newOrgId}/monitors`);
+	}
+
+	function viewAllOrganizations() {
+		if (typeof window !== 'undefined') {
+			localStorage.removeItem('pulsewatch_last_org');
+		}
+		activeOrgId.set(null);
+		goto('/dashboard/org');
 	}
 
 	function initials(name: string): string {
@@ -148,6 +159,7 @@
 				{#each allOrgs as orgItem}
 					<DropdownMenu.Item
 						class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg hover:!bg-accent hover:!text-accent-foreground"
+						onSelect={() => switchOrg(orgItem.ID)}
 						onclick={() => switchOrg(orgItem.ID)}
 					>
 						<div
@@ -165,12 +177,14 @@
 					</DropdownMenu.Item>
 				{/each}
 				<DropdownMenu.Separator class="bg-border" />
-				<DropdownMenu.Item
-					class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg hover:!bg-accent hover:!text-accent-foreground text-muted-foreground"
-					onclick={() => goto('/dashboard/org')}
-				>
-					<span class="text-[13px]">View all organizations</span>
-				</DropdownMenu.Item>
+				<a href="/dashboard/org" onclick={viewAllOrganizations} class="w-full">
+					<DropdownMenu.Item
+						class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg hover:!bg-accent hover:!text-accent-foreground text-muted-foreground"
+						onSelect={viewAllOrganizations}
+					>
+						<span class="text-[13px]">View all organizations</span>
+					</DropdownMenu.Item>
+				</a>
 			</DropdownMenu.Content>
 		</DropdownMenu.Root>
 	</Sidebar.Header>

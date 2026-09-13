@@ -24,7 +24,7 @@
 		</div>
 		<div class="min-w-0">
 			<a
-				href="/dashboard/monitor/{monitor.ID}"
+				href="/dashboard/org/{monitor.OrganizationID}/monitors/{monitor.ID}"
 				class="text-[13.5px] font-semibold text-foreground hover:text-primary transition-colors truncate block"
 			>
 				{monitor.Name}
@@ -81,7 +81,7 @@
 
 	<div class="flex justify-end">
 		<a
-			href="/dashboard/monitor/{monitor.ID}"
+			href="/dashboard/org/{monitor.OrganizationID}/monitors/{monitor.ID}"
 			class="flex items-center gap-1 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors opacity-0 group-hover:opacity-100 px-2 py-1 rounded-md hover:bg-white/5"
 			aria-label="View {monitor.Name} details"
 		>

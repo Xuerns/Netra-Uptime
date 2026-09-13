@@ -76,7 +76,7 @@
 
 			<div class="min-w-0 flex-1">
 				<h3 class="text-[15px] font-semibold text-foreground leading-tight truncate mb-0.5">
-					<a href="/dashboard/monitor/{monitor.ID}" class="hover:text-primary transition-colors">
+					<a href="/dashboard/org/{monitor.OrganizationID}/monitors/{monitor.ID}" class="hover:text-primary transition-colors">
 						{monitor.Name}
 					</a>
 				</h3>
@@ -272,7 +272,7 @@
 			</div>
 
 			<a
-				href="/dashboard/monitor/{monitor.ID}"
+				href="/dashboard/org/{monitor.OrganizationID}/monitors/{monitor.ID}"
 				class="flex items-center gap-1 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
 				aria-label="View {monitor.Name} details"
 			>

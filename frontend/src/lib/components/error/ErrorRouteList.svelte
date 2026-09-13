@@ -23,7 +23,7 @@
 		{
 			index: '04',
 			title: 'Organizations',
-			href: '/dashboard/organization',
+			href: '/dashboard/org',
 			description: 'Workspace access controls, tenant isolation & team members'
 		},
 		{

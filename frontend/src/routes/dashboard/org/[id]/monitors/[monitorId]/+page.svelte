@@ -9,12 +9,15 @@
 	import MonitorLatencyChart from '$lib/components/monitor/MonitorLatencyChart.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import MonitorDetailSkeleton from '$lib/components/skeletons/MonitorDetailSkeleton.svelte';
-	import { AlertTriangle, CheckCircle2, Clock, Calendar, Activity, Loader2 } from 'lucide-svelte';
+	import { AlertTriangle, CheckCircle2, Clock, Calendar, Activity, ChevronLeft } from 'lucide-svelte';
 	import { formatDateOnly, formatDateTime } from '$lib/utils/datetime';
 	import { userTimezone } from '$lib/stores/timezone';
 
+	// ── Params ────────────────────────────────────────────────────────────────
+	const orgId = $derived($page.params.id as string);
+	const monitorId = $derived($page.params.monitorId as string);
+
 	// ── State ─────────────────────────────────────────────────────────────────
-	const monitorId = $page.params.id as string;
 	let monitor = $state<Monitor | null>(null);
 	let stats = $state<MonitorDailyStat[]>([]);
 	let incidents = $state<Incident[]>([]);
@@ -98,10 +101,10 @@
 	// ── Data Fetching ─────────────────────────────────────────────────────────
 	let currentReqId = 0;
 
-	async function loadPeriodStats(orgId: string, monId: string, days: number) {
+	async function loadPeriodStats(oid: string, mid: string, days: number) {
 		const reqId = ++currentReqId;
 		try {
-			const statsRes = await MonitorAPI.getDailyStats(orgId, monId, days);
+			const statsRes = await MonitorAPI.getDailyStats(oid, mid, days);
 			if (reqId === currentReqId) {
 				stats = statsRes.data || [];
 			}
@@ -118,17 +121,15 @@
 		fetchError = '';
 
 		try {
-			// Fetch monitor details from user monitors
-			const res = await MonitorAPI.getAllByUser();
-			const found = res.data?.find((m: Monitor) => m.ID === monitorId);
+			if (!orgId || !monitorId) return;
+			const res = await MonitorAPI.getById(orgId, monitorId);
+			if (res.data) {
+				monitor = res.data;
+				await loadPeriodStats(orgId, monitorId, periodDays);
 
-			if (found) {
-				monitor = found;
-				await loadPeriodStats(found.OrganizationID, monitorId, periodDays);
-
-				// Fetch incidents for this monitor/org
+				// Fetch incidents for this monitor
 				try {
-					const incRes = await IncidentAPI.getAll(found.OrganizationID);
+					const incRes = await IncidentAPI.getAll(orgId);
 					incidents = (incRes.data || []).filter((inc: any) => inc.MonitorID === monitorId);
 				} catch (err) {
 					console.warn('Failed to load incidents:', err);
@@ -150,8 +151,7 @@
 
 	$effect(() => {
 		const days = periodDays;
-		if (monitor) {
-			const orgId = monitor.OrganizationID;
+		if (orgId && monitorId) {
 			untrack(() => {
 				loadPeriodStats(orgId, monitorId, days);
 			});
@@ -162,7 +162,7 @@
 	async function handlePauseResume() {
 		if (!monitor) return;
 		try {
-			await MonitorAPI.update(monitor.OrganizationID, monitor.ID, {
+			await MonitorAPI.update(orgId, monitor.ID, {
 				is_active: monitor.Status === 'paused'
 			});
 			loadMonitorData(true);
@@ -175,8 +175,8 @@
 		if (!monitor) return;
 		if (!confirm(`Are you sure you want to delete monitor "${monitor.Name}"?`)) return;
 		try {
-			await MonitorAPI.delete(monitor.OrganizationID, monitor.ID);
-			goto('/dashboard/monitor');
+			await MonitorAPI.delete(orgId, monitor.ID);
+			goto(`/dashboard/org/${orgId}/monitors`);
 		} catch (err: any) {
 			alert(err.message || 'Failed to delete monitor');
 		}
@@ -187,19 +187,29 @@
 	<title>{monitor ? `${monitor.Name} • Analytics` : 'Monitor Analytics'} • PulseWatch</title>
 </svelte:head>
 
-<div class="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
+<div class="space-y-6 max-w-7xl mx-auto text-foreground antialiased">
+	<!-- Navigation breadcrumb / back button -->
+	<div>
+		<a
+			href="/dashboard/org/{orgId}/monitors"
+			class="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+		>
+			<ChevronLeft class="size-3.5" /> Back to Monitors
+		</a>
+	</div>
+
 	{#if isLoading}
 		<MonitorDetailSkeleton />
 	{:else if fetchError || !monitor}
 		<div
-			class="border border-border rounded-xl bg-white/3 p-8 text-center space-y-3 max-w-full mx-auto"
+			class="border border-border rounded-lg bg-white/3 p-8 text-center space-y-3 max-w-full mx-auto"
 		>
 			<AlertTriangle class="size-10 text-primary mx-auto" />
 			<h2 class="text-lg font-bold text-foreground">Failed to Load Monitor</h2>
 			<p class="text-xs text-muted-foreground">{fetchError || 'Monitor not found'}</p>
 			<Button
-				href="/dashboard/monitor"
-				class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 gap-1.5 font-medium shadow-sm"
+				href="/dashboard/org/{orgId}/monitors"
+				class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 gap-1.5 font-medium"
 			>
 				Back to Monitors
 			</Button>
@@ -210,15 +220,15 @@
 
 		<!-- 2. Time Range Selector Control Bar -->
 		<div
-			class="flex items-center justify-between bg-card border border-border rounded-xl p-1.5 flex-wrap gap-2"
+			class="flex items-center justify-between bg-card border border-border rounded-lg p-1.5 flex-wrap gap-2"
 		>
 			<div class="flex items-center gap-1.5">
 				{#each ['24h', '7d', '30d', '90d', '1y'] as period}
 					<button
 						type="button"
-						class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all {activePeriod ===
+						class="px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all {activePeriod ===
 						period
-							? 'bg-primary text-primary-foreground shadow-sm'
+							? 'bg-primary text-primary-foreground'
 							: 'text-muted-foreground hover:text-foreground hover:bg-white/5'}"
 						onclick={() => (activePeriod = period as any)}
 					>
@@ -250,7 +260,7 @@
 		/>
 
 		<!-- 5. Recent Incident Logs History -->
-		<div class="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-lg space-y-4">
+		<div class="bg-card border border-border rounded-lg p-5 md:p-6 space-y-4">
 			<div class="flex items-center justify-between">
 				<h3 class="text-sm font-semibold text-foreground tracking-tight flex items-center gap-2">
 					<AlertTriangle class="size-4 text-amber-400" />
@@ -263,7 +273,7 @@
 			</div>
 
 			{#if incidents.length === 0}
-				<div class="bg-white/5 rounded-xl p-6 text-center space-y-2">
+				<div class="bg-white/5 rounded-lg p-6 text-center space-y-2">
 					<CheckCircle2 class="size-8 text-emerald-400 mx-auto" />
 					<p class="text-sm font-medium text-foreground">All Systems Operational</p>
 					<p class="text-xs text-muted-foreground">
@@ -273,8 +283,9 @@
 			{:else}
 				<div class="space-y-2">
 					{#each incidents as inc}
-						<div
-							class="flex items-center justify-between bg-white/5 border border-border rounded-xl p-4 transition-colors hover:bg-white/8"
+						<a
+							href="/dashboard/org/{orgId}/incidents/{inc.ID}"
+							class="flex items-center justify-between bg-white/5 border border-border rounded-lg p-4 transition-colors hover:bg-white/8 hover:border-primary/30 group block"
 						>
 							<div class="space-y-1">
 								<div class="flex items-center gap-2">
@@ -283,9 +294,11 @@
 											? 'bg-emerald-400'
 											: 'bg-rose-500'}"
 									></span>
-									<span class="text-sm font-semibold text-foreground"
-										>{inc.Summary || 'Service Disruption'}</span
+									<span
+										class="text-sm font-semibold text-foreground group-hover:text-primary transition-colors"
 									>
+										{inc.Summary || 'Service Disruption'}
+									</span>
 									<span
 										class="uppercase text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 border border-border text-muted-foreground"
 									>
@@ -300,7 +313,7 @@
 									<div class="text-emerald-400">Resolved: {formatDateTime(inc.ResolvedAt, tz)}</div>
 								{/if}
 							</div>
-						</div>
+						</a>
 					{/each}
 				</div>
 			{/if}

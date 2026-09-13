@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 	import {
 		Key,
 		Plus,
@@ -9,8 +10,7 @@
 		Shield,
 		ShieldCheck,
 		AlertCircle,
-		Clock,
-		Eye
+		Clock
 	} from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -22,7 +22,7 @@
 	import { userTimezone } from '$lib/stores/timezone';
 	import { formatDateOnly } from '$lib/utils/datetime';
 
-	let { orgId, userRole } = $props<{ orgId: string; userRole: string }>();
+	const orgId = $derived($page.params.id as string);
 
 	let apiKeys = $state<APIKey[]>([]);
 	let isLoading = $state(true);
@@ -46,9 +46,17 @@
 	let isRevokeOpen = $state(false);
 	let isRevoking = $state(false);
 
-	let canManage = $derived(userRole === 'owner' || userRole === 'admin');
+	const currentUserId = $derived($page.data?.user?.id || $page.data?.user?.ID);
+	const currentMember = $derived(
+		($page.data?.members ?? []).find(
+			(m: any) => (m.user_id ?? m.UserID ?? m.id ?? m.ID) === currentUserId
+		)
+	);
+	const userRole = $derived(currentMember?.Role ?? currentMember?.role ?? 'admin');
+	const canManage = $derived(userRole === 'owner' || userRole === 'admin');
 
 	async function loadAPIKeys() {
+		if (!orgId) return;
 		isLoading = true;
 		fetchError = '';
 		try {
@@ -63,7 +71,7 @@
 
 	async function handleCreateKey(e: Event) {
 		e.preventDefault();
-		if (!name.trim()) return;
+		if (!name.trim() || !orgId) return;
 
 		isSubmitting = true;
 		createError = '';
@@ -95,58 +103,69 @@
 		if (!createdPlaintextKey) return;
 		await navigator.clipboard.writeText(createdPlaintextKey);
 		isCopied = true;
+		toast.success('API key copied to clipboard');
 		setTimeout(() => (isCopied = false), 2000);
 	}
 
 	async function confirmRevokeKey() {
-		if (!keyToRevoke) return;
+		if (!keyToRevoke || !orgId) return;
 		isRevoking = true;
 		try {
 			await APIKeyAPI.revoke(orgId, keyToRevoke.id);
+			toast.success(`Key "${keyToRevoke.name}" revoked`);
 			isRevokeOpen = false;
 			keyToRevoke = null;
 			await loadAPIKeys();
 		} catch (err: any) {
-			alert(err.message || 'Failed to revoke API key');
+			toast.error(err.message || 'Failed to revoke API key');
 		} finally {
 			isRevoking = false;
 		}
 	}
 
-	// Format date menggunakan timezone dari store
 	let tz = $derived($userTimezone);
 	const formatDate = (d?: string) => formatDateOnly(d, tz);
 
 	onMount(() => {
-		loadAPIKeys();
+		if (orgId) {
+			loadAPIKeys();
+		}
 	});
 </script>
 
-<div class="flex flex-col gap-6 w-full">
-	<!-- Header & Action -->
-	<div class="flex items-center justify-between gap-4 flex-wrap pb-4 border-b border-border">
+<svelte:head>
+	<title>API Keys - PulseWatch</title>
+</svelte:head>
+
+<div class="text-foreground antialiased">
+	<!-- Page Header -->
+	<header class="flex flex-wrap items-start justify-between gap-4 mb-6">
 		<div>
-			<h2 class="text-lg font-semibold text-foreground flex items-center gap-2">API Keys</h2>
-			<p class="text-xs text-muted-foreground/70 mt-0.5">
-				Manage API keys for programmatically accessing the PulseWatch REST API.
+			<h1 class="text-[32px] font-semibold leading-tight tracking-tight text-foreground mb-1.5">
+				API Keys
+			</h1>
+			<p class="text-base leading-relaxed text-muted-foreground max-w-[50ch]">
+				Manage API tokens for programmatically integrating and accessing the PulseWatch REST API.
 			</p>
 		</div>
 
 		{#if canManage}
 			<Button
-				class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 text-xs font-medium shadow-sm rounded-lg flex items-center gap-1.5"
+				class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 font-medium"
 				onclick={() => (isCreateOpen = true)}
 			>
-				<Plus class="size-4" /> Create API Key
+				<Plus class="size-4" />
+				Create API Key
 			</Button>
 		{/if}
-	</div>
+	</header>
 
 	<!-- Content Area -->
 	{#if isLoading}
 		<div
 			class="p-8 text-center text-xs text-muted-foreground/60 bg-white/2 border border-border rounded-lg"
 		>
+			<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3"></div>
 			Loading API keys...
 		</div>
 	{:else if fetchError}
@@ -158,35 +177,35 @@
 		</div>
 	{:else if apiKeys.length === 0}
 		<div
-			class="p-10 text-center flex flex-col items-center justify-center gap-3 bg-white/2 border border-border rounded-lg"
+			class="p-12 text-center flex flex-col items-center justify-center gap-3 bg-white/2 border border-border rounded-lg"
 		>
 			<div
-				class="size-10 rounded-full bg-white/5 border border-border flex items-center justify-center text-muted-foreground"
+				class="size-12 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary"
 			>
-				<Key class="size-5" />
+				<Key class="size-6" />
 			</div>
 			<div>
-				<h3 class="text-sm font-semibold text-foreground">No API keys created yet</h3>
-				<p class="text-xs text-muted-foreground/70 mt-1">
-					Create an API key to allow CI/CD scripts, bots, or custom services to access your monitors
-					and incidents.
+				<h3 class="text-base font-semibold text-foreground">No API keys created yet</h3>
+				<p class="text-xs text-muted-foreground mt-1 max-w-[42ch]">
+					Create an API key to allow CI/CD pipelines, automated scripts, or custom microservices to
+					access monitors and incidents.
 				</p>
 			</div>
 			{#if canManage}
 				<Button
-					class="mt-2 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 text-xs font-medium shadow-sm rounded-lg flex items-center gap-1.5"
+					class="mt-2 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 text-xs font-medium"
 					onclick={() => (isCreateOpen = true)}
 				>
-					<Plus class="size-3.5" /> Create First Key
+					<Plus class="size-3.5 mr-1" /> Create First Key
 				</Button>
 			{/if}
 		</div>
 	{:else}
-		<!-- API Keys Table / Card List -->
+		<!-- API Keys List -->
 		<div class="flex flex-col gap-3">
 			{#each apiKeys as key (key.id)}
 				<div
-					class="p-4 rounded-lg bg-white/3 border border-border flex items-center justify-between gap-4 flex-wrap transition-colors hover:border-border"
+					class="p-4 rounded-lg bg-white/3 border border-border flex items-center justify-between gap-4 flex-wrap transition-colors hover:border-primary/30"
 				>
 					<div class="flex flex-col gap-1 min-w-0">
 						<div class="flex items-center gap-2.5 flex-wrap">
@@ -204,16 +223,18 @@
 						</div>
 
 						<div
-							class="flex items-center gap-4 text-[11.5px] font-mono text-muted-foreground/70 flex-wrap"
+							class="flex items-center gap-4 text-[11.5px] font-mono text-muted-foreground flex-wrap"
 						>
 							<span
 								class="bg-white/5 px-2 py-0.5 rounded border border-border text-foreground font-semibold"
 							>
 								{key.key_prefix}...****
 							</span>
-							<span class="flex items-center gap-1">
-								Created by <strong class="text-muted-foreground">{key.created_by}</strong>
-							</span>
+							{#if key.created_by}
+								<span class="flex items-center gap-1">
+									Created by <strong class="text-muted-foreground">{key.created_by}</strong>
+								</span>
+							{/if}
 							<span class="flex items-center gap-1">
 								<Clock class="size-3 shrink-0 opacity-60" /> Expires: {formatDate(key.expires_at)}
 							</span>
@@ -233,7 +254,7 @@
 
 						{#if canManage}
 							<button
-								class="p-2 rounded-lg text-muted-foreground/70 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+								class="p-2 rounded-lg text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
 								title="Revoke API key"
 								onclick={() => {
 									keyToRevoke = key;
@@ -253,45 +274,46 @@
 <!-- Modal 1: Create API Key -->
 <Dialog.Root bind:open={isCreateOpen}>
 	<Dialog.Content
-		class="sm:max-w-[480px] bg-card border border-border text-foreground p-6 rounded-lg shadow-lg"
+		class="sm:max-w-[480px] bg-card border border-border text-foreground p-6 rounded-lg"
 	>
 		<Dialog.Header>
 			<Dialog.Title class="text-lg font-semibold flex items-center gap-2">
 				<Key class="size-5 text-primary" /> Create New API Key
 			</Dialog.Title>
-			<Dialog.Description class="text-xs text-muted-foreground/70 mt-1">
+			<Dialog.Description class="text-xs text-muted-foreground mt-1">
 				Generate an API key for automated access. You will only be shown the key once.
 			</Dialog.Description>
 		</Dialog.Header>
 
 		<form onsubmit={handleCreateKey} class="flex flex-col gap-4 mt-4">
 			{#if createError}
-				<div class="p-3 text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg">
+				<div
+					class="p-3 text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg flex items-center gap-2"
+				>
+					<AlertCircle class="size-4 shrink-0" />
 					{createError}
 				</div>
 			{/if}
 
 			<div class="space-y-1.5">
-				<Label for="keyName" class="text-xs font-semibold text-foreground"
-					>Key Name <span class="text-rose-400">*</span></Label
-				>
+				<Label for="keyName" class="text-xs font-semibold text-foreground">
+					Key Name <span class="text-destructive">*</span>
+				</Label>
 				<Input
 					id="keyName"
 					placeholder="e.g., GitHub Actions CI/CD"
 					bind:value={name}
 					required
-					class="bg-white/5 border-border text-xs focus:border-primary rounded-lg"
+					class="bg-white/5 border-border text-xs focus:border-primary rounded-lg h-10 text-sm"
 				/>
 			</div>
 
 			<div class="space-y-1.5">
 				<Label class="text-xs font-semibold text-foreground">Scope / Permissions</Label>
 				<div class="grid grid-cols-2 gap-3">
-					<!-- svelte-ignore a11y_click_events_have_key_events -->
-					<!-- svelte-ignore a11y_no_static_element_interactions -->
-					<div
-						class="p-3 rounded-lg border text-left cursor-pointer transition-all {permissions ===
-						'read'
+					<button
+						type="button"
+						class="p-3 rounded-lg border text-left transition-all {permissions === 'read'
 							? 'bg-primary/10 border-primary text-primary'
 							: 'bg-white/3 border-border text-muted-foreground hover:bg-white/5'}"
 						onclick={() => (permissions = 'read')}
@@ -299,16 +321,12 @@
 						<div class="flex items-center gap-1.5 font-semibold text-xs mb-1">
 							<Shield class="size-3.5" /> Read Only
 						</div>
-						<p class="text-[11px] opacity-75">
-							Read-only access to monitors, checks & status pages.
-						</p>
-					</div>
+						<p class="text-[11px] opacity-75">Read-only access to monitors, checks & status pages.</p>
+					</button>
 
-					<!-- svelte-ignore a11y_click_events_have_key_events -->
-					<!-- svelte-ignore a11y_no_static_element_interactions -->
-					<div
-						class="p-3 rounded-lg border text-left cursor-pointer transition-all {permissions ===
-						'write'
+					<button
+						type="button"
+						class="p-3 rounded-lg border text-left transition-all {permissions === 'write'
 							? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
 							: 'bg-white/3 border-border text-muted-foreground hover:bg-white/5'}"
 						onclick={() => (permissions = 'write')}
@@ -319,7 +337,7 @@
 						<p class="text-[11px] opacity-75">
 							Full read & write access to create/update monitors & incidents.
 						</p>
-					</div>
+					</button>
 				</div>
 			</div>
 
@@ -328,7 +346,7 @@
 				<select
 					id="expiration"
 					bind:value={expiresInDays}
-					class="w-full p-2.5 text-xs bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:border-primary"
+					class="w-full h-10 px-3 text-xs bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:border-primary"
 				>
 					<option value={null}>Never (Recommended for CI/CD)</option>
 					<option value={30}>30 Days</option>
@@ -341,7 +359,7 @@
 				<Button
 					type="button"
 					variant="ghost"
-					class="text-foreground h-11 px-6 hover:text-foreground hover:bg-accent rounded-lg text-xs font-medium"
+					class="text-foreground h-10 px-5 hover:text-foreground hover:bg-accent rounded-lg text-xs font-medium"
 					onclick={() => (isCreateOpen = false)}
 				>
 					Cancel
@@ -349,7 +367,7 @@
 				<Button
 					type="submit"
 					disabled={isSubmitting || !name.trim()}
-					class="h-11 px-6 rounded-lg text-xs font-medium bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 shadow-sm disabled:opacity-50"
+					class="h-10 px-5 rounded-lg text-xs font-medium bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 disabled:opacity-50"
 				>
 					{isSubmitting ? 'Generating...' : 'Generate API Key'}
 				</Button>
@@ -361,22 +379,22 @@
 <!-- Modal 2: Show Plaintext API Key Once -->
 <Dialog.Root bind:open={isShowKeyOpen}>
 	<Dialog.Content
-		class="sm:max-w-[500px] bg-card border border-border text-foreground p-6 rounded-lg shadow-lg"
+		class="sm:max-w-[500px] bg-card border border-border text-foreground p-6 rounded-lg"
 	>
 		<Dialog.Header>
 			<Dialog.Title class="text-lg font-semibold text-emerald-400 flex items-center gap-2">
 				<Check class="size-5" /> API Key Created Successfully
 			</Dialog.Title>
-			<Dialog.Description class="text-xs text-muted-foreground/70 mt-1">
-				Please copy your API key now. For your security, <strong class="text-rose-400"
-					>it will not be shown again!</strong
+			<Dialog.Description class="text-xs text-muted-foreground mt-1">
+				Please copy your API key now. For security purposes, <strong class="text-rose-400"
+					>it will never be displayed again!</strong
 				>
 			</Dialog.Description>
 		</Dialog.Header>
 
 		<div class="flex flex-col gap-4 mt-4">
 			<div
-				class="p-3 bg-foreground/20 border border-border rounded-lg font-mono text-xs text-primary break-all flex items-center justify-between gap-3"
+				class="p-3 bg-foreground/10 border border-border rounded-lg font-mono text-xs text-primary break-all flex items-center justify-between gap-3"
 			>
 				<span>{createdPlaintextKey}</span>
 				<Button
@@ -397,14 +415,14 @@
 			>
 				<AlertCircle class="size-4 shrink-0 mt-0.5" />
 				<div>
-					<strong>Keep this key secret!</strong> Store it securely in your CI/CD environment variables
-					or password manager.
+					<strong>Keep this key secure:</strong> Store it in your encrypted secrets manager or CI/CD
+					variables.
 				</div>
 			</div>
 
 			<div class="flex justify-end pt-2">
 				<Button
-					class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-9 px-5 text-xs font-medium rounded-lg shadow-sm"
+					class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-9 px-5 text-xs font-medium rounded-lg"
 					onclick={() => {
 						isShowKeyOpen = false;
 						createdPlaintextKey = '';
