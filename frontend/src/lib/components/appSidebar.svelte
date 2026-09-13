@@ -2,52 +2,31 @@
 	import { page } from '$app/stores';
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import * as Avatar from '$lib/components/ui/avatar';
 
 	// Icons
 	import ChevronsUpDown from 'lucide-svelte/icons/chevrons-up-down';
-	import ChevronRight from 'lucide-svelte/icons/chevron-right';
-
-	// App Specific Icons
-	import LayoutDashboard from 'lucide-svelte/icons/layout-dashboard';
-	import Activity from 'lucide-svelte/icons/activity';
-	import AlertTriangle from 'lucide-svelte/icons/alert-triangle';
-	import Globe from 'lucide-svelte/icons/globe';
-
-	import Users from 'lucide-svelte/icons/users';
-	import CreditCard from 'lucide-svelte/icons/credit-card';
-	import logs from 'lucide-svelte/icons/logs';
-	import Settings2 from 'lucide-svelte/icons/settings-2';
-
+	import Building2 from 'lucide-svelte/icons/building-2';
 	import LogOut from 'lucide-svelte/icons/log-out';
 	import Bell from 'lucide-svelte/icons/bell';
 	import BadgeCheck from 'lucide-svelte/icons/badge-check';
 	import BookOpen from 'lucide-svelte/icons/book-open';
 	import ExternalLink from 'lucide-svelte/icons/external-link';
+	import Settings2 from 'lucide-svelte/icons/settings-2';
 	import { env } from '$env/dynamic/public';
 
 	import Logo from '$lib/assets/Logo.svg';
 	import { apiFetch } from '$lib/helper/api';
 	import UserSettingsModal from '$lib/components/UserSettingsModal.svelte';
-	import { isSelfHosted } from '$lib/utils/appMode';
 
 	let isSettingsOpen = $state(false);
 
-	// State for dropdowns/selection
 	let activeTeam = $state<{ name: string; logo: any }>({
 		name: 'PulseWatch Workspace',
 		logo: Logo
 	});
 
-	const navMonitoring = [
-		{ title: 'Monitors', icon: Activity, url: '/dashboard/monitor', hasSub: false },
-		{ title: 'Incidents', icon: AlertTriangle, url: '/dashboard/incidents', hasSub: false },
-		{ title: 'Status Pages', icon: Globe, url: '/dashboard/statuspage', hasSub: false }
-	];
-
-	const navSettings = [
-		{ title: 'Organization', url: '/dashboard/organization', icon: Users, isExternal: false },
-		{ title: 'Logs', url: '/dashboard/logs', icon: logs, isExternal: false },
+	const navItems = [
+		{ title: 'Organizations', url: '/dashboard/org', icon: Building2, isExternal: false },
 		{
 			title: 'Documentation',
 			url: 'https://pulsewatch-dev.dmmaulana06.workers.dev/docs',
@@ -83,15 +62,15 @@
 
 <Sidebar.Root
 	collapsible="icon"
-	class="bg-sidebar! !border-r !border-sidebar-border text-sidebar-foreground shadow-[2px_0_30px_rgba(0,0,0,0.15)] dark:shadow-[2px_0_30px_rgba(0,0,0,0.5)]"
+	class="bg-sidebar! !border-r !border-sidebar-border text-sidebar-foreground"
 >
 	<!-- Header: Team Switcher -->
 	<Sidebar.Header class="p-3 border-b border-sidebar-border">
 		<div
-			class="flex items-center gap-3 p-2 rounded-xl transition-all duration-300 text-left w-full border border-transparent group group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
+			class="flex items-center gap-3 p-2 rounded-lg transition-all duration-300 text-left w-full border border-transparent group group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
 		>
 			{#if typeof activeTeam.logo === 'string'}
-				<img src={activeTeam.logo} alt="Logo" class="size-8 object-contain drop-shadow-md" />
+				<img src={activeTeam.logo} alt="Logo" class="size-8 object-contain" />
 			{:else}
 				<activeTeam.logo class="size-4" />
 			{/if}
@@ -104,72 +83,21 @@
 		</div>
 	</Sidebar.Header>
 
-	<!-- Content: Main Navigation & Projects -->
+	<!-- Content: Main Navigation -->
 	<Sidebar.Content class="py-2">
-		<!-- Monitoring Group -->
 		<Sidebar.Group>
 			<Sidebar.GroupLabel
 				class="px-3 text-xs font-semibold text-muted-foreground tracking-widest uppercase group-data-[collapsible=icon]:hidden"
-				>Monitoring</Sidebar.GroupLabel
+				>Workspace</Sidebar.GroupLabel
 			>
 			<Sidebar.GroupContent class="mt-2">
 				<Sidebar.Menu class="space-y-1">
-					{#each navMonitoring as item}
+					{#each navItems as item}
 						{@const isActive =
-							$page.url.pathname === item.url || $page.url.pathname.startsWith(item.url + '/')}
+							!item.isExternal &&
+							($page.url.pathname === item.url || $page.url.pathname.startsWith(item.url + '/'))}
 						<Sidebar.MenuItem
-							class="group/nav relative flex items-center justify-between rounded-xl border border-transparent hover:border-sidebar-border transition-all duration-300 {isActive
-								? 'bg-sidebar-accent'
-								: 'hover:bg-sidebar-accent/60'}"
-						>
-							<Sidebar.MenuButton
-								class="w-full flex-1 h-10 {isActive
-									? 'text-sidebar-foreground!'
-									: 'text-muted-foreground! hover:text-sidebar-foreground!'}"
-							>
-								{#snippet child({ props })}
-									<a
-										href={item.url}
-										{...props}
-										class="flex items-center gap-3.5 w-full px-2.5 py-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
-									>
-										<item.icon
-											class="size-5 shrink-0 transition-colors {isActive
-												? 'text-sidebar-foreground'
-												: 'text-muted-foreground group-hover/nav:text-sidebar-foreground'}"
-										/>
-										<span class="font-medium flex-1 text-md group-data-[collapsible=icon]:hidden"
-											>{item.title}</span
-										>
-										{#if item.hasSub}
-											<ChevronRight
-												class="size-4 shrink-0 transition-colors group-data-[collapsible=icon]:hidden {isActive
-													? 'text-sidebar-foreground'
-													: 'text-muted-foreground group-hover/nav:text-sidebar-foreground'}"
-											/>
-										{/if}
-									</a>
-								{/snippet}
-							</Sidebar.MenuButton>
-						</Sidebar.MenuItem>
-					{/each}
-				</Sidebar.Menu>
-			</Sidebar.GroupContent>
-		</Sidebar.Group>
-
-		<!-- Settings Group -->
-		<Sidebar.Group class="mt-4">
-			<Sidebar.GroupLabel
-				class="px-3 text-xs font-semibold text-muted-foreground tracking-widest uppercase group-data-[collapsible=icon]:hidden"
-				>Organization</Sidebar.GroupLabel
-			>
-			<Sidebar.GroupContent class="mt-2">
-				<Sidebar.Menu class="space-y-1">
-					{#each navSettings as item}
-						{@const isActive =
-							$page.url.pathname === item.url || $page.url.pathname.startsWith(item.url + '/')}
-						<Sidebar.MenuItem
-							class="group/item relative flex items-center justify-between rounded-xl border border-transparent hover:border-sidebar-border transition-all duration-300 {isActive
+							class="group/item relative flex items-center justify-between rounded-lg border border-transparent hover:border-sidebar-border transition-all duration-300 {isActive
 								? 'bg-sidebar-accent'
 								: 'hover:bg-sidebar-accent/60'}"
 						>
@@ -214,10 +142,10 @@
 		<DropdownMenu.Root>
 			<DropdownMenu.Trigger class="w-full focus:outline-none">
 				<div
-					class="flex items-center gap-3 p-2 hover:bg-sidebar-accent/60 rounded-xl transition-all duration-300 text-left w-full border border-transparent hover:border-sidebar-border group group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
+					class="flex items-center gap-3 p-2 hover:bg-sidebar-accent/60 rounded-lg transition-all duration-300 text-left w-full border border-transparent hover:border-sidebar-border group group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
 				>
 					<div
-						class="relative size-9 rounded-xl overflow-hidden shrink-0 border border-primary/20 shadow-[0_0_10px_rgba(16,185,129,0.2)] flex items-center justify-center bg-primary text-primary-foreground font-bold"
+						class="relative size-9 rounded-lg overflow-hidden shrink-0 border border-primary/20 flex items-center justify-center bg-primary text-primary-foreground font-bold"
 					>
 						<span class="z-0">{user.name ? user.name.slice(0, 2).toUpperCase() : ''}</span>
 						{#if user.avatar}
@@ -248,7 +176,7 @@
 			</DropdownMenu.Trigger>
 
 			<DropdownMenu.Content
-				class="w-56 !bg-popover backdrop-blur-[20px] !border-border text-popover-foreground shadow-xl"
+				class="w-56 !bg-popover backdrop-blur-[20px] !border-border text-popover-foreground"
 				side={sidebar.state === 'collapsed' ? 'right' : 'top'}
 				align="end"
 				sideOffset={4}
@@ -256,7 +184,7 @@
 				<DropdownMenu.Label class="font-normal">
 					<div class="flex items-center gap-3 px-1.5 py-2 text-left text-sm">
 						<div
-							class="relative size-9 rounded-xl overflow-hidden shrink-0 border border-primary/20 flex items-center justify-center bg-primary text-primary-foreground font-bold"
+							class="relative size-9 rounded-lg overflow-hidden shrink-0 border border-primary/20 flex items-center justify-center bg-primary text-primary-foreground font-bold"
 						>
 							<span class="z-0">{user.name ? user.name.slice(0, 2).toUpperCase() : ''}</span>
 							{#if user.avatar}
