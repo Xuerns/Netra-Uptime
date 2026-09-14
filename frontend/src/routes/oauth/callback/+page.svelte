@@ -47,7 +47,7 @@
 			}
 
 			// Redirect to dashboard on success
-			window.location.href = '/dashboard/monitor';
+			window.location.href = '/dashboard/org';
 		} catch (err: any) {
 			clearTimeout(timeout);
 			console.error(err);

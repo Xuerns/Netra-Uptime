@@ -42,8 +42,26 @@ func (r *MonitorRepositoryImpl) Create(monitor *model.Monitor) error {
 func (r *MonitorRepositoryImpl) GetById(orgId, monitorId string) (*model.Monitor, error) {
 	var monitor model.Monitor
 
-	if err := r.db.Where("organization_id = ? AND id = ?", orgId, monitorId).First(&monitor).Error; err != nil {
+	if err := r.db.Where("organization_id = ? AND id = ?", orgId, monitorId).
+		Preload("MonitorPICs").
+		Preload("Organization").
+		First(&monitor).Error; err != nil {
 		return nil, err
+	}
+
+	limit := config.Load().RecentChecksLimit
+	var recentChecks []model.Check
+	if err := r.db.Where("monitor_id = ?", monitor.ID).
+		Order("checked_at DESC").
+		Limit(limit).
+		Find(&recentChecks).Error; err == nil {
+		monitor.RecentChecks = recentChecks
+	}
+
+	uptimeMap, _ := r.Get30DayUptimeMap([]string{monitor.ID.String()})
+	if pct, ok := uptimeMap[monitor.ID.String()]; ok {
+		val := pct
+		monitor.CalculatedUptime30D = &val
 	}
 
 	return &monitor, nil

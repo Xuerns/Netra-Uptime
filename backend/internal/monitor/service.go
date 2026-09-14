@@ -232,11 +232,15 @@ func mapMonitorToResponse(m model.Monitor) MonitorResponse {
 		resp.UptimePercent = &pct
 	}
 
-	for _, rc := range m.RecentChecks {
-		lastCheckedAt := rc.CheckedAt.Format(time.RFC3339)
+	if len(m.RecentChecks) > 0 {
+		latest := m.RecentChecks[0]
+		lastCheckedAt := latest.CheckedAt.Format(time.RFC3339)
 		resp.LastCheckedAt = &lastCheckedAt
-		resp.ResponseTimeMs = &rc.ResponseTimeMs
+		resp.ResponseTimeMs = &latest.ResponseTimeMs
+	}
 
+	for _, rc := range m.RecentChecks {
+		checkedAt := rc.CheckedAt.Format(time.RFC3339)
 		var errMsg *string
 		if rc.ErrorMessage != "" {
 			errMsg = &rc.ErrorMessage
@@ -249,7 +253,7 @@ func mapMonitorToResponse(m model.Monitor) MonitorResponse {
 			StatusCode:     rc.StatusCode,
 			ResponseTimeMs: rc.ResponseTimeMs,
 			ErrorMessage:   errMsg,
-			CheckedAt:      lastCheckedAt,
+			CheckedAt:      checkedAt,
 		})
 	}
 	return resp

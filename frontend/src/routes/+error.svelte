@@ -5,7 +5,6 @@
 
 	import ErrorHeader from '$lib/components/error/ErrorHeader.svelte';
 	import ErrorHero from '$lib/components/error/ErrorHero.svelte';
-	import ErrorRouteList from '$lib/components/error/ErrorRouteList.svelte';
 	import ErrorFooter from '$lib/components/error/ErrorFooter.svelte';
 
 	let statusCode = $derived($page.status || 404);
@@ -41,14 +40,12 @@
 		<ErrorHeader {statusCode} />
 	</div>
 
-	<main class="flex-1 max-w-[1440px] w-full mx-auto px-6 sm:px-10 lg:px-16 py-12 lg:py-20 flex items-center">
+	<main
+		class="flex-1 max-w-[1440px] w-full mx-auto px-6 sm:px-10 lg:px-16 py-12 lg:py-20 flex items-center"
+	>
 		<div class="w-full flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16">
 			<div class="w-full lg:flex-1 gsap-fade-in">
 				<ErrorHero {statusCode} {errorMessage} />
-			</div>
-
-			<div class="w-full lg:w-[480px] xl:w-[540px] shrink-0 gsap-fade-in">
-				<ErrorRouteList />
 			</div>
 		</div>
 	</main>

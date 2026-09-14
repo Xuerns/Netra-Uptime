@@ -2,7 +2,6 @@
 	import type { Incident } from '$lib/api/incident';
 	import { formatDateTime, formatIncidentTimeAgo } from '$lib/utils/datetime';
 	import {
-		ArrowLeft,
 		AlertTriangle,
 		CheckCircle2,
 		Radio,
@@ -32,18 +31,8 @@
 	let timeAgo = $derived(formatIncidentTimeAgo(incident.StartedAt));
 </script>
 
-<div class="space-y-4 mb-6">
-	<!-- Breadcrumb -->
-	<a
-		href="/dashboard/incidents"
-		class="inline-flex items-center gap-2 text-xs font-mono text-muted-foreground hover:text-foreground transition-colors"
-	>
-		<ArrowLeft class="size-3.5" />
-		<span>Back to Incidents</span>
-	</a>
-
-	<!-- Header Content Block -->
-	<div class="bg-card border border-border rounded-lg p-5 md:p-6 space-y-4">
+<!-- Header Content Block -->
+<div class="bg-card border border-border rounded-lg p-5 md:p-6 space-y-4">
 		<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 			<!-- Title & Badges -->
 			<div class="space-y-2">
@@ -123,7 +112,7 @@
 				>
 				{#if incident.Monitor}
 					<a
-						href="/dashboard/monitor/{incident.MonitorID}"
+						href="/dashboard/org/{incident.Monitor?.OrganizationID}/monitors/{incident.MonitorID}"
 						class="inline-flex items-center gap-1.5 text-foreground hover:text-primary font-semibold transition-colors mt-0.5"
 					>
 						<Server class="size-3.5 text-primary" />
@@ -157,4 +146,3 @@
 			</div>
 		</div>
 	</div>
-</div>

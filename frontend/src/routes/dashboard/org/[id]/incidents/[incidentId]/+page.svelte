@@ -4,7 +4,7 @@
 	import { IncidentAPI, type Incident, type IncidentUpdateResponse } from '$lib/api/incident';
 	import { userTimezone } from '$lib/stores/timezone';
 	import { toast } from 'svelte-sonner';
-	import { AlertTriangle, ChevronLeft } from 'lucide-svelte';
+	import { AlertTriangle, ArrowLeft } from 'lucide-svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	// Sub-components for page sections
 	import IncidentDetailHeader from '$lib/components/incident/IncidentDetailHeader.svelte';
@@ -102,9 +102,10 @@
 	<div>
 		<a
 			href="/dashboard/org/{orgId}/incidents"
-			class="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+			class="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
 		>
-			<ChevronLeft class="size-3.5" /> Back to Incidents
+			<ArrowLeft class="size-4 group-hover:-translate-x-1 transition-transform" />
+			<span>Back to Incidents</span>
 		</a>
 	</div>
 

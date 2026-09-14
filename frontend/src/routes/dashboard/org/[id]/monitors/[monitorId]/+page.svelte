@@ -9,7 +9,7 @@
 	import MonitorLatencyChart from '$lib/components/monitor/MonitorLatencyChart.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import MonitorDetailSkeleton from '$lib/components/skeletons/MonitorDetailSkeleton.svelte';
-	import { AlertTriangle, CheckCircle2, Clock, Calendar, Activity, ChevronLeft } from 'lucide-svelte';
+	import { AlertTriangle, CheckCircle2, Clock, Calendar, Activity, ArrowLeft } from 'lucide-svelte';
 	import { formatDateOnly, formatDateTime } from '$lib/utils/datetime';
 	import { userTimezone } from '$lib/stores/timezone';
 
@@ -45,7 +45,36 @@
 
 	// Calculated Metrics from stats / recent checks
 	let computedMetrics = $derived.by(() => {
+		if (activePeriod === '24h' && monitor?.recent_checks && monitor.recent_checks.length > 0) {
+			const checks = monitor.recent_checks;
+			const upCount = checks.filter((c) => c.Status === 'up').length;
+			const latencies = checks.map((c) => c.ResponseTimeMs);
+			const sumLatency = latencies.reduce((a, b) => a + b, 0);
+			return {
+				uptimePercent: Math.round((upCount / checks.length) * 10000) / 100,
+				avgLatencyMs: Math.round(sumLatency / checks.length),
+				minLatencyMs: latencies.length > 0 ? Math.min(...latencies) : 0,
+				maxLatencyMs: latencies.length > 0 ? Math.max(...latencies) : 0,
+				totalIncidents: incidents.length,
+				downtimeFormatted: `${incidents.length * 5}m`
+			};
+		}
+
 		if (stats.length === 0) {
+			if (monitor?.recent_checks && monitor.recent_checks.length > 0) {
+				const checks = monitor.recent_checks;
+				const upCount = checks.filter((c) => c.Status === 'up').length;
+				const latencies = checks.map((c) => c.ResponseTimeMs);
+				const sumLatency = latencies.reduce((a, b) => a + b, 0);
+				return {
+					uptimePercent: Math.round((upCount / checks.length) * 10000) / 100,
+					avgLatencyMs: Math.round(sumLatency / checks.length),
+					minLatencyMs: latencies.length > 0 ? Math.min(...latencies) : 0,
+					maxLatencyMs: latencies.length > 0 ? Math.max(...latencies) : 0,
+					totalIncidents: incidents.length,
+					downtimeFormatted: `${incidents.length * 5}m`
+				};
+			}
 			return {
 				uptimePercent: monitor?.UptimePercent ?? 100,
 				avgLatencyMs: monitor?.ResponseTimeMs ?? 0,
@@ -59,9 +88,11 @@
 		const totalChecks = stats.reduce((acc, s) => acc + s.TotalChecks, 0);
 		const upChecks = stats.reduce((acc, s) => acc + s.UpChecks, 0);
 		const uptimePercent = totalChecks > 0 ? (upChecks / totalChecks) * 100 : 100;
-		const avgLatency = Math.round(stats.reduce((acc, s) => acc + s.AvgLatencyMs, 0) / stats.length);
-		const minLatency = Math.min(...stats.map((s) => s.MinLatencyMs).filter((v) => v > 0));
-		const maxLatency = Math.max(...stats.map((s) => s.MaxLatencyMs));
+		const totalLatencyWeighted = stats.reduce((acc, s) => acc + s.AvgLatencyMs * s.TotalChecks, 0);
+		const avgLatency = totalChecks > 0 ? Math.round(totalLatencyWeighted / totalChecks) : 0;
+		const validMin = stats.map((s) => s.MinLatencyMs).filter((v) => v > 0);
+		const minLatency = validMin.length > 0 ? Math.min(...validMin) : 0;
+		const maxLatency = Math.max(...stats.map((s) => s.MaxLatencyMs), 0);
 
 		return {
 			uptimePercent: Number.isNaN(uptimePercent) ? 100 : uptimePercent,
@@ -192,9 +223,10 @@
 	<div>
 		<a
 			href="/dashboard/org/{orgId}/monitors"
-			class="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+			class="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
 		>
-			<ChevronLeft class="size-3.5" /> Back to Monitors
+			<ArrowLeft class="size-4 group-hover:-translate-x-1 transition-transform" />
+			<span>Back to Monitors</span>
 		</a>
 	</div>
 

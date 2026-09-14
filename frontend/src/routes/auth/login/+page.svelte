@@ -74,7 +74,7 @@
 				throw new Error(data.error || data.message || 'Login failed');
 			}
 
-			window.location.href = '/dashboard/monitor';
+			window.location.href = '/dashboard/org';
 		} catch (err: any) {
 			error = err.message;
 		} finally {

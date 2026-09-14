@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { type Monitor } from '$lib/api/monitor';
 	import { statusLabel } from '$lib/utils/monitor';
-	import { ArrowLeft, Globe, ShieldCheck, ExternalLink, Clock } from 'lucide-svelte';
+	import { Globe, ShieldCheck, ExternalLink, Clock } from 'lucide-svelte';
 
 	interface Props {
 		monitor: Monitor;
@@ -46,22 +46,10 @@
 	});
 </script>
 
-<div class="flex flex-col gap-4">
-	<!-- Top Navigation Back Button -->
-	<div class="flex items-center justify-between">
-		<a
-			href="/dashboard/monitor"
-			class="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
-		>
-			<ArrowLeft class="size-4 group-hover:-translate-x-1 transition-transform" />
-			<span>Back to Monitors</span>
-		</a>
-	</div>
-
-	<!-- Monitor Header Banner -->
-	<div
-		class="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4"
-	>
+<!-- Monitor Header Banner -->
+<div
+	class="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4"
+>
 		<div class="flex items-start gap-4">
 			<!-- Monitor Icon Box -->
 			<div
@@ -165,4 +153,3 @@
 			</div>
 		</div>
 	</div>
-</div>

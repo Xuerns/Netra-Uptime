@@ -16,7 +16,7 @@ export const load: LayoutLoad = async ({ fetch }) => {
 		);
 
 		if (res.ok) {
-			throw redirect(302, '/dashboard/monitor');
+			throw redirect(302, '/dashboard/org');
 		}
 	} catch (error: any) {
 		if (error?.status === 302) {
