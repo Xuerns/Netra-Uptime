@@ -1,11 +1,43 @@
 <script lang="ts">
-	import { Globe, ExternalLink, Building2 } from 'lucide-svelte';
+	import { Globe, ExternalLink, Building2, Pencil, Trash2, MoreVertical } from 'lucide-svelte';
 	import type { StatusPage } from '$lib/api/statuspage';
 
-	let { sp }: { sp: StatusPage } = $props();
+	let {
+		sp,
+		onEdit,
+		onDelete
+	}: {
+		sp: StatusPage;
+		onEdit?: (sp: StatusPage) => void;
+		onDelete?: (sp: StatusPage) => void;
+	} = $props();
+
+	let menuOpen = $state(false);
+
+	function toggleMenu(e: MouseEvent) {
+		e.stopPropagation();
+		menuOpen = !menuOpen;
+	}
+
+	function closeMenu() {
+		menuOpen = false;
+	}
+
+	function handleEdit(e: MouseEvent) {
+		e.stopPropagation();
+		closeMenu();
+		onEdit?.(sp);
+	}
+
+	function handleDelete(e: MouseEvent) {
+		e.stopPropagation();
+		closeMenu();
+		onDelete?.(sp);
+	}
 </script>
 
-<div class="list-row">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="list-row" onclick={closeMenu}>
 	<div class="flex flex-col min-w-0">
 		<div class="flex items-center gap-3 min-w-0">
 			<Globe class="size-4 text-muted-foreground shrink-0" />
@@ -18,7 +50,9 @@
 			</div>
 		{/if}
 	</div>
+
 	<span class="text-[13px] text-muted-foreground truncate">{sp.Subdomain}</span>
+
 	<div>
 		{#if sp.IsPublic}
 			<span
@@ -32,10 +66,13 @@
 			>
 		{/if}
 	</div>
+
 	<span class="text-[13px] text-muted-foreground"
 		>{sp.StatusPageMonitors?.length || 0} monitors</span
 	>
-	<div>
+
+	<!-- Actions: View + 3-dot menu -->
+	<div class="flex items-center gap-1.5">
 		<a
 			href={`/status/${sp.Subdomain}`}
 			target="_blank"
@@ -45,6 +82,43 @@
 		>
 			<ExternalLink class="size-3.5" />
 		</a>
+
+		{#if onEdit || onDelete}
+			<div class="relative">
+				<button
+					onclick={toggleMenu}
+					class="flex items-center justify-center size-7 rounded bg-white/5 border border-border hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors"
+					aria-label="More options"
+				>
+					<MoreVertical class="size-3.5" />
+				</button>
+
+				{#if menuOpen}
+					<div
+						class="dropdown-menu absolute right-0 top-full mt-1.5 w-40 z-20 bg-card border border-border rounded-xl shadow-xl overflow-hidden"
+					>
+						{#if onEdit}
+							<button
+								onclick={handleEdit}
+								class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-foreground hover:bg-white/8 transition-colors text-left"
+							>
+								<Pencil class="size-3.5 text-muted-foreground" />
+								Edit
+							</button>
+						{/if}
+						{#if onDelete}
+							<button
+								onclick={handleDelete}
+								class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-destructive hover:bg-destructive/10 transition-colors text-left"
+							>
+								<Trash2 class="size-3.5" />
+								Delete
+							</button>
+						{/if}
+					</div>
+				{/if}
+			</div>
+		{/if}
 	</div>
 </div>
 
@@ -52,7 +126,7 @@
 	/* Shared from page */
 	.list-row {
 		display: grid;
-		grid-template-columns: 1fr 1fr 100px 100px 60px;
+		grid-template-columns: 1fr 1fr 100px 100px 74px;
 		align-items: center;
 		gap: 16px;
 		padding: 12px 20px;
@@ -63,9 +137,31 @@
 		background: var(--color-accent);
 	}
 
+	.dropdown-menu {
+		animation: dropdown-in 0.12s ease;
+	}
+
+	@keyframes dropdown-in {
+		from {
+			opacity: 0;
+			transform: translateY(-6px) scale(0.97);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0) scale(1);
+		}
+	}
+
+	.menu-item:not(:last-child) {
+		border-bottom: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		.list-row {
 			transition: none;
+		}
+		.dropdown-menu {
+			animation: none;
 		}
 	}
 </style>

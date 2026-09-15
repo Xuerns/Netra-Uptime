@@ -29,7 +29,7 @@ func RegisterStaticRoutes(r *gin.Engine) {
 		apiURL := os.Getenv("PUBLIC_API_URL")
 		googleClientID := os.Getenv("PUBLIC_GOOGLE_CLIENT_ID")
 		googleRedirectURL := os.Getenv("PUBLIC_GOOGLE_REDIRECT_URL")
-		appMode := os.Getenv("PUBLIC_APP_MODE")
+		appMode := os.Getenv("APP_MODE")
 
 		js := fmt.Sprintf(
 			`export const env={PUBLIC_API_URL:%q,PUBLIC_GOOGLE_CLIENT_ID:%q,PUBLIC_GOOGLE_REDIRECT_URL:%q,PUBLIC_APP_MODE:%q}`,

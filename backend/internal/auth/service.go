@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -37,6 +38,30 @@ type AuthService interface {
 	ResetPassword(newPassword, resetToken string) error
 	InitPasswordChange(userId string, req InitPasswordChangeRequest) error
 	VerifyPasswordChange(userId string, req VerifyPasswordChangeRequest) error
+}
+
+var oauthHTTPClient = &http.Client{
+	Timeout: 30 * time.Second,
+	Transport: &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			dialer := &net.Dialer{
+				Timeout:   10 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}
+			// Prefer IPv4 (tcp4) to prevent "network is unreachable" on systems/containers without an IPv6 route
+			conn, err := dialer.DialContext(ctx, "tcp4", addr)
+			if err == nil {
+				return conn, nil
+			}
+			return dialer.DialContext(ctx, network, addr)
+		},
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	},
 }
 
 type AuthServiceImpl struct {
@@ -170,10 +195,18 @@ func (s *AuthServiceImpl) OauthLoginAndRegister(req OAuthRequest) (*LoginRespons
 	var userInfoURL string
 
 	if req.Provider == "google" {
+		clientID := os.Getenv("PUBLIC_GOOGLE_CLIENT_ID")
+		clientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
+		redirectURL := os.Getenv("PUBLIC_GOOGLE_REDIRECT_URL")
+
+		if clientID == "" || clientSecret == "" {
+			return nil, errors.New("Google OAuth is not configured: missing client ID or client secret")
+		}
+
 		conf = &oauth2.Config{
-			ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
-			ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-			RedirectURL:  os.Getenv("GOOGLE_REDIRECT_URL"),
+			ClientID:     clientID,
+			ClientSecret: clientSecret,
+			RedirectURL:  redirectURL,
 			Scopes: []string{
 				"https://www.googleapis.com/auth/userinfo.email",
 				"https://www.googleapis.com/auth/userinfo.profile",
@@ -186,15 +219,17 @@ func (s *AuthServiceImpl) OauthLoginAndRegister(req OAuthRequest) (*LoginRespons
 		return nil, errors.New("Unsupported Provider")
 	}
 
+	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, oauthHTTPClient)
+
 	// Trade Authorization code with Token
-	token, err := conf.Exchange(context.Background(), req.Code)
+	token, err := conf.Exchange(ctx, req.Code)
 
 	if err != nil {
 		return nil, errors.New("Failed to exchange token: " + err.Error())
 	}
 
 	// Get profile data from user
-	response, err := http.Get(userInfoURL + token.AccessToken)
+	response, err := oauthHTTPClient.Get(userInfoURL + token.AccessToken)
 
 	if err != nil {
 		return nil, errors.New("Failed to get user info")

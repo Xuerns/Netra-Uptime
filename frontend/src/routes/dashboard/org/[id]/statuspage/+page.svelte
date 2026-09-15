@@ -8,7 +8,8 @@
 		TriangleAlert,
 		Search,
 		LayoutGrid,
-		List
+		List,
+		Trash2
 	} from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { StatusPageAPI, type StatusPage } from '$lib/api/statuspage';
@@ -17,6 +18,8 @@
 	import StatusPageListRow from '$lib/components/statuspage/StatusPageListRow.svelte';
 	import StatusPageSkeleton from '$lib/components/skeletons/StatusPageSkeleton.svelte';
 	import AddStatusPageModal from '$lib/components/statuspage/AddStatusPageModal.svelte';
+	import EditStatusPageModal from '$lib/components/statuspage/EditStatusPageModal.svelte';
+	import { toast } from 'svelte-sonner';
 
 	// ── Types ─────────────────────────────────────────────────────────────────
 	type ViewMode = 'grid' | 'list';
@@ -33,6 +36,15 @@
 	// Add Modal
 	let isAddModalOpen = $state(false);
 	let monitors = $state<Monitor[]>([]);
+
+	// Edit Modal
+	let isEditModalOpen = $state(false);
+	let editingStatusPage = $state<StatusPage | null>(null);
+
+	// Delete Confirmation
+	let isDeletingId = $state<string | null>(null);
+	let isDeleteConfirmOpen = $state(false);
+	let deletingStatusPage = $state<StatusPage | null>(null);
 
 	// ── Derived ───────────────────────────────────────────────────────────────
 	let filtered = $derived(
@@ -57,7 +69,7 @@
 		}
 	}
 
-	async function openAddModal() {
+	async function loadMonitors() {
 		if (!orgId) return;
 		try {
 			const res = await MonitorAPI.getAll(orgId);
@@ -65,7 +77,38 @@
 		} catch (e) {
 			monitors = [];
 		}
+	}
+
+	async function openAddModal() {
+		await loadMonitors();
 		isAddModalOpen = true;
+	}
+
+	async function openEditModal(sp: StatusPage) {
+		await loadMonitors();
+		editingStatusPage = sp;
+		isEditModalOpen = true;
+	}
+
+	function openDeleteConfirm(sp: StatusPage) {
+		deletingStatusPage = sp;
+		isDeleteConfirmOpen = true;
+	}
+
+	async function handleDelete() {
+		if (!deletingStatusPage || !orgId) return;
+		isDeletingId = deletingStatusPage.ID;
+		try {
+			await StatusPageAPI.delete(orgId, deletingStatusPage.ID);
+			toast.success('Status page deleted successfully');
+			isDeleteConfirmOpen = false;
+			deletingStatusPage = null;
+			await loadStatusPages(true);
+		} catch (err: any) {
+			toast.error(err.message || 'Failed to delete status page');
+		} finally {
+			isDeletingId = null;
+		}
 	}
 
 	function setViewMode(mode: ViewMode) {
@@ -219,7 +262,11 @@
 			<div class="grid grid-cols-[repeat(auto-fill,minmax(450px,1fr))] gap-6">
 				{#each filtered as sp (sp.ID)}
 					<div animate:flip={{ duration: 250 }} class="flex w-full h-full">
-						<StatusPageCard {sp} />
+						<StatusPageCard
+							{sp}
+							onEdit={openEditModal}
+							onDelete={openDeleteConfirm}
+						/>
 					</div>
 				{/each}
 			</div>
@@ -238,7 +285,7 @@
 				</div>
 
 				{#each filtered as sp (sp.ID)}
-					<StatusPageListRow {sp} />
+					<StatusPageListRow {sp} onEdit={openEditModal} onDelete={openDeleteConfirm} />
 				{/each}
 			</div>
 		{/if}
@@ -252,11 +299,72 @@
 	onSuccess={() => loadStatusPages(true)}
 />
 
+<EditStatusPageModal
+	bind:isOpen={isEditModalOpen}
+	{orgId}
+	{monitors}
+	statusPage={editingStatusPage}
+	onSuccess={() => loadStatusPages(true)}
+/>
+
+<!-- ── Delete Confirmation Dialog ──────────────────────────────────────────── -->
+{#if isDeleteConfirmOpen}
+	<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+		onclick={(e) => {
+			if (e.target === e.currentTarget) isDeleteConfirmOpen = false;
+		}}
+	>
+		<div
+			class="bg-card border border-border rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4 flex flex-col gap-4"
+		>
+			<div class="flex items-center gap-3">
+				<div
+					class="flex items-center justify-center size-10 rounded-lg bg-destructive/10 border border-destructive/20 shrink-0"
+				>
+					<Trash2 class="size-5 text-destructive" />
+				</div>
+				<div>
+					<h2 class="text-base font-semibold text-foreground">Delete Status Page</h2>
+					<p class="text-[13px] text-muted-foreground">This action cannot be undone.</p>
+				</div>
+			</div>
+
+			<p class="text-[13px] text-muted-foreground leading-relaxed">
+				Are you sure you want to delete <strong class="text-foreground font-medium"
+					>"{deletingStatusPage?.Title}"</strong
+				>? The status page will be permanently removed.
+			</p>
+
+			<div class="flex items-center gap-2 justify-end">
+				<Button
+					type="button"
+					variant="ghost"
+					class="text-foreground h-9 px-4 hover:text-foreground hover:bg-accent"
+					onclick={() => (isDeleteConfirmOpen = false)}
+					disabled={isDeletingId !== null}
+				>
+					Cancel
+				</Button>
+				<Button
+					type="button"
+					class="h-9 px-4 bg-destructive/10 border border-destructive/20 text-destructive hover:bg-destructive hover:border-destructive hover:text-white active:scale-[0.98] transition-all duration-200 font-medium"
+					onclick={handleDelete}
+					disabled={isDeletingId !== null}
+				>
+					{isDeletingId !== null ? 'Deleting...' : 'Delete'}
+				</Button>
+			</div>
+		</div>
+	</div>
+{/if}
+
 <style>
 	/* ── List view ────────────────────────────────────────────────────────── */
 	.list-row {
 		display: grid;
-		grid-template-columns: 1fr 1fr 100px 100px 60px;
+		grid-template-columns: 1fr 1fr 100px 100px 74px;
 		align-items: center;
 		gap: 16px;
 		padding: 12px 20px;

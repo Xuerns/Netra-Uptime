@@ -1,15 +1,50 @@
 <script lang="ts">
-	import { Globe, ExternalLink, Building2 } from 'lucide-svelte';
+	import { Globe, ExternalLink, Building2, Pencil, Trash2, MoreVertical } from 'lucide-svelte';
 	import type { StatusPage } from '$lib/api/statuspage';
 
-	let { sp }: { sp: StatusPage } = $props();
+	let {
+		sp,
+		onEdit,
+		onDelete
+	}: {
+		sp: StatusPage;
+		onEdit?: (sp: StatusPage) => void;
+		onDelete?: (sp: StatusPage) => void;
+	} = $props();
+
+	let menuOpen = $state(false);
+
+	function toggleMenu(e: MouseEvent) {
+		e.stopPropagation();
+		menuOpen = !menuOpen;
+	}
+
+	function closeMenu() {
+		menuOpen = false;
+	}
+
+	function handleEdit(e: MouseEvent) {
+		e.stopPropagation();
+		closeMenu();
+		onEdit?.(sp);
+	}
+
+	function handleDelete(e: MouseEvent) {
+		e.stopPropagation();
+		closeMenu();
+		onDelete?.(sp);
+	}
 </script>
 
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-	class="flex flex-col bg-background/80 border border-border rounded-xl p-5 hover:border-border transition-colors shadow-sm h-full w-full"
+	class="card-wrapper flex flex-col bg-card border border-border rounded-xl p-5 hover:border-border/80 hover:bg-card/80 transition-colors shadow-sm h-full w-full"
+	onclick={closeMenu}
 >
-	<div class="flex items-start justify-between gap-4 mb-3">
-		<div class="flex items-center gap-3 min-w-0">
+	<!-- Top row: icon + title + badge + 3-dot menu -->
+	<div class="flex items-start justify-between gap-3 mb-3">
+		<!-- Left: icon + title/subdomain -->
+		<div class="flex items-center gap-3 min-w-0 flex-1">
 			<div
 				class="flex items-center justify-center size-10 bg-white/5 rounded-lg shrink-0 border border-border"
 			>
@@ -20,17 +55,58 @@
 				<p class="text-sm text-muted-foreground truncate m-0">{sp.Subdomain}</p>
 			</div>
 		</div>
-		{#if sp.IsPublic}
-			<span
-				class="text-[10px] font-mono px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-full uppercase tracking-wider shrink-0"
-				>Public</span
-			>
-		{:else}
-			<span
-				class="text-[10px] font-mono px-2 py-0.5 bg-white/10 text-muted-foreground border border-border rounded-full uppercase tracking-wider shrink-0"
-				>Private</span
-			>
-		{/if}
+
+		<!-- Right: badge + 3-dot menu -->
+		<div class="flex items-center gap-2 shrink-0">
+			{#if sp.IsPublic}
+				<span
+					class="text-[10px] font-mono px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-full uppercase tracking-wider"
+					>Public</span
+				>
+			{:else}
+				<span
+					class="text-[10px] font-mono px-2 py-0.5 bg-white/10 text-muted-foreground border border-border rounded-full uppercase tracking-wider"
+					>Private</span
+				>
+			{/if}
+
+			{#if onEdit || onDelete}
+				<div class="relative">
+					<button
+						onclick={toggleMenu}
+						class="flex items-center justify-center size-7 rounded-md bg-white/5 border border-border hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors"
+						aria-label="More options"
+					>
+						<MoreVertical class="size-4" />
+					</button>
+
+					{#if menuOpen}
+						<div
+							class="dropdown-menu absolute right-0 top-full mt-1.5 w-40 z-20 bg-card border border-border rounded-xl shadow-xl overflow-hidden"
+						>
+							{#if onEdit}
+								<button
+									onclick={handleEdit}
+									class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-foreground hover:bg-white/8 transition-colors text-left"
+								>
+									<Pencil class="size-3.5 text-muted-foreground" />
+									Edit
+								</button>
+							{/if}
+							{#if onDelete}
+								<button
+									onclick={handleDelete}
+									class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-destructive hover:bg-destructive/10 transition-colors text-left"
+								>
+									<Trash2 class="size-3.5" />
+									Delete
+								</button>
+							{/if}
+						</div>
+					{/if}
+				</div>
+			{/if}
+		</div>
 	</div>
 
 	<!-- Organization Name Display -->
@@ -51,6 +127,7 @@
 		<div class="text-[12px] text-muted-foreground/60 flex items-center gap-1.5 font-medium">
 			<span>{sp.StatusPageMonitors?.length || 0} monitors</span>
 		</div>
+
 		<a
 			href={`/status/${sp.Subdomain}`}
 			target="_blank"
@@ -61,3 +138,28 @@
 		</a>
 	</div>
 </div>
+
+<style>
+	.dropdown-menu {
+		animation: dropdown-in 0.12s ease;
+	}
+
+	@keyframes dropdown-in {
+		from {
+			opacity: 0;
+			transform: translateY(-6px) scale(0.97);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0) scale(1);
+		}
+	}
+
+	.menu-item:first-child {
+		border-radius: 0;
+	}
+
+	.menu-item:not(:last-child) {
+		border-bottom: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
+	}
+</style>

@@ -113,12 +113,12 @@
 
 <!-- Toggle button -->
 <button
-	class="absolute top-3 right-0 z-10 flex items-center justify-center size-6 rounded-l-md bg-sidebar border border-r-0 border-sidebar-border text-muted-foreground hover:text-foreground transition-colors"
+	class="absolute top-1/2 -translate-y-1/2 right-0 z-10 flex items-center justify-center w-5 h-12 rounded-l-lg bg-sidebar border border-r-0 border-sidebar-border text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all duration-200 group"
 	onclick={togglePanel}
 	aria-label={panelOpen ? 'Close members panel' : 'Open members panel'}
 >
 	<ChevronRight
-		class="size-3.5 transition-transform {panelOpen ? 'rotate-0' : 'rotate-180'}"
+		class="size-3.5 transition-transform duration-200 {panelOpen ? 'rotate-0' : 'rotate-180'}"
 	/>
 </button>
 
