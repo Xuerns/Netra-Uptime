@@ -1,6 +1,7 @@
 package router
 
 import (
+	"PulseWatch/internal/alertrule"
 	"PulseWatch/internal/apikey"
 	"PulseWatch/internal/audit"
 	"PulseWatch/internal/auth"
@@ -31,6 +32,7 @@ type Handlers struct {
 	PublicAPIHandler    *publicapi.PublicAPIHandler
 	APIKeyService       apikey.APIKeyService
 	NotificationHandler *notification.ChannelHandler
+	AlertRuleHandler    *alertrule.Handler
 }
 
 func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, wsHandler *websocket.WsHandler) {
@@ -91,6 +93,13 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 	orgRoutes.GET("/monitors/:monitorId/stats", h.MonitorHandler.GetDailyStats)
 	orgRoutes.PUT("/monitors/:monitorId", h.MonitorHandler.UpdateMonitor)
 	orgRoutes.DELETE("/monitors/:monitorId", h.MonitorHandler.DeleteMonitor)
+
+	// Alert Rules
+	orgRoutes.GET("/monitors/:monitorId/alert-rules", h.AlertRuleHandler.GetByMonitor)
+	orgRoutes.POST("/monitors/:monitorId/alert-rules", middleware.RequireRole("owner", "admin"), h.AlertRuleHandler.Create)
+	orgRoutes.GET("/alert-rules/:ruleId", h.AlertRuleHandler.GetByID)
+	orgRoutes.PUT("/alert-rules/:ruleId", middleware.RequireRole("owner", "admin"), h.AlertRuleHandler.Update)
+	orgRoutes.DELETE("/alert-rules/:ruleId", middleware.RequireRole("owner", "admin"), h.AlertRuleHandler.Delete)
 
 	protected.GET("/monitors", h.MonitorHandler.GetAllMonitorByUserId)
 

@@ -48,6 +48,11 @@ export interface MonitorDailyStat {
 	AvgLatencyMs: number;
 	MinLatencyMs: number;
 	MaxLatencyMs: number;
+	Count2xx?: number;
+	Count3xx?: number;
+	Count4xx?: number;
+	Count5xx?: number;
+	CountError?: number;
 }
 
 export interface Monitor {
@@ -55,7 +60,7 @@ export interface Monitor {
 	Name: string;
 	Type: 'http' | 'tcp' | 'ping';
 	Target: string;
-	Status: 'up' | 'down' | 'paused' | 'pending';
+	Status: 'up' | 'down' | 'degraded' | 'paused' | 'pending';
 	IntervalSeconds: number;
 	TimeoutSeconds: number;
 	ExpectedStatusCode?: number;

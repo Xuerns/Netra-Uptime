@@ -12,8 +12,10 @@ type Incident struct {
 	Status     string    `gorm:"not null"` // ongoing | resolved
 	Severity   string    `gorm:"not null;default:'medium'"`
 	StartedAt  time.Time
-	ResolvedAt *time.Time // nullable: nil = masih berlangsung
-	Summary    string
+	ResolvedAt *time.Time 
+	Summary       string
+	TriggeredRule string     `gorm:"default:''"`
+	AlertRuleID   *uuid.UUID `gorm:"type:uuid;default:null"`
 
 	Monitor          Monitor            `gorm:"foreignKey:MonitorID"`
 	IncidentUpdates  []IncidentUpdate   `gorm:"foreignKey:IncidentID;constraint:OnDelete:CASCADE;"`
@@ -24,7 +26,7 @@ type Incident struct {
 type IncidentUpdate struct {
 	ID         uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	IncidentID uuid.UUID `gorm:"type:uuid;not null"`
-	CreatedBy  uuid.UUID `gorm:"type:uuid;not null"` // FK ke users.id
+	CreatedBy  uuid.UUID `gorm:"type:uuid;not null"` 
 	Message    string
 	CreatedAt  time.Time `gorm:"autoCreateTime"`
 

@@ -18,7 +18,7 @@ type Monitor struct {
 	IsActive           bool      `gorm:"default:true"`
 	CreatedAt          time.Time `gorm:"autoCreateTime"`
 	UpdatedAt          time.Time `gorm:"autoUpdateTime"`
-	Status             string    `gorm:"default:up"`
+	Status             string    `gorm:"default:up"` // up | down | degraded | paused
 	FailureCount       int       `gorm:"default:0"`
 	Criticality        string    `gorm:"not null;default:'medium'"` // Extrme | High | Medium | Low
 
@@ -43,6 +43,7 @@ type Monitor struct {
 	StatusPageMonitors []StatusPageMonitor   `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
 	MonitorPICs        []MonitorPIC          `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
 	NotificationLogs   []NotificationLog     `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
+	AlertRules         []AlertRule           `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
 
 	RecentChecks        []Check  `gorm:"-" json:"recent_checks"`
 	CalculatedUptime30D *float64 `gorm:"-" json:"calculated_uptime_30d"`

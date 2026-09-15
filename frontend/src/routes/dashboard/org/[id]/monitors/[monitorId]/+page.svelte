@@ -7,6 +7,8 @@
 	import MonitorDetailHeader from '$lib/components/monitor/MonitorDetailHeader.svelte';
 	import MonitorStatsGrid from '$lib/components/monitor/MonitorStatsGrid.svelte';
 	import MonitorLatencyChart from '$lib/components/monitor/MonitorLatencyChart.svelte';
+	import MonitorStatusCodeChart from '$lib/components/monitor/MonitorStatusCodeChart.svelte';
+	import MonitorAlertRulesSection from '$lib/components/monitor/MonitorAlertRulesSection.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import MonitorDetailSkeleton from '$lib/components/skeletons/MonitorDetailSkeleton.svelte';
 	import { AlertTriangle, CheckCircle2, Clock, Calendar, Activity, ArrowLeft } from 'lucide-svelte';
@@ -110,7 +112,8 @@
 			return [...monitor.recent_checks].reverse().map((c: any) => ({
 				label: formatDateTime(c.CheckedAt, tz),
 				value: c.ResponseTimeMs,
-				status: c.Status
+				status: c.Status,
+				statusCode: c.StatusCode
 			}));
 		}
 
@@ -118,7 +121,8 @@
 			return [...monitor.recent_checks].reverse().map((c: any) => ({
 				label: formatDateTime(c.CheckedAt, tz),
 				value: c.ResponseTimeMs,
-				status: c.Status
+				status: c.Status,
+				statusCode: c.StatusCode
 			}));
 		}
 
@@ -127,6 +131,79 @@
 			value: s.AvgLatencyMs,
 			status: (s.DownChecks > 0 ? 'down' : 'up') as 'up' | 'down'
 		}));
+	});
+
+	// Status Code Aggregate Metrics
+	let statusCodeMetrics = $derived.by(() => {
+		if (activePeriod === '24h' && monitor?.recent_checks && monitor.recent_checks.length > 0) {
+			const checks = monitor.recent_checks;
+			let c2xx = 0, c3xx = 0, c4xx = 0, c5xx = 0, cErr = 0;
+			for (const c of checks) {
+				const sc = c.StatusCode;
+				if (sc >= 200 && sc < 300) c2xx++;
+				else if (sc >= 300 && sc < 400) c3xx++;
+				else if (sc >= 400 && sc < 500) c4xx++;
+				else if (sc >= 500 && sc < 600) c5xx++;
+				else cErr++;
+			}
+			return {
+				count2xx: c2xx,
+				count3xx: c3xx,
+				count4xx: c4xx,
+				count5xx: c5xx,
+				countError: cErr,
+				total: checks.length
+			};
+		}
+
+		if (stats.length > 0) {
+			let c2xx = 0, c3xx = 0, c4xx = 0, c5xx = 0, cErr = 0, tot = 0;
+			for (const s of stats) {
+				c2xx += s.Count2xx ?? 0;
+				c3xx += s.Count3xx ?? 0;
+				c4xx += s.Count4xx ?? 0;
+				c5xx += s.Count5xx ?? 0;
+				cErr += s.CountError ?? s.DownChecks ?? 0;
+				tot += s.TotalChecks ?? 0;
+			}
+			if (c2xx === 0 && c3xx === 0 && c4xx === 0 && c5xx === 0 && tot > 0) {
+				const up = stats.reduce((acc, s) => acc + (s.UpChecks ?? 0), 0);
+				const down = stats.reduce((acc, s) => acc + (s.DownChecks ?? 0), 0);
+				c2xx = up;
+				cErr = down;
+			}
+			return {
+				count2xx: c2xx,
+				count3xx: c3xx,
+				count4xx: c4xx,
+				count5xx: c5xx,
+				countError: cErr,
+				total: tot
+			};
+		}
+
+		if (monitor?.recent_checks && monitor.recent_checks.length > 0) {
+			const checks = monitor.recent_checks;
+			let c2xx = 0, c3xx = 0, c4xx = 0, c5xx = 0, cErr = 0;
+			for (const c of checks) {
+				const sc = c.StatusCode;
+				if (sc >= 200 && sc < 300) c2xx++;
+				else if (sc >= 300 && sc < 400) c3xx++;
+				else if (sc >= 400 && sc < 500) c4xx++;
+				else if (sc >= 500 && sc < 600) c5xx++;
+				else cErr++;
+			}
+			return {
+				count2xx: c2xx,
+				count3xx: c3xx,
+				count4xx: c4xx,
+				count5xx: c5xx,
+				countError: cErr,
+				total: checks.length
+			};
+		}
+
+		return { count2xx: 0, count3xx: 0, count4xx: 0, count5xx: 0, countError: 0, total: 0 };
 	});
 
 	// ── Data Fetching ─────────────────────────────────────────────────────────
@@ -291,11 +368,30 @@
 			height={240}
 		/>
 
-		<!-- 5. Recent Incident Logs History -->
+		<!-- 5. HTTP Status Code Distribution Chart -->
+		{#if monitor.Type === 'http'}
+			<MonitorStatusCodeChart
+				count2xx={statusCodeMetrics.count2xx}
+				count3xx={statusCodeMetrics.count3xx}
+				count4xx={statusCodeMetrics.count4xx}
+				count5xx={statusCodeMetrics.count5xx}
+				countError={statusCodeMetrics.countError}
+				totalChecks={statusCodeMetrics.total}
+				periodLabel={activePeriod.toUpperCase()}
+			/>
+		{/if}
+
+		<!-- 6. Alert Rules & Incident Policies -->
+		<MonitorAlertRulesSection
+			{orgId}
+			{monitorId}
+			monitorType={monitor.Type}
+		/>
+
+		<!-- 7. Recent Incident Logs History -->
 		<div class="bg-card border border-border rounded-lg p-5 md:p-6 space-y-4">
 			<div class="flex items-center justify-between">
 				<h3 class="text-sm font-semibold text-foreground tracking-tight flex items-center gap-2">
-					<AlertTriangle class="size-4 text-amber-400" />
 					<span>Recent Outages & Incidents</span>
 				</h3>
 

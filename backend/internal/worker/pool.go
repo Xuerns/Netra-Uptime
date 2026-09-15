@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+
+	"github.com/google/uuid"
 )
 
 type Job struct {
@@ -97,7 +99,6 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) {
 		timeout = 10 * time.Second
 	}
 
-	var isCheckSuccess bool = true
 	var statusCode int
 	var responseTime time.Duration
 	var checkErr error
@@ -105,31 +106,34 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) {
 	switch monitor.Type {
 	case "http":
 		statusCode, responseTime, checkErr = checker.CheckHTTP(monitor.Target, timeout, monitor.ExpectedStatusCode)
-		if checkErr != nil || (monitor.ExpectedStatusCode != 0 && statusCode != monitor.ExpectedStatusCode) {
-			isCheckSuccess = false
-		}
 	case "tcp":
 		responseTime, checkErr = checker.CheckTCP(monitor.Target, timeout)
-		if checkErr != nil {
-			isCheckSuccess = false
-		}
 	case "ping":
 		responseTime, checkErr = checker.CheckPing(monitor.Target, timeout)
-		if checkErr != nil {
-			isCheckSuccess = false
-		}
 	}
+
+	var dbMonitor model.Monitor
+	if err := wp.db.Preload("AlertRules", "is_active = true").First(&dbMonitor, "id = ?", monitor.ID).Error; err != nil {
+		log.Printf("Failed to fetch monitor for state evaluation: %v\n", err)
+		return
+	}
+
+	eval := EvaluateRules(&dbMonitor, dbMonitor.AlertRules, statusCode, responseTime, checkErr)
 
 	errMsg := ""
 	if checkErr != nil {
 		errMsg = checkErr.Error()
-	} else if !isCheckSuccess && monitor.Type == "http" {
-		errMsg = "status code mismatch"
+	} else if eval.IsBreached {
+		errMsg = eval.Reason
 	}
 
 	statusCheck := "up"
-	if !isCheckSuccess {
-		statusCheck = "down"
+	if eval.IsBreached {
+		if eval.Severity == "critical" {
+			statusCheck = "down"
+		} else {
+			statusCheck = "degraded"
+		}
 	}
 
 	checkResult := model.Check{
@@ -145,22 +149,15 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) {
 		log.Printf("Failed to create check for monitor %s: %v\n", monitor.Name, err)
 	}
 
-	var dbMonitor model.Monitor
-	if err := wp.db.First(&dbMonitor, "id = ?", monitor.ID).Error; err != nil {
-		log.Printf("Failed to fetch monitor for state evaluation: %v\n", err)
-		return
-	}
-
-	const threshold = 3
-
-	if isCheckSuccess {
-		// Success Scenario
-		if dbMonitor.Status == "down" {
+	if !eval.IsBreached {
+		// Success / Healthy Scenario
+		if dbMonitor.Status == "down" || dbMonitor.Status == "degraded" {
+			prevStatus := dbMonitor.Status
 			dbMonitor.Status = "up"
 			dbMonitor.FailureCount = 0
 
 			subject := fmt.Sprintf("[PulseWatch] Resolved: %s is back UP", monitor.Name)
-			message := fmt.Sprintf("<h3>Service restored</h3><p>Your monitor <b>%s</b> (%s) has returned to healty state.</p>", dbMonitor.Name, dbMonitor.Target)
+			message := fmt.Sprintf("<h3>Service Restored</h3><p>Your monitor <b>%s</b> (%s) has returned to healthy state (previously %s).</p>", dbMonitor.Name, dbMonitor.Target, prevStatus)
 
 			go wp.sendNotification(&dbMonitor, subject, message)
 			go wp.dispatcher.Dispatch(&dbMonitor, nil, "monitor.up", subject, message)
@@ -169,7 +166,7 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) {
 			err := wp.db.Model(&model.Incident{}).Where("monitor_id = ? AND status = ?", monitor.ID, "ongoing").Updates(map[string]interface{}{
 				"status":      "resolved",
 				"resolved_at": now,
-				"summary":     "Resolved automatically because service returned to healthy state.",
+				"summary":     "Resolved automatically: all alert rules passed healthy state.",
 			}).Error
 
 			if err != nil {
@@ -178,38 +175,58 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) {
 				log.Printf("[Incident] Monitor Resolved: %s is back UP!\n", monitor.Name)
 			}
 		} else {
-			// Status already up, and also for reset count
 			dbMonitor.FailureCount = 0
 		}
 	} else {
-		// Failed Scenario
-		dbMonitor.FailureCount++
+		// Rule Breached Scenario
+		if eval.Severity == "critical" {
+			dbMonitor.FailureCount++
 
-		if dbMonitor.FailureCount >= threshold && dbMonitor.Status == "up" {
-			dbMonitor.Status = "down"
+			if dbMonitor.FailureCount >= eval.RequiredBreaches && dbMonitor.Status != "down" {
+				dbMonitor.Status = "down"
 
-			subject := fmt.Sprintf("[PulseWatch] ALERT %s is DOWN", monitor.Name)
-			message := fmt.Sprintf("<h3>Service Down Alert</h3><p>Your monitor <b>%s</b> (%s) is DOWN after %d consecutive failures.<br>Error: <i>%s</i></p>", dbMonitor.Name, dbMonitor.Target, threshold, errMsg)
+				subject := fmt.Sprintf("[PulseWatch] ALERT: %s is DOWN (%s)", monitor.Name, eval.RuleName)
+				message := fmt.Sprintf("<h3>Service Down Alert</h3><p>Your monitor <b>%s</b> (%s) triggered alert rule <b>%s</b>.<br>Reason: <i>%s</i> (breached %d consecutive times)</p>", dbMonitor.Name, dbMonitor.Target, eval.RuleName, eval.Reason, eval.RequiredBreaches)
 
-			go wp.sendNotification(&dbMonitor, subject, message)
+				go wp.sendNotification(&dbMonitor, subject, message)
 
-			newIncident := model.Incident{
-				MonitorID: monitor.ID,
-				Status:    "ongoing",
-				StartedAt: time.Now(),
-				Summary:   "Monitor down: " + errMsg,
-			}
+				var alertRuleUUID *uuid.UUID
+				if eval.RuleID != nil {
+					if parsed, err := uuid.Parse(*eval.RuleID); err == nil {
+						alertRuleUUID = &parsed
+					}
+				}
 
-			if err := wp.db.Create(&newIncident).Error; err != nil {
-				log.Printf("[Incident] Failed to create incident for monitor %s: %v\n", monitor.Name, err)
+				newIncident := model.Incident{
+					MonitorID:     monitor.ID,
+					Status:        "ongoing",
+					StartedAt:     time.Now(),
+					Summary:       fmt.Sprintf("%s: %s", eval.RuleName, eval.Reason),
+					TriggeredRule: eval.RuleName,
+					AlertRuleID:   alertRuleUUID,
+				}
+
+				if err := wp.db.Create(&newIncident).Error; err != nil {
+					log.Printf("[Incident] Failed to create incident for monitor %s: %v\n", monitor.Name, err)
+				} else {
+					incidentIDStr := newIncident.ID.String()
+					go wp.dispatcher.Dispatch(&dbMonitor, &incidentIDStr, "monitor.down", subject, message)
+					log.Printf("[Incident] MONITOR DOWN TRIGGERED: %s is DOWN (%s). Error: %s\n", monitor.Name, eval.RuleName, eval.Reason)
+				}
 			} else {
-				incidentIDStr := newIncident.ID.String()
-				go wp.dispatcher.Dispatch(&dbMonitor, &incidentIDStr, "monitor.down", subject, message)
-				log.Printf("[Incident] MONITOR DOWN TRIGGERED: %s is DOWN after %d failures. Error: %s\n", monitor.Name, threshold, errMsg)
+				log.Printf("[Check] Monitor %s breached critical rule %s %d time(s) (waiting for %d)\n", monitor.Name, eval.RuleName, dbMonitor.FailureCount, eval.RequiredBreaches)
 			}
+		} else if eval.Severity == "warning" {
+			// Degraded Warning (e.g. high latency)
+			if dbMonitor.Status == "up" {
+				dbMonitor.Status = "degraded"
+				subject := fmt.Sprintf("[PulseWatch] WARNING: %s is DEGRADED (%s)", monitor.Name, eval.RuleName)
+				message := fmt.Sprintf("<h3>Service Degraded Warning</h3><p>Your monitor <b>%s</b> (%s) is experiencing degraded performance.<br>Rule: <b>%s</b><br>Reason: <i>%s</i></p>", dbMonitor.Name, dbMonitor.Target, eval.RuleName, eval.Reason)
 
-		} else {
-			log.Printf("[Check] Monitor %s failed %d time(s) (waiting for threshold %d to trigger DOWN)\n", monitor.Name, dbMonitor.FailureCount, threshold)
+				go wp.sendNotification(&dbMonitor, subject, message)
+				go wp.dispatcher.Dispatch(&dbMonitor, nil, "monitor.degraded", subject, message)
+				log.Printf("[Check] MONITOR DEGRADED: %s (%s). %s\n", monitor.Name, eval.RuleName, eval.Reason)
+			}
 		}
 	}
 

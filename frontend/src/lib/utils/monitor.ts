@@ -18,10 +18,14 @@ export function statusLabel(s: Monitor['Status']): string {
 			return 'UP';
 		case 'down':
 			return 'DOWN';
+		case 'degraded':
+			return 'DEGRADED';
 		case 'paused':
 			return 'PAUSED';
 		case 'pending':
 			return 'PENDING';
+		default:
+			return (s as string)?.toUpperCase() ?? 'UNKNOWN';
 	}
 }
 
