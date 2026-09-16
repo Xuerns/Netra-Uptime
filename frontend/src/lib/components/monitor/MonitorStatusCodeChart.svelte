@@ -178,9 +178,7 @@
 									size: 11
 								},
 								callback: (val) => {
-									return viewMode === 'percentage'
-										? `${val}%`
-										: Number(val).toLocaleString();
+									return viewMode === 'percentage' ? `${val}%` : Number(val).toLocaleString();
 								}
 							}
 						}
@@ -226,7 +224,9 @@
 		<!-- View Switcher & Total Count -->
 		<div class="flex items-center gap-2">
 			<!-- Toggle View Mode: % or Count -->
-			<div class="bg-white/5 border border-border rounded-lg p-0.5 flex items-center text-[11px] font-mono">
+			<div
+				class="bg-white/5 border border-border rounded-lg p-0.5 flex items-center text-[11px] font-mono"
+			>
 				<button
 					type="button"
 					class="px-2.5 py-1 rounded-md transition-all {viewMode === 'percentage'

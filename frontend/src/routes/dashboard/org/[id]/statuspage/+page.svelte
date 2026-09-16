@@ -274,7 +274,7 @@
 			<!-- ── List view ─────────────────────────────────────────────────────── -->
 		{:else}
 			<div
-				class="flex flex-col divide-y divide-border border border-border rounded-lg overflow-hidden bg-white/2"
+				class="flex flex-col divide-y divide-border border border-border rounded-lg bg-white/2"
 			>
 				<div class="list-row list-row--header" aria-hidden="true">
 					<span>Status Page</span>

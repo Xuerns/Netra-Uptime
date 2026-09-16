@@ -6,8 +6,6 @@
 		Plus,
 		Trash2,
 		Mail,
-		MessageSquare,
-		Bot,
 		Webhook,
 		Link2,
 		ToggleLeft,
@@ -16,8 +14,7 @@
 		CheckCircle,
 		Clock,
 		X,
-		TriangleAlert,
-		Hash
+		TriangleAlert
 	} from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -323,14 +320,21 @@
 									class="flex items-center justify-center size-9 rounded-md bg-white/5 text-muted-foreground shrink-0"
 								>
 									{#if ch.type === 'email'}
-										<Mail class="size-4 text-blue-400" />
-									{:else if ch.type === 'slack'}
-										<Hash class="size-4 text-purple-400" />
-									{:else if ch.type === 'discord'}
-										<Bot class="size-4 text-indigo-400" />
-									{:else}
-										<Webhook class="size-4 text-orange-400" />
-									{/if}
+									<Mail class="size-4 text-blue-400" />
+								{:else if ch.type === 'slack'}
+									<svg class="size-4" viewBox="0 0 122.8 122.8" xmlns="http://www.w3.org/2000/svg">
+										<path d="M25.8 77.6c0 7.1-5.8 12.9-12.9 12.9S0 84.7 0 77.6s5.8-12.9 12.9-12.9h12.9v12.9zm6.5 0c0-7.1 5.8-12.9 12.9-12.9s12.9 5.8 12.9 12.9v32.3c0 7.1-5.8 12.9-12.9 12.9s-12.9-5.8-12.9-12.9V77.6z" fill="#e01e5a"/>
+										<path d="M45.2 25.8c-7.1 0-12.9-5.8-12.9-12.9S38.1 0 45.2 0s12.9 5.8 12.9 12.9v12.9H45.2zm0 6.5c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9H12.9C5.8 58.1 0 52.3 0 45.2s5.8-12.9 12.9-12.9h32.3z" fill="#36c5f0"/>
+										<path d="M97 45.2c0-7.1 5.8-12.9 12.9-12.9s12.9 5.8 12.9 12.9-5.8 12.9-12.9 12.9H97V45.2zm-6.5 0c0 7.1-5.8 12.9-12.9 12.9s-12.9-5.8-12.9-12.9V12.9C64.7 5.8 70.5 0 77.6 0s12.9 5.8 12.9 12.9v32.3z" fill="#2eb67d"/>
+										<path d="M77.6 97c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9-12.9-5.8-12.9-12.9V97h12.9zm0-6.5c-7.1 0-12.9-5.8-12.9-12.9s5.8-12.9 12.9-12.9h32.3c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9H77.6z" fill="#ecb22e"/>
+									</svg>
+								{:else if ch.type === 'discord'}
+									<svg class="size-4" viewBox="0 0 127.14 96.36" xmlns="http://www.w3.org/2000/svg">
+										<path d="M107.7 8.07A105.15 105.15 0 0 0 81.47 0a72.06 72.06 0 0 0-3.36 6.83 97.68 97.68 0 0 0-29.17 0A72.37 72.37 0 0 0 45.57 0a105.89 105.89 0 0 0-26.25 8.09C2.79 32.65-1.71 56.6.54 80.21a105.73 105.73 0 0 0 32.17 16.15 77.7 77.7 0 0 0 6.89-11.11 68.42 68.42 0 0 1-10.85-5.18c.91-.66 1.8-1.34 2.66-2a75.57 75.57 0 0 0 64.32 0c.87.71 1.76 1.39 2.66 2a68.68 68.68 0 0 1-10.87 5.19 77 77 0 0 0 6.89 11.1 105.25 105.25 0 0 0 32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15ZM42.45 65.69C36.18 65.69 31 60 31 53s5-12.74 11.43-12.74S54 46 53.89 53s-5.05 12.69-11.44 12.69Zm42.24 0C78.41 65.69 73.25 60 73.25 53s5-12.74 11.44-12.74S96.23 46 96.12 53s-5.04 12.69-11.43 12.69Z" fill="#5865f2"/>
+									</svg>
+								{:else}
+									<Webhook class="size-4 text-orange-400" />
+								{/if}
 								</div>
 
 								<div class="flex flex-col min-w-0">
@@ -532,19 +536,49 @@
 					Channel Type <span class="text-destructive font-bold">*</span>
 				</Label>
 				<div class="grid grid-cols-4 gap-2">
-					{#each [{ id: 'email', label: 'Email', icon: Mail, color: 'text-blue-400' }, { id: 'slack', label: 'Slack', icon: Hash, color: 'text-purple-400' }, { id: 'discord', label: 'Discord', icon: Bot, color: 'text-indigo-400' }, { id: 'webhook', label: 'Webhook', icon: Webhook, color: 'text-orange-400' }] as t}
-						<button
-							type="button"
-							onclick={() => (newType = t.id as ChannelType)}
-							class="h-10 rounded-lg border text-xs font-medium transition-all flex items-center justify-center gap-1.5 {newType ===
-							t.id
-								? 'bg-primary/10 border-primary/40 text-primary font-semibold'
-								: 'border-border bg-background text-foreground/70 hover:bg-white/5 hover:text-foreground'}"
-						>
-							<t.icon class="size-3.5 {t.color}" />
-							{t.label}
-						</button>
-					{/each}
+					<!-- Email -->
+					<button
+						type="button"
+						onclick={() => (newType = 'email')}
+						class="h-10 rounded-lg border text-xs font-medium transition-all flex items-center justify-center gap-1.5 {newType === 'email' ? 'bg-primary/10 border-primary/40 text-primary font-semibold' : 'border-border bg-background text-foreground/70 hover:bg-white/5 hover:text-foreground'}"
+					>
+						<Mail class="size-3.5 text-blue-400" />
+						Email
+					</button>
+					<!-- Slack -->
+					<button
+						type="button"
+						onclick={() => (newType = 'slack')}
+						class="h-10 rounded-lg border text-xs font-medium transition-all flex items-center justify-center gap-1.5 {newType === 'slack' ? 'bg-primary/10 border-primary/40 text-primary font-semibold' : 'border-border bg-background text-foreground/70 hover:bg-white/5 hover:text-foreground'}"
+					>
+						<svg class="size-3.5" viewBox="0 0 122.8 122.8" xmlns="http://www.w3.org/2000/svg">
+							<path d="M25.8 77.6c0 7.1-5.8 12.9-12.9 12.9S0 84.7 0 77.6s5.8-12.9 12.9-12.9h12.9v12.9zm6.5 0c0-7.1 5.8-12.9 12.9-12.9s12.9 5.8 12.9 12.9v32.3c0 7.1-5.8 12.9-12.9 12.9s-12.9-5.8-12.9-12.9V77.6z" fill="#e01e5a"/>
+							<path d="M45.2 25.8c-7.1 0-12.9-5.8-12.9-12.9S38.1 0 45.2 0s12.9 5.8 12.9 12.9v12.9H45.2zm0 6.5c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9H12.9C5.8 58.1 0 52.3 0 45.2s5.8-12.9 12.9-12.9h32.3z" fill="#36c5f0"/>
+							<path d="M97 45.2c0-7.1 5.8-12.9 12.9-12.9s12.9 5.8 12.9 12.9-5.8 12.9-12.9 12.9H97V45.2zm-6.5 0c0 7.1-5.8 12.9-12.9 12.9s-12.9-5.8-12.9-12.9V12.9C64.7 5.8 70.5 0 77.6 0s12.9 5.8 12.9 12.9v32.3z" fill="#2eb67d"/>
+							<path d="M77.6 97c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9-12.9-5.8-12.9-12.9V97h12.9zm0-6.5c-7.1 0-12.9-5.8-12.9-12.9s5.8-12.9 12.9-12.9h32.3c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9H77.6z" fill="#ecb22e"/>
+						</svg>
+						Slack
+					</button>
+					<!-- Discord -->
+					<button
+						type="button"
+						onclick={() => (newType = 'discord')}
+						class="h-10 rounded-lg border text-xs font-medium transition-all flex items-center justify-center gap-1.5 {newType === 'discord' ? 'bg-primary/10 border-primary/40 text-primary font-semibold' : 'border-border bg-background text-foreground/70 hover:bg-white/5 hover:text-foreground'}"
+					>
+						<svg class="size-3.5" viewBox="0 0 127.14 96.36" xmlns="http://www.w3.org/2000/svg">
+							<path d="M107.7 8.07A105.15 105.15 0 0 0 81.47 0a72.06 72.06 0 0 0-3.36 6.83 97.68 97.68 0 0 0-29.17 0A72.37 72.37 0 0 0 45.57 0a105.89 105.89 0 0 0-26.25 8.09C2.79 32.65-1.71 56.6.54 80.21a105.73 105.73 0 0 0 32.17 16.15 77.7 77.7 0 0 0 6.89-11.11 68.42 68.42 0 0 1-10.85-5.18c.91-.66 1.8-1.34 2.66-2a75.57 75.57 0 0 0 64.32 0c.87.71 1.76 1.39 2.66 2a68.68 68.68 0 0 1-10.87 5.19 77 77 0 0 0 6.89 11.1 105.25 105.25 0 0 0 32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15ZM42.45 65.69C36.18 65.69 31 60 31 53s5-12.74 11.43-12.74S54 46 53.89 53s-5.05 12.69-11.44 12.69Zm42.24 0C78.41 65.69 73.25 60 73.25 53s5-12.74 11.44-12.74S96.23 46 96.12 53s-5.04 12.69-11.43 12.69Z" fill="#5865f2"/>
+						</svg>
+						Discord
+					</button>
+					<!-- Webhook -->
+					<button
+						type="button"
+						onclick={() => (newType = 'webhook')}
+						class="h-10 rounded-lg border text-xs font-medium transition-all flex items-center justify-center gap-1.5 {newType === 'webhook' ? 'bg-primary/10 border-primary/40 text-primary font-semibold' : 'border-border bg-background text-foreground/70 hover:bg-white/5 hover:text-foreground'}"
+					>
+						<Webhook class="size-3.5 text-orange-400" />
+						Webhook
+					</button>
 				</div>
 			</div>
 

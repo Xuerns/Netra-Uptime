@@ -399,7 +399,7 @@
 			<div class="monitors-scroll-area">
 				<div
 					data-lenis-prevent
-					class="flex flex-col divide-y divide-border border border-border rounded-lg overflow-hidden bg-white/2"
+					class="flex flex-col divide-y divide-border border border-border rounded-lg bg-white/2"
 				>
 					<!-- Header row -->
 					<div class="list-row list-row--header" aria-hidden="true">
@@ -409,11 +409,18 @@
 						<span>Uptime 30d</span>
 						<span>Interval</span>
 						<span>Last check</span>
-						<span></span>
+						<span class="text-right">Actions</span>
 					</div>
 
 					{#each filtered as monitor (monitor.ID)}
-						<MonitorListRow {monitor} />
+						<MonitorListRow
+							{monitor}
+							{openDropdownId}
+							{toggleDropdown}
+							{handleDeleteMonitor}
+							{handleEditMonitor}
+							{handleTogglePause}
+						/>
 					{/each}
 				</div>
 			</div>
@@ -529,7 +536,7 @@
 	/* ── List view ────────────────────────────────────────────────────────── */
 	.list-row {
 		display: grid;
-		grid-template-columns: 1fr 100px 90px 90px 80px 110px 40px;
+		grid-template-columns: 1fr 100px 90px 90px 80px 110px 80px;
 		align-items: center;
 		gap: 16px;
 		padding: 12px 20px;
@@ -557,7 +564,7 @@
 
 	@media (max-width: 900px) {
 		.list-row {
-			grid-template-columns: 1fr 90px 80px 40px;
+			grid-template-columns: 1fr 100px 90px 80px;
 		}
 		.list-row > :nth-child(4),
 		.list-row > :nth-child(5),

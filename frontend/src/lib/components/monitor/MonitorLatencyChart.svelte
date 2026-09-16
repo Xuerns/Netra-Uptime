@@ -203,11 +203,21 @@
 			</h3>
 
 			<!-- Status Code Color Legend -->
-			<div class="hidden md:flex items-center gap-2.5 text-[11px] font-mono text-muted-foreground pl-2 border-l border-border">
-				<span class="flex items-center gap-1"><span class="size-2 rounded-full bg-emerald-400"></span> 2xx</span>
-				<span class="flex items-center gap-1"><span class="size-2 rounded-full bg-blue-400"></span> 3xx</span>
-				<span class="flex items-center gap-1"><span class="size-2 rounded-full bg-amber-400"></span> 4xx</span>
-				<span class="flex items-center gap-1"><span class="size-2 rounded-full bg-rose-500"></span> 5xx/Err</span>
+			<div
+				class="hidden md:flex items-center gap-2.5 text-[11px] font-mono text-muted-foreground pl-2 border-l border-border"
+			>
+				<span class="flex items-center gap-1"
+					><span class="size-2 rounded-full bg-emerald-400"></span> 2xx</span
+				>
+				<span class="flex items-center gap-1"
+					><span class="size-2 rounded-full bg-blue-400"></span> 3xx</span
+				>
+				<span class="flex items-center gap-1"
+					><span class="size-2 rounded-full bg-amber-400"></span> 4xx</span
+				>
+				<span class="flex items-center gap-1"
+					><span class="size-2 rounded-full bg-rose-500"></span> 5xx/Err</span
+				>
 			</div>
 		</div>
 	</div>

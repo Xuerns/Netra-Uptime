@@ -137,7 +137,11 @@
 	let statusCodeMetrics = $derived.by(() => {
 		if (activePeriod === '24h' && monitor?.recent_checks && monitor.recent_checks.length > 0) {
 			const checks = monitor.recent_checks;
-			let c2xx = 0, c3xx = 0, c4xx = 0, c5xx = 0, cErr = 0;
+			let c2xx = 0,
+				c3xx = 0,
+				c4xx = 0,
+				c5xx = 0,
+				cErr = 0;
 			for (const c of checks) {
 				const sc = c.StatusCode;
 				if (sc >= 200 && sc < 300) c2xx++;
@@ -157,7 +161,12 @@
 		}
 
 		if (stats.length > 0) {
-			let c2xx = 0, c3xx = 0, c4xx = 0, c5xx = 0, cErr = 0, tot = 0;
+			let c2xx = 0,
+				c3xx = 0,
+				c4xx = 0,
+				c5xx = 0,
+				cErr = 0,
+				tot = 0;
 			for (const s of stats) {
 				c2xx += s.Count2xx ?? 0;
 				c3xx += s.Count3xx ?? 0;
@@ -184,7 +193,11 @@
 
 		if (monitor?.recent_checks && monitor.recent_checks.length > 0) {
 			const checks = monitor.recent_checks;
-			let c2xx = 0, c3xx = 0, c4xx = 0, c5xx = 0, cErr = 0;
+			let c2xx = 0,
+				c3xx = 0,
+				c4xx = 0,
+				c5xx = 0,
+				cErr = 0;
 			for (const c of checks) {
 				const sc = c.StatusCode;
 				if (sc >= 200 && sc < 300) c2xx++;
@@ -382,11 +395,7 @@
 		{/if}
 
 		<!-- 6. Alert Rules & Incident Policies -->
-		<MonitorAlertRulesSection
-			{orgId}
-			{monitorId}
-			monitorType={monitor.Type}
-		/>
+		<MonitorAlertRulesSection {orgId} {monitorId} monitorType={monitor.Type} />
 
 		<!-- 7. Recent Incident Logs History -->
 		<div class="bg-card border border-border rounded-lg p-5 md:p-6 space-y-4">

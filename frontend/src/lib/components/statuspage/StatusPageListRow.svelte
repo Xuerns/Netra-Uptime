@@ -36,8 +36,14 @@
 	}
 </script>
 
+<svelte:window
+	onclick={() => {
+		if (menuOpen) closeMenu();
+	}}
+/>
+
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="list-row" onclick={closeMenu}>
+<div class="list-row relative {menuOpen ? 'z-30' : ''}" onclick={closeMenu}>
 	<div class="flex flex-col min-w-0">
 		<div class="flex items-center gap-3 min-w-0">
 			<Globe class="size-4 text-muted-foreground shrink-0" />
@@ -95,7 +101,7 @@
 
 				{#if menuOpen}
 					<div
-						class="dropdown-menu absolute right-0 top-full mt-1.5 w-40 z-20 bg-card border border-border rounded-xl shadow-xl overflow-hidden"
+						class="dropdown-menu absolute right-0 top-full mt-1.5 w-40 z-50 bg-card border border-border rounded-xl shadow-xl overflow-hidden"
 					>
 						{#if onEdit}
 							<button

@@ -273,7 +273,18 @@
 							</Sidebar.MenuButton>
 						</Sidebar.MenuItem>
 					{/each}
+				</Sidebar.Menu>
+			</Sidebar.GroupContent>
+		</Sidebar.Group>
 
+		<!-- Resources Group -->
+		<Sidebar.Group class="mt-4">
+			<Sidebar.GroupLabel
+				class="px-3 text-xs font-semibold text-muted-foreground tracking-widest uppercase group-data-[collapsible=icon]:hidden"
+				>Resources</Sidebar.GroupLabel
+			>
+			<Sidebar.GroupContent class="mt-2">
+				<Sidebar.Menu class="space-y-1">
 					<!-- Docs (External Link) -->
 					<Sidebar.MenuItem
 						class="group/item relative flex items-center justify-between rounded-lg border border-transparent hover:border-sidebar-border transition-all duration-300 hover:bg-sidebar-accent/60"

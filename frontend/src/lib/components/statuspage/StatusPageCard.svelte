@@ -36,9 +36,15 @@
 	}
 </script>
 
+<svelte:window
+	onclick={() => {
+		if (menuOpen) closeMenu();
+	}}
+/>
+
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-	class="card-wrapper flex flex-col bg-card border border-border rounded-xl p-5 hover:border-border/80 hover:bg-card/80 transition-colors shadow-sm h-full w-full"
+	class="card-wrapper flex flex-col bg-card border border-border rounded-xl p-5 hover:border-border/80 hover:bg-card/80 transition-colors shadow-sm h-full w-full relative {menuOpen ? 'z-30' : ''}"
 	onclick={closeMenu}
 >
 	<!-- Top row: icon + title + badge + 3-dot menu -->
@@ -82,7 +88,7 @@
 
 					{#if menuOpen}
 						<div
-							class="dropdown-menu absolute right-0 top-full mt-1.5 w-40 z-20 bg-card border border-border rounded-xl shadow-xl overflow-hidden"
+							class="dropdown-menu absolute right-0 top-full mt-1.5 w-40 z-50 bg-card border border-border rounded-xl shadow-xl overflow-hidden"
 						>
 							{#if onEdit}
 								<button

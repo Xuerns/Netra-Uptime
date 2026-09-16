@@ -25,8 +25,11 @@
 		logo: Logo
 	});
 
-	const navItems = [
-		{ title: 'Organizations', url: '/dashboard/org', icon: Building2, isExternal: false },
+	const navWorkspace = [
+		{ title: 'Organizations', url: '/dashboard/org', icon: Building2 }
+	];
+
+	const navResources = [
 		{
 			title: 'Documentation',
 			url: 'https://pulsewatch-dev.dmmaulana06.workers.dev/docs',
@@ -85,6 +88,7 @@
 
 	<!-- Content: Main Navigation -->
 	<Sidebar.Content class="py-2">
+		<!-- Workspace Group -->
 		<Sidebar.Group>
 			<Sidebar.GroupLabel
 				class="px-3 text-xs font-semibold text-muted-foreground tracking-widest uppercase group-data-[collapsible=icon]:hidden"
@@ -92,10 +96,9 @@
 			>
 			<Sidebar.GroupContent class="mt-2">
 				<Sidebar.Menu class="space-y-1">
-					{#each navItems as item}
+					{#each navWorkspace as item}
 						{@const isActive =
-							!item.isExternal &&
-							($page.url.pathname === item.url || $page.url.pathname.startsWith(item.url + '/'))}
+							$page.url.pathname === item.url || $page.url.pathname.startsWith(item.url + '/')}
 						<Sidebar.MenuItem
 							class="group/item relative flex items-center justify-between rounded-lg border border-transparent hover:border-sidebar-border transition-all duration-300 {isActive
 								? 'bg-sidebar-accent'
@@ -109,8 +112,6 @@
 								{#snippet child({ props })}
 									<a
 										href={item.url}
-										target={item.isExternal ? '_blank' : undefined}
-										rel={item.isExternal ? 'noopener noreferrer' : undefined}
 										{...props}
 										class="flex items-center gap-3.5 w-full px-2.5 py-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
 									>
@@ -122,11 +123,47 @@
 										<span class="text-md font-medium flex-1 group-data-[collapsible=icon]:hidden"
 											>{item.title}</span
 										>
-										{#if item.isExternal}
-											<ExternalLink
-												class="size-3.5 text-muted-foreground group-hover/item:text-sidebar-foreground transition-colors group-data-[collapsible=icon]:hidden"
-											/>
-										{/if}
+									</a>
+								{/snippet}
+							</Sidebar.MenuButton>
+						</Sidebar.MenuItem>
+					{/each}
+				</Sidebar.Menu>
+			</Sidebar.GroupContent>
+		</Sidebar.Group>
+
+		<!-- Resources Group -->
+		<Sidebar.Group class="mt-4">
+			<Sidebar.GroupLabel
+				class="px-3 text-xs font-semibold text-muted-foreground tracking-widest uppercase group-data-[collapsible=icon]:hidden"
+				>Resources</Sidebar.GroupLabel
+			>
+			<Sidebar.GroupContent class="mt-2">
+				<Sidebar.Menu class="space-y-1">
+					{#each navResources as item}
+						<Sidebar.MenuItem
+							class="group/item relative flex items-center justify-between rounded-lg border border-transparent hover:border-sidebar-border transition-all duration-300 hover:bg-sidebar-accent/60"
+						>
+							<Sidebar.MenuButton
+								class="w-full flex-1 h-10 text-muted-foreground! hover:text-sidebar-foreground!"
+							>
+								{#snippet child({ props })}
+									<a
+										href={item.url}
+										target="_blank"
+										rel="noopener noreferrer"
+										{...props}
+										class="flex items-center gap-3.5 w-full px-2.5 py-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
+									>
+										<item.icon
+											class="size-4.5 shrink-0 transition-colors text-muted-foreground group-hover/item:text-sidebar-foreground"
+										/>
+										<span class="text-md font-medium flex-1 group-data-[collapsible=icon]:hidden"
+											>{item.title}</span
+										>
+										<ExternalLink
+											class="size-3.5 text-muted-foreground group-hover/item:text-sidebar-foreground transition-colors group-data-[collapsible=icon]:hidden"
+										/>
 									</a>
 								{/snippet}
 							</Sidebar.MenuButton>
