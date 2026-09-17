@@ -89,12 +89,12 @@
 	<!-- Content: Main Navigation -->
 	<Sidebar.Content class="py-2">
 		<!-- Workspace Group -->
-		<Sidebar.Group>
+		<Sidebar.Group class="py-1">
 			<Sidebar.GroupLabel
 				class="px-3 text-xs font-semibold text-muted-foreground tracking-widest uppercase group-data-[collapsible=icon]:hidden"
 				>Workspace</Sidebar.GroupLabel
 			>
-			<Sidebar.GroupContent class="mt-2">
+			<Sidebar.GroupContent class="mt-1">
 				<Sidebar.Menu class="space-y-1">
 					{#each navWorkspace as item}
 						{@const isActive =
@@ -133,12 +133,12 @@
 		</Sidebar.Group>
 
 		<!-- Resources Group -->
-		<Sidebar.Group class="mt-4">
+		<Sidebar.Group class="mt-1 py-1">
 			<Sidebar.GroupLabel
 				class="px-3 text-xs font-semibold text-muted-foreground tracking-widest uppercase group-data-[collapsible=icon]:hidden"
 				>Resources</Sidebar.GroupLabel
 			>
-			<Sidebar.GroupContent class="mt-2">
+			<Sidebar.GroupContent class="mt-1">
 				<Sidebar.Menu class="space-y-1">
 					{#each navResources as item}
 						<Sidebar.MenuItem

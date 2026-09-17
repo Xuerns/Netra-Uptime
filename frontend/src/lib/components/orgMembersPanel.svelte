@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { MoreVertical, Trash2, ShieldAlert, ShieldX, Users, ChevronRight } from 'lucide-svelte';
+	import { MoreVertical, Trash2, ShieldAlert, ShieldX, Users, ChevronRight, UserPlus } from 'lucide-svelte';
 	import MemberSkeleton from '$lib/components/skeletons/MemberSkeleton.svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
+	import InviteMemberModal from '$lib/components/InviteMemberModal.svelte';
 	import { OrgAPI } from '$lib/api/organization';
 	import { toast } from 'svelte-sonner';
 
@@ -37,6 +38,7 @@
 
 	let panelOpen = $state(true);
 	let openDropdownId = $state<string | null>(null);
+	let isInviteModalOpen = $state(false);
 
 	let owners = $derived(members.filter((m: Member) => m.Role === 'owner'));
 	let admins = $derived(members.filter((m: Member) => m.Role === 'admin'));
@@ -142,6 +144,19 @@
 					{/if}
 				</span>
 			</div>
+
+			<!-- Invite Member Button -->
+			{#if currentUserRole === 'owner' || currentUserRole === 'admin'}
+				<button
+					type="button"
+					class="flex items-center justify-center size-7 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
+					onclick={() => (isInviteModalOpen = true)}
+					aria-label="Invite member"
+					title="Invite member"
+				>
+					<UserPlus class="size-4" />
+				</button>
+			{/if}
 		</div>
 
 		{#if isLoadingMembers}
@@ -400,4 +415,11 @@
 	cancelText="Cancel"
 	destructive={true}
 	onConfirm={confirmKickMember}
+/>
+
+
+<InviteMemberModal
+	bind:open={isInviteModalOpen}
+	{orgId}
+	onInvited={() => onMembersUpdated?.()}
 />

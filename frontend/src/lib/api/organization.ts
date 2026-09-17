@@ -97,14 +97,18 @@ export const OrgAPI = {
 		};
 	},
 
-	inviteMember: async (orgId: string, data: InviteMemberRequest) => {
+	inviteMember: async (orgId: string, data: InviteMemberRequest | InviteMemberRequest[]) => {
 		// Backend `InviteMember` (BulkInviteMemberRequest) expects: { invitations: [...] }
+		const invitations = Array.isArray(data) ? data : [data];
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/invite`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ invitations: [data] })
+			body: JSON.stringify({ invitations })
 		});
-		if (!res.ok) throw new Error('Failed to invite member');
+		if (!res.ok) {
+			const err = await res.json().catch(() => ({}));
+			throw new Error(err.error || err.message || 'Failed to invite member');
+		}
 		return res.json();
 	},
 
