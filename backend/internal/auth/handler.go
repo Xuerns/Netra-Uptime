@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"PulseWatch/pkg/apierror"
 	"PulseWatch/pkg/email"
 	"net/http"
 	"os"
@@ -21,14 +22,14 @@ func NewAuthHandler(service AuthService) AuthHandler {
 func (h AuthHandler) Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	message, err := h.service.Register(req)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -38,14 +39,14 @@ func (h AuthHandler) Register(c *gin.Context) {
 func (h AuthHandler) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	response, err := h.service.Login(req)
 
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -78,7 +79,7 @@ func (h AuthHandler) Logout(c *gin.Context) {
 
 	if err == nil && refreshToken != "" {
 		if err = h.service.Logout(refreshToken); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 			return
 		}
 	}
@@ -100,7 +101,7 @@ func (h AuthHandler) RefreshAccessToken(c *gin.Context) {
 	accessToken, err := h.service.RefreshAccessToken(token)
 
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -129,7 +130,7 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 	response, err := h.service.GetProfile(userId.(string))
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -139,21 +140,21 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 	var req ForgotPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	url, err := h.service.ForgotPassword(req.Email)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
 	// Only send email if user was found (url is not empty)
 	if url != "" {
 		if err := email.MailSender(req.Email, url); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send reset email. Please try again later."})
 			return
 		}
 	}
@@ -165,12 +166,12 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	var req ResetPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	if err := h.service.ResetPassword(req.Password, req.Token); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -181,14 +182,14 @@ func (h *AuthHandler) OauthLoginAndRegister(c *gin.Context) {
 	var req OAuthRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	response, err := h.service.OauthLoginAndRegister(req)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -220,12 +221,12 @@ func (h AuthHandler) InitPasswordChange(c *gin.Context) {
 
 	var req InitPasswordChangeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	if err := h.service.InitPasswordChange(userId.(string), req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -241,12 +242,12 @@ func (h AuthHandler) VerifyPasswordChange(c *gin.Context) {
 
 	var req VerifyPasswordChangeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	if err := h.service.VerifyPasswordChange(userId.(string), req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 

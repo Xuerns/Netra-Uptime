@@ -8,6 +8,7 @@
 	import { Switch } from '$lib/components/ui/switch';
 	import { toast } from 'svelte-sonner';
 	import { TriangleAlert, Activity } from 'lucide-svelte';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	let {
 		isOpen = $bindable(false),
@@ -77,7 +78,7 @@
 			isOpen = false;
 			onSuccess();
 		} catch (err: any) {
-			error = err.message || 'Failed to create status page';
+			error = parseApiError(err, 'Failed to create status page');
 			toast.error(error);
 		} finally {
 			loading = false;

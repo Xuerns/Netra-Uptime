@@ -24,6 +24,7 @@
 	import OrganizationSkeleton from '$lib/components/skeletons/OrganizationSkeleton.svelte';
 	import { toast } from 'svelte-sonner';
 	import { activeOrgId, organizations } from '$lib/stores/organization';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	// ── Types ────────────────────────────────────────────────────────────────────
 	interface Organization {
@@ -221,7 +222,7 @@
 				orgs.map((o) => ({ id: o.ID, name: o.Name, slug: o.Slug }))
 			);
 		} catch (err: any) {
-			fetchError = err.message ?? 'Failed to load organizations.';
+			fetchError = parseApiError(err, 'Failed to load organizations.');
 		} finally {
 			isLoading = false;
 		}
@@ -263,7 +264,7 @@
 				selectOrg(newOrg.ID);
 			}
 		} catch (err: any) {
-			createError = err.message ?? 'Failed to create organization.';
+			createError = parseApiError(err, 'Failed to create organization.');
 			toast.error(createError);
 		} finally {
 			isSubmitting = false;

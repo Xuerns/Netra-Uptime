@@ -13,6 +13,7 @@
 		validateMonitorTimeout
 	} from '$lib/utils/validation';
 	import MonitorTypeGuide from '$lib/components/monitor/MonitorTypeGuide.svelte';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	let {
 		isOpen = $bindable(false),
@@ -148,7 +149,7 @@
 			onSuccess();
 			isOpen = false;
 		} catch (err: any) {
-			error = err.message || 'Failed to create monitor';
+			error = parseApiError(err, 'Failed to create monitor');
 		} finally {
 			loading = false;
 		}

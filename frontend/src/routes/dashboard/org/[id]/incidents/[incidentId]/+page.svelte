@@ -4,6 +4,7 @@
 	import { IncidentAPI, type Incident, type IncidentUpdateResponse } from '$lib/api/incident';
 	import { userTimezone } from '$lib/stores/timezone';
 	import { toast } from 'svelte-sonner';
+	import { parseApiError } from '$lib/utils/parseApiError';
 	import { AlertTriangle, ArrowLeft } from 'lucide-svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	// Sub-components for page sections
@@ -61,7 +62,7 @@
 			const res = await IncidentAPI.getById(orgId, incidentId);
 			if (res.data) incident = res.data;
 		} catch (err: any) {
-			toast.error(err.message || 'Failed to join incident bridge');
+			toast.error(parseApiError(err, 'Failed to join incident bridge'));
 		} finally {
 			isJoining = false;
 		}
@@ -78,7 +79,7 @@
 			const updatesRes = await IncidentAPI.getUpdates(orgId, incidentId);
 			updates = updatesRes.data || [];
 		} catch (err: any) {
-			toast.error(err.message || 'Failed to post update');
+			toast.error(parseApiError(err, 'Failed to post update'));
 		} finally {
 			isPosting = false;
 		}

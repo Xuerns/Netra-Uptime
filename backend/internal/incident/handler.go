@@ -1,6 +1,7 @@
 package incident
 
 import (
+	"PulseWatch/pkg/apierror"
 	"PulseWatch/pkg/utils"
 	"net/http"
 
@@ -83,7 +84,7 @@ func (h *Incidenthandler) AddIncidentUpdate(c *gin.Context) {
 
 	var req UpdateIncidentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
@@ -92,7 +93,7 @@ func (h *Incidenthandler) AddIncidentUpdate(c *gin.Context) {
 	updatedIncident, err := h.service.AddIncidentUpdate(orgId.(uuid.UUID).String(), incidentId, userId.(string), req.Message)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -122,7 +123,7 @@ func (h *Incidenthandler) JoinAssignee(c *gin.Context) {
 	}
 
 	if err := h.service.JoinAssignee(orgId.(uuid.UUID).String(), incidentId, userId.(string)); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -147,7 +148,7 @@ func (h *Incidenthandler) GetMessageAndUser(c *gin.Context) {
 	IncidentUpdates, err := h.service.GetIncidentUpdate(orgId.(uuid.UUID).String(), incidentId)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 

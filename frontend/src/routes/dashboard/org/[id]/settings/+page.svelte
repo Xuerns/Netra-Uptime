@@ -10,6 +10,7 @@
 	import { Loader2, AlertTriangle, ArrowLeft, ChevronDown, Check } from 'lucide-svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import { OrgAPI } from '$lib/api/organization';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	const orgId = $page.params.id as string;
 	const currentUserId = $page.data.user?.id;
@@ -121,7 +122,7 @@
 			originalOrgName = formData.name;
 			toast.success('Organization updated successfully');
 		} catch (error: any) {
-			toast.error(error.message || 'Failed to update organization');
+			toast.error(parseApiError(error, 'Failed to update organization'));
 		} finally {
 			isUpdating = false;
 		}
@@ -142,7 +143,7 @@
 			toast.success('Organization disbanded successfully');
 			goto('/dashboard/org');
 		} catch (error: any) {
-			toast.error(error.message || 'Failed to disband organization');
+			toast.error(parseApiError(error, 'Failed to disband organization'));
 			isDisbanding = false;
 		}
 	}
@@ -157,7 +158,7 @@
 			toast.success('Ownership transferred successfully');
 			goto('/dashboard/org');
 		} catch (error: any) {
-			toast.error(error.message || 'Failed to transfer ownership');
+			toast.error(parseApiError(error, 'Failed to transfer ownership'));
 		} finally {
 			isTransferModalOpen = false;
 		}
@@ -172,7 +173,7 @@
 			toast.success('You have left the organization');
 			goto('/dashboard/org');
 		} catch (error: any) {
-			toast.error(error.message || 'Failed to leave organization');
+			toast.error(parseApiError(error, 'Failed to leave organization'));
 		} finally {
 			isLeaveModalOpen = false;
 		}

@@ -1,6 +1,7 @@
 package notification
 
 import (
+	"PulseWatch/pkg/apierror"
 	"net/http"
 	"strconv"
 
@@ -26,13 +27,13 @@ func (h *ChannelHandler) Create(c *gin.Context) {
 
 	var req CreateChannelRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	resp, err := h.service.Create(orgID, &req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -48,7 +49,7 @@ func (h *ChannelHandler) GetAll(c *gin.Context) {
 
 	resp, err := h.service.GetAll(orgID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -70,7 +71,7 @@ func (h *ChannelHandler) GetByID(c *gin.Context) {
 
 	resp, err := h.service.GetByID(orgID, channelID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		c.JSON(http.StatusNotFound, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -93,13 +94,13 @@ func (h *ChannelHandler) Update(c *gin.Context) {
 
 	var req UpdateChannelRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	resp, err := h.service.Update(orgID, channelID, &req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -121,7 +122,7 @@ func (h *ChannelHandler) Delete(c *gin.Context) {
 	}
 
 	if err := h.service.Delete(orgID, channelID); err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		c.JSON(http.StatusNotFound, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -141,7 +142,7 @@ func (h *ChannelHandler) GetLogs(c *gin.Context) {
 
 	resp, err := h.service.GetLogs(orgID, limit, offset)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 

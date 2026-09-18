@@ -10,6 +10,7 @@
 	import { onMount } from 'svelte';
 	import { OrgAPI } from '$lib/api/organization';
 	import { invalidateAll } from '$app/navigation';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	let { data, children } = $props();
 
@@ -39,7 +40,7 @@
 			const res = await OrgAPI.getMembers(data.orgId);
 			members = res.data ?? [];
 		} catch (err: any) {
-			membersError = err.message || 'Failed to reload members';
+			membersError = parseApiError(err, 'Failed to reload members');
 		}
 	}
 </script>

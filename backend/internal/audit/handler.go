@@ -1,6 +1,7 @@
 package audit
 
 import (
+	"PulseWatch/pkg/apierror"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -27,13 +28,13 @@ func (h *AuditHandlerImpl) GetOrgAuditLogs(c *gin.Context) {
 
 	var query GetAuditLogsQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid query parameters"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	resp, err := h.service.GetLogs(orgId, query)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 

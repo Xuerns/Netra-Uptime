@@ -5,6 +5,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import NotificationSkeleton from '$lib/components/skeletons/NotificationSkeleton.svelte';
 	import { toast } from 'svelte-sonner';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	interface User {
 		id: string;
@@ -60,7 +61,7 @@
 				}
 			}));
 		} catch (err: any) {
-			errorMsg = err.message || 'Failed to load invitations';
+			errorMsg = parseApiError(err, 'Failed to load invitations');
 		} finally {
 			isLoading = false;
 		}
@@ -79,7 +80,7 @@
 				toast.success('Invitation rejected');
 			}
 		} catch (err: any) {
-			errorMsg = err.message || `Failed to ${action} invitation`;
+			errorMsg = parseApiError(err, `Failed to ${action} invitation`);
 			toast.error(errorMsg);
 		}
 	}

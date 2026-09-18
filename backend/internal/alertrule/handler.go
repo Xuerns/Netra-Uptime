@@ -1,6 +1,7 @@
 package alertrule
 
 import (
+	"PulseWatch/pkg/apierror"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -36,13 +37,13 @@ func (h *Handler) Create(c *gin.Context) {
 
 	var req CreateAlertRuleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	rule, err := h.service.Create(orgID, monitorID, &req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -70,7 +71,7 @@ func (h *Handler) GetByMonitor(c *gin.Context) {
 
 	rules, err := h.service.GetByMonitor(orgID, monitorID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -98,7 +99,7 @@ func (h *Handler) GetByID(c *gin.Context) {
 
 	rule, err := h.service.GetByID(orgID, ruleID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		c.JSON(http.StatusNotFound, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -126,13 +127,13 @@ func (h *Handler) Update(c *gin.Context) {
 
 	var req UpdateAlertRuleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	rule, err := h.service.Update(orgID, ruleID, &req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -159,7 +160,7 @@ func (h *Handler) Delete(c *gin.Context) {
 	}
 
 	if err := h.service.Delete(orgID, ruleID); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 

@@ -21,6 +21,7 @@
 	import { toast } from 'svelte-sonner';
 	import { userTimezone } from '$lib/stores/timezone';
 	import { formatDateOnly } from '$lib/utils/datetime';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	const orgId = $derived($page.params.id as string);
 
@@ -63,7 +64,7 @@
 			const res = await APIKeyAPI.getAllByOrg(orgId);
 			apiKeys = res.data ?? [];
 		} catch (err: any) {
-			fetchError = err.message || 'Failed to load API keys';
+			fetchError = parseApiError(err, 'Failed to load API keys');
 		} finally {
 			isLoading = false;
 		}
@@ -93,7 +94,7 @@
 
 			await loadAPIKeys();
 		} catch (err: any) {
-			createError = err.message || 'Failed to create API key';
+			createError = parseApiError(err, 'Failed to create API key');
 		} finally {
 			isSubmitting = false;
 		}
@@ -117,7 +118,7 @@
 			keyToRevoke = null;
 			await loadAPIKeys();
 		} catch (err: any) {
-			toast.error(err.message || 'Failed to revoke API key');
+			toast.error(parseApiError(err, 'Failed to revoke API key'));
 		} finally {
 			isRevoking = false;
 		}

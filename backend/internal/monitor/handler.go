@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"PulseWatch/pkg/apierror"
 	"net/http"
 	"strconv"
 
@@ -34,14 +35,14 @@ func (h *MonitorHandler) CreateMonitor(c *gin.Context) {
 	var req CreateMonitorRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	monitor, err := h.service.Create(orgId.(uuid.UUID).String(), userId.(string), c.ClientIP(), &req)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -66,7 +67,7 @@ func (h *MonitorHandler) GetById(c *gin.Context) {
 	monitor, err := h.service.GetById(orgId.(uuid.UUID).String(), monitorId)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -84,7 +85,7 @@ func (h *MonitorHandler) GetAllMonitor(c *gin.Context) {
 	monitors, err := h.service.GetAllMonitor(orgId.(uuid.UUID).String())
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -114,14 +115,14 @@ func (h *MonitorHandler) UpdateMonitor(c *gin.Context) {
 
 	var req UpdatedMonitorRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	monitor, err := h.service.UpdateMonitor(orgId.(uuid.UUID).String(), userId.(string), c.ClientIP(), monitorId, req)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "success", "data": monitor})
@@ -149,7 +150,7 @@ func (h *MonitorHandler) DeleteMonitor(c *gin.Context) {
 	}
 
 	if err := h.service.DeleteMonitor(orgId.(uuid.UUID).String(), userId.(string), c.ClientIP(), monitorId); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -167,7 +168,7 @@ func (h *MonitorHandler) GetAllMonitorByUserId(c *gin.Context) {
 	monitors, err := h.service.GetAllMonitorByUserId(userId.(string))
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -195,7 +196,7 @@ func (h *MonitorHandler) GetDailyStats(c *gin.Context) {
 
 	stats, err := h.service.GetDailyStats(orgId.(uuid.UUID).String(), monitorId, days)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 

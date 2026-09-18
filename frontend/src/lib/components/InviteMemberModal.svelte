@@ -5,6 +5,7 @@
 	import { debounce } from '$lib/helper/utils';
 	import { toast } from 'svelte-sonner';
 	import { Search, UserPlus, X, TriangleAlert, Loader2 } from 'lucide-svelte';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	interface UserResult {
 		id: string;
@@ -140,7 +141,7 @@
 			open = false;
 			onInvited?.();
 		} catch (err: any) {
-			errorMsg = err.message || 'Failed to send invitations';
+			errorMsg = parseApiError(err, 'Failed to send invitations');
 			toast.error(errorMsg);
 		} finally {
 			isSubmitting = false;

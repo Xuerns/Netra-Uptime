@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { env } from '$env/dynamic/public';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	let error = $state('');
 
@@ -54,7 +55,7 @@
 			if (err.name === 'AbortError') {
 				error = 'Authentication timed out. Please try again.';
 			} else {
-				error = err.message || 'An error occurred during authentication';
+				error = parseApiError(err, 'An error occurred during authentication');
 			}
 		}
 	});

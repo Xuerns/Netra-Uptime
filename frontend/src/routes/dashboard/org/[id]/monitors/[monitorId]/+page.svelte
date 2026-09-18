@@ -14,6 +14,8 @@
 	import { AlertTriangle, CheckCircle2, Clock, Calendar, Activity, ArrowLeft } from 'lucide-svelte';
 	import { formatDateOnly, formatDateTime } from '$lib/utils/datetime';
 	import { userTimezone } from '$lib/stores/timezone';
+	import { toast } from 'svelte-sonner';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	// ── Params ────────────────────────────────────────────────────────────────
 	const orgId = $derived($page.params.id as string);
@@ -260,7 +262,7 @@
 				fetchError = 'Monitor not found or access denied';
 			}
 		} catch (err: any) {
-			fetchError = err.message || 'Failed to load monitor data';
+			fetchError = parseApiError(err, 'Failed to load monitor data');
 		} finally {
 			isLoading = false;
 		}
@@ -288,7 +290,7 @@
 			});
 			loadMonitorData(true);
 		} catch (err: any) {
-			alert(err.message || 'Failed to toggle monitor status');
+			toast.error(parseApiError(err, 'Failed to toggle monitor status'));
 		}
 	}
 
@@ -297,9 +299,10 @@
 		if (!confirm(`Are you sure you want to delete monitor "${monitor.Name}"?`)) return;
 		try {
 			await MonitorAPI.delete(orgId, monitor.ID);
+			toast.success('Monitor deleted successfully');
 			goto(`/dashboard/org/${orgId}/monitors`);
 		} catch (err: any) {
-			alert(err.message || 'Failed to delete monitor');
+			toast.error(parseApiError(err, 'Failed to delete monitor'));
 		}
 	}
 </script>

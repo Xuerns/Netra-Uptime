@@ -9,6 +9,7 @@
 		validateConfirmPassword,
 		debounce
 	} from '$lib/utils/validation';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	const API_Route = `${env.PUBLIC_API_URL}`;
 
@@ -91,7 +92,7 @@
 
 			requestSuccess = true;
 		} catch (err: any) {
-			requestError = err.message;
+			requestError = parseApiError(err, 'Failed to send reset link.');
 		} finally {
 			requestLoading = false;
 		}
@@ -128,7 +129,7 @@
 
 			resetSuccess = true;
 		} catch (err: any) {
-			resetError = err.message;
+			resetError = parseApiError(err, 'Failed to reset password.');
 		} finally {
 			resetLoading = false;
 		}

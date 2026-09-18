@@ -20,6 +20,7 @@
 	import AddStatusPageModal from '$lib/components/statuspage/AddStatusPageModal.svelte';
 	import EditStatusPageModal from '$lib/components/statuspage/EditStatusPageModal.svelte';
 	import { toast } from 'svelte-sonner';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	// ── Types ─────────────────────────────────────────────────────────────────
 	type ViewMode = 'grid' | 'list';
@@ -63,7 +64,7 @@
 			const res = await StatusPageAPI.getAll(orgId);
 			statusPages = res.data ?? [];
 		} catch (err: any) {
-			fetchError = err.message || 'Failed to fetch status pages.';
+			fetchError = parseApiError(err, 'Failed to fetch status pages.');
 		} finally {
 			isLoading = false;
 		}
@@ -105,7 +106,7 @@
 			deletingStatusPage = null;
 			await loadStatusPages(true);
 		} catch (err: any) {
-			toast.error(err.message || 'Failed to delete status page');
+			toast.error(parseApiError(err, 'Failed to delete status page'));
 		} finally {
 			isDeletingId = null;
 		}

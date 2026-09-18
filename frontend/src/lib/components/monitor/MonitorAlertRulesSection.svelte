@@ -3,6 +3,8 @@
 	import { AlertRuleAPI, type AlertRule, type CreateAlertRuleRequest } from '$lib/api/alertRule';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { Bell, Plus, Trash2, CheckCircle, AlertTriangle, ShieldAlert, Sparkles, X, Power } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	interface Props {
 		orgId: string;
@@ -92,7 +94,7 @@
 			ruleName = '';
 			await loadRules();
 		} catch (err: any) {
-			errorMsg = err.message || 'Failed to create alert rule';
+			errorMsg = parseApiError(err, 'Failed to create alert rule');
 		} finally {
 			isSaving = false;
 		}
@@ -103,8 +105,9 @@
 			const updated = !rule.is_active;
 			await AlertRuleAPI.update(orgId, rule.id, { is_active: updated });
 			rule.is_active = updated;
+			toast.success(updated ? 'Alert rule enabled' : 'Alert rule disabled');
 		} catch (err: any) {
-			alert(err.message || 'Failed to update rule');
+			toast.error(parseApiError(err, 'Failed to update rule'));
 		}
 	}
 
@@ -113,8 +116,9 @@
 		try {
 			await AlertRuleAPI.delete(orgId, ruleId);
 			rules = rules.filter((r) => r.id !== ruleId);
+			toast.success('Alert rule deleted successfully');
 		} catch (err: any) {
-			alert(err.message || 'Failed to delete alert rule');
+			toast.error(parseApiError(err, 'Failed to delete alert rule'));
 		}
 	}
 </script>

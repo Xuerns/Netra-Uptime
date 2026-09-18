@@ -1,6 +1,7 @@
 package statuspage
 
 import (
+	"PulseWatch/pkg/apierror"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -18,7 +19,7 @@ func NewStatusPageHandler(service StatusPageService) StatusPageHandler {
 func (h *StatusPageHandler) CreateStatusPage(c *gin.Context) {
 	var req CreateStatusPageRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
@@ -39,7 +40,7 @@ func (h *StatusPageHandler) CreateStatusPage(c *gin.Context) {
 	res, err := h.service.Create(orgId.(uuid.UUID).String(), userId.(string), c.ClientIP(), &req)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -64,7 +65,7 @@ func (h *StatusPageHandler) GetAllStatusPage(c *gin.Context) {
 	statusPages, err := h.service.GetAllByOrganizationID(orgId.(uuid.UUID).String(), userId.(string))
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -91,7 +92,7 @@ func (h *StatusPageHandler) DeleteStatusPage(c *gin.Context) {
 	err := h.service.Delete(statusPageID, orgId.(uuid.UUID).String(), userId.(string), c.ClientIP())
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -101,7 +102,7 @@ func (h *StatusPageHandler) DeleteStatusPage(c *gin.Context) {
 func (h *StatusPageHandler) UpdateStatusPage(c *gin.Context) {
 	var req UpdateStatusPageRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
@@ -124,7 +125,7 @@ func (h *StatusPageHandler) UpdateStatusPage(c *gin.Context) {
 	res, err := h.service.Update(statusPageID, orgId.(uuid.UUID).String(), userId.(string), c.ClientIP(), &req)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -136,7 +137,7 @@ func (h *StatusPageHandler) GetStatusPageMonitor(c *gin.Context) {
 
 	statusPageMonitors, err := h.service.GetStatusPageMonitor(statusPageID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -160,7 +161,7 @@ func (h *StatusPageHandler) GetById(c *gin.Context) {
 
 	statusPage, err := h.service.GetById(statusPageID, orgId.(uuid.UUID).String(), userId.(string))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		c.JSON(http.StatusNotFound, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -189,7 +190,7 @@ func (h *StatusPageHandler) GetAllStatusPageByUserId(c *gin.Context) {
 
 	statusPages, err := h.service.GetStatusPageByUserId(userId.(string))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		c.JSON(http.StatusNotFound, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 

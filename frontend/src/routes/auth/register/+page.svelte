@@ -10,6 +10,7 @@
 		debounce
 	} from '$lib/utils/validation';
 	import { isSelfHosted } from '$lib/utils/appMode';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	let name = $state('');
 	let email = $state('');
@@ -119,7 +120,7 @@
 
 			window.location.href = '/auth/login';
 		} catch (err: any) {
-			error = err.message;
+			error = parseApiError(err, 'Registration failed');
 		} finally {
 			loading = false;
 		}

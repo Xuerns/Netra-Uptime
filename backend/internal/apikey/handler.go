@@ -1,6 +1,7 @@
 package apikey
 
 import (
+	"PulseWatch/pkg/apierror"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -25,13 +26,13 @@ func (h *APIKeyHandler) Create(c *gin.Context) {
 
 	var req CreateAPIKeyRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	result, err := h.service.CreateKey(orgID, userID, req, c.ClientIP())
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -47,7 +48,7 @@ func (h *APIKeyHandler) List(c *gin.Context) {
 
 	keys, err := h.service.ListKeys(orgID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -68,7 +69,7 @@ func (h *APIKeyHandler) Revoke(c *gin.Context) {
 	userID := userIDVal.(string)
 
 	if err := h.service.RevokeKey(orgID, userID, keyID, c.ClientIP()); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 

@@ -24,6 +24,8 @@
 	import AddMonitorModal from '$lib/components/monitor/AddMonitorModal.svelte';
 	import EditMonitorModal from '$lib/components/monitor/EditMonitorModal.svelte';
 	import { wsClient, type MonitorUpdatePayload } from '$lib/utils/ws';
+	import { toast } from 'svelte-sonner';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	// ── Types ─────────────────────────────────────────────────────────────────
 	type StatusFilter = 'all' | 'up' | 'down' | 'paused';
@@ -89,7 +91,7 @@
 			});
 			await loadMonitors(true);
 		} catch (err: any) {
-			alert(err.message || 'Failed to toggle monitor status');
+			toast.error(parseApiError(err, 'Failed to toggle monitor status'));
 		}
 	}
 
@@ -99,9 +101,10 @@
 		if (!m) return;
 		try {
 			await MonitorAPI.delete(orgId, m.ID);
+			toast.success('Monitor deleted successfully');
 			await loadMonitors(true);
 		} catch (err: any) {
-			alert(err.message || 'Failed to delete monitor');
+			toast.error(parseApiError(err, 'Failed to delete monitor'));
 		}
 	}
 
@@ -113,7 +116,7 @@
 			const res = await MonitorAPI.getAll(orgId);
 			monitors = res.data ?? [];
 		} catch (err: any) {
-			fetchError = err.message || 'Failed to fetch monitors.';
+			fetchError = parseApiError(err, 'Failed to fetch monitors.');
 		} finally {
 			isLoading = false;
 		}

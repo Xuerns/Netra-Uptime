@@ -2,6 +2,7 @@ package notification
 
 import (
 	"PulseWatch/internal/model"
+	"PulseWatch/pkg/apierror"
 	"PulseWatch/pkg/email"
 	"bytes"
 	"context"
@@ -113,7 +114,7 @@ func (d *Dispatcher) Dispatch(monitor *model.Monitor, incidentID *string, event,
 			if dispatchErr != nil {
 				log.Printf("[Dispatcher] Failed to dispatch to channel %s (%s): %v\n", ch.Name, ch.Type, dispatchErr)
 				logEntry.Status = "failed"
-				logEntry.ErrorDetail = dispatchErr.Error()
+				logEntry.ErrorDetail = apierror.SanitizeDispatchError(dispatchErr)
 			} else {
 				log.Printf("[Dispatcher] Dispatched to channel %s (%s) for monitor %s\n", ch.Name, ch.Type, monitor.Name)
 				logEntry.Status = "sent"

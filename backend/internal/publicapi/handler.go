@@ -4,6 +4,7 @@ import (
 	"PulseWatch/internal/incident"
 	"PulseWatch/internal/monitor"
 	"PulseWatch/internal/statuspage"
+	"PulseWatch/pkg/apierror"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -33,7 +34,7 @@ func (h *PublicAPIHandler) ListMonitors(c *gin.Context) {
 	orgID := c.GetString("org_id")
 	monitors, err := h.monitorService.GetAllMonitor(orgID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
@@ -62,13 +63,13 @@ func (h *PublicAPIHandler) CreateMonitor(c *gin.Context) {
 
 	var req monitor.CreateMonitorRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	created, err := h.monitorService.Create(orgID, "APIKeySystem", c.ClientIP(), &req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{
@@ -84,13 +85,13 @@ func (h *PublicAPIHandler) UpdateMonitor(c *gin.Context) {
 
 	var req monitor.UpdatedMonitorRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	updated, err := h.monitorService.UpdateMonitor(orgID, "APIKeySystem", c.ClientIP(), monitorID, req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
@@ -105,7 +106,7 @@ func (h *PublicAPIHandler) DeleteMonitor(c *gin.Context) {
 	monitorID := c.Param("id")
 
 	if err := h.monitorService.DeleteMonitor(orgID, "APIKeySystem", c.ClientIP(), monitorID); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
@@ -121,7 +122,7 @@ func (h *PublicAPIHandler) ListIncidents(c *gin.Context) {
 
 	incidents, err := h.incidentService.GetAllIncident(orgID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
@@ -140,13 +141,13 @@ func (h *PublicAPIHandler) CreateIncidentNote(c *gin.Context) {
 
 	var req CreateIncidentNoteRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	note, err := h.incidentService.AddIncidentUpdate(orgID, req.IncidentID, "APIKeySystem", req.Message)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{
@@ -163,7 +164,7 @@ func (h *PublicAPIHandler) ListStatusPages(c *gin.Context) {
 
 	pages, err := h.statusPageService.GetAllByOrganizationID(orgID, "")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{

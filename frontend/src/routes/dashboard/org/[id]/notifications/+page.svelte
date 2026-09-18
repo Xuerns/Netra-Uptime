@@ -30,6 +30,7 @@
 	import { toast } from 'svelte-sonner';
 	import { userTimezone } from '$lib/stores/timezone';
 	import { formatDateTime } from '$lib/utils/datetime';
+	import { parseApiError, truncateErrorDetail } from '$lib/utils/parseApiError';
 
 	const orgId = $derived($page.params.id as string);
 
@@ -66,6 +67,13 @@
 	let logsOffset = $state(0);
 	const logsLimit = 20;
 
+	// Error detail expansion state
+	let expandedErrors = $state<Record<string, boolean>>({});
+
+	function toggleErrorDetail(id: string) {
+		expandedErrors[id] = !expandedErrors[id];
+	}
+
 	const currentUserId = $derived($page.data?.user?.id || $page.data?.user?.ID);
 	const currentMember = $derived(
 		($page.data?.members ?? []).find(
@@ -89,7 +97,7 @@
 		try {
 			channels = await NotificationAPI.getChannels(orgId);
 		} catch (err: any) {
-			channelsError = err.message || 'Failed to load notification channels';
+			channelsError = parseApiError(err, 'Failed to load notification channels');
 		} finally {
 			isLoadingChannels = false;
 		}
@@ -105,7 +113,7 @@
 			logs = reset ? (res.logs ?? []) : [...logs, ...(res.logs ?? [])];
 			logsTotal = res.total;
 		} catch (err: any) {
-			logsError = err.message || 'Failed to load notification logs';
+			logsError = parseApiError(err, 'Failed to load notification logs');
 		} finally {
 			isLoadingLogs = false;
 		}
@@ -135,7 +143,7 @@
 			resetForm();
 			await loadChannels();
 		} catch (err: any) {
-			createError = err.message || 'Failed to create channel';
+			createError = parseApiError(err, 'Failed to create channel');
 		} finally {
 			isCreating = false;
 		}
@@ -149,7 +157,7 @@
 			toast.success(ch.is_active ? 'Channel disabled' : 'Channel enabled');
 			await loadChannels();
 		} catch (err: any) {
-			toast.error(err.message || 'Failed to update channel');
+			toast.error(parseApiError(err, 'Failed to update channel'));
 		} finally {
 			togglingId = null;
 		}
@@ -168,7 +176,7 @@
 			toast.success(`Channel "${channelToDelete.name}" deleted`);
 			await loadChannels();
 		} catch (err: any) {
-			toast.error(err.message || 'Failed to delete channel');
+			toast.error(parseApiError(err, 'Failed to delete channel'));
 		} finally {
 			isDeleting = false;
 			channelToDelete = null;
@@ -456,11 +464,28 @@
 							</div>
 
 							{#if log.error_detail}
-								<p
-									class="text-xs text-destructive/80 mt-1 font-mono break-all bg-destructive/5 p-2 rounded"
-								>
-									{log.error_detail}
-								</p>
+								<div class="mt-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-xs">
+									<div class="flex items-center justify-between gap-2">
+										<span class="font-medium text-destructive flex items-center gap-1.5">
+											<AlertCircle class="size-3.5 shrink-0" />
+											Error Details
+										</span>
+										{#if log.error_detail.length > 120}
+											<button
+												type="button"
+												onclick={() => toggleErrorDetail(log.id)}
+												class="text-[11px] text-muted-foreground hover:text-foreground underline transition-colors cursor-pointer"
+											>
+												{expandedErrors[log.id] ? 'Show less' : 'Show details'}
+											</button>
+										{/if}
+									</div>
+									<p class="mt-1 font-mono text-[11px] leading-relaxed text-foreground/80 break-words whitespace-pre-wrap select-text">
+										{expandedErrors[log.id] || log.error_detail.length <= 120
+											? log.error_detail
+											: truncateErrorDetail(log.error_detail, 120)}
+									</p>
+								</div>
 							{/if}
 
 							<span class="text-xs text-muted-foreground/60 mt-1">{formatDate(log.sent_at)}</span>

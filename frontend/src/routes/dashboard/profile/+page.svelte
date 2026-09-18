@@ -10,6 +10,7 @@
 	import { apiFetch } from '$lib/helper/api';
 	import { env } from '$env/dynamic/public';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	let { data } = $props();
 	let user = $state(data.user);
@@ -57,7 +58,7 @@
 			user.name = formData.name;
 			toast.success('Profile updated successfully');
 		} catch (error: any) {
-			toast.error(error.message || 'Failed to update profile');
+			toast.error(parseApiError(error, 'Failed to update profile'));
 		} finally {
 			isUpdatingProfile = false;
 		}
@@ -90,7 +91,7 @@
 			toast.success('Verification code sent to your email');
 			passwordStep = 'verify';
 		} catch (error: any) {
-			toast.error(error.message || 'Failed to initiate password change');
+			toast.error(parseApiError(error, 'Failed to initiate password change'));
 		} finally {
 			isChangingPassword = false;
 		}
@@ -122,7 +123,7 @@
 			passwordData = { currentPassword: '', newPassword: '', confirmPassword: '', code: '' };
 			isSecurityOpen = false;
 		} catch (error: any) {
-			toast.error(error.message || 'Failed to verify password change');
+			toast.error(parseApiError(error, 'Failed to verify password change'));
 		} finally {
 			isChangingPassword = false;
 		}
@@ -144,7 +145,7 @@
 			// Redirect to home/login
 			window.location.href = '/auth/login';
 		} catch (error: any) {
-			toast.error(error.message || 'Failed to delete account');
+			toast.error(parseApiError(error, 'Failed to delete account'));
 		}
 	}
 </script>

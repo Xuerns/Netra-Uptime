@@ -1,6 +1,7 @@
 package organization
 
 import (
+	"PulseWatch/pkg/apierror"
 	"net/http"
 	"strconv"
 
@@ -27,7 +28,7 @@ func (h OrganizationHandler) GetAllOrganization(c *gin.Context) {
 	orgs, err := h.service.GetAllOrganization(userId.(string))
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -47,7 +48,7 @@ func (h *OrganizationHandler) GetAllMember(c *gin.Context) {
 	members, err := h.service.GetOrganizationAllMember(orgId, memberId.(string))
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -57,7 +58,7 @@ func (h *OrganizationHandler) GetAllMember(c *gin.Context) {
 func (h *OrganizationHandler) CreateOrganization(c *gin.Context) {
 	var req CreateOrganizationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
@@ -71,7 +72,7 @@ func (h *OrganizationHandler) CreateOrganization(c *gin.Context) {
 	res, err := h.service.CreateOrganization(&req, ownerId.(string))
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -89,7 +90,7 @@ func (h *OrganizationHandler) GetInvitation(c *gin.Context) {
 	invitations, err := h.service.GetInvitation(userId.(string))
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -106,14 +107,14 @@ func (h *OrganizationHandler) InvitationAction(c *gin.Context) {
 
 	var req InvitationActionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	res, err := h.service.InvitationAction(&req, userId.(string), c.ClientIP())
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -125,7 +126,7 @@ func (h *OrganizationHandler) InviteMember(c *gin.Context) {
 	var req BulkInviteMemberRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
@@ -146,7 +147,7 @@ func (h *OrganizationHandler) InviteMember(c *gin.Context) {
 	res, err := h.service.InviteMember(orgId.(uuid.UUID).String(), userId.(string), c.ClientIP(), req)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -162,7 +163,7 @@ func (h *OrganizationHandler) KickMember(c *gin.Context) {
 
 	var memberId string
 	if err := c.ShouldBindJSON(&memberId); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
@@ -176,7 +177,7 @@ func (h *OrganizationHandler) KickMember(c *gin.Context) {
 	res, err := h.service.KickMember(orgId.(uuid.UUID).String(), userId.(string), memberId, c.ClientIP())
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -201,7 +202,7 @@ func (h *OrganizationHandler) Disband(c *gin.Context) {
 	res, err := h.service.Disband(orgId.(uuid.UUID).String(), userId.(string), c.ClientIP())
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -227,7 +228,7 @@ func (h *OrganizationHandler) UpdateOrganization(c *gin.Context) {
 
 	var req UpdateOrganizationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		c.Abort()
 		return
 	}
@@ -235,7 +236,7 @@ func (h *OrganizationHandler) UpdateOrganization(c *gin.Context) {
 	res, err := h.service.UpdateOrganization(&req, orgId.(uuid.UUID).String(), userId.(string), c.ClientIP())
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		c.Abort()
 		return
 	}
@@ -274,7 +275,7 @@ func (h *OrganizationHandler) SearchPersons(c *gin.Context) {
 		if err.Error() == "No users found" {
 			c.JSON(http.StatusOK, gin.H{"status": "success", "data": []interface{}{}})
 		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		}
 		c.Abort()
 		return
@@ -300,14 +301,14 @@ func (h *OrganizationHandler) PromoteToAdmin(c *gin.Context) {
 
 	var req RoleChangeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	res, err := h.service.PromoteToAdmin(req.UserID, orgId.(uuid.UUID).String(), userId.(string), c.ClientIP())
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -331,14 +332,14 @@ func (h *OrganizationHandler) DemoteToMember(c *gin.Context) {
 
 	var req RoleChangeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	res, err := h.service.DemotedToMember(req.UserID, orgId.(uuid.UUID).String(), userId.(string), c.ClientIP())
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -362,14 +363,14 @@ func (h *OrganizationHandler) TransferOwnership(c *gin.Context) {
 
 	var req RoleChangeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
 		return
 	}
 
 	res, err := h.service.TransferOwnership(owner.(string), req.UserID, orgId.(uuid.UUID).String(), c.ClientIP())
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 
@@ -394,7 +395,7 @@ func (h *OrganizationHandler) LeaveOrganization(c *gin.Context) {
 	res, err := h.service.LeaveOrganization(userId.(string), orgId.(uuid.UUID).String(), c.ClientIP())
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
 

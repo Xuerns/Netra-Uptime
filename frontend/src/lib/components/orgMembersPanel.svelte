@@ -5,6 +5,7 @@
 	import InviteMemberModal from '$lib/components/InviteMemberModal.svelte';
 	import { OrgAPI } from '$lib/api/organization';
 	import { toast } from 'svelte-sonner';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	interface MemberUser {
 		ID: string;
@@ -78,7 +79,7 @@
 			toast.success('Member removed successfully');
 			onMembersUpdated?.();
 		} catch (err: any) {
-			toast.error(err.message || 'Failed to remove member');
+			toast.error(parseApiError(err, 'Failed to remove member'));
 		}
 	}
 
@@ -88,7 +89,7 @@
 			toast.success('Member promoted to admin');
 			onMembersUpdated?.();
 		} catch (err: any) {
-			toast.error(err.message || 'Failed to promote member');
+			toast.error(parseApiError(err, 'Failed to promote member'));
 		}
 	}
 
@@ -98,7 +99,7 @@
 			toast.success('Admin demoted to member');
 			onMembersUpdated?.();
 		} catch (err: any) {
-			toast.error(err.message || 'Failed to demote admin');
+			toast.error(parseApiError(err, 'Failed to demote admin'));
 		}
 	}
 

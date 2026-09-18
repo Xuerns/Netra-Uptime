@@ -4,6 +4,7 @@
 	import { env } from '$env/dynamic/public';
 	import { validateEmail, validatePassword, debounce } from '$lib/utils/validation';
 	import { isSelfHosted } from '$lib/utils/appMode';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	let email = $state('');
 	let password = $state('');
@@ -76,7 +77,7 @@
 
 			window.location.href = '/dashboard/org';
 		} catch (err: any) {
-			error = err.message;
+			error = parseApiError(err, 'Login failed');
 		} finally {
 			loading = false;
 		}

@@ -11,6 +11,7 @@
 		validateMonitorInterval,
 		validateMonitorTimeout
 	} from '$lib/utils/validation';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	interface Monitor {
 		ID: string;
@@ -172,7 +173,7 @@
 			onSuccess();
 			isOpen = false;
 		} catch (err: any) {
-			error = err.message || 'Failed to update monitor';
+			error = parseApiError(err, 'Failed to update monitor');
 		} finally {
 			loading = false;
 		}
