@@ -1,39 +1,39 @@
-# ── STAGE 1: Build Frontend (SvelteKit) ─────────────
-FROM node:22-alpine AS frontend-builder
+# ── STAGE 1: Build Client (SvelteKit) ─────────────
+FROM node:22-alpine AS client-builder
 ENV CI=true
-WORKDIR /app/frontend
+WORKDIR /app/client
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-COPY frontend/package.json frontend/pnpm-lock.yaml ./
+COPY client/package.json client/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
-COPY frontend/ ./
+COPY client/ ./
 RUN pnpm build
 
-# ── STAGE 2: Build Backend (Go with embedded Frontend) ──
-FROM golang:alpine AS backend-builder
-WORKDIR /app/backend
+# ── STAGE 2: Build Server (Go with embedded Client) ──
+FROM golang:alpine AS server-builder
+WORKDIR /app/server
 
-COPY backend/go.mod backend/go.sum ./
+COPY server/go.mod server/go.sum ./
 RUN go mod download
 
-COPY backend/ ./
+COPY server/ ./
 
-# Copy compiled frontend assets into Go embed folder
-COPY --from=frontend-builder /app/frontend/build ./internal/static/build
+# Copy compiled client assets into Go embed folder
+COPY --from=client-builder /app/client/build ./internal/static/build
 
 # Build static binary
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o pulsewatch ./cmd/server
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o pulsewatch ./cmd/pulsewatch
 
 # ── STAGE 3: Minimal Single Container Runner ────────
 FROM alpine:3.20 AS runner
 
 WORKDIR /app
 
-COPY --from=backend-builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=server-builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-COPY --from=backend-builder /app/backend/pulsewatch ./pulsewatch
+COPY --from=server-builder /app/server/pulsewatch ./pulsewatch
 
 EXPOSE 8080
 
