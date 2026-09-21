@@ -139,6 +139,7 @@ func TestIncidentService_GetIncidentDetail_Success(t *testing.T) {
 				ID:        incID,
 				MonitorID: monID,
 				Status:    "investigating",
+				Severity:  "critical",
 				Summary:   "API down",
 				StartedAt: time.Now(),
 			}, nil
@@ -155,6 +156,9 @@ func TestIncidentService_GetIncidentDetail_Success(t *testing.T) {
 	}
 	if resp.Status != "investigating" {
 		t.Errorf("expected status investigating, got %s", resp.Status)
+	}
+	if resp.Severity != "critical" {
+		t.Errorf("expected severity critical, got %s", resp.Severity)
 	}
 }
 

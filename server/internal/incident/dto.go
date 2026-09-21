@@ -23,6 +23,7 @@ type IncidentResponse struct {
 	ID         string             `json:"id"`
 	MonitorID  string             `json:"monitor_id"`
 	Status     string             `json:"status"`
+	Severity   string             `json:"severity"`
 	Summary    string             `json:"summary"`
 	StartedAt  string             `json:"started_at"`
 	ResolvedAt *string            `json:"resolved_at"`

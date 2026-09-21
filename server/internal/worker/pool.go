@@ -200,6 +200,7 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) {
 				newIncident := model.Incident{
 					MonitorID:     monitor.ID,
 					Status:        "ongoing",
+					Severity:      ResolveIncidentSeverity(dbMonitor.Criticality, eval.Severity),
 					StartedAt:     time.Now(),
 					Summary:       fmt.Sprintf("%s: %s", eval.RuleName, eval.Reason),
 					TriggeredRule: eval.RuleName,

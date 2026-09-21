@@ -185,20 +185,6 @@
 </svelte:head>
 
 <div class="p-6 max-w-4xl mx-auto space-y-6">
-	<div class="flex items-center gap-4 mb-2">
-		<a
-			href={`/dashboard/org/${orgId}/monitors`}
-			class="flex items-center justify-center size-9 rounded-lg border bg-foreground/10 border-border text-muted-foreground hover:bg-white/7 hover:text-foreground transition-colors"
-			aria-label="Back to Organization Monitors"
-		>
-			<ArrowLeft class="size-4.5" />
-		</a>
-		<div>
-			<h1 class="text-2xl font-bold tracking-tight text-foreground">Organization Settings</h1>
-			<p class="text-muted-foreground">Manage your organization details and dangerous actions.</p>
-		</div>
-	</div>
-
 	{#if isLoading}
 		<div class="flex items-center justify-center py-20">
 			<Loader2 class="size-8 text-primary animate-spin" />

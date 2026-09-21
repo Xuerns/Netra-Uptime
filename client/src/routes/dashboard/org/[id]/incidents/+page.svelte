@@ -29,7 +29,7 @@
 
 	let activeFilter = $state<'active' | 'resolved'>('active');
 	let searchQuery = $state('');
-	let severityFilter = $state<'all' | 'sev1' | 'sev2' | 'sev3'>('all');
+	let severityFilter = $state<'all' | 'sev1' | 'sev2' | 'sev3' | 'sev4'>('all');
 	let currentPage = $state(1);
 	let itemsPerPage = $state(10);
 
@@ -139,8 +139,9 @@
 		>
 			<option value="all">All Severities</option>
 			<option value="sev1">Sev 1 (Critical)</option>
-			<option value="sev2">Sev 2 (Major)</option>
-			<option value="sev3">Sev 3 (Minor)</option>
+			<option value="sev2">Sev 2 (High)</option>
+			<option value="sev3">Sev 3 (Medium)</option>
+			<option value="sev4">Sev 4 (Low)</option>
 		</select>
 	</div>
 
@@ -245,9 +246,11 @@
 												? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
 												: incident.SeverityCode === 'sev2'
 													? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-													: 'bg-sky-500/10 text-sky-400 border-sky-500/20'}"
+													: incident.SeverityCode === 'sev3'
+														? 'bg-sky-500/10 text-sky-400 border-sky-500/20'
+														: 'bg-slate-500/10 text-slate-400 border-slate-500/20'}"
 										>
-											{incident.Severity || incident.SeverityCode}
+											{incident.SeverityLabel || incident.Severity || incident.SeverityCode}
 										</span>
 									{/if}
 

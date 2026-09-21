@@ -100,3 +100,29 @@ func TestEvaluateRules_CustomRules(t *testing.T) {
 		t.Errorf("Expected inactive rule not to trigger, got: %+v", res)
 	}
 }
+
+func TestResolveIncidentSeverity(t *testing.T) {
+	tests := []struct {
+		criticality string
+		alertSev    string
+		expected    string
+	}{
+		{"extreme", "critical", "critical"},
+		{"extreme", "warning", "high"},
+		{"high", "critical", "critical"},
+		{"high", "warning", "high"},
+		{"medium", "critical", "high"},
+		{"medium", "warning", "medium"},
+		{"low", "critical", "medium"},
+		{"low", "warning", "low"},
+		{"unknown", "critical", "high"},
+		{"unknown", "warning", "medium"},
+	}
+
+	for _, tc := range tests {
+		actual := ResolveIncidentSeverity(tc.criticality, tc.alertSev)
+		if actual != tc.expected {
+			t.Errorf("ResolveIncidentSeverity(%q, %q) = %q; want %q", tc.criticality, tc.alertSev, actual, tc.expected)
+		}
+	}
+}

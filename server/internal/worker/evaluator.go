@@ -219,3 +219,38 @@ func evaluateNumeric(actual int, op string, target int, prefix string) (bool, st
 	}
 	return false, ""
 }
+
+// ResolveIncidentSeverity resolves an incident severity level (critical, high, medium, low)
+// based on monitor criticality (extreme, high, medium, low) and alert rule severity (critical, warning).
+func ResolveIncidentSeverity(monitorCriticality, alertSeverity string) string {
+	crit := strings.ToLower(strings.TrimSpace(monitorCriticality))
+	sev := strings.ToLower(strings.TrimSpace(alertSeverity))
+
+	switch crit {
+	case "extreme":
+		if sev == "critical" {
+			return "critical"
+		}
+		return "high"
+	case "high":
+		if sev == "critical" {
+			return "critical"
+		}
+		return "high"
+	case "medium":
+		if sev == "critical" {
+			return "high"
+		}
+		return "medium"
+	case "low":
+		if sev == "critical" {
+			return "medium"
+		}
+		return "low"
+	default:
+		if sev == "critical" {
+			return "high"
+		}
+		return "medium"
+	}
+}

@@ -10,7 +10,7 @@ type Incident struct {
 	ID         uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	MonitorID  uuid.UUID `gorm:"type:uuid;not null"`
 	Status     string    `gorm:"not null"` // ongoing | resolved
-	Severity   string    `gorm:"not null;default:'medium'"`
+	Severity   string    `gorm:"not null;default:'medium'"` // critical | high | medium | low
 	StartedAt  time.Time
 	ResolvedAt *time.Time 
 	Summary       string

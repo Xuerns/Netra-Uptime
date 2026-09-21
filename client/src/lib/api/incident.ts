@@ -35,9 +35,9 @@ export interface Incident {
 	UpdatedAt: string;
 	Assignees?: IncidentAssignee[];
 
-	// Dummy UI fields to simulate future backend support
-	Severity?: 'Sev-1 Critical' | 'Sev-2 High' | 'Sev-3 Medium';
-	SeverityCode?: 'sev1' | 'sev2' | 'sev3';
+	Severity: string;
+	SeverityCode: 'sev1' | 'sev2' | 'sev3' | 'sev4';
+	SeverityLabel: string;
 	Assignee?: {
 		Name: string;
 		Avatar: string;
@@ -48,7 +48,28 @@ export interface AddIncidentUpdateReq {
 	message: string;
 }
 
+export function mapSeverityFromBackend(severity?: string): {
+	code: 'sev1' | 'sev2' | 'sev3' | 'sev4';
+	label: string;
+} {
+	switch (severity?.toLowerCase()) {
+		case 'critical':
+			return { code: 'sev1', label: 'Sev-1 Critical' };
+		case 'high':
+			return { code: 'sev2', label: 'Sev-2 High' };
+		case 'medium':
+			return { code: 'sev3', label: 'Sev-3 Medium' };
+		case 'low':
+			return { code: 'sev4', label: 'Sev-4 Low' };
+		default:
+			return { code: 'sev3', label: 'Sev-3 Medium' };
+	}
+}
+
 export function mapIncident(inc: any): Incident {
+	const rawSev = inc.severity ?? inc.Severity ?? 'medium';
+	const sevMeta = mapSeverityFromBackend(rawSev);
+
 	return {
 		ID: inc.id ?? inc.ID,
 		MonitorID: inc.monitor_id ?? inc.MonitorID,
@@ -62,7 +83,8 @@ export function mapIncident(inc: any): Incident {
 			inc.monitor || inc.Monitor
 				? ({
 						Name: inc.monitor?.name ?? inc.Monitor?.Name,
-						Target: inc.monitor?.target ?? inc.Monitor?.Target
+						Target: inc.monitor?.target ?? inc.Monitor?.Target,
+						OrganizationID: inc.monitor?.organization_id ?? inc.Monitor?.OrganizationID
 					} as any)
 				: undefined,
 		Assignees: (inc.assignees ?? inc.Assignees ?? []).map((a: any) => ({
@@ -79,8 +101,9 @@ export function mapIncident(inc: any): Incident {
 						}
 					: undefined
 		})),
-		Severity: inc.Severity,
-		SeverityCode: inc.SeverityCode,
+		Severity: rawSev,
+		SeverityCode: sevMeta.code,
+		SeverityLabel: sevMeta.label,
 		Assignee: inc.Assignee
 	};
 }
@@ -91,25 +114,8 @@ export const IncidentAPI = {
 		if (!res.ok) throw new Error('Failed to fetch incidents');
 
 		const data = await res.json();
-
-		// Inject dummy data for UI testing since backend doesn't support them yet
 		if (data.data) {
-			data.data = data.data.map((rawInc: any, idx: number) => {
-				const inc = mapIncident(rawInc);
-				const isCritical = inc.Status === 'ongoing' && idx === 0;
-				const isHigh = inc.Status === 'ongoing' && idx === 1;
-
-				return {
-					...inc,
-					Severity: isCritical ? 'Sev-1 Critical' : isHigh ? 'Sev-2 High' : 'Sev-3 Medium',
-					SeverityCode: isCritical ? 'sev1' : isHigh ? 'sev2' : 'sev3',
-					Assignee: {
-						Name: isCritical ? 'Sarah J. (On-call)' : 'System Admin',
-						Avatar:
-							'https://lh3.googleusercontent.com/aida-public/AB6AXuCWWg0i3K32PRnzgcgm-KInGbQ_KP6Lyk4dAXO7rAlUNlY70n9HJxF4rRON6By7RRNBkI4NCvt-XomEBfoMyN7AyEiCoAtVox4UJL0rGFfYacyLXFBub_RmMrfJ92hfJvZNtqJ6ocqMHWVk_9y2XhftQPLQTrRhRoUyYoqlGLh4tycxX8fVS4KLzgbPn7ZDneOUKVQRbJ8zgu44APcNLEKB7kXjFRFg2bk_B0ciTQ5NZU3paIZBNS6NBw'
-					}
-				};
-			});
+			data.data = data.data.map((rawInc: any) => mapIncident(rawInc));
 		}
 
 		return data;

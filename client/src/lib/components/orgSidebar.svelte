@@ -192,12 +192,8 @@
 	<!-- Content: Main Navigation -->
 	<Sidebar.Content class="py-2">
 		<!-- Monitoring Group -->
-		<Sidebar.Group class="mt-2">
-			<Sidebar.GroupLabel
-				class="px-3 text-xs font-semibold text-muted-foreground tracking-widest uppercase group-data-[collapsible=icon]:hidden"
-				>Monitoring</Sidebar.GroupLabel
-			>
-			<Sidebar.GroupContent class="mt-1">
+		<Sidebar.Group class="py-1">
+			<Sidebar.GroupContent>
 				<Sidebar.Menu class="space-y-1">
 					{#each navMonitoring as item}
 						{@const active = isActive(item.segment)}
@@ -234,13 +230,11 @@
 			</Sidebar.GroupContent>
 		</Sidebar.Group>
 
+		<Sidebar.Separator class="my-1.5" />
+
 		<!-- Organization Group -->
-		<Sidebar.Group class="mt-1 py-1">
-			<Sidebar.GroupLabel
-				class="px-3 text-xs font-semibold text-muted-foreground tracking-widest uppercase group-data-[collapsible=icon]:hidden"
-				>Organization</Sidebar.GroupLabel
-			>
-			<Sidebar.GroupContent class="mt-1">
+		<Sidebar.Group class="py-1">
+			<Sidebar.GroupContent>
 				<Sidebar.Menu class="space-y-1">
 					{#each navOrganization as item}
 						{@const active = isActive(item.segment)}
@@ -277,13 +271,11 @@
 			</Sidebar.GroupContent>
 		</Sidebar.Group>
 
+		<Sidebar.Separator class="my-1.5" />
+
 		<!-- Resources Group -->
-		<Sidebar.Group class="mt-1 py-1">
-			<Sidebar.GroupLabel
-				class="px-3 text-xs font-semibold text-muted-foreground tracking-widest uppercase group-data-[collapsible=icon]:hidden"
-				>Resources</Sidebar.GroupLabel
-			>
-			<Sidebar.GroupContent class="mt-1">
+		<Sidebar.Group class="py-1">
+			<Sidebar.GroupContent>
 				<Sidebar.Menu class="space-y-1">
 					<!-- Docs (External Link) -->
 					<Sidebar.MenuItem

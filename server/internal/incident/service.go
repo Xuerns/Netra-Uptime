@@ -25,10 +25,16 @@ func NewIncidentService(repo IncidentRepository) IncidentService {
 }
 
 func mapIncidentToResponse(inc model.Incident) IncidentResponse {
+	sev := inc.Severity
+	if sev == "" {
+		sev = "medium"
+	}
+
 	resp := IncidentResponse{
 		ID:        inc.ID.String(),
 		MonitorID: inc.MonitorID.String(),
 		Status:    inc.Status,
+		Severity:  sev,
 		Summary:   inc.Summary,
 		StartedAt: inc.StartedAt.Format(time.RFC3339),
 	}
