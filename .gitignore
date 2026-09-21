@@ -48,7 +48,6 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
-.agents/
 skills-lock.json
 
 # Mark & Security Reports

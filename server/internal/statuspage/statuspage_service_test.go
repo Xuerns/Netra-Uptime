@@ -36,7 +36,17 @@ type mockStatusPageRepo struct {
 	getBySubdomainFunc              func(subdomain string) (*model.StatusPage, error)
 	getStatusPageMonitorFunc        func(statusPageID string) ([]model.StatusPageMonitor, error)
 	getStatusPageByUserIdFunc       func(userId string) ([]model.StatusPage, error)
-	totalOrganizationStatusPageFunc func(orgId string) (int64, error)
+	totalOrganizationStatusPageFunc           func(orgId string) (int64, error)
+	getActiveIncidentsByMonitorIDsFunc        func(monitorIDs []string) ([]model.Incident, error)
+	getRecentResolvedIncidentsByMonitorIDsFunc func(monitorIDs []string, days int) ([]model.Incident, error)
+	get30DayUptimeMapFunc                     func(monitorIDs []string) (map[string]float64, error)
+	getMonitorDailyStatsFunc                  func(monitorIDs []string, days int) (map[string][]model.MonitorDailyStat, error)
+	getActiveMaintenancesFunc                 func(statusPageID string) ([]model.ScheduledMaintenance, []model.ScheduledMaintenance, error)
+	createMaintenanceFunc                     func(maintenance *model.ScheduledMaintenance, monitorIDs []string) (*model.ScheduledMaintenance, error)
+	getMaintenancesByStatusPageIDFunc         func(statusPageID, orgID string) ([]model.ScheduledMaintenance, error)
+	getMaintenanceByIDFunc                    func(maintenanceID, orgID string) (*model.ScheduledMaintenance, error)
+	updateMaintenanceFunc                     func(maintenance *model.ScheduledMaintenance, monitorIDs *[]string) (*model.ScheduledMaintenance, error)
+	deleteMaintenanceFunc                     func(maintenanceID, orgID string) error
 }
 
 func (m *mockStatusPageRepo) Create(statuspage *model.StatusPage) (*model.StatusPage, error) {
@@ -94,6 +104,67 @@ func (m *mockStatusPageRepo) TotalOrganizationStatusPage(orgId string) (int64, e
 		return m.totalOrganizationStatusPageFunc(orgId)
 	}
 	return 0, nil
+}
+func (m *mockStatusPageRepo) GetActiveIncidentsByMonitorIDs(monitorIDs []string) ([]model.Incident, error) {
+	if m.getActiveIncidentsByMonitorIDsFunc != nil {
+		return m.getActiveIncidentsByMonitorIDsFunc(monitorIDs)
+	}
+	return nil, nil
+}
+func (m *mockStatusPageRepo) GetRecentResolvedIncidentsByMonitorIDs(monitorIDs []string, days int) ([]model.Incident, error) {
+	if m.getRecentResolvedIncidentsByMonitorIDsFunc != nil {
+		return m.getRecentResolvedIncidentsByMonitorIDsFunc(monitorIDs, days)
+	}
+	return nil, nil
+}
+func (m *mockStatusPageRepo) Get30DayUptimeMap(monitorIDs []string) (map[string]float64, error) {
+	if m.get30DayUptimeMapFunc != nil {
+		return m.get30DayUptimeMapFunc(monitorIDs)
+	}
+	return make(map[string]float64), nil
+}
+func (m *mockStatusPageRepo) GetMonitorDailyStats(monitorIDs []string, days int) (map[string][]model.MonitorDailyStat, error) {
+	if m.getMonitorDailyStatsFunc != nil {
+		return m.getMonitorDailyStatsFunc(monitorIDs, days)
+	}
+	return make(map[string][]model.MonitorDailyStat), nil
+}
+func (m *mockStatusPageRepo) GetActiveMaintenances(statusPageID string) ([]model.ScheduledMaintenance, []model.ScheduledMaintenance, error) {
+	if m.getActiveMaintenancesFunc != nil {
+		return m.getActiveMaintenancesFunc(statusPageID)
+	}
+	return nil, nil, nil
+}
+func (m *mockStatusPageRepo) CreateMaintenance(maintenance *model.ScheduledMaintenance, monitorIDs []string) (*model.ScheduledMaintenance, error) {
+	if m.createMaintenanceFunc != nil {
+		return m.createMaintenanceFunc(maintenance, monitorIDs)
+	}
+	maintenance.ID = uuid.New()
+	return maintenance, nil
+}
+func (m *mockStatusPageRepo) GetMaintenancesByStatusPageID(statusPageID, orgID string) ([]model.ScheduledMaintenance, error) {
+	if m.getMaintenancesByStatusPageIDFunc != nil {
+		return m.getMaintenancesByStatusPageIDFunc(statusPageID, orgID)
+	}
+	return nil, nil
+}
+func (m *mockStatusPageRepo) GetMaintenanceByID(maintenanceID, orgID string) (*model.ScheduledMaintenance, error) {
+	if m.getMaintenanceByIDFunc != nil {
+		return m.getMaintenanceByIDFunc(maintenanceID, orgID)
+	}
+	return nil, errors.New("not found")
+}
+func (m *mockStatusPageRepo) UpdateMaintenance(maintenance *model.ScheduledMaintenance, monitorIDs *[]string) (*model.ScheduledMaintenance, error) {
+	if m.updateMaintenanceFunc != nil {
+		return m.updateMaintenanceFunc(maintenance, monitorIDs)
+	}
+	return maintenance, nil
+}
+func (m *mockStatusPageRepo) DeleteMaintenance(maintenanceID, orgID string) error {
+	if m.deleteMaintenanceFunc != nil {
+		return m.deleteMaintenanceFunc(maintenanceID, orgID)
+	}
+	return nil
 }
 
 // Mock SubscriptionChecker
@@ -448,5 +519,397 @@ func TestStatusPageHandler_GetPublicBySubdomain(t *testing.T) {
 
 	if w.Code != http.StatusOK {
 		t.Errorf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestStatusPageService_GetBySubdomain_OverallStatus(t *testing.T) {
+	mon1 := uuid.New()
+	mon2 := uuid.New()
+
+	tests := []struct {
+		name           string
+		monitors       []model.StatusPageMonitor
+		incidents      []model.Incident
+		expectedStatus string
+	}{
+		{
+			name: "all up => operational",
+			monitors: []model.StatusPageMonitor{
+				{Monitor: model.Monitor{ID: mon1, Status: "up", IsActive: true}},
+				{Monitor: model.Monitor{ID: mon2, Status: "up", IsActive: true}},
+			},
+			expectedStatus: "operational",
+		},
+		{
+			name: "one down => partial_outage",
+			monitors: []model.StatusPageMonitor{
+				{Monitor: model.Monitor{ID: mon1, Status: "up", IsActive: true}},
+				{Monitor: model.Monitor{ID: mon2, Status: "down", IsActive: true}},
+			},
+			expectedStatus: "partial_outage",
+		},
+		{
+			name: "all down => major_outage",
+			monitors: []model.StatusPageMonitor{
+				{Monitor: model.Monitor{ID: mon1, Status: "down", IsActive: true}},
+				{Monitor: model.Monitor{ID: mon2, Status: "down", IsActive: true}},
+			},
+			expectedStatus: "major_outage",
+		},
+		{
+			name: "one degraded => degraded",
+			monitors: []model.StatusPageMonitor{
+				{Monitor: model.Monitor{ID: mon1, Status: "up", IsActive: true}},
+				{Monitor: model.Monitor{ID: mon2, Status: "degraded", IsActive: true}},
+			},
+			expectedStatus: "degraded",
+		},
+		{
+			name: "active critical incident => degraded",
+			monitors: []model.StatusPageMonitor{
+				{Monitor: model.Monitor{ID: mon1, Status: "up", IsActive: true}},
+				{Monitor: model.Monitor{ID: mon2, Status: "up", IsActive: true}},
+			},
+			incidents: []model.Incident{
+				{ID: uuid.New(), Severity: "critical", Status: "ongoing"},
+			},
+			expectedStatus: "degraded",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := &mockStatusPageRepo{
+				getBySubdomainFunc: func(sub string) (*model.StatusPage, error) {
+					return &model.StatusPage{
+						Title:              "PulseWatch Status",
+						Subdomain:          sub,
+						StatusPageMonitors: tc.monitors,
+					}, nil
+				},
+				getActiveIncidentsByMonitorIDsFunc: func(ids []string) ([]model.Incident, error) {
+					return tc.incidents, nil
+				},
+			}
+			svc := NewStatusPageService(repo, nil, nil, nil)
+			resp, err := svc.GetBySubdomain("pulsewatch")
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if resp.OverallStatus != tc.expectedStatus {
+				t.Errorf("expected overall status %s, got %s", tc.expectedStatus, resp.OverallStatus)
+			}
+		})
+	}
+}
+
+func TestStatusPageService_GetBySubdomain_IncidentsAndUptime(t *testing.T) {
+	monID := uuid.New()
+	incID := uuid.New()
+	resolvedTime := time.Now().Add(-1 * time.Hour)
+
+	repo := &mockStatusPageRepo{
+		getBySubdomainFunc: func(sub string) (*model.StatusPage, error) {
+			return &model.StatusPage{
+				Title:     "PulseWatch Status",
+				Subdomain: sub,
+				StatusPageMonitors: []model.StatusPageMonitor{
+					{
+						Monitor: model.Monitor{
+							ID:       monID,
+							Name:     "API Server",
+							Type:     "http",
+							Status:   "up",
+							IsActive: true,
+							RecentChecks: []model.Check{
+								{ResponseTimeMs: 120},
+								{ResponseTimeMs: 95},
+							},
+						},
+					},
+				},
+			}, nil
+		},
+		getActiveIncidentsByMonitorIDsFunc: func(ids []string) ([]model.Incident, error) {
+			return []model.Incident{
+				{
+					ID:        incID,
+					MonitorID: monID,
+					Status:    "ongoing",
+					Severity:  "high",
+					Summary:   "High latency detected",
+					StartedAt: time.Now().Add(-30 * time.Minute),
+					Monitor:   model.Monitor{Name: "API Server"},
+					IncidentUpdates: []model.IncidentUpdate{
+						{
+							Message:   "Investigating database queries",
+							CreatedAt: time.Now().Add(-15 * time.Minute),
+						},
+					},
+				},
+			}, nil
+		},
+		getRecentResolvedIncidentsByMonitorIDsFunc: func(ids []string, days int) ([]model.Incident, error) {
+			return []model.Incident{
+				{
+					ID:         uuid.New(),
+					MonitorID:  monID,
+					Status:     "resolved",
+					Severity:   "medium",
+					Summary:    "DNS lookup timeout",
+					StartedAt:  time.Now().Add(-2 * time.Hour),
+					ResolvedAt: &resolvedTime,
+					Monitor:    model.Monitor{Name: "API Server"},
+				},
+			}, nil
+		},
+		get30DayUptimeMapFunc: func(ids []string) (map[string]float64, error) {
+			return map[string]float64{
+				monID.String(): 99.85,
+			}, nil
+		},
+	}
+
+	svc := NewStatusPageService(repo, nil, nil, nil)
+	resp, err := svc.GetBySubdomain("pulsewatch")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(resp.Monitors) != 1 {
+		t.Fatalf("expected 1 monitor, got %d", len(resp.Monitors))
+	}
+	if resp.Monitors[0].UptimePercent == nil || *resp.Monitors[0].UptimePercent != 99.85 {
+		t.Errorf("expected uptime 99.85, got %v", resp.Monitors[0].UptimePercent)
+	}
+
+	if len(resp.ActiveIncidents) != 1 {
+		t.Fatalf("expected 1 active incident, got %d", len(resp.ActiveIncidents))
+	}
+	if resp.ActiveIncidents[0].Summary != "High latency detected" {
+		t.Errorf("unexpected summary: %s", resp.ActiveIncidents[0].Summary)
+	}
+	if resp.ActiveIncidents[0].MonitorName != "API Server" {
+		t.Errorf("expected monitor name 'API Server', got '%s'", resp.ActiveIncidents[0].MonitorName)
+	}
+	if len(resp.ActiveIncidents[0].Updates) != 1 {
+		t.Fatalf("expected 1 incident update, got %d", len(resp.ActiveIncidents[0].Updates))
+	}
+
+	if len(resp.RecentIncidents) != 1 {
+		t.Fatalf("expected 1 recent incident, got %d", len(resp.RecentIncidents))
+	}
+	if resp.RecentIncidents[0].ResolvedAt == nil {
+		t.Errorf("expected resolved_at to be set")
+	}
+}
+
+func TestStatusPageService_GetBySubdomain_90DayStatsAndMaintenance(t *testing.T) {
+	spID := uuid.New()
+	monID := uuid.New()
+	now := time.Now()
+
+	repo := &mockStatusPageRepo{
+		getBySubdomainFunc: func(sub string) (*model.StatusPage, error) {
+			return &model.StatusPage{
+				ID:        spID,
+				Title:     "PulseWatch Test",
+				Subdomain: sub,
+				StatusPageMonitors: []model.StatusPageMonitor{
+					{
+						Monitor: model.Monitor{
+							ID:       monID,
+							Name:     "Database Cluster",
+							Type:     "tcp",
+							Status:   "up",
+							IsActive: true,
+						},
+					},
+				},
+			}, nil
+		},
+		getMonitorDailyStatsFunc: func(ids []string, days int) (map[string][]model.MonitorDailyStat, error) {
+			return map[string][]model.MonitorDailyStat{
+				monID.String(): {
+					{
+						MonitorID:        monID,
+						Date:             now.AddDate(0, 0, -1),
+						TotalChecks:      1440,
+						UpChecks:         1438,
+						DownChecks:       2,
+						UptimePercentage: 99.86,
+					},
+				},
+			}, nil
+		},
+		getActiveMaintenancesFunc: func(statusPageID string) ([]model.ScheduledMaintenance, []model.ScheduledMaintenance, error) {
+			ongoing := []model.ScheduledMaintenance{
+				{
+					ID:             uuid.New(),
+					Title:          "Database Migration",
+					Description:    "Upgrading to PostgreSQL 17",
+					Status:         "in_progress",
+					ScheduledStart: now.Add(-30 * time.Minute),
+					ScheduledEnd:   now.Add(1 * time.Hour),
+					AffectedMonitors: []model.MaintenanceMonitor{
+						{Monitor: model.Monitor{Name: "Database Cluster"}},
+					},
+				},
+			}
+			upcoming := []model.ScheduledMaintenance{
+				{
+					ID:             uuid.New(),
+					Title:          "Network Switch Upgrade",
+					Description:    "Core switch firmware update",
+					Status:         "scheduled",
+					ScheduledStart: now.Add(24 * time.Hour),
+					ScheduledEnd:   now.Add(26 * time.Hour),
+				},
+			}
+			return ongoing, upcoming, nil
+		},
+	}
+
+	svc := NewStatusPageService(repo, nil, nil, nil)
+	resp, err := svc.GetBySubdomain("pulsewatch")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(resp.Monitors) != 1 {
+		t.Fatalf("expected 1 monitor, got %d", len(resp.Monitors))
+	}
+	// Verify exactly 90 days of stats
+	if len(resp.Monitors[0].DailyStats) != 90 {
+		t.Fatalf("expected 90 daily stats, got %d", len(resp.Monitors[0].DailyStats))
+	}
+
+	// Verify the day with data has has_data = true
+	yesterdayStr := now.AddDate(0, 0, -1).Format("2006-01-02")
+	foundYesterday := false
+	for _, day := range resp.Monitors[0].DailyStats {
+		if day.Date == yesterdayStr {
+			foundYesterday = true
+			if !day.HasData {
+				t.Errorf("expected yesterday to have has_data=true")
+			}
+			if day.UptimePercentage != 99.86 {
+				t.Errorf("expected uptime 99.86, got %f", day.UptimePercentage)
+			}
+		}
+	}
+	if !foundYesterday {
+		t.Errorf("expected yesterday's date %s in daily stats", yesterdayStr)
+	}
+
+	// Verify ongoing and upcoming maintenances
+	if len(resp.OngoingMaintenances) != 1 {
+		t.Fatalf("expected 1 ongoing maintenance, got %d", len(resp.OngoingMaintenances))
+	}
+	if resp.OngoingMaintenances[0].Title != "Database Migration" {
+		t.Errorf("unexpected title: %s", resp.OngoingMaintenances[0].Title)
+	}
+	if len(resp.OngoingMaintenances[0].AffectedMonitors) != 1 || resp.OngoingMaintenances[0].AffectedMonitors[0] != "Database Cluster" {
+		t.Errorf("unexpected affected monitors: %v", resp.OngoingMaintenances[0].AffectedMonitors)
+	}
+
+	if len(resp.UpcomingMaintenances) != 1 {
+		t.Fatalf("expected 1 upcoming maintenance, got %d", len(resp.UpcomingMaintenances))
+	}
+	if resp.UpcomingMaintenances[0].Title != "Network Switch Upgrade" {
+		t.Errorf("unexpected title: %s", resp.UpcomingMaintenances[0].Title)
+	}
+}
+
+func TestStatusPageService_MaintenanceCRUD(t *testing.T) {
+	orgID := uuid.New()
+	userID := uuid.New()
+	spID := uuid.New()
+	mID := uuid.New()
+
+	checker := &mockStatusPageChecker{
+		member: &model.OrganizationMember{Role: "admin"},
+	}
+
+	repo := &mockStatusPageRepo{
+		getByIdFunc: func(sid, oid string) (*model.StatusPage, error) {
+			return &model.StatusPage{ID: spID, OrganizationID: orgID}, nil
+		},
+		createMaintenanceFunc: func(m *model.ScheduledMaintenance, ids []string) (*model.ScheduledMaintenance, error) {
+			m.ID = mID
+			return m, nil
+		},
+		getMaintenancesByStatusPageIDFunc: func(sid, oid string) ([]model.ScheduledMaintenance, error) {
+			return []model.ScheduledMaintenance{
+				{
+					ID:           mID,
+					StatusPageID: spID,
+					Title:        "Routine Reboot",
+					Status:       "scheduled",
+				},
+			}, nil
+		},
+		getMaintenanceByIDFunc: func(mid, oid string) (*model.ScheduledMaintenance, error) {
+			return &model.ScheduledMaintenance{
+				ID:           mID,
+				StatusPageID: spID,
+				Title:        "Routine Reboot",
+				Status:       "scheduled",
+			}, nil
+		},
+		updateMaintenanceFunc: func(m *model.ScheduledMaintenance, ids *[]string) (*model.ScheduledMaintenance, error) {
+			return m, nil
+		},
+		deleteMaintenanceFunc: func(mid, oid string) error {
+			return nil
+		},
+	}
+
+	svc := NewStatusPageService(repo, checker, nil, nil)
+
+	// Create
+	createReq := &CreateMaintenanceRequest{
+		Title:          "Routine Reboot",
+		ScheduledStart: time.Now(),
+		ScheduledEnd:   time.Now().Add(1 * time.Hour),
+	}
+	created, err := svc.CreateMaintenance(orgID.String(), spID.String(), userID.String(), "127.0.0.1", createReq)
+	if err != nil {
+		t.Fatalf("failed to create maintenance: %v", err)
+	}
+	if created.Title != "Routine Reboot" {
+		t.Errorf("expected Routine Reboot, got %s", created.Title)
+	}
+
+	// List
+	list, err := svc.GetMaintenances(orgID.String(), spID.String(), userID.String())
+	if err != nil {
+		t.Fatalf("failed to get maintenances: %v", err)
+	}
+	if len(list) != 1 {
+		t.Fatalf("expected 1 maintenance, got %d", len(list))
+	}
+
+	// Update
+	newTitle := "Emergency Reboot"
+	newStatus := "in_progress"
+	updated, err := svc.UpdateMaintenance(orgID.String(), spID.String(), mID.String(), userID.String(), "127.0.0.1", &UpdateMaintenanceRequest{
+		Title:  &newTitle,
+		Status: &newStatus,
+	})
+	if err != nil {
+		t.Fatalf("failed to update maintenance: %v", err)
+	}
+	if updated.Title != "Emergency Reboot" {
+		t.Errorf("expected Emergency Reboot, got %s", updated.Title)
+	}
+	if updated.ActualStart == nil {
+		t.Errorf("expected ActualStart to be set when moving to in_progress")
+	}
+
+	// Delete
+	err = svc.DeleteMaintenance(orgID.String(), spID.String(), mID.String(), userID.String(), "127.0.0.1")
+	if err != nil {
+		t.Fatalf("failed to delete maintenance: %v", err)
 	}
 }

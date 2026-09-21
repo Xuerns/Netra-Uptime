@@ -26,6 +26,94 @@ export interface StatusPageMonitor {
 	DisplayOrder: number;
 }
 
+export interface PublicIncidentUpdate {
+	message: string;
+	created_at: string;
+}
+
+export interface PublicIncident {
+	id: string;
+	status: string; // ongoing | resolved
+	severity: string; // critical | high | medium | low
+	summary: string;
+	started_at: string;
+	resolved_at?: string | null;
+	monitor_name?: string;
+	updates: PublicIncidentUpdate[];
+}
+
+export interface PublicUptimeDay {
+	date: string;
+	uptime_percentage: number;
+	down_checks: number;
+	total_checks: number;
+	has_data: boolean;
+}
+
+export interface PublicMaintenance {
+	id: string;
+	title: string;
+	description: string;
+	status: 'scheduled' | 'in_progress' | 'completed' | string;
+	scheduled_start: string;
+	scheduled_end: string;
+	affected_monitors: string[];
+}
+
+export interface PublicMonitor {
+	id: string;
+	name: string;
+	type: string;
+	status: 'up' | 'down' | 'degraded' | 'paused' | string;
+	uptime_percent?: number | null;
+	recent_checks: number[];
+	daily_stats?: PublicUptimeDay[];
+}
+
+export interface PublicStatusPage {
+	title: string;
+	description?: string | null;
+	subdomain: string;
+	overall_status: 'operational' | 'degraded' | 'partial_outage' | 'major_outage';
+	monitors: PublicMonitor[];
+	active_incidents: PublicIncident[];
+	recent_incidents: PublicIncident[];
+	upcoming_maintenances?: PublicMaintenance[];
+	ongoing_maintenances?: PublicMaintenance[];
+}
+
+export interface Maintenance {
+	id: string;
+	status_page_id: string;
+	title: string;
+	description?: string;
+	status: 'scheduled' | 'in_progress' | 'completed';
+	scheduled_start: string;
+	scheduled_end: string;
+	actual_start?: string | null;
+	actual_end?: string | null;
+	created_at: string;
+	affected_monitors: string[];
+	affected_monitor_ids?: string[];
+}
+
+export interface CreateMaintenanceRequest {
+	title: string;
+	description?: string;
+	scheduled_start: string;
+	scheduled_end: string;
+	monitor_ids?: string[];
+}
+
+export interface UpdateMaintenanceRequest {
+	title?: string;
+	description?: string;
+	status?: 'scheduled' | 'in_progress' | 'completed';
+	scheduled_start?: string;
+	scheduled_end?: string;
+	monitor_ids?: string[];
+}
+
 export interface StatusPage {
 	ID: string;
 	OrganizationID: string;
@@ -138,6 +226,59 @@ export const StatusPageAPI = {
 			method: 'DELETE'
 		});
 		if (!res.ok) throw new Error('Failed to delete status page');
+		return res.json();
+	},
+
+	createMaintenance: async (orgId: string, statusPageId: string, data: CreateMaintenanceRequest) => {
+		const res = await apiFetch(
+			`${API_Route}/organization/${orgId}/statuspage/${statusPageId}/maintenance`,
+			{
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(data)
+			}
+		);
+		if (!res.ok) throw new Error('Failed to create maintenance');
+		return res.json();
+	},
+
+	getMaintenances: async (orgId: string, statusPageId: string) => {
+		const res = await apiFetch(
+			`${API_Route}/organization/${orgId}/statuspage/${statusPageId}/maintenance`,
+			{
+				method: 'GET'
+			}
+		);
+		if (!res.ok) throw new Error('Failed to fetch maintenances');
+		return res.json();
+	},
+
+	updateMaintenance: async (
+		orgId: string,
+		statusPageId: string,
+		maintenanceId: string,
+		data: UpdateMaintenanceRequest
+	) => {
+		const res = await apiFetch(
+			`${API_Route}/organization/${orgId}/statuspage/${statusPageId}/maintenance/${maintenanceId}`,
+			{
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(data)
+			}
+		);
+		if (!res.ok) throw new Error('Failed to update maintenance');
+		return res.json();
+	},
+
+	deleteMaintenance: async (orgId: string, statusPageId: string, maintenanceId: string) => {
+		const res = await apiFetch(
+			`${API_Route}/organization/${orgId}/statuspage/${statusPageId}/maintenance/${maintenanceId}`,
+			{
+				method: 'DELETE'
+			}
+		);
+		if (!res.ok) throw new Error('Failed to delete maintenance');
 		return res.json();
 	}
 };

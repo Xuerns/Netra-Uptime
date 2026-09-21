@@ -23,6 +23,10 @@ type StatusPageService interface {
 	GetBySubdomain(subdomain string) (*PublicStatusPageResponse, error)
 	GetStatusPageMonitor(statusPageID string) ([]model.StatusPageMonitor, error)
 	GetStatusPageByUserId(userId string) ([]StatusPageResponse, error)
+	CreateMaintenance(orgID, statusPageID, userID, ipAddress string, req *CreateMaintenanceRequest) (*model.ScheduledMaintenance, error)
+	GetMaintenances(orgID, statusPageID, userID string) ([]MaintenanceResponse, error)
+	UpdateMaintenance(orgID, statusPageID, maintenanceID, userID, ipAddress string, req *UpdateMaintenanceRequest) (*model.ScheduledMaintenance, error)
+	DeleteMaintenance(orgID, statusPageID, maintenanceID, userID, ipAddress string) error
 }
 
 type SubscriptionChecker interface {
@@ -300,32 +304,147 @@ func (s *StatusPageServiceImpl) GetBySubdomain(subdomain string) (*PublicStatusP
 		return nil, errors.New("Status page not found")
 	}
 
-	var monitorsResponse []PublicMonitorResponse
+	var monitorIDs []string
 	for _, spm := range statusPage.StatusPageMonitors {
 		if spm.Monitor.IsActive {
-			var recentChecks []int
+			monitorIDs = append(monitorIDs, spm.Monitor.ID.String())
+		}
+	}
+
+	var uptimeMap map[string]float64
+	var dailyStatsMap map[string][]model.MonitorDailyStat
+	if len(monitorIDs) > 0 {
+		uptimeMap, _ = s.repo.Get30DayUptimeMap(monitorIDs)
+		dailyStatsMap, _ = s.repo.GetMonitorDailyStats(monitorIDs, 90)
+	}
+
+	monitorsResponse := make([]PublicMonitorResponse, 0)
+	for _, spm := range statusPage.StatusPageMonitors {
+		if spm.Monitor.IsActive {
+			recentChecks := make([]int, 0)
 			for _, check := range spm.Monitor.RecentChecks {
 				recentChecks = append(recentChecks, check.ResponseTimeMs)
 			}
 
+			var uptimePct *float64
+			if uptimeMap != nil {
+				if val, ok := uptimeMap[spm.Monitor.ID.String()]; ok {
+					uptimePct = &val
+				}
+			}
+
+			var monitorDailyStats []model.MonitorDailyStat
+			if dailyStatsMap != nil {
+				monitorDailyStats = dailyStatsMap[spm.Monitor.ID.String()]
+			}
+			dailyStats := generate90DayStats(monitorDailyStats)
+
 			monitorsResponse = append(monitorsResponse, PublicMonitorResponse{
-				ID:           spm.Monitor.ID.String(),
-				Name:         spm.Monitor.Name,
-				Type:         spm.Monitor.Type,
-				Status:       spm.Monitor.Status,
-				RecentChecks: recentChecks,
+				ID:            spm.Monitor.ID.String(),
+				Name:          spm.Monitor.Name,
+				Type:          spm.Monitor.Type,
+				Status:        spm.Monitor.Status,
+				UptimePercent: uptimePct,
+				RecentChecks:  recentChecks,
+				DailyStats:    dailyStats,
 			})
 		}
 	}
 
+	var activeIncidents []model.Incident
+	var recentIncidents []model.Incident
+	if len(monitorIDs) > 0 {
+		activeIncidents, _ = s.repo.GetActiveIncidentsByMonitorIDs(monitorIDs)
+		recentIncidents, _ = s.repo.GetRecentResolvedIncidentsByMonitorIDs(monitorIDs, 7)
+	}
+
+	ongoingMaintenances, upcomingMaintenances, _ := s.repo.GetActiveMaintenances(statusPage.ID.String())
+
+	overallStatus := calculateOverallStatus(monitorsResponse, activeIncidents)
+
 	response := &PublicStatusPageResponse{
-		Title:       statusPage.Title,
-		Description: statusPage.Description,
-		Subdomain:   statusPage.Subdomain,
-		Monitors:    monitorsResponse,
+		Title:                statusPage.Title,
+		Description:          statusPage.Description,
+		Subdomain:            statusPage.Subdomain,
+		OverallStatus:        overallStatus,
+		Monitors:             monitorsResponse,
+		ActiveIncidents:      mapIncidentsToResponse(activeIncidents),
+		RecentIncidents:      mapIncidentsToResponse(recentIncidents),
+		UpcomingMaintenances: mapMaintenancesToPublicResponse(upcomingMaintenances),
+		OngoingMaintenances:  mapMaintenancesToPublicResponse(ongoingMaintenances),
 	}
 
 	return response, nil
+}
+
+func calculateOverallStatus(monitors []PublicMonitorResponse, activeIncidents []model.Incident) string {
+	if len(monitors) == 0 {
+		return "operational"
+	}
+
+	downCount := 0
+	degradedCount := 0
+	for _, m := range monitors {
+		switch m.Status {
+		case "down":
+			downCount++
+		case "degraded":
+			degradedCount++
+		}
+	}
+
+	if downCount == len(monitors) {
+		return "major_outage"
+	}
+	if downCount > 0 {
+		return "partial_outage"
+	}
+	if degradedCount > 0 {
+		return "degraded"
+	}
+	for _, inc := range activeIncidents {
+		if inc.Severity == "critical" || inc.Severity == "high" {
+			return "degraded"
+		}
+	}
+
+	return "operational"
+}
+
+func mapIncidentsToResponse(incidents []model.Incident) []PublicIncidentResponse {
+	resp := make([]PublicIncidentResponse, 0)
+	for _, inc := range incidents {
+		var resolvedAtStr *string
+		if inc.ResolvedAt != nil {
+			s := inc.ResolvedAt.Format(time.RFC3339)
+			resolvedAtStr = &s
+		}
+
+		updates := make([]PublicIncidentUpdateResponse, 0)
+		for _, u := range inc.IncidentUpdates {
+			updates = append(updates, PublicIncidentUpdateResponse{
+				Message:   u.Message,
+				CreatedAt: u.CreatedAt.Format(time.RFC3339),
+			})
+		}
+
+		monitorName := ""
+		if inc.Monitor.Name != "" {
+			monitorName = inc.Monitor.Name
+		}
+
+		resp = append(resp, PublicIncidentResponse{
+			ID:          inc.ID.String(),
+			Status:      inc.Status,
+			Severity:    inc.Severity,
+			Summary:     inc.Summary,
+			StartedAt:   inc.StartedAt.Format(time.RFC3339),
+			ResolvedAt:  resolvedAtStr,
+			MonitorName: monitorName,
+			Updates:     updates,
+		})
+	}
+	return resp
 }
 
 func (s *StatusPageServiceImpl) GetStatusPageByUserId(userId string) ([]StatusPageResponse, error) {
@@ -356,4 +475,226 @@ func (s *StatusPageServiceImpl) GetStatusPageByUserId(userId string) ([]StatusPa
 	}
 
 	return response, nil
+}
+
+func generate90DayStats(stats []model.MonitorDailyStat) []PublicUptimeDayResponse {
+	statMap := make(map[string]model.MonitorDailyStat)
+	for _, s := range stats {
+		statMap[s.Date.Format("2006-01-02")] = s
+	}
+
+	result := make([]PublicUptimeDayResponse, 90)
+	now := time.Now()
+
+	for i := 0; i < 90; i++ {
+		day := now.AddDate(0, 0, -(89 - i))
+		dateStr := day.Format("2006-01-02")
+		if s, ok := statMap[dateStr]; ok && s.TotalChecks > 0 {
+			result[i] = PublicUptimeDayResponse{
+				Date:             dateStr,
+				UptimePercentage: s.UptimePercentage,
+				DownChecks:       s.DownChecks,
+				TotalChecks:      s.TotalChecks,
+				HasData:          true,
+			}
+		} else {
+			result[i] = PublicUptimeDayResponse{
+				Date:             dateStr,
+				UptimePercentage: 100.0,
+				DownChecks:       0,
+				TotalChecks:      0,
+				HasData:          false,
+			}
+		}
+	}
+	return result
+}
+
+func mapMaintenancesToPublicResponse(maintenances []model.ScheduledMaintenance) []PublicMaintenanceResponse {
+	resp := make([]PublicMaintenanceResponse, 0)
+	for _, m := range maintenances {
+		monNames := make([]string, 0)
+		for _, am := range m.AffectedMonitors {
+			if am.Monitor.Name != "" {
+				monNames = append(monNames, am.Monitor.Name)
+			}
+		}
+		resp = append(resp, PublicMaintenanceResponse{
+			ID:               m.ID.String(),
+			Title:            m.Title,
+			Description:      m.Description,
+			Status:           m.Status,
+			ScheduledStart:   m.ScheduledStart.Format(time.RFC3339),
+			ScheduledEnd:     m.ScheduledEnd.Format(time.RFC3339),
+			AffectedMonitors: monNames,
+		})
+	}
+	return resp
+}
+
+func (s *StatusPageServiceImpl) CreateMaintenance(orgID, statusPageID, userID, ipAddress string, req *CreateMaintenanceRequest) (*model.ScheduledMaintenance, error) {
+	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	if err == nil && member == nil {
+		return nil, errors.New("You're not member of this organization")
+	}
+
+	sp, err := s.repo.GetById(statusPageID, orgID)
+	if err != nil {
+		return nil, errors.New("Status page not found")
+	}
+
+	orgUUID, err := uuid.Parse(orgID)
+	if err != nil {
+		return nil, errors.New("Invalid organization ID")
+	}
+
+	maintenance := &model.ScheduledMaintenance{
+		OrganizationID: orgUUID,
+		StatusPageID:   sp.ID,
+		Title:          req.Title,
+		Description:    req.Description,
+		Status:         "scheduled",
+		ScheduledStart: req.ScheduledStart,
+		ScheduledEnd:   req.ScheduledEnd,
+	}
+
+	created, err := s.repo.CreateMaintenance(maintenance, req.MonitorIDs)
+	if err != nil {
+		return nil, errors.New("Failed to create scheduled maintenance")
+	}
+
+	if s.auditService != nil {
+		mIDStr := created.ID.String()
+		_ = s.auditService.Record(audit.RecordAuditLogParams{
+			OrganizationID: orgID,
+			UserID:         userID,
+			Action:         "MAINTENANCE_CREATE",
+			EntityType:     "scheduled_maintenance",
+			EntityID:       &mIDStr,
+			Description:    fmt.Sprintf("Created scheduled maintenance '%s'", created.Title),
+			IPAddress:      ipAddress,
+		})
+	}
+
+	return created, nil
+}
+
+func (s *StatusPageServiceImpl) GetMaintenances(orgID, statusPageID, userID string) ([]MaintenanceResponse, error) {
+	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	if err == nil && member == nil {
+		return nil, errors.New("You're not member of this organization")
+	}
+
+	maintenances, err := s.repo.GetMaintenancesByStatusPageID(statusPageID, orgID)
+	if err != nil {
+		return nil, errors.New("Failed to retrieve maintenances")
+	}
+
+	resp := make([]MaintenanceResponse, 0)
+	for _, m := range maintenances {
+		monNames := make([]string, 0)
+		monIDs := make([]string, 0)
+		for _, am := range m.AffectedMonitors {
+			if am.Monitor.Name != "" {
+				monNames = append(monNames, am.Monitor.Name)
+			}
+			monIDs = append(monIDs, am.MonitorID.String())
+		}
+		resp = append(resp, MaintenanceResponse{
+			ID:                 m.ID.String(),
+			StatusPageID:       m.StatusPageID.String(),
+			Title:              m.Title,
+			Description:        m.Description,
+			Status:             m.Status,
+			ScheduledStart:     m.ScheduledStart,
+			ScheduledEnd:       m.ScheduledEnd,
+			ActualStart:        m.ActualStart,
+			ActualEnd:          m.ActualEnd,
+			CreatedAt:          m.CreatedAt,
+			AffectedMonitors:   monNames,
+			AffectedMonitorIDs: monIDs,
+		})
+	}
+
+	return resp, nil
+}
+
+func (s *StatusPageServiceImpl) UpdateMaintenance(orgID, statusPageID, maintenanceID, userID, ipAddress string, req *UpdateMaintenanceRequest) (*model.ScheduledMaintenance, error) {
+	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	if err == nil && member == nil {
+		return nil, errors.New("You're not member of this organization")
+	}
+
+	existing, err := s.repo.GetMaintenanceByID(maintenanceID, orgID)
+	if err != nil {
+		return nil, errors.New("Maintenance not found")
+	}
+
+	if req.Title != nil {
+		existing.Title = *req.Title
+	}
+	if req.Description != nil {
+		existing.Description = *req.Description
+	}
+	if req.Status != nil {
+		existing.Status = *req.Status
+		if *req.Status == "in_progress" && existing.ActualStart == nil {
+			now := time.Now()
+			existing.ActualStart = &now
+		} else if *req.Status == "completed" && existing.ActualEnd == nil {
+			now := time.Now()
+			existing.ActualEnd = &now
+		}
+	}
+	if req.ScheduledStart != nil {
+		existing.ScheduledStart = *req.ScheduledStart
+	}
+	if req.ScheduledEnd != nil {
+		existing.ScheduledEnd = *req.ScheduledEnd
+	}
+
+	updated, err := s.repo.UpdateMaintenance(existing, req.MonitorIDs)
+	if err != nil {
+		return nil, errors.New("Failed to update scheduled maintenance")
+	}
+
+	if s.auditService != nil {
+		mIDStr := updated.ID.String()
+		_ = s.auditService.Record(audit.RecordAuditLogParams{
+			OrganizationID: orgID,
+			UserID:         userID,
+			Action:         "MAINTENANCE_UPDATE",
+			EntityType:     "scheduled_maintenance",
+			EntityID:       &mIDStr,
+			Description:    fmt.Sprintf("Updated scheduled maintenance '%s'", updated.Title),
+			IPAddress:      ipAddress,
+		})
+	}
+
+	return updated, nil
+}
+
+func (s *StatusPageServiceImpl) DeleteMaintenance(orgID, statusPageID, maintenanceID, userID, ipAddress string) error {
+	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	if err == nil && member == nil {
+		return errors.New("You're not member of this organization")
+	}
+
+	if err := s.repo.DeleteMaintenance(maintenanceID, orgID); err != nil {
+		return errors.New("Failed to delete scheduled maintenance")
+	}
+
+	if s.auditService != nil {
+		_ = s.auditService.Record(audit.RecordAuditLogParams{
+			OrganizationID: orgID,
+			UserID:         userID,
+			Action:         "MAINTENANCE_DELETE",
+			EntityType:     "scheduled_maintenance",
+			EntityID:       &maintenanceID,
+			Description:    fmt.Sprintf("Deleted scheduled maintenance ID %s", maintenanceID),
+			IPAddress:      ipAddress,
+		})
+	}
+
+	return nil
 }

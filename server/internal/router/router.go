@@ -118,6 +118,10 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 	orgRoutes.GET("/statuspage/:statusPageId/monitors", h.StatusPageHandler.GetStatusPageMonitor)
 	orgRoutes.DELETE("/statuspage/:statusPageId", h.StatusPageHandler.DeleteStatusPage)
 	orgRoutes.PUT("/statuspage/:statusPageId", h.StatusPageHandler.UpdateStatusPage)
+	orgRoutes.POST("/statuspage/:statusPageId/maintenance", h.StatusPageHandler.CreateMaintenance)
+	orgRoutes.GET("/statuspage/:statusPageId/maintenance", h.StatusPageHandler.GetMaintenances)
+	orgRoutes.PUT("/statuspage/:statusPageId/maintenance/:maintenanceId", h.StatusPageHandler.UpdateMaintenance)
+	orgRoutes.DELETE("/statuspage/:statusPageId/maintenance/:maintenanceId", h.StatusPageHandler.DeleteMaintenance)
 
 	// Audit Logs
 	orgRoutes.GET("/audit-logs", h.AuditHandler.GetOrgAuditLogs)

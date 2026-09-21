@@ -31,7 +31,8 @@ func main() {
 
 	_ = db.AutoMigrate(&model.User{}, &model.Check{}, &model.Incident{}, &model.IncidentUpdate{}, &model.Monitor{}, &model.NotificationChannel{},
 		&model.NotificationLog{}, &model.Organization{}, &model.OrganizationMember{}, &model.RefreshToken{}, &model.StatusPage{}, &model.StatusPageMonitor{},
-		&model.Subscription{}, &model.OrganizationInvitation{}, &model.PasswordResetToken{}, &model.IncidentAssignee{}, &model.MonitorPIC{}, &model.AuditLog{}, &model.APIKey{}, &model.MonitorDailyStat{}, &model.AlertRule{})
+		&model.Subscription{}, &model.OrganizationInvitation{}, &model.PasswordResetToken{}, &model.IncidentAssignee{}, &model.MonitorPIC{}, &model.AuditLog{}, &model.APIKey{}, &model.MonitorDailyStat{}, &model.AlertRule{},
+		&model.ScheduledMaintenance{}, &model.MaintenanceMonitor{})
 
 	sender, err := email.NewSMTPSender()
 	if err != nil {

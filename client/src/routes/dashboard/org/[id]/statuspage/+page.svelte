@@ -19,6 +19,7 @@
 	import StatusPageSkeleton from '$lib/components/skeletons/StatusPageSkeleton.svelte';
 	import AddStatusPageModal from '$lib/components/statuspage/AddStatusPageModal.svelte';
 	import EditStatusPageModal from '$lib/components/statuspage/EditStatusPageModal.svelte';
+	import MaintenanceModal from '$lib/components/statuspage/MaintenanceModal.svelte';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
 
@@ -41,6 +42,10 @@
 	// Edit Modal
 	let isEditModalOpen = $state(false);
 	let editingStatusPage = $state<StatusPage | null>(null);
+
+	// Maintenance Modal
+	let isMaintenanceModalOpen = $state(false);
+	let maintenanceStatusPage = $state<StatusPage | null>(null);
 
 	// Delete Confirmation
 	let isDeletingId = $state<string | null>(null);
@@ -89,6 +94,12 @@
 		await loadMonitors();
 		editingStatusPage = sp;
 		isEditModalOpen = true;
+	}
+
+	async function openMaintenanceModal(sp: StatusPage) {
+		await loadMonitors();
+		maintenanceStatusPage = sp;
+		isMaintenanceModalOpen = true;
 	}
 
 	function openDeleteConfirm(sp: StatusPage) {
@@ -267,6 +278,7 @@
 							{sp}
 							onEdit={openEditModal}
 							onDelete={openDeleteConfirm}
+							onMaintenance={openMaintenanceModal}
 						/>
 					</div>
 				{/each}
@@ -286,7 +298,12 @@
 				</div>
 
 				{#each filtered as sp (sp.ID)}
-					<StatusPageListRow {sp} onEdit={openEditModal} onDelete={openDeleteConfirm} />
+					<StatusPageListRow
+						{sp}
+						onEdit={openEditModal}
+						onDelete={openDeleteConfirm}
+						onMaintenance={openMaintenanceModal}
+					/>
 				{/each}
 			</div>
 		{/if}
@@ -306,6 +323,13 @@
 	{monitors}
 	statusPage={editingStatusPage}
 	onSuccess={() => loadStatusPages(true)}
+/>
+
+<MaintenanceModal
+	bind:isOpen={isMaintenanceModalOpen}
+	{orgId}
+	statusPage={maintenanceStatusPage}
+	{monitors}
 />
 
 <!-- ── Delete Confirmation Dialog ──────────────────────────────────────────── -->

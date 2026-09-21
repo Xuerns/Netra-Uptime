@@ -196,3 +196,113 @@ func (h *StatusPageHandler) GetAllStatusPageByUserId(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"status": "success", "data": statusPages})
 }
+
+func (h *StatusPageHandler) CreateMaintenance(c *gin.Context) {
+	var req CreateMaintenanceRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
+		return
+	}
+
+	orgId, exist := c.Get("organizationID")
+	if !exist {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
+		return
+	}
+
+	userId, exist := c.Get("userID")
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
+		return
+	}
+
+	statusPageID := c.Param("statusPageId")
+
+	maintenance, err := h.service.CreateMaintenance(orgId.(uuid.UUID).String(), statusPageID, userId.(string), c.ClientIP(), &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"status": "success", "data": maintenance})
+}
+
+func (h *StatusPageHandler) GetMaintenances(c *gin.Context) {
+	orgId, exist := c.Get("organizationID")
+	if !exist {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
+		return
+	}
+
+	userId, exist := c.Get("userID")
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
+		return
+	}
+
+	statusPageID := c.Param("statusPageId")
+
+	maintenances, err := h.service.GetMaintenances(orgId.(uuid.UUID).String(), statusPageID, userId.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "data": maintenances})
+}
+
+func (h *StatusPageHandler) UpdateMaintenance(c *gin.Context) {
+	var req UpdateMaintenanceRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
+		return
+	}
+
+	orgId, exist := c.Get("organizationID")
+	if !exist {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
+		return
+	}
+
+	userId, exist := c.Get("userID")
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
+		return
+	}
+
+	statusPageID := c.Param("statusPageId")
+	maintenanceID := c.Param("maintenanceId")
+
+	maintenance, err := h.service.UpdateMaintenance(orgId.(uuid.UUID).String(), statusPageID, maintenanceID, userId.(string), c.ClientIP(), &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "data": maintenance})
+}
+
+func (h *StatusPageHandler) DeleteMaintenance(c *gin.Context) {
+	orgId, exist := c.Get("organizationID")
+	if !exist {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
+		return
+	}
+
+	userId, exist := c.Get("userID")
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
+		return
+	}
+
+	statusPageID := c.Param("statusPageId")
+	maintenanceID := c.Param("maintenanceId")
+
+	err := h.service.DeleteMaintenance(orgId.(uuid.UUID).String(), statusPageID, maintenanceID, userId.(string), c.ClientIP())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Maintenance deleted successfully"})
+}

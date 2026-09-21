@@ -1,15 +1,17 @@
 <script lang="ts">
-	import { Globe, ExternalLink, Building2, Pencil, Trash2, MoreVertical } from 'lucide-svelte';
+	import { Globe, ExternalLink, Building2, Pencil, Trash2, MoreVertical, Wrench } from 'lucide-svelte';
 	import type { StatusPage } from '$lib/api/statuspage';
 
 	let {
 		sp,
 		onEdit,
-		onDelete
+		onDelete,
+		onMaintenance
 	}: {
 		sp: StatusPage;
 		onEdit?: (sp: StatusPage) => void;
 		onDelete?: (sp: StatusPage) => void;
+		onMaintenance?: (sp: StatusPage) => void;
 	} = $props();
 
 	let menuOpen = $state(false);
@@ -33,6 +35,12 @@
 		e.stopPropagation();
 		closeMenu();
 		onDelete?.(sp);
+	}
+
+	function handleMaintenance(e: MouseEvent) {
+		e.stopPropagation();
+		closeMenu();
+		onMaintenance?.(sp);
 	}
 </script>
 
@@ -90,6 +98,15 @@
 						<div
 							class="dropdown-menu absolute right-0 top-full mt-1.5 w-40 z-50 bg-card border border-border rounded-xl shadow-xl overflow-hidden"
 						>
+							{#if onMaintenance}
+								<button
+									onclick={handleMaintenance}
+									class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-foreground hover:bg-white/8 transition-colors text-left"
+								>
+									<Wrench class="size-3.5 text-blue-400" />
+									Maintenance
+								</button>
+							{/if}
 							{#if onEdit}
 								<button
 									onclick={handleEdit}

@@ -3,7 +3,9 @@ package statuspage
 import (
 	"PulseWatch/config"
 	"PulseWatch/internal/model"
+	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -18,6 +20,16 @@ type StatusPageRepository interface {
 	GetStatusPageMonitor(statusPageID string) ([]model.StatusPageMonitor, error)
 	GetStatusPageByUserId(userId string) ([]model.StatusPage, error)
 	TotalOrganizationStatusPage(orgId string) (int64, error)
+	GetActiveIncidentsByMonitorIDs(monitorIDs []string) ([]model.Incident, error)
+	GetRecentResolvedIncidentsByMonitorIDs(monitorIDs []string, days int) ([]model.Incident, error)
+	Get30DayUptimeMap(monitorIDs []string) (map[string]float64, error)
+	GetMonitorDailyStats(monitorIDs []string, days int) (map[string][]model.MonitorDailyStat, error)
+	GetActiveMaintenances(statusPageID string) ([]model.ScheduledMaintenance, []model.ScheduledMaintenance, error)
+	CreateMaintenance(maintenance *model.ScheduledMaintenance, monitorIDs []string) (*model.ScheduledMaintenance, error)
+	GetMaintenancesByStatusPageID(statusPageID, orgID string) ([]model.ScheduledMaintenance, error)
+	GetMaintenanceByID(maintenanceID, orgID string) (*model.ScheduledMaintenance, error)
+	UpdateMaintenance(maintenance *model.ScheduledMaintenance, monitorIDs *[]string) (*model.ScheduledMaintenance, error)
+	DeleteMaintenance(maintenanceID, orgID string) error
 }
 
 type StatusPageRepositoryImpl struct {
@@ -161,4 +173,290 @@ func (r *StatusPageRepositoryImpl) TotalOrganizationStatusPage(orgId string) (in
 	}
 
 	return totalStatusPage, nil
+}
+
+func (r *StatusPageRepositoryImpl) GetActiveIncidentsByMonitorIDs(monitorIDs []string) ([]model.Incident, error) {
+	var incidents []model.Incident
+	if len(monitorIDs) == 0 {
+		return incidents, nil
+	}
+	err := r.db.Preload("Monitor").
+		Preload("IncidentUpdates", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at DESC")
+		}).
+		Where("monitor_id IN ? AND status = ?", monitorIDs, "ongoing").
+		Order("started_at DESC").Find(&incidents).Error
+	return incidents, err
+}
+
+func (r *StatusPageRepositoryImpl) GetRecentResolvedIncidentsByMonitorIDs(monitorIDs []string, days int) ([]model.Incident, error) {
+	var incidents []model.Incident
+	if len(monitorIDs) == 0 {
+		return incidents, nil
+	}
+	since := time.Now().AddDate(0, 0, -days)
+	err := r.db.Preload("Monitor").
+		Preload("IncidentUpdates", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at DESC")
+		}).
+		Where("monitor_id IN ? AND status = ? AND resolved_at >= ?", monitorIDs, "resolved", since).
+		Order("resolved_at DESC").Limit(20).Find(&incidents).Error
+	return incidents, err
+}
+
+func (r *StatusPageRepositoryImpl) Get30DayUptimeMap(monitorIDs []string) (map[string]float64, error) {
+	result := make(map[string]float64)
+	if len(monitorIDs) == 0 {
+		return result, nil
+	}
+
+	sinceDate := time.Now().AddDate(0, 0, -30)
+
+	type uptimeAgg struct {
+		MonitorID   string `gorm:"column:monitor_id"`
+		TotalChecks int64  `gorm:"column:total_checks"`
+		UpChecks    int64  `gorm:"column:up_checks"`
+	}
+
+	var dailyAggs []uptimeAgg
+	r.db.Table("monitor_daily_stats").
+		Select("monitor_id::text as monitor_id, SUM(total_checks) as total_checks, SUM(up_checks) as up_checks").
+		Where("monitor_id IN ? AND date >= ?", monitorIDs, sinceDate).
+		Group("monitor_id").
+		Scan(&dailyAggs)
+
+	var checkAggs []uptimeAgg
+	r.db.Table("checks").
+		Select("monitor_id::text as monitor_id, COUNT(*) as total_checks, COUNT(CASE WHEN status = 'up' THEN 1 END) as up_checks").
+		Where("monitor_id IN ? AND checked_at >= ?", monitorIDs, sinceDate).
+		Group("monitor_id").
+		Scan(&checkAggs)
+
+	totals := make(map[string]int64)
+	ups := make(map[string]int64)
+
+	for _, d := range dailyAggs {
+		totals[d.MonitorID] += d.TotalChecks
+		ups[d.MonitorID] += d.UpChecks
+	}
+
+	for _, c := range checkAggs {
+		totals[c.MonitorID] += c.TotalChecks
+		ups[c.MonitorID] += c.UpChecks
+	}
+
+	for _, id := range monitorIDs {
+		tot := totals[id]
+		u := ups[id]
+		if tot > 0 {
+			result[id] = (float64(u) / float64(tot)) * 100.0
+		} else {
+			result[id] = 100.0
+		}
+	}
+
+	return result, nil
+}
+
+func (r *StatusPageRepositoryImpl) GetMonitorDailyStats(monitorIDs []string, days int) (map[string][]model.MonitorDailyStat, error) {
+	result := make(map[string][]model.MonitorDailyStat)
+	if len(monitorIDs) == 0 {
+		return result, nil
+	}
+
+	startDate := time.Now().AddDate(0, 0, -days).Truncate(24 * time.Hour)
+
+	var stats []model.MonitorDailyStat
+	if err := r.db.Where("monitor_id IN ? AND date >= ?", monitorIDs, startDate).
+		Order("date ASC").Find(&stats).Error; err != nil {
+		return nil, err
+	}
+
+	for _, s := range stats {
+		mID := s.MonitorID.String()
+		result[mID] = append(result[mID], s)
+	}
+
+	// Also aggregate today's checks from checks table
+	type rawDailyAgg struct {
+		MonitorID   string    `gorm:"column:monitor_id"`
+		Date        time.Time `gorm:"column:date"`
+		TotalChecks int       `gorm:"column:total_checks"`
+		UpChecks    int       `gorm:"column:up_checks"`
+		DownChecks  int       `gorm:"column:down_checks"`
+	}
+
+	var rawAggs []rawDailyAgg
+	r.db.Table("checks").
+		Select(`
+			monitor_id::text AS monitor_id,
+			DATE(checked_at) AS date,
+			COUNT(*) AS total_checks,
+			COUNT(CASE WHEN status = 'up' THEN 1 END) AS up_checks,
+			COUNT(CASE WHEN status = 'down' THEN 1 END) AS down_checks
+		`).
+		Where("monitor_id IN ? AND checked_at >= ?", monitorIDs, startDate).
+		Group("monitor_id, DATE(checked_at)").
+		Scan(&rawAggs)
+
+	if len(rawAggs) > 0 {
+		for _, raw := range rawAggs {
+			mID := raw.MonitorID
+			dateStr := raw.Date.Format("2006-01-02")
+			existingList := result[mID]
+			found := false
+			for idx, s := range existingList {
+				if s.Date.Format("2006-01-02") == dateStr {
+					tot := s.TotalChecks + raw.TotalChecks
+					up := s.UpChecks + raw.UpChecks
+					down := s.DownChecks + raw.DownChecks
+					pct := 100.0
+					if tot > 0 {
+						pct = (float64(up) / float64(tot)) * 100.0
+					}
+					existingList[idx].TotalChecks = tot
+					existingList[idx].UpChecks = up
+					existingList[idx].DownChecks = down
+					existingList[idx].UptimePercentage = pct
+					found = true
+					break
+				}
+			}
+			if !found {
+				pct := 100.0
+				if raw.TotalChecks > 0 {
+					pct = (float64(raw.UpChecks) / float64(raw.TotalChecks)) * 100.0
+				}
+				mUUID, _ := uuid.Parse(mID)
+				existingList = append(existingList, model.MonitorDailyStat{
+					MonitorID:        mUUID,
+					Date:             raw.Date,
+					TotalChecks:      raw.TotalChecks,
+					UpChecks:         raw.UpChecks,
+					DownChecks:       raw.DownChecks,
+					UptimePercentage: pct,
+				})
+			}
+			result[mID] = existingList
+		}
+	}
+
+	return result, nil
+}
+
+func (r *StatusPageRepositoryImpl) GetActiveMaintenances(statusPageID string) ([]model.ScheduledMaintenance, []model.ScheduledMaintenance, error) {
+	now := time.Now()
+	var ongoing []model.ScheduledMaintenance
+	var upcoming []model.ScheduledMaintenance
+
+	err := r.db.Preload("AffectedMonitors.Monitor").
+		Where("status_page_id = ? AND (status = 'in_progress' OR (status = 'scheduled' AND scheduled_start <= ? AND scheduled_end >= ?))", statusPageID, now, now).
+		Order("scheduled_start ASC").
+		Find(&ongoing).Error
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = r.db.Preload("AffectedMonitors.Monitor").
+		Where("status_page_id = ? AND status = 'scheduled' AND scheduled_start > ?", statusPageID, now).
+		Order("scheduled_start ASC").
+		Limit(5).
+		Find(&upcoming).Error
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return ongoing, upcoming, nil
+}
+
+func (r *StatusPageRepositoryImpl) CreateMaintenance(maintenance *model.ScheduledMaintenance, monitorIDs []string) (*model.ScheduledMaintenance, error) {
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(maintenance).Error; err != nil {
+			return err
+		}
+
+		for _, mID := range monitorIDs {
+			parsedID, err := uuid.Parse(mID)
+			if err != nil {
+				continue
+			}
+			mm := model.MaintenanceMonitor{
+				MaintenanceID: maintenance.ID,
+				MonitorID:     parsedID,
+			}
+			if err := tx.Create(&mm).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var loaded model.ScheduledMaintenance
+	if err := r.db.Preload("AffectedMonitors.Monitor").Where("id = ?", maintenance.ID).First(&loaded).Error; err != nil {
+		return maintenance, nil
+	}
+	return &loaded, nil
+}
+
+func (r *StatusPageRepositoryImpl) GetMaintenancesByStatusPageID(statusPageID, orgID string) ([]model.ScheduledMaintenance, error) {
+	var list []model.ScheduledMaintenance
+	err := r.db.Preload("AffectedMonitors.Monitor").
+		Where("status_page_id = ? AND organization_id = ?", statusPageID, orgID).
+		Order("created_at DESC").Find(&list).Error
+	return list, err
+}
+
+func (r *StatusPageRepositoryImpl) GetMaintenanceByID(maintenanceID, orgID string) (*model.ScheduledMaintenance, error) {
+	var m model.ScheduledMaintenance
+	err := r.db.Preload("AffectedMonitors.Monitor").
+		Where("id = ? AND organization_id = ?", maintenanceID, orgID).
+		First(&m).Error
+	if err != nil {
+		return nil, err
+	}
+	return &m, nil
+}
+
+func (r *StatusPageRepositoryImpl) UpdateMaintenance(maintenance *model.ScheduledMaintenance, monitorIDs *[]string) (*model.ScheduledMaintenance, error) {
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(maintenance).Error; err != nil {
+			return err
+		}
+
+		if monitorIDs != nil {
+			if err := tx.Where("maintenance_id = ?", maintenance.ID).Delete(&model.MaintenanceMonitor{}).Error; err != nil {
+				return err
+			}
+			for _, mID := range *monitorIDs {
+				parsedID, err := uuid.Parse(mID)
+				if err != nil {
+					continue
+				}
+				mm := model.MaintenanceMonitor{
+					MaintenanceID: maintenance.ID,
+					MonitorID:     parsedID,
+				}
+				if err := tx.Create(&mm).Error; err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var loaded model.ScheduledMaintenance
+	if err := r.db.Preload("AffectedMonitors.Monitor").Where("id = ?", maintenance.ID).First(&loaded).Error; err != nil {
+		return maintenance, nil
+	}
+	return &loaded, nil
+}
+
+func (r *StatusPageRepositoryImpl) DeleteMaintenance(maintenanceID, orgID string) error {
+	return r.db.Where("id = ? AND organization_id = ?", maintenanceID, orgID).Delete(&model.ScheduledMaintenance{}).Error
 }

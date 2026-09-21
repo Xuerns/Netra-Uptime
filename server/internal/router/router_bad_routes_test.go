@@ -503,6 +503,18 @@ func (m *mockStatService) GetStatusPageMonitor(statusPageID string) ([]model.Sta
 func (m *mockStatService) GetStatusPageByUserId(userId string) ([]statuspage.StatusPageResponse, error) {
 	return []statuspage.StatusPageResponse{}, nil
 }
+func (m *mockStatService) CreateMaintenance(orgID, statusPageID, userID, ipAddress string, req *statuspage.CreateMaintenanceRequest) (*model.ScheduledMaintenance, error) {
+	return &model.ScheduledMaintenance{Title: req.Title}, nil
+}
+func (m *mockStatService) GetMaintenances(orgID, statusPageID, userID string) ([]statuspage.MaintenanceResponse, error) {
+	return []statuspage.MaintenanceResponse{}, nil
+}
+func (m *mockStatService) UpdateMaintenance(orgID, statusPageID, maintenanceID, userID, ipAddress string, req *statuspage.UpdateMaintenanceRequest) (*model.ScheduledMaintenance, error) {
+	return &model.ScheduledMaintenance{}, nil
+}
+func (m *mockStatService) DeleteMaintenance(orgID, statusPageID, maintenanceID, userID, ipAddress string) error {
+	return nil
+}
 
 type mockAudService struct{}
 
