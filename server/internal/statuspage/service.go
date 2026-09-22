@@ -103,12 +103,21 @@ func (s *StatusPageServiceImpl) Create(orgID, userID, ipAddress string, req *Cre
 		return nil, errors.New("Invalid organization ID")
 	}
 
+	themeColor := req.ThemeColor
+	if themeColor == "" {
+		themeColor = "#4edea3"
+	}
+
 	statusPage := &model.StatusPage{
 		OrganizationID:     orgUUID,
 		Title:              req.Title,
 		Description:        req.Description,
 		Subdomain:          req.Subdomain,
 		IsPublic:           req.IsPublic,
+		LogoURL:            req.LogoURL,
+		FaviconURL:         req.FaviconURL,
+		ThemeColor:         themeColor,
+		CustomCSS:          req.CustomCSS,
 		StatusPageMonitors: statusPageMonitor,
 	}
 
@@ -169,6 +178,11 @@ func toStatusPageResponse(sp model.StatusPage) StatusPageResponse {
 		})
 	}
 
+	themeColor := sp.ThemeColor
+	if themeColor == "" {
+		themeColor = "#4edea3"
+	}
+
 	resp := StatusPageResponse{
 		ID:                 sp.ID.String(),
 		OrganizationID:     sp.OrganizationID.String(),
@@ -176,6 +190,10 @@ func toStatusPageResponse(sp model.StatusPage) StatusPageResponse {
 		Title:              sp.Title,
 		Description:        sp.Description,
 		IsPublic:           sp.IsPublic,
+		LogoURL:            sp.LogoURL,
+		FaviconURL:         sp.FaviconURL,
+		ThemeColor:         themeColor,
+		CustomCSS:          sp.CustomCSS,
 		CreatedAt:          sp.CreatedAt,
 		StatusPageMonitors: monitors,
 		ComponentGroups:    compGroups,
@@ -264,6 +282,22 @@ func (s *StatusPageServiceImpl) Update(statuspageID, orgID, userID, ipAddress st
 
 	if req.IsPublic != nil {
 		statusPage.IsPublic = *req.IsPublic
+	}
+
+	if req.LogoURL != nil {
+		statusPage.LogoURL = *req.LogoURL
+	}
+
+	if req.FaviconURL != nil {
+		statusPage.FaviconURL = *req.FaviconURL
+	}
+
+	if req.ThemeColor != nil {
+		statusPage.ThemeColor = *req.ThemeColor
+	}
+
+	if req.CustomCSS != nil {
+		statusPage.CustomCSS = *req.CustomCSS
 	}
 
 	if req.MonitorID != nil {
@@ -418,11 +452,20 @@ func (s *StatusPageServiceImpl) GetBySubdomain(subdomain string) (*PublicStatusP
 
 	incidentHistory := groupIncidentsByDay(historyIncidents, 14)
 
+	themeColor := statusPage.ThemeColor
+	if themeColor == "" {
+		themeColor = "#4edea3"
+	}
+
 	response := &PublicStatusPageResponse{
 		Title:                statusPage.Title,
 		Description:          statusPage.Description,
 		Subdomain:            statusPage.Subdomain,
 		OverallStatus:        overallStatus,
+		LogoURL:              statusPage.LogoURL,
+		FaviconURL:           statusPage.FaviconURL,
+		ThemeColor:           themeColor,
+		CustomCSS:            statusPage.CustomCSS,
 		Monitors:             monitorsResponse,
 		ComponentGroups:      componentGroupsResponse,
 		ActiveIncidents:      mapIncidentsToResponse(activeIncidents),

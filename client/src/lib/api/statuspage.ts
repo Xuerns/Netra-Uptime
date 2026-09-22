@@ -8,6 +8,10 @@ export interface CreateStatusPageRequest {
 	title: string;
 	description?: string | null;
 	is_public: boolean;
+	logo_url?: string;
+	favicon_url?: string;
+	theme_color?: string;
+	custom_css?: string;
 	monitor_id: string[];
 }
 
@@ -16,6 +20,10 @@ export interface UpdateStatusPageRequest {
 	title?: string;
 	description?: string | null;
 	is_public?: boolean;
+	logo_url?: string;
+	favicon_url?: string;
+	theme_color?: string;
+	custom_css?: string;
 	monitor_id?: string[];
 }
 
@@ -89,6 +97,10 @@ export interface PublicStatusPage {
 	description?: string | null;
 	subdomain: string;
 	overall_status: 'operational' | 'degraded' | 'partial_outage' | 'major_outage';
+	logo_url?: string;
+	favicon_url?: string;
+	theme_color?: string;
+	custom_css?: string;
 	monitors: PublicMonitor[];
 	component_groups?: PublicComponentGroup[];
 	active_incidents: PublicIncident[];
@@ -167,6 +179,10 @@ export interface StatusPage {
 	Title: string;
 	Description?: string | null;
 	IsPublic: boolean;
+	LogoURL?: string;
+	FaviconURL?: string;
+	ThemeColor?: string;
+	CustomCSS?: string;
 	CreatedAt: string;
 	StatusPageMonitors?: StatusPageMonitor[];
 	ComponentGroups?: ComponentGroup[];
@@ -188,6 +204,10 @@ function mapStatusPage(sp: any): StatusPage {
 		Title: sp.title ?? sp.Title,
 		Description: sp.description ?? sp.Description,
 		IsPublic: sp.is_public ?? sp.IsPublic,
+		LogoURL: sp.logo_url ?? sp.LogoURL ?? '',
+		FaviconURL: sp.favicon_url ?? sp.FaviconURL ?? '',
+		ThemeColor: sp.theme_color ?? sp.ThemeColor ?? '#4edea3',
+		CustomCSS: sp.custom_css ?? sp.CustomCSS ?? '',
 		CreatedAt: sp.created_at ?? sp.CreatedAt,
 		StatusPageMonitors: (sp.status_page_monitors || sp.StatusPageMonitors || []).map((m: any) => ({
 			ID: m.id ?? m.ID,

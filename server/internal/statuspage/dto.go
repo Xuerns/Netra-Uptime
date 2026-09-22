@@ -7,7 +7,11 @@ type CreateStatusPageRequest struct {
 	Title       string   `json:"title" binding:"required,max=60"`
 	Description *string  `json:"description" binding:"omitempty"`
 	IsPublic    bool     `json:"is_public" binding:"required"`
-	MonitorID []string `json:"monitor_id" binding:"required,min=1,max=40,dive,uuid"`
+	LogoURL     string   `json:"logo_url" binding:"omitempty"`
+	FaviconURL  string   `json:"favicon_url" binding:"omitempty"`
+	ThemeColor  string   `json:"theme_color" binding:"omitempty"`
+	CustomCSS   string   `json:"custom_css" binding:"omitempty"`
+	MonitorID   []string `json:"monitor_id" binding:"required,min=1,max=40,dive,uuid"`
 }
 
 type UpdateStatusPageRequest struct {
@@ -15,7 +19,11 @@ type UpdateStatusPageRequest struct {
 	Title       *string   `json:"title" binding:"omitempty,max=60"`
 	Description *string   `json:"description" binding:"omitempty"`
 	IsPublic    *bool     `json:"is_public" binding:"omitempty"`
-	MonitorID *[]string `json:"monitor_id" binding:"omitempty,dive,uuid"`
+	LogoURL     *string   `json:"logo_url" binding:"omitempty"`
+	FaviconURL  *string   `json:"favicon_url" binding:"omitempty"`
+	ThemeColor  *string   `json:"theme_color" binding:"omitempty"`
+	CustomCSS   *string   `json:"custom_css" binding:"omitempty"`
+	MonitorID   *[]string `json:"monitor_id" binding:"omitempty,dive,uuid"`
 }
 
 type PublicIncidentUpdateResponse struct {
@@ -81,6 +89,10 @@ type PublicStatusPageResponse struct {
 	Description          *string                        `json:"description"`
 	Subdomain            string                         `json:"subdomain"`
 	OverallStatus        string                         `json:"overall_status"`
+	LogoURL              string                         `json:"logo_url"`
+	FaviconURL           string                         `json:"favicon_url"`
+	ThemeColor           string                         `json:"theme_color"`
+	CustomCSS            string                         `json:"custom_css"`
 	Monitors             []PublicMonitorResponse        `json:"monitors"`
 	ComponentGroups      []PublicComponentGroupResponse `json:"component_groups"`
 	ActiveIncidents      []PublicIncidentResponse       `json:"active_incidents"`
@@ -88,6 +100,12 @@ type PublicStatusPageResponse struct {
 	IncidentHistory      []PublicIncidentDayGroup       `json:"incident_history"`
 	UpcomingMaintenances []PublicMaintenanceResponse    `json:"upcoming_maintenances"`
 	OngoingMaintenances  []PublicMaintenanceResponse    `json:"ongoing_maintenances"`
+}
+
+type PublicStatusJSONResponse struct {
+	Status      string `json:"status"`
+	Description string `json:"description"`
+	UpdatedAt   string `json:"updated_at"`
 }
 
 type CreateMaintenanceRequest struct {
@@ -169,6 +187,10 @@ type StatusPageResponse struct {
 	Title              string                   `json:"title"`
 	Description        *string                  `json:"description"`
 	IsPublic           bool                     `json:"is_public"`
+	LogoURL            string                   `json:"logo_url"`
+	FaviconURL         string                   `json:"favicon_url"`
+	ThemeColor         string                   `json:"theme_color"`
+	CustomCSS          string                   `json:"custom_css"`
 	CreatedAt          time.Time                `json:"created_at"`
 	StatusPageMonitors []StatusPageMonitorInfo  `json:"status_page_monitors"`
 	ComponentGroups    []ComponentGroupResponse `json:"component_groups"`

@@ -56,6 +56,9 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 	api.POST("/auth", authLimiter, h.AuthHandler.OauthLoginAndRegister)
 
 	api.GET("/public/statuspage/:subdomain", h.StatusPageHandler.GetPublicBySubdomain)
+	api.GET("/public/statuspage/:subdomain/summary.json", h.StatusPageHandler.GetPublicSummaryJSON)
+	api.GET("/public/statuspage/:subdomain/status.json", h.StatusPageHandler.GetPublicStatusJSON)
+	api.GET("/public/statuspage/:subdomain/badge.svg", h.StatusPageHandler.GetStatusBadge)
 	// Protected API -> Need Access token
 	protected := r.Group("api/v1")
 	protected.Use(middleware.AuthMiddleware())

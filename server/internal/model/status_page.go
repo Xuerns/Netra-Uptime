@@ -15,6 +15,12 @@ type StatusPage struct {
 	IsPublic       bool      `gorm:"default:true"`
 	CreatedAt      time.Time `gorm:"autoCreateTime"`
 
+	// Branding
+	LogoURL    string `gorm:"default:''"`
+	FaviconURL string `gorm:"default:''"`
+	ThemeColor string `gorm:"default:'#4edea3'"`
+	CustomCSS  string `gorm:"type:text;default:''"`
+
 	Organization       Organization        `gorm:"foreignKey:OrganizationID"`
 	StatusPageMonitors []StatusPageMonitor `gorm:"foreignKey:StatusPageID;constraint:OnDelete:CASCADE"`
 	ComponentGroups    []ComponentGroup    `gorm:"foreignKey:StatusPageID;constraint:OnDelete:CASCADE"`

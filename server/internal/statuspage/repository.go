@@ -89,7 +89,11 @@ func (r *StatusPageRepositoryImpl) Delete(statusPageID, orgID string) error {
 func (r *StatusPageRepositoryImpl) Update(statuspageID, orgID string, statuspage *model.StatusPage) (*model.StatusPage, error) {
 	var updatedStatusPage model.StatusPage
 
-	err := r.db.Model(&updatedStatusPage).Clauses(clause.Returning{}).Where("id = ? AND organization_id = ?", statuspageID, orgID).Updates(statuspage).Error
+	err := r.db.Model(&updatedStatusPage).
+		Clauses(clause.Returning{}).
+		Where("id = ? AND organization_id = ?", statuspageID, orgID).
+		Select("Subdomain", "Title", "Description", "IsPublic", "LogoURL", "FaviconURL", "ThemeColor", "CustomCSS").
+		Updates(statuspage).Error
 
 	if err != nil {
 		return nil, err

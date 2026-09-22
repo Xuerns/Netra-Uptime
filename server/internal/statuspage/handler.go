@@ -2,7 +2,9 @@ package statuspage
 
 import (
 	"PulseWatch/pkg/apierror"
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -178,6 +180,132 @@ func (h *StatusPageHandler) GetPublicBySubdomain(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": "success", "data": statusPage})
+}
+
+func (h *StatusPageHandler) GetPublicSummaryJSON(c *gin.Context) {
+	subdomain := c.Param("subdomain")
+
+	statusPage, err := h.service.GetBySubdomain(subdomain)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Status page not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, statusPage)
+}
+
+func (h *StatusPageHandler) GetPublicStatusJSON(c *gin.Context) {
+	subdomain := c.Param("subdomain")
+
+	statusPage, err := h.service.GetBySubdomain(subdomain)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Status page not found"})
+		return
+	}
+
+	desc := "All Systems Operational"
+	switch statusPage.OverallStatus {
+	case "degraded":
+		desc = "Degraded Performance"
+	case "partial_outage":
+		desc = "Partial System Outage"
+	case "major_outage":
+		desc = "Major Service Outage"
+	case "maintenance":
+		desc = "Under Scheduled Maintenance"
+	}
+
+	c.JSON(http.StatusOK, PublicStatusJSONResponse{
+		Status:      statusPage.OverallStatus,
+		Description: desc,
+		UpdatedAt:   time.Now().UTC().Format(time.RFC3339),
+	})
+}
+
+func (h *StatusPageHandler) GetStatusBadge(c *gin.Context) {
+	subdomain := c.Param("subdomain")
+
+	statusPage, err := h.service.GetBySubdomain(subdomain)
+
+	statusText := "operational"
+	bgColor := "#10b981"
+	if err != nil {
+		statusText = "unknown"
+		bgColor = "#6b7280"
+	} else {
+		switch statusPage.OverallStatus {
+		case "operational":
+			statusText = "operational"
+			bgColor = "#10b981"
+		case "degraded":
+			statusText = "degraded"
+			bgColor = "#f59e0b"
+		case "partial_outage":
+			statusText = "partial outage"
+			bgColor = "#f97316"
+		case "major_outage":
+			statusText = "major outage"
+			bgColor = "#ef4444"
+		case "maintenance":
+			statusText = "maintenance"
+			bgColor = "#3b82f6"
+		default:
+			statusText = statusPage.OverallStatus
+			bgColor = "#10b981"
+		}
+	}
+
+	svg := generateShieldBadgeSVG("status", statusText, bgColor)
+	c.Header("Content-Type", "image/svg+xml")
+	c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+	c.String(http.StatusOK, svg)
+}
+
+func generateShieldBadgeSVG(label, status, color string) string {
+	labelWidth := len(label)*7 + 14
+	if labelWidth < 45 {
+		labelWidth = 45
+	}
+	statusWidth := len(status)*7 + 16
+	if statusWidth < 50 {
+		statusWidth = 50
+	}
+	totalWidth := labelWidth + statusWidth
+	labelCenter := labelWidth / 2
+	statusCenter := labelWidth + (statusWidth / 2)
+
+	return fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="20" role="img" aria-label="%s: %s">
+	<title>%s: %s</title>
+	<linearGradient id="s" x2="0" y2="100%%">
+		<stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+		<stop offset="1" stop-opacity=".1"/>
+	</linearGradient>
+	<clipPath id="r">
+		<rect width="%d" height="20" rx="3" fill="#fff"/>
+	</clipPath>
+	<g clip-path="url(#r)">
+		<rect width="%d" height="20" fill="#2d3748"/>
+		<rect x="%d" width="%d" height="20" fill="%s"/>
+		<rect width="%d" height="20" fill="url(#s)"/>
+	</g>
+	<g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="11">
+		<text aria-hidden="true" x="%d" y="15" fill="#010101" fill-opacity=".3">%s</text>
+		<text x="%d" y="14">%s</text>
+		<text aria-hidden="true" x="%d" y="15" fill="#010101" fill-opacity=".3">%s</text>
+		<text x="%d" y="14">%s</text>
+	</g>
+</svg>`,
+		totalWidth, label, status,
+		label, status,
+		totalWidth,
+		labelWidth,
+		labelWidth, statusWidth, color,
+		totalWidth,
+		labelCenter, label,
+		labelCenter, label,
+		statusCenter, status,
+		statusCenter, status,
+	)
 }
 
 func (h *StatusPageHandler) GetAllStatusPageByUserId(c *gin.Context) {

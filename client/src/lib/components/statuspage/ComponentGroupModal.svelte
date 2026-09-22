@@ -189,9 +189,6 @@
 		<!-- Header -->
 		<div class="p-6 border-b border-border/60 flex items-center justify-between">
 			<div class="flex items-center gap-3">
-				<div class="size-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-					<FolderTree class="size-5 text-purple-400" />
-				</div>
 				<div>
 					<Dialog.Title class="text-lg font-bold text-foreground">
 						Component Groups

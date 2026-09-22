@@ -213,9 +213,6 @@
 		<!-- Header -->
 		<div class="p-6 border-b border-border/60 flex items-center justify-between">
 			<div class="flex items-center gap-3">
-				<div class="size-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-					<Wrench class="size-5 text-blue-400" />
-				</div>
 				<div>
 					<Dialog.Title class="text-lg font-bold text-foreground">
 						Scheduled Maintenance

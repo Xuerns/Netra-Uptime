@@ -315,10 +315,17 @@
 
 <svelte:head>
 	<title>{statusPage.title} | System Status</title>
+	{#if statusPage.favicon_url}
+		<link rel="icon" href={statusPage.favicon_url} />
+	{/if}
+	{#if statusPage.custom_css}
+		{@html `<style>${statusPage.custom_css}</style>`}
+	{/if}
 </svelte:head>
 
 <div
 	class="min-h-screen relative overflow-x-hidden text-foreground bg-background pattern-bg flex flex-col selection:bg-primary/20"
+	style={statusPage.theme_color ? `--primary: ${statusPage.theme_color}; --theme-primary: ${statusPage.theme_color};` : ''}
 >
 	<!-- Top Navigation Bar -->
 	<header
@@ -326,7 +333,15 @@
 	>
 		<div class="max-w-5xl mx-auto flex justify-between items-center px-4 sm:px-6 py-4 w-full">
 			<div class="flex items-center gap-3">
-				<img class="h-8 w-8 object-contain" src={logo} alt="PulseWatch Logo" />
+				{#if statusPage.logo_url}
+					<img
+						class="h-8 max-w-36 object-contain rounded"
+						src={statusPage.logo_url}
+						alt={`${statusPage.title} Logo`}
+					/>
+				{:else}
+					<img class="h-8 w-8 object-contain" src={logo} alt="PulseWatch Logo" />
+				{/if}
 				<div class="flex flex-col">
 					<div class="flex items-center gap-2">
 						<span class="font-headline-md text-headline-md font-bold text-foreground">

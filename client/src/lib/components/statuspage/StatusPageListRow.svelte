@@ -1,5 +1,15 @@
 <script lang="ts">
-	import { Globe, ExternalLink, Building2, Pencil, Trash2, MoreVertical, Wrench, FolderTree } from 'lucide-svelte';
+	import {
+		Globe,
+		ExternalLink,
+		Building2,
+		Pencil,
+		Trash2,
+		MoreVertical,
+		Wrench,
+		FolderTree,
+		Shield
+	} from 'lucide-svelte';
 	import type { StatusPage } from '$lib/api/statuspage';
 
 	let {
@@ -7,13 +17,15 @@
 		onEdit,
 		onDelete,
 		onMaintenance,
-		onGroups
+		onGroups,
+		onEmbedBadge
 	}: {
 		sp: StatusPage;
 		onEdit?: (sp: StatusPage) => void;
 		onDelete?: (sp: StatusPage) => void;
 		onMaintenance?: (sp: StatusPage) => void;
 		onGroups?: (sp: StatusPage) => void;
+		onEmbedBadge?: (sp: StatusPage) => void;
 	} = $props();
 
 	let menuOpen = $state(false);
@@ -49,6 +61,12 @@
 		e.stopPropagation();
 		closeMenu();
 		onGroups?.(sp);
+	}
+
+	function handleEmbedBadge(e: MouseEvent) {
+		e.stopPropagation();
+		closeMenu();
+		onEmbedBadge?.(sp);
 	}
 </script>
 
@@ -119,12 +137,21 @@
 					<div
 						class="dropdown-menu absolute right-0 top-full mt-1.5 w-44 z-50 bg-card border border-border rounded-xl shadow-xl overflow-hidden"
 					>
+						{#if onEmbedBadge}
+							<button
+								onclick={handleEmbedBadge}
+								class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-foreground hover:bg-white/8 transition-colors text-left"
+							>
+								<Shield class="size-3.5 text-emerald-400" />
+								Embed Badge
+							</button>
+						{/if}
 						{#if onGroups}
 							<button
 								onclick={handleGroups}
 								class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-foreground hover:bg-white/8 transition-colors text-left"
 							>
-								<FolderTree class="size-3.5 text-purple-400" />
+								<FolderTree class="size-3.5 text-emerald-400" />
 								Groups
 							</button>
 						{/if}
@@ -133,7 +160,7 @@
 								onclick={handleMaintenance}
 								class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-foreground hover:bg-white/8 transition-colors text-left"
 							>
-								<Wrench class="size-3.5 text-blue-400" />
+								<Wrench class="size-3.5 text-emerald-400" />
 								Maintenance
 							</button>
 						{/if}
@@ -142,7 +169,7 @@
 								onclick={handleEdit}
 								class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-foreground hover:bg-white/8 transition-colors text-left"
 							>
-								<Pencil class="size-3.5 text-muted-foreground" />
+								<Pencil class="size-3.5 text-emerald-400" />
 								Edit
 							</button>
 						{/if}

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -1030,3 +1031,77 @@ func TestComponentGroupCRUDAndIncidentHistory(t *testing.T) {
 		t.Errorf("expected 1 incident today, got %d", len(dailyGroups[0].Incidents))
 	}
 }
+
+func TestStatusPageBrandingAndBadgeEndpoints(t *testing.T) {
+	subdomain := "acme-test"
+	repo := &mockStatusPageRepo{
+		getBySubdomainFunc: func(sub string) (*model.StatusPage, error) {
+			desc := "Acme status page"
+			return &model.StatusPage{
+				ID:          uuid.New(),
+				Title:       "Acme Corp",
+				Subdomain:   subdomain,
+				Description: &desc,
+				IsPublic:    true,
+				LogoURL:     "https://example.com/logo.png",
+				FaviconURL:  "https://example.com/favicon.ico",
+				ThemeColor:  "#3b82f6",
+				CustomCSS:   "body { font-family: sans-serif; }",
+			}, nil
+		},
+	}
+	checker := &mockStatusPageChecker{}
+	svc := NewStatusPageService(repo, checker, nil, nil)
+	handler := NewStatusPageHandler(svc)
+
+	r := gin.New()
+	r.GET("/public/statuspage/:subdomain/summary.json", handler.GetPublicSummaryJSON)
+	r.GET("/public/statuspage/:subdomain/status.json", handler.GetPublicStatusJSON)
+	r.GET("/public/statuspage/:subdomain/badge.svg", handler.GetStatusBadge)
+
+	// Test 1: summary.json
+	w1 := httptest.NewRecorder()
+	req1, _ := http.NewRequest(http.MethodGet, "/public/statuspage/"+subdomain+"/summary.json", nil)
+	r.ServeHTTP(w1, req1)
+	if w1.Code != http.StatusOK {
+		t.Errorf("expected 200 for summary.json, got %d", w1.Code)
+	}
+	var summary PublicStatusPageResponse
+	if err := json.Unmarshal(w1.Body.Bytes(), &summary); err != nil {
+		t.Fatalf("failed to parse summary.json: %v", err)
+	}
+	if summary.LogoURL != "https://example.com/logo.png" || summary.ThemeColor != "#3b82f6" {
+		t.Errorf("unexpected branding values in summary.json: %+v", summary)
+	}
+
+	// Test 2: status.json
+	w2 := httptest.NewRecorder()
+	req2, _ := http.NewRequest(http.MethodGet, "/public/statuspage/"+subdomain+"/status.json", nil)
+	r.ServeHTTP(w2, req2)
+	if w2.Code != http.StatusOK {
+		t.Errorf("expected 200 for status.json, got %d", w2.Code)
+	}
+	var statResp PublicStatusJSONResponse
+	if err := json.Unmarshal(w2.Body.Bytes(), &statResp); err != nil {
+		t.Fatalf("failed to parse status.json: %v", err)
+	}
+	if statResp.Status != "operational" {
+		t.Errorf("expected status 'operational', got '%s'", statResp.Status)
+	}
+
+	// Test 3: badge.svg
+	w3 := httptest.NewRecorder()
+	req3, _ := http.NewRequest(http.MethodGet, "/public/statuspage/"+subdomain+"/badge.svg", nil)
+	r.ServeHTTP(w3, req3)
+	if w3.Code != http.StatusOK {
+		t.Errorf("expected 200 for badge.svg, got %d", w3.Code)
+	}
+	if w3.Header().Get("Content-Type") != "image/svg+xml" {
+		t.Errorf("expected Content-Type image/svg+xml, got %s", w3.Header().Get("Content-Type"))
+	}
+	svgContent := w3.Body.String()
+	if !strings.Contains(svgContent, "<svg") || !strings.Contains(svgContent, "operational") {
+		t.Errorf("expected valid SVG with operational text, got: %s", svgContent)
+	}
+}
+

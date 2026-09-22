@@ -2,15 +2,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { flip } from 'svelte/animate';
-	import {
-		Globe,
-		Plus,
-		TriangleAlert,
-		Search,
-		LayoutGrid,
-		List,
-		Trash2
-	} from 'lucide-svelte';
+	import { Globe, Plus, TriangleAlert, Search, LayoutGrid, List, Trash2 } from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { StatusPageAPI, type StatusPage } from '$lib/api/statuspage';
 	import { MonitorAPI, type Monitor } from '$lib/api/monitor';
@@ -21,6 +13,7 @@
 	import EditStatusPageModal from '$lib/components/statuspage/EditStatusPageModal.svelte';
 	import MaintenanceModal from '$lib/components/statuspage/MaintenanceModal.svelte';
 	import ComponentGroupModal from '$lib/components/statuspage/ComponentGroupModal.svelte';
+	import EmbedBadgeModal from '$lib/components/statuspage/EmbedBadgeModal.svelte';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
 
@@ -51,6 +44,10 @@
 	// Component Groups Modal
 	let isGroupModalOpen = $state(false);
 	let groupStatusPage = $state<StatusPage | null>(null);
+
+	// Embed Badge Modal
+	let isEmbedModalOpen = $state(false);
+	let embedStatusPage = $state<StatusPage | null>(null);
 
 	// Delete Confirmation
 	let isDeletingId = $state<string | null>(null);
@@ -120,6 +117,11 @@
 		await loadMonitors();
 		groupStatusPage = sp;
 		isGroupModalOpen = true;
+	}
+
+	function openEmbedModal(sp: StatusPage) {
+		embedStatusPage = sp;
+		isEmbedModalOpen = true;
 	}
 
 	function openDeleteConfirm(sp: StatusPage) {
@@ -300,6 +302,7 @@
 							onDelete={openDeleteConfirm}
 							onMaintenance={openMaintenanceModal}
 							onGroups={openGroupModal}
+							onEmbedBadge={openEmbedModal}
 						/>
 					</div>
 				{/each}
@@ -307,9 +310,7 @@
 
 			<!-- ── List view ─────────────────────────────────────────────────────── -->
 		{:else}
-			<div
-				class="flex flex-col divide-y divide-border border border-border rounded-lg bg-white/2"
-			>
+			<div class="flex flex-col divide-y divide-border border border-border rounded-lg bg-white/2">
 				<div class="list-row list-row--header" aria-hidden="true">
 					<span>Status Page</span>
 					<span>Subdomain</span>
@@ -325,6 +326,7 @@
 						onDelete={openDeleteConfirm}
 						onMaintenance={openMaintenanceModal}
 						onGroups={openGroupModal}
+						onEmbedBadge={openEmbedModal}
 					/>
 				{/each}
 			</div>
@@ -362,11 +364,13 @@
 	onUpdated={() => loadStatusPages(true)}
 />
 
+<EmbedBadgeModal bind:isOpen={isEmbedModalOpen} statusPage={embedStatusPage} />
+
 <!-- ── Delete Confirmation Dialog ──────────────────────────────────────────── -->
 {#if isDeleteConfirmOpen}
 	<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 	<div
-		class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm w-max-[400px]"
 		onclick={(e) => {
 			if (e.target === e.currentTarget) isDeleteConfirmOpen = false;
 		}}
@@ -375,11 +379,6 @@
 			class="bg-card border border-border rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4 flex flex-col gap-4"
 		>
 			<div class="flex items-center gap-3">
-				<div
-					class="flex items-center justify-center size-10 rounded-lg bg-destructive/10 border border-destructive/20 shrink-0"
-				>
-					<Trash2 class="size-5 text-destructive" />
-				</div>
 				<div>
 					<h2 class="text-base font-semibold text-foreground">Delete Status Page</h2>
 					<p class="text-[13px] text-muted-foreground">This action cannot be undone.</p>
