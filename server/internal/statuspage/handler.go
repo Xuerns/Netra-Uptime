@@ -306,3 +306,144 @@ func (h *StatusPageHandler) DeleteMaintenance(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Maintenance deleted successfully"})
 }
+
+func (h *StatusPageHandler) CreateComponentGroup(c *gin.Context) {
+	var req CreateComponentGroupRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
+		return
+	}
+
+	orgId, exist := c.Get("organizationID")
+	if !exist {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
+		return
+	}
+
+	userId, exist := c.Get("userID")
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
+		return
+	}
+
+	statusPageID := c.Param("statusPageId")
+
+	group, err := h.service.CreateComponentGroup(orgId.(uuid.UUID).String(), statusPageID, userId.(string), c.ClientIP(), &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"status": "success", "data": group})
+}
+
+func (h *StatusPageHandler) GetComponentGroups(c *gin.Context) {
+	orgId, exist := c.Get("organizationID")
+	if !exist {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
+		return
+	}
+
+	userId, exist := c.Get("userID")
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
+		return
+	}
+
+	statusPageID := c.Param("statusPageId")
+
+	groups, err := h.service.GetComponentGroups(orgId.(uuid.UUID).String(), statusPageID, userId.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "data": groups})
+}
+
+func (h *StatusPageHandler) UpdateComponentGroup(c *gin.Context) {
+	var req UpdateComponentGroupRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
+		return
+	}
+
+	orgId, exist := c.Get("organizationID")
+	if !exist {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
+		return
+	}
+
+	userId, exist := c.Get("userID")
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
+		return
+	}
+
+	statusPageID := c.Param("statusPageId")
+	groupID := c.Param("groupId")
+
+	group, err := h.service.UpdateComponentGroup(orgId.(uuid.UUID).String(), statusPageID, groupID, userId.(string), c.ClientIP(), &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "data": group})
+}
+
+func (h *StatusPageHandler) DeleteComponentGroup(c *gin.Context) {
+	orgId, exist := c.Get("organizationID")
+	if !exist {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
+		return
+	}
+
+	userId, exist := c.Get("userID")
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
+		return
+	}
+
+	statusPageID := c.Param("statusPageId")
+	groupID := c.Param("groupId")
+
+	err := h.service.DeleteComponentGroup(orgId.(uuid.UUID).String(), statusPageID, groupID, userId.(string), c.ClientIP())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Component group deleted successfully"})
+}
+
+func (h *StatusPageHandler) AssignMonitorGroup(c *gin.Context) {
+	var req AssignMonitorGroupRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
+		return
+	}
+
+	orgId, exist := c.Get("organizationID")
+	if !exist {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
+		return
+	}
+
+	userId, exist := c.Get("userID")
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
+		return
+	}
+
+	statusPageID := c.Param("statusPageId")
+	monitorID := c.Param("monitorId")
+
+	err := h.service.AssignMonitorToGroup(orgId.(uuid.UUID).String(), statusPageID, monitorID, userId.(string), c.ClientIP(), &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Monitor assigned to group successfully"})
+}

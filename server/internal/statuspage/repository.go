@@ -30,6 +30,13 @@ type StatusPageRepository interface {
 	GetMaintenanceByID(maintenanceID, orgID string) (*model.ScheduledMaintenance, error)
 	UpdateMaintenance(maintenance *model.ScheduledMaintenance, monitorIDs *[]string) (*model.ScheduledMaintenance, error)
 	DeleteMaintenance(maintenanceID, orgID string) error
+	GetIncidentHistory(monitorIDs []string, days int) ([]model.Incident, error)
+	CreateComponentGroup(group *model.ComponentGroup) (*model.ComponentGroup, error)
+	GetComponentGroupsByStatusPageID(statusPageID string) ([]model.ComponentGroup, error)
+	GetComponentGroupByID(groupID, statusPageID string) (*model.ComponentGroup, error)
+	UpdateComponentGroup(group *model.ComponentGroup) (*model.ComponentGroup, error)
+	DeleteComponentGroup(groupID, statusPageID string) error
+	AssignMonitorToGroup(statusPageID, monitorID string, groupID *string) error
 }
 
 type StatusPageRepositoryImpl struct {
@@ -52,7 +59,12 @@ func (r *StatusPageRepositoryImpl) Create(statuspage *model.StatusPage) (*model.
 func (r *StatusPageRepositoryImpl) GetAllByOrganizationID(orgID string) ([]model.StatusPage, error) {
 	var StatusPages []model.StatusPage
 
-	if err := r.db.Preload("StatusPageMonitors").Where("organization_id = ?", orgID).Find(&StatusPages).Error; err != nil {
+	if err := r.db.Preload("Organization").
+		Preload("StatusPageMonitors").
+		Preload("ComponentGroups", func(db *gorm.DB) *gorm.DB {
+			return db.Order("component_groups.display_order ASC, component_groups.name ASC")
+		}).
+		Where("organization_id = ?", orgID).Find(&StatusPages).Error; err != nil {
 		return nil, err
 	}
 
@@ -100,7 +112,13 @@ func (r *StatusPageRepositoryImpl) Update(statuspageID, orgID string, statuspage
 
 func (r *StatusPageRepositoryImpl) GetById(statuspageID, orgID string) (*model.StatusPage, error) {
 	var statuspage model.StatusPage
-	if err := r.db.Where("id = ? AND organization_id = ?", statuspageID, orgID).First(&statuspage).Error; err != nil {
+	if err := r.db.Preload("Organization").
+		Preload("StatusPageMonitors").
+		Preload("StatusPageMonitors.Monitor").
+		Preload("ComponentGroups", func(db *gorm.DB) *gorm.DB {
+			return db.Order("component_groups.display_order ASC, component_groups.name ASC")
+		}).
+		Where("id = ? AND organization_id = ?", statuspageID, orgID).First(&statuspage).Error; err != nil {
 		return nil, err
 	}
 	return &statuspage, nil
@@ -116,7 +134,13 @@ func (r *StatusPageRepositoryImpl) GetStatusPageMonitor(statusPageID string) ([]
 
 func (r *StatusPageRepositoryImpl) GetBySubdomain(subdomain string) (*model.StatusPage, error) {
 	var statuspage model.StatusPage
-	if err := r.db.Preload("StatusPageMonitors").Preload("StatusPageMonitors.Monitor").Where("subdomain = ? AND is_public = ?", subdomain, true).First(&statuspage).Error; err != nil {
+	if err := r.db.Preload("StatusPageMonitors").
+		Preload("StatusPageMonitors.Monitor").
+		Preload("StatusPageMonitors.ComponentGroup").
+		Preload("ComponentGroups", func(db *gorm.DB) *gorm.DB {
+			return db.Order("component_groups.display_order ASC, component_groups.name ASC")
+		}).
+		Where("subdomain = ? AND is_public = ?", subdomain, true).First(&statuspage).Error; err != nil {
 		return nil, err
 	}
 
@@ -459,4 +483,73 @@ func (r *StatusPageRepositoryImpl) UpdateMaintenance(maintenance *model.Schedule
 
 func (r *StatusPageRepositoryImpl) DeleteMaintenance(maintenanceID, orgID string) error {
 	return r.db.Where("id = ? AND organization_id = ?", maintenanceID, orgID).Delete(&model.ScheduledMaintenance{}).Error
+}
+
+func (r *StatusPageRepositoryImpl) GetIncidentHistory(monitorIDs []string, days int) ([]model.Incident, error) {
+	if len(monitorIDs) == 0 {
+		return []model.Incident{}, nil
+	}
+	cutoff := time.Now().AddDate(0, 0, -days)
+	var incidents []model.Incident
+	err := r.db.Preload("Monitor").
+		Preload("IncidentUpdates", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at DESC")
+		}).
+		Where("monitor_id IN ? AND status = ? AND started_at >= ?", monitorIDs, "resolved", cutoff).
+		Order("started_at DESC").
+		Find(&incidents).Error
+	return incidents, err
+}
+
+func (r *StatusPageRepositoryImpl) CreateComponentGroup(group *model.ComponentGroup) (*model.ComponentGroup, error) {
+	if err := r.db.Create(group).Error; err != nil {
+		return nil, err
+	}
+	return group, nil
+}
+
+func (r *StatusPageRepositoryImpl) GetComponentGroupsByStatusPageID(statusPageID string) ([]model.ComponentGroup, error) {
+	var groups []model.ComponentGroup
+	err := r.db.Where("status_page_id = ?", statusPageID).
+		Order("display_order ASC, name ASC").
+		Find(&groups).Error
+	return groups, err
+}
+
+func (r *StatusPageRepositoryImpl) GetComponentGroupByID(groupID, statusPageID string) (*model.ComponentGroup, error) {
+	var group model.ComponentGroup
+	err := r.db.Where("id = ? AND status_page_id = ?", groupID, statusPageID).First(&group).Error
+	if err != nil {
+		return nil, err
+	}
+	return &group, nil
+}
+
+func (r *StatusPageRepositoryImpl) UpdateComponentGroup(group *model.ComponentGroup) (*model.ComponentGroup, error) {
+	if err := r.db.Save(group).Error; err != nil {
+		return nil, err
+	}
+	return group, nil
+}
+
+func (r *StatusPageRepositoryImpl) DeleteComponentGroup(groupID, statusPageID string) error {
+	_ = r.db.Model(&model.StatusPageMonitor{}).
+		Where("status_page_id = ? AND group_id = ?", statusPageID, groupID).
+		Update("group_id", nil).Error
+
+	return r.db.Where("id = ? AND status_page_id = ?", groupID, statusPageID).
+		Delete(&model.ComponentGroup{}).Error
+}
+
+func (r *StatusPageRepositoryImpl) AssignMonitorToGroup(statusPageID, monitorID string, groupID *string) error {
+	var parsedGroupID *uuid.UUID
+	if groupID != nil && *groupID != "" {
+		gUUID, err := uuid.Parse(*groupID)
+		if err == nil {
+			parsedGroupID = &gUUID
+		}
+	}
+	return r.db.Model(&model.StatusPageMonitor{}).
+		Where("status_page_id = ? AND monitor_id = ?", statusPageID, monitorID).
+		Update("group_id", parsedGroupID).Error
 }

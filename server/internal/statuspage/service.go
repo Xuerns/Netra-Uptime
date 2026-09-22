@@ -27,6 +27,11 @@ type StatusPageService interface {
 	GetMaintenances(orgID, statusPageID, userID string) ([]MaintenanceResponse, error)
 	UpdateMaintenance(orgID, statusPageID, maintenanceID, userID, ipAddress string, req *UpdateMaintenanceRequest) (*model.ScheduledMaintenance, error)
 	DeleteMaintenance(orgID, statusPageID, maintenanceID, userID, ipAddress string) error
+	CreateComponentGroup(orgID, statusPageID, userID, ipAddress string, req *CreateComponentGroupRequest) (*model.ComponentGroup, error)
+	GetComponentGroups(orgID, statusPageID, userID string) ([]ComponentGroupResponse, error)
+	UpdateComponentGroup(orgID, statusPageID, groupID, userID, ipAddress string, req *UpdateComponentGroupRequest) (*model.ComponentGroup, error)
+	DeleteComponentGroup(orgID, statusPageID, groupID, userID, ipAddress string) error
+	AssignMonitorToGroup(orgID, statusPageID, monitorID, userID, ipAddress string, req *AssignMonitorGroupRequest) error
 }
 
 type SubscriptionChecker interface {
@@ -132,11 +137,35 @@ func (s *StatusPageServiceImpl) Create(orgID, userID, ipAddress string, req *Cre
 func toStatusPageResponse(sp model.StatusPage) StatusPageResponse {
 	var monitors []StatusPageMonitorInfo
 	for _, m := range sp.StatusPageMonitors {
+		var gIDStr *string
+		if m.GroupID != nil {
+			s := m.GroupID.String()
+			gIDStr = &s
+		}
 		monitors = append(monitors, StatusPageMonitorInfo{
 			ID:           m.ID.String(),
 			StatusPageID: m.StatusPageID.String(),
 			MonitorID:    m.MonitorID.String(),
 			DisplayOrder: m.DisplayOrder,
+			GroupID:      gIDStr,
+		})
+	}
+
+	compGroups := make([]ComponentGroupResponse, 0)
+	for _, cg := range sp.ComponentGroups {
+		mIDs := make([]string, 0)
+		for _, m := range sp.StatusPageMonitors {
+			if m.GroupID != nil && *m.GroupID == cg.ID {
+				mIDs = append(mIDs, m.MonitorID.String())
+			}
+		}
+		compGroups = append(compGroups, ComponentGroupResponse{
+			ID:           cg.ID.String(),
+			StatusPageID: cg.StatusPageID.String(),
+			Name:         cg.Name,
+			DisplayOrder: cg.DisplayOrder,
+			IsExpanded:   cg.IsExpanded,
+			MonitorIDs:   mIDs,
 		})
 	}
 
@@ -149,6 +178,7 @@ func toStatusPageResponse(sp model.StatusPage) StatusPageResponse {
 		IsPublic:           sp.IsPublic,
 		CreatedAt:          sp.CreatedAt,
 		StatusPageMonitors: monitors,
+		ComponentGroups:    compGroups,
 	}
 
 	if sp.Organization.ID != uuid.Nil {
@@ -339,11 +369,23 @@ func (s *StatusPageServiceImpl) GetBySubdomain(subdomain string) (*PublicStatusP
 			}
 			dailyStats := generate90DayStats(monitorDailyStats)
 
+			var groupIDStr *string
+			var groupNameStr *string
+			if spm.GroupID != nil {
+				s := spm.GroupID.String()
+				groupIDStr = &s
+				if spm.ComponentGroup != nil && spm.ComponentGroup.Name != "" {
+					groupNameStr = &spm.ComponentGroup.Name
+				}
+			}
+
 			monitorsResponse = append(monitorsResponse, PublicMonitorResponse{
 				ID:            spm.Monitor.ID.String(),
 				Name:          spm.Monitor.Name,
 				Type:          spm.Monitor.Type,
 				Status:        spm.Monitor.Status,
+				GroupID:       groupIDStr,
+				GroupName:     groupNameStr,
 				UptimePercent: uptimePct,
 				RecentChecks:  recentChecks,
 				DailyStats:    dailyStats,
@@ -353,14 +395,28 @@ func (s *StatusPageServiceImpl) GetBySubdomain(subdomain string) (*PublicStatusP
 
 	var activeIncidents []model.Incident
 	var recentIncidents []model.Incident
+	var historyIncidents []model.Incident
 	if len(monitorIDs) > 0 {
 		activeIncidents, _ = s.repo.GetActiveIncidentsByMonitorIDs(monitorIDs)
 		recentIncidents, _ = s.repo.GetRecentResolvedIncidentsByMonitorIDs(monitorIDs, 7)
+		historyIncidents, _ = s.repo.GetIncidentHistory(monitorIDs, 90)
 	}
 
 	ongoingMaintenances, upcomingMaintenances, _ := s.repo.GetActiveMaintenances(statusPage.ID.String())
 
 	overallStatus := calculateOverallStatus(monitorsResponse, activeIncidents)
+
+	componentGroupsResponse := make([]PublicComponentGroupResponse, 0)
+	for _, cg := range statusPage.ComponentGroups {
+		componentGroupsResponse = append(componentGroupsResponse, PublicComponentGroupResponse{
+			ID:           cg.ID.String(),
+			Name:         cg.Name,
+			DisplayOrder: cg.DisplayOrder,
+			IsExpanded:   cg.IsExpanded,
+		})
+	}
+
+	incidentHistory := groupIncidentsByDay(historyIncidents, 14)
 
 	response := &PublicStatusPageResponse{
 		Title:                statusPage.Title,
@@ -368,8 +424,10 @@ func (s *StatusPageServiceImpl) GetBySubdomain(subdomain string) (*PublicStatusP
 		Subdomain:            statusPage.Subdomain,
 		OverallStatus:        overallStatus,
 		Monitors:             monitorsResponse,
+		ComponentGroups:      componentGroupsResponse,
 		ActiveIncidents:      mapIncidentsToResponse(activeIncidents),
 		RecentIncidents:      mapIncidentsToResponse(recentIncidents),
+		IncidentHistory:      incidentHistory,
 		UpcomingMaintenances: mapMaintenancesToPublicResponse(upcomingMaintenances),
 		OngoingMaintenances:  mapMaintenancesToPublicResponse(ongoingMaintenances),
 	}
@@ -698,3 +756,223 @@ func (s *StatusPageServiceImpl) DeleteMaintenance(orgID, statusPageID, maintenan
 
 	return nil
 }
+
+func groupIncidentsByDay(incidents []model.Incident, continuousDays int) []PublicIncidentDayGroup {
+	incMap := make(map[string][]model.Incident)
+	for _, inc := range incidents {
+		dateStr := inc.StartedAt.Format("2006-01-02")
+		incMap[dateStr] = append(incMap[dateStr], inc)
+	}
+
+	result := make([]PublicIncidentDayGroup, 0)
+	now := time.Now()
+
+	seenDates := make(map[string]bool)
+	for i := 0; i < continuousDays; i++ {
+		day := now.AddDate(0, 0, -i)
+		dateStr := day.Format("2006-01-02")
+		seenDates[dateStr] = true
+
+		dayIncidents := make([]PublicIncidentResponse, 0)
+		if incs, ok := incMap[dateStr]; ok {
+			dayIncidents = mapIncidentsToResponse(incs)
+		}
+		result = append(result, PublicIncidentDayGroup{
+			Date:      dateStr,
+			Incidents: dayIncidents,
+		})
+	}
+
+	for _, inc := range incidents {
+		dateStr := inc.StartedAt.Format("2006-01-02")
+		if !seenDates[dateStr] {
+			seenDates[dateStr] = true
+			result = append(result, PublicIncidentDayGroup{
+				Date:      dateStr,
+				Incidents: mapIncidentsToResponse(incMap[dateStr]),
+			})
+		}
+	}
+
+	return result
+}
+
+func (s *StatusPageServiceImpl) CreateComponentGroup(orgID, statusPageID, userID, ipAddress string, req *CreateComponentGroupRequest) (*model.ComponentGroup, error) {
+	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	if err == nil && member == nil {
+		return nil, errors.New("You're not member of this organization")
+	}
+
+	sp, err := s.repo.GetById(statusPageID, orgID)
+	if err != nil {
+		return nil, errors.New("Status page not found")
+	}
+
+	isExpanded := true
+	if req.IsExpanded != nil {
+		isExpanded = *req.IsExpanded
+	}
+
+	group := &model.ComponentGroup{
+		StatusPageID: sp.ID,
+		Name:         req.Name,
+		DisplayOrder: req.DisplayOrder,
+		IsExpanded:   isExpanded,
+	}
+
+	created, err := s.repo.CreateComponentGroup(group)
+	if err != nil {
+		return nil, errors.New("Failed to create component group")
+	}
+
+	if s.auditService != nil {
+		gIDStr := created.ID.String()
+		_ = s.auditService.Record(audit.RecordAuditLogParams{
+			OrganizationID: orgID,
+			UserID:         userID,
+			Action:         "COMPONENT_GROUP_CREATE",
+			EntityType:     "component_group",
+			EntityID:       &gIDStr,
+			Description:    fmt.Sprintf("Created component group '%s'", created.Name),
+			IPAddress:      ipAddress,
+		})
+	}
+
+	return created, nil
+}
+
+func (s *StatusPageServiceImpl) GetComponentGroups(orgID, statusPageID, userID string) ([]ComponentGroupResponse, error) {
+	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	if err == nil && member == nil {
+		return nil, errors.New("You're not member of this organization")
+	}
+
+	sp, err := s.repo.GetById(statusPageID, orgID)
+	if err != nil {
+		return nil, errors.New("Status page not found")
+	}
+
+	groups, err := s.repo.GetComponentGroupsByStatusPageID(statusPageID)
+	if err != nil {
+		return nil, errors.New("Failed to retrieve component groups")
+	}
+
+	resp := make([]ComponentGroupResponse, 0)
+	for _, g := range groups {
+		mIDs := make([]string, 0)
+		for _, spm := range sp.StatusPageMonitors {
+			if spm.GroupID != nil && *spm.GroupID == g.ID {
+				mIDs = append(mIDs, spm.MonitorID.String())
+			}
+		}
+		resp = append(resp, ComponentGroupResponse{
+			ID:           g.ID.String(),
+			StatusPageID: g.StatusPageID.String(),
+			Name:         g.Name,
+			DisplayOrder: g.DisplayOrder,
+			IsExpanded:   g.IsExpanded,
+			MonitorIDs:   mIDs,
+		})
+	}
+
+	return resp, nil
+}
+
+func (s *StatusPageServiceImpl) UpdateComponentGroup(orgID, statusPageID, groupID, userID, ipAddress string, req *UpdateComponentGroupRequest) (*model.ComponentGroup, error) {
+	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	if err == nil && member == nil {
+		return nil, errors.New("You're not member of this organization")
+	}
+
+	group, err := s.repo.GetComponentGroupByID(groupID, statusPageID)
+	if err != nil {
+		return nil, errors.New("Component group not found")
+	}
+
+	if req.Name != nil {
+		group.Name = *req.Name
+	}
+	if req.DisplayOrder != nil {
+		group.DisplayOrder = *req.DisplayOrder
+	}
+	if req.IsExpanded != nil {
+		group.IsExpanded = *req.IsExpanded
+	}
+
+	updated, err := s.repo.UpdateComponentGroup(group)
+	if err != nil {
+		return nil, errors.New("Failed to update component group")
+	}
+
+	if s.auditService != nil {
+		gIDStr := updated.ID.String()
+		_ = s.auditService.Record(audit.RecordAuditLogParams{
+			OrganizationID: orgID,
+			UserID:         userID,
+			Action:         "COMPONENT_GROUP_UPDATE",
+			EntityType:     "component_group",
+			EntityID:       &gIDStr,
+			Description:    fmt.Sprintf("Updated component group '%s'", updated.Name),
+			IPAddress:      ipAddress,
+		})
+	}
+
+	return updated, nil
+}
+
+func (s *StatusPageServiceImpl) DeleteComponentGroup(orgID, statusPageID, groupID, userID, ipAddress string) error {
+	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	if err == nil && member == nil {
+		return errors.New("You're not member of this organization")
+	}
+
+	group, err := s.repo.GetComponentGroupByID(groupID, statusPageID)
+	if err != nil {
+		return errors.New("Component group not found")
+	}
+
+	if err := s.repo.DeleteComponentGroup(groupID, statusPageID); err != nil {
+		return errors.New("Failed to delete component group")
+	}
+
+	if s.auditService != nil {
+		gIDStr := group.ID.String()
+		_ = s.auditService.Record(audit.RecordAuditLogParams{
+			OrganizationID: orgID,
+			UserID:         userID,
+			Action:         "COMPONENT_GROUP_DELETE",
+			EntityType:     "component_group",
+			EntityID:       &gIDStr,
+			Description:    fmt.Sprintf("Deleted component group '%s'", group.Name),
+			IPAddress:      ipAddress,
+		})
+	}
+
+	return nil
+}
+
+func (s *StatusPageServiceImpl) AssignMonitorToGroup(orgID, statusPageID, monitorID, userID, ipAddress string, req *AssignMonitorGroupRequest) error {
+	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	if err == nil && member == nil {
+		return errors.New("You're not member of this organization")
+	}
+
+	_, err = s.repo.GetById(statusPageID, orgID)
+	if err != nil {
+		return errors.New("Status page not found")
+	}
+
+	if req.GroupID != nil && *req.GroupID != "" {
+		_, err := s.repo.GetComponentGroupByID(*req.GroupID, statusPageID)
+		if err != nil {
+			return errors.New("Component group not found on this status page")
+		}
+	}
+
+	if err := s.repo.AssignMonitorToGroup(statusPageID, monitorID, req.GroupID); err != nil {
+		return errors.New("Failed to assign monitor to group")
+	}
+
+	return nil
+}
+

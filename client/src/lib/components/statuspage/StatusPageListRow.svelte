@@ -1,17 +1,19 @@
 <script lang="ts">
-	import { Globe, ExternalLink, Building2, Pencil, Trash2, MoreVertical, Wrench } from 'lucide-svelte';
+	import { Globe, ExternalLink, Building2, Pencil, Trash2, MoreVertical, Wrench, FolderTree } from 'lucide-svelte';
 	import type { StatusPage } from '$lib/api/statuspage';
 
 	let {
 		sp,
 		onEdit,
 		onDelete,
-		onMaintenance
+		onMaintenance,
+		onGroups
 	}: {
 		sp: StatusPage;
 		onEdit?: (sp: StatusPage) => void;
 		onDelete?: (sp: StatusPage) => void;
 		onMaintenance?: (sp: StatusPage) => void;
+		onGroups?: (sp: StatusPage) => void;
 	} = $props();
 
 	let menuOpen = $state(false);
@@ -41,6 +43,12 @@
 		e.stopPropagation();
 		closeMenu();
 		onMaintenance?.(sp);
+	}
+
+	function handleGroups(e: MouseEvent) {
+		e.stopPropagation();
+		closeMenu();
+		onGroups?.(sp);
 	}
 </script>
 
@@ -109,8 +117,17 @@
 
 				{#if menuOpen}
 					<div
-						class="dropdown-menu absolute right-0 top-full mt-1.5 w-40 z-50 bg-card border border-border rounded-xl shadow-xl overflow-hidden"
+						class="dropdown-menu absolute right-0 top-full mt-1.5 w-44 z-50 bg-card border border-border rounded-xl shadow-xl overflow-hidden"
 					>
+						{#if onGroups}
+							<button
+								onclick={handleGroups}
+								class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-foreground hover:bg-white/8 transition-colors text-left"
+							>
+								<FolderTree class="size-3.5 text-purple-400" />
+								Groups
+							</button>
+						{/if}
 						{#if onMaintenance}
 							<button
 								onclick={handleMaintenance}

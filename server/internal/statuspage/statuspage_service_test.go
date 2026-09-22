@@ -166,6 +166,28 @@ func (m *mockStatusPageRepo) DeleteMaintenance(maintenanceID, orgID string) erro
 	}
 	return nil
 }
+func (m *mockStatusPageRepo) GetIncidentHistory(monitorIDs []string, days int) ([]model.Incident, error) {
+	return nil, nil
+}
+func (m *mockStatusPageRepo) CreateComponentGroup(group *model.ComponentGroup) (*model.ComponentGroup, error) {
+	group.ID = uuid.New()
+	return group, nil
+}
+func (m *mockStatusPageRepo) GetComponentGroupsByStatusPageID(statusPageID string) ([]model.ComponentGroup, error) {
+	return nil, nil
+}
+func (m *mockStatusPageRepo) GetComponentGroupByID(groupID, statusPageID string) (*model.ComponentGroup, error) {
+	return &model.ComponentGroup{Name: "Mock Group"}, nil
+}
+func (m *mockStatusPageRepo) UpdateComponentGroup(group *model.ComponentGroup) (*model.ComponentGroup, error) {
+	return group, nil
+}
+func (m *mockStatusPageRepo) DeleteComponentGroup(groupID, statusPageID string) error {
+	return nil
+}
+func (m *mockStatusPageRepo) AssignMonitorToGroup(statusPageID, monitorID string, groupID *string) error {
+	return nil
+}
 
 // Mock SubscriptionChecker
 type mockStatusPageChecker struct {
@@ -911,5 +933,100 @@ func TestStatusPageService_MaintenanceCRUD(t *testing.T) {
 	err = svc.DeleteMaintenance(orgID.String(), spID.String(), mID.String(), userID.String(), "127.0.0.1")
 	if err != nil {
 		t.Fatalf("failed to delete maintenance: %v", err)
+	}
+}
+
+func TestComponentGroupCRUDAndIncidentHistory(t *testing.T) {
+	repo := &mockStatusPageRepo{}
+	checker := &mockStatusPageChecker{plan: "pro"}
+	svc := NewStatusPageService(repo, checker, nil, nil)
+
+	orgID := uuid.New()
+	userID := uuid.New()
+	spID := uuid.New()
+	mID := uuid.New()
+
+	repo.getByIdFunc = func(statuspageID, oID string) (*model.StatusPage, error) {
+		return &model.StatusPage{
+			ID:             spID,
+			OrganizationID: orgID,
+			Title:          "Production Status",
+			Subdomain:      "prod",
+			IsPublic:       true,
+			StatusPageMonitors: []model.StatusPageMonitor{
+				{
+					ID:           uuid.New(),
+					StatusPageID: spID,
+					MonitorID:    mID,
+				},
+			},
+		}, nil
+	}
+
+	// Create Group
+	created, err := svc.CreateComponentGroup(orgID.String(), spID.String(), userID.String(), "127.0.0.1", &CreateComponentGroupRequest{
+		Name:         "Core Infrastructure",
+		DisplayOrder: 1,
+	})
+	if err != nil {
+		t.Fatalf("failed to create component group: %v", err)
+	}
+	if created.Name != "Core Infrastructure" {
+		t.Errorf("expected Core Infrastructure, got %s", created.Name)
+	}
+
+	// Get Groups
+	groups, err := svc.GetComponentGroups(orgID.String(), spID.String(), userID.String())
+	if err != nil {
+		t.Fatalf("failed to get component groups: %v", err)
+	}
+	_ = groups
+
+	// Update Group
+	newName := "Core Services"
+	updated, err := svc.UpdateComponentGroup(orgID.String(), spID.String(), created.ID.String(), userID.String(), "127.0.0.1", &UpdateComponentGroupRequest{
+		Name: &newName,
+	})
+	if err != nil {
+		t.Fatalf("failed to update component group: %v", err)
+	}
+	if updated.Name != "Core Services" {
+		t.Errorf("expected Core Services, got %s", updated.Name)
+	}
+
+	// Assign Monitor to Group
+	gIDStr := created.ID.String()
+	err = svc.AssignMonitorToGroup(orgID.String(), spID.String(), mID.String(), userID.String(), "127.0.0.1", &AssignMonitorGroupRequest{
+		GroupID: &gIDStr,
+	})
+	if err != nil {
+		t.Fatalf("failed to assign monitor to group: %v", err)
+	}
+
+	// Delete Group
+	err = svc.DeleteComponentGroup(orgID.String(), spID.String(), created.ID.String(), userID.String(), "127.0.0.1")
+	if err != nil {
+		t.Fatalf("failed to delete component group: %v", err)
+	}
+
+	// Test groupIncidentsByDay
+	now := time.Now()
+	resAt := now.Add(-10 * time.Minute)
+	incidents := []model.Incident{
+		{
+			ID:         uuid.New(),
+			Summary:    "API Timeout Spike",
+			Severity:   "high",
+			Status:     "resolved",
+			StartedAt:  now.Add(-30 * time.Minute),
+			ResolvedAt: &resAt,
+		},
+	}
+	dailyGroups := groupIncidentsByDay(incidents, 7)
+	if len(dailyGroups) < 7 {
+		t.Errorf("expected at least 7 day groups, got %d", len(dailyGroups))
+	}
+	if len(dailyGroups[0].Incidents) != 1 {
+		t.Errorf("expected 1 incident today, got %d", len(dailyGroups[0].Incidents))
 	}
 }

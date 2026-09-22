@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { StatusPageAPI, type Maintenance, type StatusPage } from '$lib/api/statuspage';
 	import type { Monitor } from '$lib/api/monitor';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -36,12 +37,21 @@
 	let selectedMonitors = $state<string[]>([]);
 	let formError = $state('');
 
+	let lastOpenedId = $state<string | null>(null);
+
 	$effect(() => {
 		if (isOpen && statusPage && orgId) {
-			loadMaintenances();
-			isFormOpen = false;
-			editingMaintenance = null;
-			resetForm();
+			if (lastOpenedId !== statusPage.ID) {
+				lastOpenedId = statusPage.ID;
+				untrack(() => {
+					loadMaintenances();
+					isFormOpen = false;
+					editingMaintenance = null;
+					resetForm();
+				});
+			}
+		} else if (!isOpen) {
+			lastOpenedId = null;
 		}
 	});
 

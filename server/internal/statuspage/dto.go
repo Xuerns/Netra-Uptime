@@ -52,26 +52,42 @@ type PublicMaintenanceResponse struct {
 	AffectedMonitors []string `json:"affected_monitors"`
 }
 
+type PublicComponentGroupResponse struct {
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	DisplayOrder int    `json:"display_order"`
+	IsExpanded   bool   `json:"is_expanded"`
+}
+
+type PublicIncidentDayGroup struct {
+	Date      string                   `json:"date"`
+	Incidents []PublicIncidentResponse `json:"incidents"`
+}
+
 type PublicMonitorResponse struct {
 	ID            string                    `json:"id"`
 	Name          string                    `json:"name"`
 	Type          string                    `json:"type"`
 	Status        string                    `json:"status"`
+	GroupID       *string                   `json:"group_id,omitempty"`
+	GroupName     *string                   `json:"group_name,omitempty"`
 	UptimePercent *float64                  `json:"uptime_percent"`
 	RecentChecks  []int                     `json:"recent_checks"`
 	DailyStats    []PublicUptimeDayResponse `json:"daily_stats"`
 }
 
 type PublicStatusPageResponse struct {
-	Title                string                      `json:"title"`
-	Description          *string                     `json:"description"`
-	Subdomain            string                      `json:"subdomain"`
-	OverallStatus        string                      `json:"overall_status"`
-	Monitors             []PublicMonitorResponse     `json:"monitors"`
-	ActiveIncidents      []PublicIncidentResponse    `json:"active_incidents"`
-	RecentIncidents      []PublicIncidentResponse    `json:"recent_incidents"`
-	UpcomingMaintenances []PublicMaintenanceResponse `json:"upcoming_maintenances"`
-	OngoingMaintenances  []PublicMaintenanceResponse `json:"ongoing_maintenances"`
+	Title                string                         `json:"title"`
+	Description          *string                        `json:"description"`
+	Subdomain            string                         `json:"subdomain"`
+	OverallStatus        string                         `json:"overall_status"`
+	Monitors             []PublicMonitorResponse        `json:"monitors"`
+	ComponentGroups      []PublicComponentGroupResponse `json:"component_groups"`
+	ActiveIncidents      []PublicIncidentResponse       `json:"active_incidents"`
+	RecentIncidents      []PublicIncidentResponse       `json:"recent_incidents"`
+	IncidentHistory      []PublicIncidentDayGroup       `json:"incident_history"`
+	UpcomingMaintenances []PublicMaintenanceResponse    `json:"upcoming_maintenances"`
+	OngoingMaintenances  []PublicMaintenanceResponse    `json:"ongoing_maintenances"`
 }
 
 type CreateMaintenanceRequest struct {
@@ -113,20 +129,47 @@ type OrgInfo struct {
 }
 
 type StatusPageMonitorInfo struct {
-	ID           string `json:"id"`
-	StatusPageID string `json:"status_page_id"`
-	MonitorID    string `json:"monitor_id"`
+	ID           string  `json:"id"`
+	StatusPageID string  `json:"status_page_id"`
+	MonitorID    string  `json:"monitor_id"`
+	DisplayOrder int     `json:"display_order"`
+	GroupID      *string `json:"group_id,omitempty"`
+}
+
+type ComponentGroupResponse struct {
+	ID           string   `json:"id"`
+	StatusPageID string   `json:"status_page_id"`
+	Name         string   `json:"name"`
+	DisplayOrder int      `json:"display_order"`
+	IsExpanded   bool     `json:"is_expanded"`
+	MonitorIDs   []string `json:"monitor_ids"`
+}
+
+type CreateComponentGroupRequest struct {
+	Name         string `json:"name" binding:"required,min=1,max=100"`
 	DisplayOrder int    `json:"display_order"`
+	IsExpanded   *bool  `json:"is_expanded"`
+}
+
+type UpdateComponentGroupRequest struct {
+	Name         *string `json:"name" binding:"omitempty,min=1,max=100"`
+	DisplayOrder *int    `json:"display_order"`
+	IsExpanded   *bool   `json:"is_expanded"`
+}
+
+type AssignMonitorGroupRequest struct {
+	GroupID *string `json:"group_id" binding:"omitempty"`
 }
 
 type StatusPageResponse struct {
-	ID                 string                  `json:"id"`
-	OrganizationID     string                  `json:"organization_id"`
-	Organization       *OrgInfo                `json:"organization,omitempty"`
-	Subdomain          string                  `json:"subdomain"`
-	Title              string                  `json:"title"`
-	Description        *string                 `json:"description"`
-	IsPublic           bool                    `json:"is_public"`
-	CreatedAt          time.Time               `json:"created_at"`
-	StatusPageMonitors []StatusPageMonitorInfo `json:"status_page_monitors"`
+	ID                 string                   `json:"id"`
+	OrganizationID     string                   `json:"organization_id"`
+	Organization       *OrgInfo                 `json:"organization,omitempty"`
+	Subdomain          string                   `json:"subdomain"`
+	Title              string                   `json:"title"`
+	Description        *string                  `json:"description"`
+	IsPublic           bool                     `json:"is_public"`
+	CreatedAt          time.Time                `json:"created_at"`
+	StatusPageMonitors []StatusPageMonitorInfo  `json:"status_page_monitors"`
+	ComponentGroups    []ComponentGroupResponse `json:"component_groups"`
 }

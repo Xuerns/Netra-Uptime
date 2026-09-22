@@ -515,6 +515,21 @@ func (m *mockStatService) UpdateMaintenance(orgID, statusPageID, maintenanceID, 
 func (m *mockStatService) DeleteMaintenance(orgID, statusPageID, maintenanceID, userID, ipAddress string) error {
 	return nil
 }
+func (m *mockStatService) CreateComponentGroup(orgID, statusPageID, userID, ipAddress string, req *statuspage.CreateComponentGroupRequest) (*model.ComponentGroup, error) {
+	return &model.ComponentGroup{Name: req.Name}, nil
+}
+func (m *mockStatService) GetComponentGroups(orgID, statusPageID, userID string) ([]statuspage.ComponentGroupResponse, error) {
+	return []statuspage.ComponentGroupResponse{}, nil
+}
+func (m *mockStatService) UpdateComponentGroup(orgID, statusPageID, groupID, userID, ipAddress string, req *statuspage.UpdateComponentGroupRequest) (*model.ComponentGroup, error) {
+	return &model.ComponentGroup{}, nil
+}
+func (m *mockStatService) DeleteComponentGroup(orgID, statusPageID, groupID, userID, ipAddress string) error {
+	return nil
+}
+func (m *mockStatService) AssignMonitorToGroup(orgID, statusPageID, monitorID, userID, ipAddress string, req *statuspage.AssignMonitorGroupRequest) error {
+	return nil
+}
 
 type mockAudService struct{}
 

@@ -1,17 +1,19 @@
 <script lang="ts">
-	import { Globe, ExternalLink, Building2, Pencil, Trash2, MoreVertical, Wrench } from 'lucide-svelte';
+	import { Globe, ExternalLink, Building2, Pencil, Trash2, MoreVertical, Wrench, FolderTree } from 'lucide-svelte';
 	import type { StatusPage } from '$lib/api/statuspage';
 
 	let {
 		sp,
 		onEdit,
 		onDelete,
-		onMaintenance
+		onMaintenance,
+		onGroups
 	}: {
 		sp: StatusPage;
 		onEdit?: (sp: StatusPage) => void;
 		onDelete?: (sp: StatusPage) => void;
 		onMaintenance?: (sp: StatusPage) => void;
+		onGroups?: (sp: StatusPage) => void;
 	} = $props();
 
 	let menuOpen = $state(false);
@@ -42,6 +44,12 @@
 		closeMenu();
 		onMaintenance?.(sp);
 	}
+
+	function handleGroups(e: MouseEvent) {
+		e.stopPropagation();
+		closeMenu();
+		onGroups?.(sp);
+	}
 </script>
 
 <svelte:window
@@ -57,38 +65,40 @@
 >
 	<!-- Top row: icon + title + badge + 3-dot menu -->
 	<div class="flex items-start justify-between gap-3 mb-3">
-		<!-- Left: icon + title/subdomain -->
-		<div class="flex items-center gap-3 min-w-0 flex-1">
+		<div class="flex items-center gap-3 min-w-0">
 			<div
-				class="flex items-center justify-center size-10 bg-white/5 rounded-lg shrink-0 border border-border"
+				class="size-9 rounded-lg bg-white/5 border border-border flex items-center justify-center shrink-0"
 			>
-				<Globe class="size-5 text-muted-foreground" />
+				<Globe class="size-4 text-primary" />
 			</div>
-			<div class="min-w-0 flex flex-col">
-				<h3 class="text-base font-semibold text-foreground truncate m-0">{sp.Title}</h3>
-				<p class="text-sm text-muted-foreground truncate m-0">{sp.Subdomain}</p>
+			<div class="min-w-0">
+				<h3 class="text-base font-semibold text-foreground truncate leading-tight">{sp.Title}</h3>
+				<span class="text-xs text-muted-foreground font-mono truncate block mt-0.5"
+					>{sp.Subdomain}</span
+				>
 			</div>
 		</div>
 
-		<!-- Right: badge + 3-dot menu -->
 		<div class="flex items-center gap-2 shrink-0">
+			<!-- Public/Private badge -->
 			{#if sp.IsPublic}
 				<span
-					class="text-[10px] font-mono px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-full uppercase tracking-wider"
+					class="text-[10px] font-mono px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-full uppercase tracking-wider font-medium"
 					>Public</span
 				>
 			{:else}
 				<span
-					class="text-[10px] font-mono px-2 py-0.5 bg-white/10 text-muted-foreground border border-border rounded-full uppercase tracking-wider"
+					class="text-[10px] font-mono px-2 py-0.5 bg-white/10 text-muted-foreground border border-border rounded-full uppercase tracking-wider font-medium"
 					>Private</span
 				>
 			{/if}
 
-			{#if onEdit || onDelete}
+			<!-- 3-dot action menu -->
+			{#if onEdit || onDelete || onMaintenance || onGroups}
 				<div class="relative">
 					<button
 						onclick={toggleMenu}
-						class="flex items-center justify-center size-7 rounded-md bg-white/5 border border-border hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors"
+						class="flex items-center justify-center size-8 rounded-lg bg-white/5 border border-border hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors"
 						aria-label="More options"
 					>
 						<MoreVertical class="size-4" />
@@ -96,8 +106,17 @@
 
 					{#if menuOpen}
 						<div
-							class="dropdown-menu absolute right-0 top-full mt-1.5 w-40 z-50 bg-card border border-border rounded-xl shadow-xl overflow-hidden"
+							class="dropdown-menu absolute right-0 top-full mt-1.5 w-44 z-50 bg-card border border-border rounded-xl shadow-xl overflow-hidden"
 						>
+							{#if onGroups}
+								<button
+									onclick={handleGroups}
+									class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-foreground hover:bg-white/8 transition-colors text-left"
+								>
+									<FolderTree class="size-3.5 text-purple-400" />
+									Groups
+								</button>
+							{/if}
 							{#if onMaintenance}
 								<button
 									onclick={handleMaintenance}

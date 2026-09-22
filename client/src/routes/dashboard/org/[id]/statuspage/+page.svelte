@@ -20,6 +20,7 @@
 	import AddStatusPageModal from '$lib/components/statuspage/AddStatusPageModal.svelte';
 	import EditStatusPageModal from '$lib/components/statuspage/EditStatusPageModal.svelte';
 	import MaintenanceModal from '$lib/components/statuspage/MaintenanceModal.svelte';
+	import ComponentGroupModal from '$lib/components/statuspage/ComponentGroupModal.svelte';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
 
@@ -47,6 +48,10 @@
 	let isMaintenanceModalOpen = $state(false);
 	let maintenanceStatusPage = $state<StatusPage | null>(null);
 
+	// Component Groups Modal
+	let isGroupModalOpen = $state(false);
+	let groupStatusPage = $state<StatusPage | null>(null);
+
 	// Delete Confirmation
 	let isDeletingId = $state<string | null>(null);
 	let isDeleteConfirmOpen = $state(false);
@@ -68,6 +73,15 @@
 		try {
 			const res = await StatusPageAPI.getAll(orgId);
 			statusPages = res.data ?? [];
+			if (editingStatusPage) {
+				editingStatusPage = statusPages.find((s) => s.ID === editingStatusPage?.ID) || null;
+			}
+			if (maintenanceStatusPage) {
+				maintenanceStatusPage = statusPages.find((s) => s.ID === maintenanceStatusPage?.ID) || null;
+			}
+			if (groupStatusPage) {
+				groupStatusPage = statusPages.find((s) => s.ID === groupStatusPage?.ID) || null;
+			}
 		} catch (err: any) {
 			fetchError = parseApiError(err, 'Failed to fetch status pages.');
 		} finally {
@@ -100,6 +114,12 @@
 		await loadMonitors();
 		maintenanceStatusPage = sp;
 		isMaintenanceModalOpen = true;
+	}
+
+	async function openGroupModal(sp: StatusPage) {
+		await loadMonitors();
+		groupStatusPage = sp;
+		isGroupModalOpen = true;
 	}
 
 	function openDeleteConfirm(sp: StatusPage) {
@@ -279,6 +299,7 @@
 							onEdit={openEditModal}
 							onDelete={openDeleteConfirm}
 							onMaintenance={openMaintenanceModal}
+							onGroups={openGroupModal}
 						/>
 					</div>
 				{/each}
@@ -303,6 +324,7 @@
 						onEdit={openEditModal}
 						onDelete={openDeleteConfirm}
 						onMaintenance={openMaintenanceModal}
+						onGroups={openGroupModal}
 					/>
 				{/each}
 			</div>
@@ -330,6 +352,14 @@
 	{orgId}
 	statusPage={maintenanceStatusPage}
 	{monitors}
+/>
+
+<ComponentGroupModal
+	bind:isOpen={isGroupModalOpen}
+	{orgId}
+	statusPage={groupStatusPage}
+	{monitors}
+	onUpdated={() => loadStatusPages(true)}
 />
 
 <!-- ── Delete Confirmation Dialog ──────────────────────────────────────────── -->

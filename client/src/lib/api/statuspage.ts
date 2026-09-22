@@ -60,11 +60,25 @@ export interface PublicMaintenance {
 	affected_monitors: string[];
 }
 
+export interface PublicComponentGroup {
+	id: string;
+	name: string;
+	display_order: number;
+	is_expanded: boolean;
+}
+
+export interface PublicIncidentDayGroup {
+	date: string;
+	incidents: PublicIncident[];
+}
+
 export interface PublicMonitor {
 	id: string;
 	name: string;
 	type: string;
 	status: 'up' | 'down' | 'degraded' | 'paused' | string;
+	group_id?: string | null;
+	group_name?: string | null;
 	uptime_percent?: number | null;
 	recent_checks: number[];
 	daily_stats?: PublicUptimeDay[];
@@ -76,8 +90,10 @@ export interface PublicStatusPage {
 	subdomain: string;
 	overall_status: 'operational' | 'degraded' | 'partial_outage' | 'major_outage';
 	monitors: PublicMonitor[];
+	component_groups?: PublicComponentGroup[];
 	active_incidents: PublicIncident[];
 	recent_incidents: PublicIncident[];
+	incident_history?: PublicIncidentDayGroup[];
 	upcoming_maintenances?: PublicMaintenance[];
 	ongoing_maintenances?: PublicMaintenance[];
 }
@@ -97,6 +113,27 @@ export interface Maintenance {
 	affected_monitor_ids?: string[];
 }
 
+export interface ComponentGroup {
+	id: string;
+	status_page_id: string;
+	name: string;
+	display_order: number;
+	is_expanded: boolean;
+	monitor_ids?: string[];
+}
+
+export interface CreateComponentGroupRequest {
+	name: string;
+	display_order?: number;
+	is_expanded?: boolean;
+}
+
+export interface UpdateComponentGroupRequest {
+	name?: string;
+	display_order?: number;
+	is_expanded?: boolean;
+}
+
 export interface CreateMaintenanceRequest {
 	title: string;
 	description?: string;
@@ -114,6 +151,14 @@ export interface UpdateMaintenanceRequest {
 	monitor_ids?: string[];
 }
 
+export interface StatusPageMonitor {
+	ID: string;
+	StatusPageID: string;
+	MonitorID: string;
+	DisplayOrder: number;
+	GroupID?: string | null;
+}
+
 export interface StatusPage {
 	ID: string;
 	OrganizationID: string;
@@ -124,6 +169,7 @@ export interface StatusPage {
 	IsPublic: boolean;
 	CreatedAt: string;
 	StatusPageMonitors?: StatusPageMonitor[];
+	ComponentGroups?: ComponentGroup[];
 }
 
 function mapStatusPage(sp: any): StatusPage {
@@ -147,7 +193,16 @@ function mapStatusPage(sp: any): StatusPage {
 			ID: m.id ?? m.ID,
 			StatusPageID: m.status_page_id ?? m.StatusPageID,
 			MonitorID: m.monitor_id ?? m.MonitorID,
-			DisplayOrder: m.display_order ?? m.DisplayOrder
+			DisplayOrder: m.display_order ?? m.DisplayOrder,
+			GroupID: m.group_id ?? m.GroupID ?? null
+		})),
+		ComponentGroups: (sp.component_groups || sp.ComponentGroups || []).map((g: any) => ({
+			id: g.id ?? g.ID,
+			status_page_id: g.status_page_id ?? g.StatusPageID,
+			name: g.name ?? g.Name,
+			display_order: g.display_order ?? g.DisplayOrder ?? 0,
+			is_expanded: g.is_expanded ?? g.IsExpanded ?? true,
+			monitor_ids: g.monitor_ids || []
 		}))
 	};
 }
@@ -279,6 +334,77 @@ export const StatusPageAPI = {
 			}
 		);
 		if (!res.ok) throw new Error('Failed to delete maintenance');
+		return res.json();
+	},
+
+	getGroups: async (orgId: string, statusPageId: string) => {
+		const res = await apiFetch(
+			`${API_Route}/organization/${orgId}/statuspage/${statusPageId}/groups`,
+			{ method: 'GET' }
+		);
+		if (!res.ok) throw new Error('Failed to fetch component groups');
+		return res.json();
+	},
+
+	createGroup: async (
+		orgId: string,
+		statusPageId: string,
+		data: CreateComponentGroupRequest
+	) => {
+		const res = await apiFetch(
+			`${API_Route}/organization/${orgId}/statuspage/${statusPageId}/groups`,
+			{
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(data)
+			}
+		);
+		if (!res.ok) throw new Error('Failed to create component group');
+		return res.json();
+	},
+
+	updateGroup: async (
+		orgId: string,
+		statusPageId: string,
+		groupId: string,
+		data: UpdateComponentGroupRequest
+	) => {
+		const res = await apiFetch(
+			`${API_Route}/organization/${orgId}/statuspage/${statusPageId}/groups/${groupId}`,
+			{
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(data)
+			}
+		);
+		if (!res.ok) throw new Error('Failed to update component group');
+		return res.json();
+	},
+
+	deleteGroup: async (orgId: string, statusPageId: string, groupId: string) => {
+		const res = await apiFetch(
+			`${API_Route}/organization/${orgId}/statuspage/${statusPageId}/groups/${groupId}`,
+			{ method: 'DELETE' }
+		);
+		if (!res.ok) throw new Error('Failed to delete component group');
+		return res.json();
+	},
+
+	assignMonitorGroup: async (
+		orgId: string,
+		statusPageId: string,
+		monitorId: string,
+		groupId: string | null
+	) => {
+		const res = await apiFetch(
+			`${API_Route}/organization/${orgId}/statuspage/${statusPageId}/monitors/${monitorId}/group`,
+			{
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ group_id: groupId || null })
+			}
+		);
+		if (!res.ok) throw new Error('Failed to assign monitor to group');
 		return res.json();
 	}
 };

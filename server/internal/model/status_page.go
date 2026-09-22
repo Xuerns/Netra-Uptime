@@ -17,14 +17,17 @@ type StatusPage struct {
 
 	Organization       Organization        `gorm:"foreignKey:OrganizationID"`
 	StatusPageMonitors []StatusPageMonitor `gorm:"foreignKey:StatusPageID;constraint:OnDelete:CASCADE"`
+	ComponentGroups    []ComponentGroup    `gorm:"foreignKey:StatusPageID;constraint:OnDelete:CASCADE"`
 }
 
 type StatusPageMonitor struct {
-	ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
-	StatusPageID uuid.UUID `gorm:"type:uuid;not null"`
-	MonitorID    uuid.UUID `gorm:"type:uuid;not null"`
-	DisplayOrder int       `gorm:"default:0"`
+	ID           uuid.UUID  `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	StatusPageID uuid.UUID  `gorm:"type:uuid;not null;index"`
+	MonitorID    uuid.UUID  `gorm:"type:uuid;not null;index"`
+	DisplayOrder int        `gorm:"default:0"`
+	GroupID      *uuid.UUID `gorm:"type:uuid;default:null"`
 
-	StatusPage StatusPage `gorm:"foreignKey:StatusPageID"`
-	Monitor    Monitor    `gorm:"foreignKey:MonitorID"`
+	StatusPage     StatusPage      `gorm:"foreignKey:StatusPageID"`
+	Monitor        Monitor         `gorm:"foreignKey:MonitorID"`
+	ComponentGroup *ComponentGroup `gorm:"foreignKey:GroupID;constraint:OnDelete:SET NULL"`
 }
