@@ -1,10 +1,7 @@
 <script lang="ts">
 	import type { PublicUptimeDay } from '$lib/api/statuspage';
 
-	let {
-		dailyStats = [],
-		overallUptime = null
-	} = $props<{
+	let { dailyStats = [], overallUptime = null } = $props<{
 		dailyStats?: PublicUptimeDay[];
 		overallUptime?: number | null;
 	}>();
@@ -96,11 +93,21 @@
 				class="absolute -top-12 z-30 -translate-x-1/2 pointer-events-none transition-all duration-75"
 				style="left: {Math.max(60, Math.min(tooltipPos.x, 700))}px"
 			>
-				<div class="bg-card/95 backdrop-blur-md border border-border px-2.5 py-1.5 rounded-lg shadow-xl text-center text-xs whitespace-nowrap">
+				<div
+					class="bg-card/95 backdrop-blur-md border border-border px-2.5 py-1.5 rounded-lg shadow-xl text-center text-xs whitespace-nowrap"
+				>
 					<div class="font-semibold text-foreground">{formatDate(day.date)}</div>
 					{#if day.has_data}
-						<div class="text-[11px] font-mono text-muted-foreground flex items-center gap-1.5 justify-center mt-0.5">
-							<span class={day.uptime_percentage >= 99.0 ? 'text-emerald-400' : day.uptime_percentage >= 95.0 ? 'text-amber-400' : 'text-red-400'}>
+						<div
+							class="text-[11px] font-mono text-muted-foreground flex items-center gap-1.5 justify-center mt-0.5"
+						>
+							<span
+								class={day.uptime_percentage >= 99.0
+									? 'text-emerald-400'
+									: day.uptime_percentage >= 95.0
+										? 'text-amber-400'
+										: 'text-red-400'}
+							>
 								{day.uptime_percentage.toFixed(2)}% uptime
 							</span>
 							{#if day.down_checks > 0}
@@ -117,12 +124,17 @@
 
 		<!-- The 90-Day Segments -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div class="flex items-center gap-[2px] sm:gap-[3px] w-full h-8 sm:h-9 py-1" onmouseleave={handleMouseLeave}>
+		<div
+			class="flex items-center gap-[2px] sm:gap-[3px] w-full h-8 sm:h-9 py-1"
+			onmouseleave={handleMouseLeave}
+		>
 			{#each paddedStats as day, i}
 				<button
 					type="button"
 					aria-label={`Uptime for ${day.date}`}
-					class="flex-1 h-full rounded-[2px] sm:rounded-sm transition-all duration-150 {getBarColor(day)} {hoveredIndex === i ? 'scale-y-125 z-10 brightness-125' : 'opacity-90'}"
+					class="flex-1 h-full rounded-[2px] sm:rounded-sm transition-all duration-150 {getBarColor(
+						day
+					)} {hoveredIndex === i ? 'scale-y-125 z-10 brightness-125' : 'opacity-90'}"
 					onmouseenter={(e) => handleMouseEnter(i, e)}
 					tabindex="-1"
 				></button>
@@ -131,7 +143,9 @@
 	</div>
 
 	<!-- Bottom Axis / Scale -->
-	<div class="flex justify-between items-center text-[11px] font-mono text-muted-foreground/80 px-0.5">
+	<div
+		class="flex justify-between items-center text-[11px] font-mono text-muted-foreground/80 px-0.5"
+	>
 		<span>90 days ago</span>
 		{#if overallUptime !== null && overallUptime !== undefined}
 			<span class="text-emerald-400/90 font-medium">

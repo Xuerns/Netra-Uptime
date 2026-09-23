@@ -19,7 +19,9 @@
 		<div class="flex items-center gap-2.5">
 			<span class="text-xs sm:text-sm font-mono text-primary font-semibold">{index}</span>
 			<span class="text-xs sm:text-sm font-mono text-muted-foreground">/</span>
-			<span class="text-base sm:text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+			<span
+				class="text-base sm:text-lg font-semibold text-foreground group-hover:text-primary transition-colors"
+			>
 				{title}
 			</span>
 		</div>

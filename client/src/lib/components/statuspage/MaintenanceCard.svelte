@@ -2,10 +2,7 @@
 	import type { PublicMaintenance } from '$lib/api/statuspage';
 	import { Wrench, Calendar, Clock, AlertCircle } from 'lucide-svelte';
 
-	let {
-		maintenance,
-		isOngoing = false
-	} = $props<{
+	let { maintenance, isOngoing = false } = $props<{
 		maintenance: PublicMaintenance;
 		isOngoing?: boolean;
 	}>();
@@ -64,12 +61,16 @@
 	<div class="flex flex-wrap items-center justify-between gap-2">
 		<div class="flex items-center gap-2">
 			{#if isOngoing}
-				<span class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+				<span
+					class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30"
+				>
 					<span class="size-1.5 rounded-full bg-blue-400 animate-pulse"></span>
 					In Progress
 				</span>
 			{:else}
-				<span class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+				<span
+					class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
+				>
 					<Calendar class="size-3" />
 					Scheduled ({timeUntil(maintenance.scheduled_start)})
 				</span>
@@ -88,7 +89,9 @@
 			{maintenance.title}
 		</h3>
 		{#if maintenance.description}
-			<p class="text-xs sm:text-sm text-muted-foreground mt-1.5 leading-relaxed whitespace-pre-line">
+			<p
+				class="text-xs sm:text-sm text-muted-foreground mt-1.5 leading-relaxed whitespace-pre-line"
+			>
 				{maintenance.description}
 			</p>
 		{/if}
@@ -99,7 +102,9 @@
 		<div class="pt-2 border-t border-border/40 flex flex-wrap items-center gap-2">
 			<span class="text-[11px] text-muted-foreground font-medium">Affected Services:</span>
 			{#each maintenance.affected_monitors as monitorName}
-				<span class="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 border border-border/80 text-foreground/80">
+				<span
+					class="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 border border-border/80 text-foreground/80"
+				>
 					{monitorName}
 				</span>
 			{/each}

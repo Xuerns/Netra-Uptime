@@ -39,19 +39,32 @@ export interface UpdateAlertRuleRequest {
 }
 
 export const AlertRuleAPI = {
-	getByMonitor: async (orgId: string, monitorId: string): Promise<{ status: string; data: AlertRule[] }> => {
-		const res = await apiFetch(`${API_Route}/organization/${orgId}/monitors/${monitorId}/alert-rules`, {
-			method: 'GET'
-		});
+	getByMonitor: async (
+		orgId: string,
+		monitorId: string
+	): Promise<{ status: string; data: AlertRule[] }> => {
+		const res = await apiFetch(
+			`${API_Route}/organization/${orgId}/monitors/${monitorId}/alert-rules`,
+			{
+				method: 'GET'
+			}
+		);
 		if (!res.ok) throw new Error('Failed to fetch alert rules');
 		return res.json();
 	},
 
-	create: async (orgId: string, monitorId: string, payload: CreateAlertRuleRequest): Promise<{ status: string; data: AlertRule }> => {
-		const res = await apiFetch(`${API_Route}/organization/${orgId}/monitors/${monitorId}/alert-rules`, {
-			method: 'POST',
-			body: JSON.stringify(payload)
-		});
+	create: async (
+		orgId: string,
+		monitorId: string,
+		payload: CreateAlertRuleRequest
+	): Promise<{ status: string; data: AlertRule }> => {
+		const res = await apiFetch(
+			`${API_Route}/organization/${orgId}/monitors/${monitorId}/alert-rules`,
+			{
+				method: 'POST',
+				body: JSON.stringify(payload)
+			}
+		);
 		if (!res.ok) {
 			const err = await res.json().catch(() => ({}));
 			throw new Error(err.error || 'Failed to create alert rule');
@@ -59,7 +72,11 @@ export const AlertRuleAPI = {
 		return res.json();
 	},
 
-	update: async (orgId: string, ruleId: string, payload: UpdateAlertRuleRequest): Promise<{ status: string; data: AlertRule }> => {
+	update: async (
+		orgId: string,
+		ruleId: string,
+		payload: UpdateAlertRuleRequest
+	): Promise<{ status: string; data: AlertRule }> => {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/alert-rules/${ruleId}`, {
 			method: 'PUT',
 			body: JSON.stringify(payload)

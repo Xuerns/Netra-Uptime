@@ -18,6 +18,7 @@
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import { APIKeyAPI, type APIKey, type CreateAPIKeyRequest } from '$lib/api/apikey';
+	import { headerStore } from '$lib/stores/headerStore.svelte';
 	import { toast } from 'svelte-sonner';
 	import { userTimezone } from '$lib/stores/timezone';
 	import { formatDateOnly } from '$lib/utils/datetime';
@@ -127,11 +128,28 @@
 	let tz = $derived($userTimezone);
 	const formatDate = (d?: string) => formatDateOnly(d, tz);
 
+	// Sync with layout top bar
+	$effect(() => {
+		headerStore.set({
+			actionType: canManage ? 'button' : null,
+			actionLabel: 'Create API Key',
+			onAction: () => {
+				isCreateOpen = true;
+			},
+			badge: {
+				text: `${apiKeys.length} API Key${apiKeys.length !== 1 ? 's' : ''}`,
+				variant: 'slate'
+			}
+		});
+	});
+
 	onMount(() => {
 		if (orgId) {
 			loadAPIKeys();
 		}
 	});
+
+
 </script>
 
 <svelte:head>
@@ -149,16 +167,6 @@
 				Manage API tokens for programmatically integrating and accessing the PulseWatch REST API.
 			</p>
 		</div>
-
-		{#if canManage}
-			<Button
-				class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 font-medium"
-				onclick={() => (isCreateOpen = true)}
-			>
-				<Plus class="size-4" />
-				Create API Key
-			</Button>
-		{/if}
 	</header>
 
 	<!-- Content Area -->
@@ -322,7 +330,9 @@
 						<div class="flex items-center gap-1.5 font-semibold text-xs mb-1">
 							<Shield class="size-3.5" /> Read Only
 						</div>
-						<p class="text-[11px] opacity-75">Read-only access to monitors, checks & status pages.</p>
+						<p class="text-[11px] opacity-75">
+							Read-only access to monitors, checks & status pages.
+						</p>
 					</button>
 
 					<button
@@ -416,8 +426,7 @@
 			>
 				<AlertCircle class="size-4 shrink-0 mt-0.5" />
 				<div>
-					<strong>Keep this key secure:</strong> Store it in your encrypted secrets manager or CI/CD
-					variables.
+					<strong>Keep this key secure:</strong> Store it in your encrypted secrets manager or CI/CD variables.
 				</div>
 			</div>
 

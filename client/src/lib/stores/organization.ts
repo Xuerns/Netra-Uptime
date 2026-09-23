@@ -34,4 +34,3 @@ export const activeOrganization = derived(
 		return $organizations.find((org) => org.id === $activeOrgId) || null;
 	}
 );
-

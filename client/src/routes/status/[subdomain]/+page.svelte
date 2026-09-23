@@ -325,7 +325,9 @@
 
 <div
 	class="min-h-screen relative overflow-x-hidden text-foreground bg-background pattern-bg flex flex-col selection:bg-primary/20"
-	style={statusPage.theme_color ? `--primary: ${statusPage.theme_color}; --theme-primary: ${statusPage.theme_color};` : ''}
+	style={statusPage.theme_color
+		? `--primary: ${statusPage.theme_color}; --theme-primary: ${statusPage.theme_color};`
+		: ''}
 >
 	<!-- Top Navigation Bar -->
 	<header
@@ -369,8 +371,12 @@
 					title="Click to refresh status immediately"
 					onclick={triggerRefresh}
 				>
-					<RefreshCw class="size-3 text-muted-foreground {isRefreshing ? 'animate-spin text-primary' : ''}" />
-					<span>{isRefreshing ? 'Updating...' : `Updated ${timeAgo(lastUpdated.toISOString())}`}</span>
+					<RefreshCw
+						class="size-3 text-muted-foreground {isRefreshing ? 'animate-spin text-primary' : ''}"
+					/>
+					<span
+						>{isRefreshing ? 'Updating...' : `Updated ${timeAgo(lastUpdated.toISOString())}`}</span
+					>
 				</button>
 
 				<span
@@ -413,7 +419,14 @@
 					class="flex items-center gap-1.5 text-xs text-muted-foreground self-start sm:self-auto shrink-0 bg-black/20 sm:bg-transparent px-3 py-1.5 sm:p-0 rounded-lg"
 				>
 					<Clock class="size-3.5 text-muted-foreground" />
-					<span>Last verified: {lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</span>
+					<span
+						>Last verified: {lastUpdated.toLocaleTimeString('en-US', {
+							hour: '2-digit',
+							minute: '2-digit',
+							second: '2-digit',
+							hour12: false
+						})}</span
+					>
 				</div>
 			</div>
 		</section>
@@ -423,9 +436,7 @@
 			<section class="space-y-4">
 				<div class="flex items-center gap-2">
 					<Wrench class="size-4 text-blue-400" />
-					<h2 class="text-lg font-semibold tracking-tight text-foreground">
-						Ongoing Maintenance
-					</h2>
+					<h2 class="text-lg font-semibold tracking-tight text-foreground">Ongoing Maintenance</h2>
 				</div>
 				<div class="space-y-3">
 					{#each statusPage.ongoing_maintenances as maintenance}
@@ -490,7 +501,8 @@
 										</span>
 										{#if incident.monitor_name}
 											<span class="text-xs text-muted-foreground flex items-center gap-1">
-												• <span class="text-foreground/90 font-medium">{incident.monitor_name}</span>
+												• <span class="text-foreground/90 font-medium">{incident.monitor_name}</span
+												>
 											</span>
 										{/if}
 									</div>
@@ -516,7 +528,9 @@
 												<span
 													class="absolute left-1.5 top-1.5 size-1.5 rounded-full bg-amber-400 -translate-x-1/2"
 												></span>
-												<div class="flex items-center gap-2 text-xs text-muted-foreground font-mono">
+												<div
+													class="flex items-center gap-2 text-xs text-muted-foreground font-mono"
+												>
 													<span>{formatDateTime(update.created_at)}</span>
 												</div>
 												<p class="text-sm text-foreground/90 leading-relaxed">
@@ -570,13 +584,17 @@
 											<h3 class="text-base font-semibold text-foreground truncate">
 												{gInfo.group.name}
 											</h3>
-											<span class="text-[11px] font-mono text-muted-foreground px-2 py-0.5 rounded-full bg-white/5 border border-border/60">
+											<span
+												class="text-[11px] font-mono text-muted-foreground px-2 py-0.5 rounded-full bg-white/5 border border-border/60"
+											>
 												{gInfo.monitors.length}
 											</span>
 										</div>
 									</div>
 
-									<div class="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 border border-border/60 shrink-0">
+									<div
+										class="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 border border-border/60 shrink-0"
+									>
 										<span class="size-2 rounded-full {gBadge.dotClass}"></span>
 										<span class={gBadge.textClass}>{gBadge.label}</span>
 									</div>
@@ -744,19 +762,21 @@
 						<div
 							class="rounded-xl border border-border/70 bg-white/3 backdrop-blur-md p-5 transition-all duration-200"
 						>
-							<div
-								class="flex items-center justify-between pb-3 border-b border-border/40 mb-3"
-							>
+							<div class="flex items-center justify-between pb-3 border-b border-border/40 mb-3">
 								<h3 class="text-xs sm:text-sm font-semibold text-foreground font-mono">
 									{formatDateHeader(dayGroup.date)}
 								</h3>
 								{#if dayGroup.incidents.length === 0}
-									<span class="text-[11px] text-muted-foreground flex items-center gap-1.5 font-medium">
+									<span
+										class="text-[11px] text-muted-foreground flex items-center gap-1.5 font-medium"
+									>
 										<ShieldCheck class="size-3.5 text-emerald-400" />
 										No incidents
 									</span>
 								{:else}
-									<span class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+									<span
+										class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30"
+									>
 										{dayGroup.incidents.length} incident{dayGroup.incidents.length > 1 ? 's' : ''}
 									</span>
 								{/if}
@@ -788,9 +808,16 @@
 													{/if}
 												</div>
 
-												<div class="flex items-center gap-2 text-xs text-muted-foreground font-mono">
+												<div
+													class="flex items-center gap-2 text-xs text-muted-foreground font-mono"
+												>
 													{#if incident.started_at && incident.resolved_at}
-														<span>Duration: {formatDuration(incident.started_at, incident.resolved_at)}</span>
+														<span
+															>Duration: {formatDuration(
+																incident.started_at,
+																incident.resolved_at
+															)}</span
+														>
 														<span>•</span>
 													{/if}
 													<span>{formatDateTime(incident.resolved_at || incident.started_at)}</span>
@@ -802,7 +829,9 @@
 											</h4>
 
 											{#if incident.updates && incident.updates.length > 0}
-												<p class="text-xs text-muted-foreground leading-relaxed pl-3 border-l-2 border-border/60">
+												<p
+													class="text-xs text-muted-foreground leading-relaxed pl-3 border-l-2 border-border/60"
+												>
 													{incident.updates[0].message}
 												</p>
 											{/if}

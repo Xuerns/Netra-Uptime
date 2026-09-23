@@ -17,7 +17,7 @@
 </script>
 
 <div class="flex flex-col justify-between h-full space-y-10">
-	<div>	
+	<div>
 		<!-- Giant Architectural 404 Headline -->
 		<div class="relative">
 			<div
@@ -26,7 +26,9 @@
 				{statusCode}
 			</div>
 			<div class="absolute inset-0 flex flex-col justify-center">
-				<h1 class="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-tight">
+				<h1
+					class="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-tight"
+				>
 					Route Severed.<br />
 					<span class="text-muted-foreground font-normal">{errorMessage}</span>
 				</h1>
@@ -34,7 +36,9 @@
 		</div>
 
 		<!-- Explanatory Technical Statement -->
-		<p class="mt-8 text-base sm:text-lg lg:text-xl text-muted-foreground leading-relaxed font-normal max-w-full">
+		<p
+			class="mt-8 text-base sm:text-lg lg:text-xl text-muted-foreground leading-relaxed font-normal max-w-full"
+		>
 			The requested URL path was not recognized by our edge router table. The resource has either
 			been decommissioned, relocated to an internal cluster, or never provisioned.
 		</p>

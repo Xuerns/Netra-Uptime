@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import { headerStore } from '$lib/stores/headerStore.svelte';
 	import {
 		Bell,
 		Plus,
@@ -210,6 +211,24 @@
 
 	let tz = $derived($userTimezone);
 	const formatDate = (iso: string) => formatDateTime(iso, tz);
+
+	// Sync with layout top bar
+	$effect(() => {
+		headerStore.set({
+			actionType: activeSubTab === 'channels' && canManage ? 'button' : null,
+			actionLabel: 'Add Channel',
+			onAction: () => {
+				resetForm();
+				isAddModalOpen = true;
+			},
+			badge: {
+				text: `${channels.length} Channel${channels.length !== 1 ? 's' : ''}`,
+				variant: 'slate'
+			}
+		});
+	});
+
+
 </script>
 
 <svelte:head>
@@ -228,19 +247,6 @@
 				recover.
 			</p>
 		</div>
-
-		{#if activeSubTab === 'channels' && canManage}
-			<Button
-				class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 font-medium"
-				onclick={() => {
-					resetForm();
-					isAddModalOpen = true;
-				}}
-			>
-				<Plus class="size-4" />
-				Add Channel
-			</Button>
-		{/if}
 	</header>
 
 	<!-- Sub-nav Tabs -->

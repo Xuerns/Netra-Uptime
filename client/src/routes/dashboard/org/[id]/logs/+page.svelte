@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import { headerStore } from '$lib/stores/headerStore.svelte';
 	import {
 		ScrollText,
 		Search,
@@ -224,9 +225,28 @@
 		fetchAuditLogs();
 	}
 
+	// Sync with layout top bar
+	$effect(() => {
+		headerStore.set({
+			showSearch: true,
+			searchPlaceholder: 'Search audit logs...',
+			badge: {
+				text: `${totalCount} Event${totalCount !== 1 ? 's' : ''}`,
+				variant: 'slate'
+			}
+		});
+	});
+
+	$effect(() => {
+		searchQuery = headerStore.searchQuery;
+		debouncedFetchLogs();
+	});
+
 	onMount(() => {
 		fetchAuditLogs();
 	});
+
+
 </script>
 
 <svelte:head>
@@ -239,18 +259,6 @@
 		<div
 			class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 bg-card border border-border rounded-lg"
 		>
-			<!-- Search Input -->
-			<div class="relative flex-1 min-w-[240px]">
-				<Search class="absolute left-3 top-2.5 size-4 text-muted-foreground/50" />
-				<Input
-					type="text"
-					placeholder="Search logs by action or description..."
-					bind:value={searchQuery}
-					oninput={handleSearchInput}
-					class="pl-9 h-9 text-sm bg-muted/50 border-border focus-visible:border-primary text-foreground rounded-lg placeholder:text-muted-foreground/40"
-				/>
-			</div>
-
 			<!-- Category Filter Buttons -->
 			<div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
 				{#each categories as cat (cat.id)}

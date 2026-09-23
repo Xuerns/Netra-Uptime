@@ -1,10 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import {
-		StatusPageAPI,
-		type ComponentGroup,
-		type StatusPage
-	} from '$lib/api/statuspage';
+	import { StatusPageAPI, type ComponentGroup, type StatusPage } from '$lib/api/statuspage';
 	import type { Monitor } from '$lib/api/monitor';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Input } from '$lib/components/ui/input';
@@ -185,16 +181,18 @@
 </script>
 
 <Dialog.Root bind:open={isOpen}>
-	<Dialog.Content class="sm:max-w-[640px] max-h-[85vh] flex flex-col bg-card border border-border rounded-2xl p-0 overflow-hidden shadow-2xl">
+	<Dialog.Content
+		class="sm:max-w-[640px] max-h-[85vh] flex flex-col bg-card border border-border rounded-2xl p-0 overflow-hidden shadow-2xl"
+	>
 		<!-- Header -->
 		<div class="p-6 border-b border-border/60 flex items-center justify-between">
 			<div class="flex items-center gap-3">
 				<div>
-					<Dialog.Title class="text-lg font-bold text-foreground">
-						Component Groups
-					</Dialog.Title>
+					<Dialog.Title class="text-lg font-bold text-foreground">Component Groups</Dialog.Title>
 					<Dialog.Description class="text-xs text-muted-foreground mt-0.5">
-						Organize services into collapsible categories on <span class="text-foreground font-medium">{statusPage?.Title}</span>
+						Organize services into collapsible categories on <span
+							class="text-foreground font-medium">{statusPage?.Title}</span
+						>
 					</Dialog.Description>
 				</div>
 			</div>
@@ -204,7 +202,8 @@
 		<div class="px-6 pt-3 pb-0 border-b border-border/40 flex gap-4">
 			<button
 				type="button"
-				class="text-xs font-semibold pb-2.5 border-b-2 transition-colors flex items-center gap-1.5 {activeTab === 'groups'
+				class="text-xs font-semibold pb-2.5 border-b-2 transition-colors flex items-center gap-1.5 {activeTab ===
+				'groups'
 					? 'border-primary text-primary'
 					: 'border-transparent text-muted-foreground hover:text-foreground'}"
 				onclick={() => (activeTab = 'groups')}
@@ -214,7 +213,8 @@
 			</button>
 			<button
 				type="button"
-				class="text-xs font-semibold pb-2.5 border-b-2 transition-colors flex items-center gap-1.5 {activeTab === 'assignment'
+				class="text-xs font-semibold pb-2.5 border-b-2 transition-colors flex items-center gap-1.5 {activeTab ===
+				'assignment'
 					? 'border-primary text-primary'
 					: 'border-transparent text-muted-foreground hover:text-foreground'}"
 				onclick={() => (activeTab = 'assignment')}
@@ -234,7 +234,9 @@
 					</h3>
 
 					{#if formError}
-						<div class="p-2.5 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-2">
+						<div
+							class="p-2.5 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-2"
+						>
 							<AlertCircle class="size-4 shrink-0" />
 							<span>{formError}</span>
 						</div>
@@ -264,12 +266,7 @@
 
 					<div class="flex justify-end gap-2 pt-1">
 						{#if isEditingGroup}
-							<Button
-								variant="ghost"
-								size="sm"
-								class="text-xs h-8"
-								onclick={resetForm}
-							>
+							<Button variant="ghost" size="sm" class="text-xs h-8" onclick={resetForm}>
 								Cancel
 							</Button>
 						{/if}
@@ -294,11 +291,14 @@
 				{#if isLoading}
 					<div class="py-8 text-center text-xs text-muted-foreground">Loading groups...</div>
 				{:else if groups.length === 0}
-					<div class="py-10 text-center space-y-2 border border-dashed border-border/80 rounded-xl p-6">
+					<div
+						class="py-10 text-center space-y-2 border border-dashed border-border/80 rounded-xl p-6"
+					>
 						<Layers class="size-8 text-muted-foreground/40 mx-auto" />
 						<p class="text-xs font-medium text-foreground">No component groups configured</p>
 						<p class="text-[11px] text-muted-foreground max-w-[50%] mx-auto">
-							Create groups like "Web Applications", "APIs", or "Databases" to organize monitors cleanly on your public status page.
+							Create groups like "Web Applications", "APIs", or "Databases" to organize monitors
+							cleanly on your public status page.
 						</p>
 					</div>
 				{:else}
@@ -306,9 +306,13 @@
 						<Label class="text-xs text-muted-foreground font-medium">Existing Groups</Label>
 						<div class="space-y-2">
 							{#each groups as g}
-								<div class="flex items-center justify-between p-3 rounded-lg border border-border/70 bg-white/3 transition-colors hover:border-border">
+								<div
+									class="flex items-center justify-between p-3 rounded-lg border border-border/70 bg-white/3 transition-colors hover:border-border"
+								>
 									<div class="flex items-center gap-3">
-										<span class="text-xs font-mono size-6 rounded bg-white/5 border border-border/60 flex items-center justify-center text-muted-foreground">
+										<span
+											class="text-xs font-mono size-6 rounded bg-white/5 border border-border/60 flex items-center justify-center text-muted-foreground"
+										>
 											{g.display_order}
 										</span>
 										<div>
@@ -348,20 +352,27 @@
 				<!-- Monitor Assignment Tab -->
 				<div class="space-y-3">
 					<p class="text-xs text-muted-foreground">
-						Assign each monitored service to a component group. Services without a group will appear under "Ungrouped Components".
+						Assign each monitored service to a component group. Services without a group will appear
+						under "Ungrouped Components".
 					</p>
 
 					{#if pageMonitors.length === 0}
-						<div class="py-8 text-center text-xs text-muted-foreground border border-dashed border-border rounded-xl">
+						<div
+							class="py-8 text-center text-xs text-muted-foreground border border-dashed border-border rounded-xl"
+						>
 							No monitors attached to this status page yet.
 						</div>
 					{:else}
 						<div class="space-y-2">
 							{#each pageMonitors as mon}
-								<div class="flex items-center justify-between p-3 rounded-lg border border-border/70 bg-white/3 gap-3">
+								<div
+									class="flex items-center justify-between p-3 rounded-lg border border-border/70 bg-white/3 gap-3"
+								>
 									<div class="min-w-0">
 										<p class="text-xs font-semibold text-foreground truncate">{mon.Name}</p>
-										<span class="text-[10px] font-mono text-muted-foreground uppercase">{mon.Type}</span>
+										<span class="text-[10px] font-mono text-muted-foreground uppercase"
+											>{mon.Type}</span
+										>
 									</div>
 
 									<div class="w-48 sm:w-56 shrink-0">

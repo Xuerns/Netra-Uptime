@@ -2,7 +2,17 @@
 	import { onMount } from 'svelte';
 	import { AlertRuleAPI, type AlertRule, type CreateAlertRuleRequest } from '$lib/api/alertRule';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { Bell, Plus, Trash2, CheckCircle, AlertTriangle, ShieldAlert, Sparkles, X, Power } from 'lucide-svelte';
+	import {
+		Bell,
+		Plus,
+		Trash2,
+		CheckCircle,
+		AlertTriangle,
+		ShieldAlert,
+		Sparkles,
+		X,
+		Power
+	} from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
 
@@ -157,7 +167,8 @@
 			<div class="space-y-1">
 				<p class="text-sm font-medium text-foreground">Using Default Fallback Rule</p>
 				<p class="text-xs text-muted-foreground max-w-[560px] mx-auto leading-relaxed">
-					No custom rules configured. Currently alerting if connection times out or status code doesn't match expected after 3 consecutive failures.
+					No custom rules configured. Currently alerting if connection times out or status code
+					doesn't match expected after 3 consecutive failures.
 				</p>
 			</div>
 		</div>
@@ -165,7 +176,9 @@
 		<div class="space-y-2.5">
 			{#each rules as rule}
 				<div
-					class="flex items-center justify-between bg-white/3 border border-border/80 hover:border-border rounded-xl p-4 transition-all gap-3 flex-wrap sm:flex-nowrap {rule.is_active ? '' : 'opacity-60'}"
+					class="flex items-center justify-between bg-white/3 border border-border/80 hover:border-border rounded-xl p-4 transition-all gap-3 flex-wrap sm:flex-nowrap {rule.is_active
+						? ''
+						: 'opacity-60'}"
 				>
 					<div class="space-y-1.5">
 						<div class="flex items-center gap-2 flex-wrap">
@@ -178,14 +191,17 @@
 							></span>
 							<span class="text-sm font-semibold text-foreground">{rule.name}</span>
 							<span
-								class="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase {rule.severity === 'critical'
+								class="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase {rule.severity ===
+								'critical'
 									? 'text-rose-400 bg-rose-500/10 border border-rose-500/20'
 									: 'text-amber-400 bg-amber-500/10 border border-amber-500/20'}"
 							>
 								{rule.severity}
 							</span>
 							{#if !rule.is_active}
-								<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground border border-border">
+								<span
+									class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground border border-border"
+								>
 									Disabled
 								</span>
 							{/if}
@@ -193,8 +209,12 @@
 
 						<div class="flex items-center gap-2 text-xs text-muted-foreground font-mono">
 							<span>When:</span>
-							<span class="px-1.5 py-0.5 rounded bg-white/5 border border-white/5 text-foreground font-medium">
-								{rule.metric} {rule.operator} {rule.target_value}
+							<span
+								class="px-1.5 py-0.5 rounded bg-white/5 border border-white/5 text-foreground font-medium"
+							>
+								{rule.metric}
+								{rule.operator}
+								{rule.target_value}
 							</span>
 							<span>•</span>
 							<span>{rule.consecutive} check{rule.consecutive > 1 ? 's' : ''} in a row</span>
@@ -230,8 +250,12 @@
 
 <!-- Modal Add Alert Rule -->
 {#if showAddModal}
-	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in duration-200">
-		<div class="bg-card border border-border rounded-2xl w-full sm:max-w-[560px] shadow-2xl p-6 space-y-5 text-foreground my-auto animate-in zoom-in-95 duration-200">
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in duration-200"
+	>
+		<div
+			class="bg-card border border-border rounded-2xl w-full sm:max-w-[560px] shadow-2xl p-6 space-y-5 text-foreground my-auto animate-in zoom-in-95 duration-200"
+		>
 			<div class="flex items-center justify-between border-b border-border pb-3">
 				<h3 class="text-base font-bold flex items-center gap-2">
 					<Sparkles class="size-4 text-primary" />
@@ -279,7 +303,9 @@
 
 			<form onsubmit={handleCreateRule} class="space-y-4">
 				{#if errorMsg}
-					<div class="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg p-3">
+					<div
+						class="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg p-3"
+					>
 						{errorMsg}
 					</div>
 				{/if}
@@ -315,7 +341,8 @@
 					</div>
 
 					<div class="space-y-1">
-						<label for="operator-select" class="text-xs font-medium text-foreground">Operator</label>
+						<label for="operator-select" class="text-xs font-medium text-foreground">Operator</label
+						>
 						<select
 							id="operator-select"
 							bind:value={operator}
@@ -331,7 +358,9 @@
 					</div>
 
 					<div class="space-y-1">
-						<label for="target-value-input" class="text-xs font-medium text-foreground">Target Value</label>
+						<label for="target-value-input" class="text-xs font-medium text-foreground"
+							>Target Value</label
+						>
 						<input
 							id="target-value-input"
 							type="text"
@@ -346,7 +375,9 @@
 				<!-- Consecutive & Severity -->
 				<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
 					<div class="space-y-1">
-						<label for="consecutive-input" class="text-xs font-medium text-foreground">Consecutive Breaches</label>
+						<label for="consecutive-input" class="text-xs font-medium text-foreground"
+							>Consecutive Breaches</label
+						>
 						<input
 							id="consecutive-input"
 							type="number"
@@ -359,7 +390,9 @@
 					</div>
 
 					<div class="space-y-1">
-						<label for="severity-select" class="text-xs font-medium text-foreground">Severity Level</label>
+						<label for="severity-select" class="text-xs font-medium text-foreground"
+							>Severity Level</label
+						>
 						<select
 							id="severity-select"
 							bind:value={severity}

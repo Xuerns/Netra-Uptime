@@ -1,5 +1,15 @@
 <script lang="ts">
-	import { Globe, ExternalLink, Building2, Pencil, Trash2, MoreVertical, Wrench, FolderTree, Shield } from 'lucide-svelte';
+	import {
+		Globe,
+		ExternalLink,
+		Building2,
+		Pencil,
+		Trash2,
+		MoreVertical,
+		Wrench,
+		FolderTree,
+		Shield
+	} from 'lucide-svelte';
 	import type { StatusPage } from '$lib/api/statuspage';
 
 	let {
@@ -68,7 +78,9 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-	class="card-wrapper flex flex-col bg-card border border-border rounded-xl p-5 hover:border-border/80 hover:bg-card/80 transition-colors shadow-sm h-full w-full relative {menuOpen ? 'z-30' : ''}"
+	class="card-wrapper flex flex-col bg-card border border-border rounded-xl p-5 hover:border-border/80 hover:bg-card/80 transition-colors shadow-sm h-full w-full relative {menuOpen
+		? 'z-30'
+		: ''}"
 	onclick={closeMenu}
 >
 	<!-- Top row: icon + title + badge + 3-dot menu -->

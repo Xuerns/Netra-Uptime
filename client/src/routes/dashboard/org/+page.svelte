@@ -218,9 +218,7 @@
 			orgs = res.data ?? [];
 
 			// Update global store
-			organizations.set(
-				orgs.map((o) => ({ id: o.ID, name: o.Name, slug: o.Slug }))
-			);
+			organizations.set(orgs.map((o) => ({ id: o.ID, name: o.Name, slug: o.Slug })));
 		} catch (err: any) {
 			fetchError = parseApiError(err, 'Failed to load organizations.');
 		} finally {

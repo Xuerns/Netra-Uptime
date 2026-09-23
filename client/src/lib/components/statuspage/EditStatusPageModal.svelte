@@ -150,7 +150,8 @@
 			<div class="flex items-center gap-4 mt-5 border-b border-border/40 -mb-4">
 				<button
 					type="button"
-					class="text-xs font-semibold pb-3 border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer {activeTab === 'general'
+					class="text-xs font-semibold pb-3 border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer {activeTab ===
+					'general'
 						? 'border-primary text-primary'
 						: 'border-transparent text-muted-foreground hover:text-foreground'}"
 					onclick={() => (activeTab = 'general')}
@@ -160,7 +161,8 @@
 				</button>
 				<button
 					type="button"
-					class="text-xs font-semibold pb-3 border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer {activeTab === 'branding'
+					class="text-xs font-semibold pb-3 border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer {activeTab ===
+					'branding'
 						? 'border-primary text-primary'
 						: 'border-transparent text-muted-foreground hover:text-foreground'}"
 					onclick={() => (activeTab = 'branding')}
@@ -206,7 +208,9 @@
 
 						<div class="space-y-1.5">
 							<Label for="edit-description" class="text-xs font-medium text-foreground">
-								Description <span class="text-muted-foreground text-[11px] font-normal">(Optional)</span>
+								Description <span class="text-muted-foreground text-[11px] font-normal"
+									>(Optional)</span
+								>
 							</Label>
 							<textarea
 								id="edit-description"
@@ -241,7 +245,9 @@
 						>
 							<div class="space-y-0.5">
 								<Label class="text-xs font-medium text-foreground">Public Visibility</Label>
-								<p class="text-[11px] text-muted-foreground">Anyone with the link can view this page.</p>
+								<p class="text-[11px] text-muted-foreground">
+									Anyone with the link can view this page.
+								</p>
 							</div>
 							<Switch bind:checked={isPublic} />
 						</div>
@@ -251,7 +257,9 @@
 					<div class="space-y-2 flex flex-col h-full">
 						<div class="flex items-center justify-between">
 							<Label class="text-xs font-medium text-foreground">Select Monitors</Label>
-							<span class="text-[11px] text-muted-foreground">{selectedMonitors.length} selected</span>
+							<span class="text-[11px] text-muted-foreground"
+								>{selectedMonitors.length} selected</span
+							>
 						</div>
 
 						<div
@@ -275,8 +283,12 @@
 										</div>
 
 										<div class="flex flex-col flex-1 min-w-0">
-											<span class="text-xs font-medium text-foreground truncate">{monitor.Name}</span>
-											<span class="text-[10px] text-muted-foreground font-mono truncate">{monitor.Target}</span>
+											<span class="text-xs font-medium text-foreground truncate"
+												>{monitor.Name}</span
+											>
+											<span class="text-[10px] text-muted-foreground font-mono truncate"
+												>{monitor.Target}</span
+											>
 										</div>
 
 										<input
@@ -306,7 +318,10 @@
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 						<!-- Logo URL -->
 						<div class="space-y-1.5">
-							<Label for="edit-logo" class="text-xs font-medium text-foreground flex items-center gap-1.5">
+							<Label
+								for="edit-logo"
+								class="text-xs font-medium text-foreground flex items-center gap-1.5"
+							>
 								<Image class="size-3.5 text-primary" />
 								Custom Logo URL
 							</Label>
@@ -320,7 +335,9 @@
 								Direct URL to image (PNG or SVG with transparent background recommended).
 							</p>
 							{#if logoUrl.trim()}
-								<div class="mt-2 p-2.5 bg-black/40 rounded-lg border border-border/50 flex items-center gap-3">
+								<div
+									class="mt-2 p-2.5 bg-black/40 rounded-lg border border-border/50 flex items-center gap-3"
+								>
 									<img
 										src={logoUrl}
 										alt="Logo preview"
@@ -334,7 +351,10 @@
 
 						<!-- Favicon URL -->
 						<div class="space-y-1.5">
-							<Label for="edit-favicon" class="text-xs font-medium text-foreground flex items-center gap-1.5">
+							<Label
+								for="edit-favicon"
+								class="text-xs font-medium text-foreground flex items-center gap-1.5"
+							>
 								<Sparkles class="size-3.5 text-blue-400" />
 								Custom Favicon URL
 							</Label>
@@ -348,7 +368,9 @@
 								Direct URL to `.ico` or `.png` icon for browser tab.
 							</p>
 							{#if faviconUrl.trim()}
-								<div class="mt-2 p-2.5 bg-black/40 rounded-lg border border-border/50 flex items-center gap-3">
+								<div
+									class="mt-2 p-2.5 bg-black/40 rounded-lg border border-border/50 flex items-center gap-3"
+								>
 									<img
 										src={faviconUrl}
 										alt="Favicon preview"
@@ -368,12 +390,15 @@
 							Theme Accent Color
 						</Label>
 						<p class="text-[11px] text-muted-foreground">
-							Choose your brand color to accent status badges, buttons, and indicators on the status page.
+							Choose your brand color to accent status badges, buttons, and indicators on the status
+							page.
 						</p>
 
 						<div class="flex flex-wrap items-center gap-3 pt-1">
 							<!-- Native Color Picker & Hex Input -->
-							<div class="flex items-center gap-2 bg-background border border-border rounded-lg px-2 py-1">
+							<div
+								class="flex items-center gap-2 bg-background border border-border rounded-lg px-2 py-1"
+							>
 								<input
 									type="color"
 									bind:value={themeColor}
@@ -391,7 +416,8 @@
 								{#each colorPresets as preset}
 									<button
 										type="button"
-										class="size-6 rounded-full border transition-transform hover:scale-110 flex items-center justify-center {themeColor.toLowerCase() === preset.hex.toLowerCase()
+										class="size-6 rounded-full border transition-transform hover:scale-110 flex items-center justify-center {themeColor.toLowerCase() ===
+										preset.hex.toLowerCase()
 											? 'ring-2 ring-foreground ring-offset-2 ring-offset-background'
 											: 'border-white/10'}"
 										style="background-color: {preset.hex};"
@@ -409,12 +435,16 @@
 
 					<!-- Custom CSS -->
 					<div class="space-y-1.5">
-						<Label for="edit-css" class="text-xs font-medium text-foreground flex items-center gap-1.5">
+						<Label
+							for="edit-css"
+							class="text-xs font-medium text-foreground flex items-center gap-1.5"
+						>
 							<Code2 class="size-3.5 text-purple-400" />
 							Custom CSS
 						</Label>
 						<p class="text-[11px] text-muted-foreground">
-							Inject custom styles directly into your status page (e.g. fonts, overrides, styling tweaks).
+							Inject custom styles directly into your status page (e.g. fonts, overrides, styling
+							tweaks).
 						</p>
 						<textarea
 							id="edit-css"
@@ -428,7 +458,9 @@
 			{/if}
 
 			<!-- Footer -->
-			<div class="border-t border-border pt-4 mt-auto flex items-center justify-end gap-2 bg-transparent">
+			<div
+				class="border-t border-border pt-4 mt-auto flex items-center justify-end gap-2 bg-transparent"
+			>
 				<Button
 					type="button"
 					variant="ghost"

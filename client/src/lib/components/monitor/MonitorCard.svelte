@@ -76,7 +76,10 @@
 
 			<div class="min-w-0 flex-1">
 				<h3 class="text-[15px] font-semibold text-foreground leading-tight truncate mb-0.5">
-					<a href="/dashboard/org/{monitor.OrganizationID}/monitors/{monitor.ID}" class="hover:text-primary transition-colors">
+					<a
+						href="/dashboard/org/{monitor.OrganizationID}/monitors/{monitor.ID}"
+						class="hover:text-primary transition-colors"
+					>
 						{monitor.Name}
 					</a>
 				</h3>

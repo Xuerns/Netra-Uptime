@@ -304,7 +304,11 @@ export const StatusPageAPI = {
 		return res.json();
 	},
 
-	createMaintenance: async (orgId: string, statusPageId: string, data: CreateMaintenanceRequest) => {
+	createMaintenance: async (
+		orgId: string,
+		statusPageId: string,
+		data: CreateMaintenanceRequest
+	) => {
 		const res = await apiFetch(
 			`${API_Route}/organization/${orgId}/statuspage/${statusPageId}/maintenance`,
 			{
@@ -366,11 +370,7 @@ export const StatusPageAPI = {
 		return res.json();
 	},
 
-	createGroup: async (
-		orgId: string,
-		statusPageId: string,
-		data: CreateComponentGroupRequest
-	) => {
+	createGroup: async (orgId: string, statusPageId: string, data: CreateComponentGroupRequest) => {
 		const res = await apiFetch(
 			`${API_Route}/organization/${orgId}/statuspage/${statusPageId}/groups`,
 			{

@@ -25,9 +25,7 @@
 		logo: Logo
 	});
 
-	const navWorkspace = [
-		{ title: 'Organizations', url: '/dashboard/org', icon: Building2 }
-	];
+	const navWorkspace = [{ title: 'Organizations', url: '/dashboard/org', icon: Building2 }];
 
 	const navResources = [
 		{

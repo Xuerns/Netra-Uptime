@@ -16,6 +16,7 @@
 	import LogsIcon from 'lucide-svelte/icons/logs';
 	import Settings from 'lucide-svelte/icons/settings';
 	import Key from 'lucide-svelte/icons/key';
+	import Users from 'lucide-svelte/icons/users';
 
 	// Footer Icons
 	import LogOut from 'lucide-svelte/icons/log-out';
@@ -47,11 +48,13 @@
 			avatar: ''
 		},
 		org,
-		allOrgs = []
+		allOrgs = [],
+		hasUnreadNotifications = false
 	} = $props<{
 		user: { name: string; email: string; avatar?: string };
 		org: OrgItem;
 		allOrgs: OrgItem[];
+		hasUnreadNotifications?: boolean;
 	}>();
 
 	const orgId = $derived($page.params.id);
@@ -63,6 +66,7 @@
 	];
 
 	const navOrganization = [
+		{ title: 'Members', icon: Users, segment: 'members' },
 		{ title: 'Logs', icon: LogsIcon, segment: 'logs' },
 		{ title: 'Notifications', icon: Bell, segment: 'notifications' },
 		{ title: 'API Keys', icon: Key, segment: 'api-keys' },
@@ -132,7 +136,9 @@
 						{initials(org?.Name ?? 'O')}
 					</div>
 
-					<div class="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+					<div
+						class="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden"
+					>
 						<span class="truncate font-semibold text-sidebar-foreground tracking-tight"
 							>{org?.Name ?? 'Organization'}</span
 						>
@@ -152,7 +158,9 @@
 				align="start"
 				sideOffset={4}
 			>
-				<DropdownMenu.Label class="text-[11px] text-muted-foreground/60 uppercase tracking-widest font-semibold px-2 py-1.5">
+				<DropdownMenu.Label
+					class="text-[11px] text-muted-foreground/60 uppercase tracking-widest font-semibold px-2 py-1.5"
+				>
 					Switch Organization
 				</DropdownMenu.Label>
 				<DropdownMenu.Separator class="bg-border" />
@@ -328,6 +336,11 @@
 								class="absolute inset-0 z-10 size-full object-cover bg-background"
 								onerror={(e) => ((e.currentTarget as HTMLImageElement).style.display = 'none')}
 							/>
+						{/if}
+						{#if hasUnreadNotifications}
+							<span
+								class="absolute top-1 right-1 size-2 rounded-full bg-primary border border-background z-20"
+							></span>
 						{/if}
 					</div>
 					<div

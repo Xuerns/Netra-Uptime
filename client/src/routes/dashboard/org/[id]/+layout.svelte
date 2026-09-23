@@ -1,72 +1,175 @@
 <script lang="ts">
-	import type { LayoutData } from './$types';
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import OrgSidebar from '$lib/components/orgSidebar.svelte';
-	import OrgMembersPanel from '$lib/components/orgMembersPanel.svelte';
-
-	import { Bell } from 'lucide-svelte';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { headerStore } from '$lib/stores/headerStore.svelte';
+	import { Search, Plus, Globe, Radio, Cpu, UserPlus } from 'lucide-svelte';
 	import { fade } from 'svelte/transition';
 	import { page } from '$app/stores';
+	import { beforeNavigate } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { OrgAPI } from '$lib/api/organization';
-	import { invalidateAll } from '$app/navigation';
-	import { parseApiError } from '$lib/utils/parseApiError';
 
 	let { data, children } = $props();
 
 	let hasUnreadNotifications = $state(false);
-	let members = $state<any[]>([]);
-	let isLoadingMembers = $state(false);
-	let membersError = $state('');
+	let searchInputRef = $state<HTMLInputElement | null>(null);
 
-	$effect(() => {
-		members = data?.members ?? [];
+	const orgName = $derived(data?.org?.Name || data?.org?.name || 'Workspace');
+
+	const pageTitle = $derived.by(() => {
+		if (headerStore.title) return headerStore.title;
+		const path = $page.url.pathname;
+		if (path.includes('/monitors')) return 'Monitors';
+		if (path.includes('/members')) return 'Members';
+		if (path.includes('/incidents')) return 'Incidents';
+		if (path.includes('/statuspage')) return 'Status Pages';
+		if (path.includes('/logs')) return 'Logs';
+		if (path.includes('/notifications')) return 'Notifications';
+		if (path.includes('/api-keys')) return 'API Keys';
+		if (path.includes('/settings')) return 'Settings';
+		return 'Dashboard';
 	});
 
-	const currentUserId = $derived(data?.user?.id || data?.user?.ID);
-
-	onMount(async () => {
-		try {
-			const res = await OrgAPI.getInvitations();
-			const invitations = res.data || res.message || res || [];
-			hasUnreadNotifications = invitations.some((inv: any) => inv.Status === 'pending');
-		} catch (e) {
-			// ignore
-		}
+	// Reset header state before each navigation so the new page starts clean.
+	// This fires synchronously before the old page unmounts, avoiding the
+	// race condition where onDestroy reads the already-updated $page store.
+	beforeNavigate(() => {
+		headerStore.reset();
 	});
 
-	async function refreshMembers() {
-		try {
-			const res = await OrgAPI.getMembers(data.orgId);
-			members = res.data ?? [];
-		} catch (err: any) {
-			membersError = parseApiError(err, 'Failed to reload members');
+	onMount(() => {
+		async function checkInvitations() {
+			try {
+				const res = await OrgAPI.getInvitations();
+				const invitations = res.data || res.message || res || [];
+				hasUnreadNotifications = invitations.some((inv: any) => inv.Status === 'pending');
+			} catch (e) {
+				// ignore
+			}
 		}
-	}
+		checkInvitations();
+
+		function handleKeyDown(e: KeyboardEvent) {
+			if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+				if (headerStore.showSearch && searchInputRef) {
+					e.preventDefault();
+					searchInputRef.focus();
+				}
+			}
+		}
+
+		window.addEventListener('keydown', handleKeyDown);
+		return () => {
+			window.removeEventListener('keydown', handleKeyDown);
+		};
+	});
 </script>
 
 <Sidebar.Provider>
-	<OrgSidebar user={data?.user} org={data?.org} allOrgs={data?.allOrgs ?? []} />
+	<OrgSidebar
+		user={data?.user}
+		org={data?.org}
+		allOrgs={data?.allOrgs ?? []}
+		{hasUnreadNotifications}
+	/>
 	<Sidebar.Inset class="flex flex-col min-h-screen">
+		<!-- ── Top Dark Utility Bar ─────────────────────────────────────────── -->
 		<header
-			class="flex h-12 shrink-0 items-center justify-between gap-2 border-b px-4 border-border!"
+			class="h-14 border-b border-border bg-card/60 backdrop-blur-md px-4 flex items-center justify-between sticky top-0 z-20 shrink-0 gap-3"
 		>
-			<Sidebar.Trigger class="-ml-1" />
+			<!-- Left: Sidebar Trigger, Divider, Breadcrumb & Status Badge -->
+			<div class="flex items-center gap-3 min-w-0">
+				<Sidebar.Trigger class="-ml-1" />
+				<div class="h-4 w-px bg-border shrink-0"></div>
 
-			<a
-				href="/dashboard/notification"
-				class="flex relative items-center justify-center size-9 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
-				aria-label="Notifications"
-			>
-				<Bell class="size-4.5" />
-				{#if hasUnreadNotifications}
-					<span
-						class="absolute top-2.25 right-2.25 size-2 rounded-full bg-primary border border-background"
-					></span>
+				<!-- Breadcrumb -->
+				<div
+					class="flex items-center gap-2 text-xs font-medium text-muted-foreground truncate select-none"
+				>
+					<span class="truncate max-w-[140px] md:max-w-[200px]">{orgName}</span>
+					<span class="text-muted-foreground/40">/</span>
+					<span class="text-foreground font-semibold">{pageTitle}</span>
+				</div>
+			</div>
+
+			<!-- Right: Search Input & Action CTA -->
+			<div class="flex items-center gap-3 shrink-0">
+				<!-- Search Filter Input (If active) -->
+				{#if headerStore.showSearch}
+					<div class="relative w-48 sm:w-60 md:w-72">
+						<Search
+							class="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/50 pointer-events-none"
+						/>
+						<input
+							bind:this={searchInputRef}
+							type="search"
+							placeholder={headerStore.searchPlaceholder}
+							bind:value={headerStore.searchQuery}
+							class="w-full text-xs bg-foreground/5 border border-border rounded-lg pl-8 pr-12 py-1.5 text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors"
+						/>
+						<kbd
+							class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border pointer-events-none hidden sm:inline-block"
+							>⌘K</kbd
+						>
+					</div>
 				{/if}
-			</a>
+
+				<!-- Action CTA: Monitor Dropdown -->
+				{#if headerStore.actionType === 'monitor'}
+					<DropdownMenu.Root>
+						<DropdownMenu.Trigger
+							class="inline-flex items-center gap-1.5 bg-transparent hover:bg-white/5 text-emerald-400 border border-border px-3 py-1.5 rounded-lg font-semibold text-xs transition-colors active:scale-95 cursor-pointer focus:outline-none"
+						>
+							<Plus class="size-3.5 stroke-[2.5]" />
+							<span class="hidden sm:inline">Add monitor</span>
+						</DropdownMenu.Trigger>
+						<DropdownMenu.Content
+							align="end"
+							class="bg-card border-border text-foreground min-w-[160px] p-1.5 rounded-lg"
+						>
+							<DropdownMenu.Item
+								class="hover:bg-white/10 cursor-pointer rounded-md p-2 text-xs"
+								onclick={() => headerStore.onAction?.('http')}
+							>
+								<Globe class="mr-2 size-3.5 text-emerald-400" /> HTTP/API
+							</DropdownMenu.Item>
+							<DropdownMenu.Item
+								class="hover:bg-white/10 cursor-pointer rounded-md p-2 text-xs"
+								onclick={() => headerStore.onAction?.('ping')}
+							>
+								<Radio class="mr-2 size-3.5 text-emerald-400" /> Ping
+							</DropdownMenu.Item>
+							<DropdownMenu.Item
+								class="hover:bg-white/10 cursor-pointer rounded-md p-2 text-xs"
+								onclick={() => headerStore.onAction?.('tcp')}
+							>
+								<Cpu class="mr-2 size-3.5 text-emerald-400" /> TCP (Port)
+							</DropdownMenu.Item>
+						</DropdownMenu.Content>
+					</DropdownMenu.Root>
+				{:else if headerStore.actionType === 'member'}
+					<Button
+						class="bg-transparent hover:bg-white/5 text-emerald-400 border border-border h-8 px-3.5 font-semibold rounded-lg text-xs gap-1.5 active:scale-95 transition-all cursor-pointer"
+						onclick={() => headerStore.onAction?.()}
+					>
+						<UserPlus class="size-3.5 stroke-[2.5]" />
+						<span class="hidden sm:inline">Invite member</span>
+					</Button>
+				{:else if headerStore.actionType === 'button' && headerStore.actionLabel}
+					<Button
+						class="bg-transparent hover:bg-white/5 text-emerald-400 border border-border h-8 px-3.5 font-semibold rounded-lg text-xs gap-1.5 active:scale-95 transition-all cursor-pointer"
+						onclick={() => headerStore.onAction?.()}
+					>
+						<Plus class="size-3.5 stroke-[2.5]" />
+						<span>{headerStore.actionLabel}</span>
+					</Button>
+				{/if}
+			</div>
 		</header>
 
+		<!-- ── Main View Area (Full width) ─────────────────────────────────── -->
 		<div class="flex-1 relative flex min-h-0">
 			<main class="flex-1 relative flex flex-col min-h-0 dashboard-bg">
 				{#key $page.url.pathname}
@@ -79,16 +182,6 @@
 					</div>
 				{/key}
 			</main>
-
-			<!-- Members Panel (Right Side) -->
-			<OrgMembersPanel
-				{members}
-				{isLoadingMembers}
-				{membersError}
-				currentUserId={currentUserId ?? ''}
-				orgId={data?.orgId ?? ''}
-				onMembersUpdated={refreshMembers}
-			/>
 		</div>
 	</Sidebar.Inset>
 </Sidebar.Provider>

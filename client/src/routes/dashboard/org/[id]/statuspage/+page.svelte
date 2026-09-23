@@ -14,6 +14,7 @@
 	import MaintenanceModal from '$lib/components/statuspage/MaintenanceModal.svelte';
 	import ComponentGroupModal from '$lib/components/statuspage/ComponentGroupModal.svelte';
 	import EmbedBadgeModal from '$lib/components/statuspage/EmbedBadgeModal.svelte';
+	import { headerStore } from '$lib/stores/headerStore.svelte';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
 
@@ -27,7 +28,6 @@
 	let isLoading = $state(true);
 	let fetchError = $state('');
 	let viewMode = $state<ViewMode>('grid');
-	let searchQuery = $state('');
 
 	// Add Modal
 	let isAddModalOpen = $state(false);
@@ -55,9 +55,24 @@
 	let deletingStatusPage = $state<StatusPage | null>(null);
 
 	// ── Derived ───────────────────────────────────────────────────────────────
+	// Sync with layout top bar
+	$effect(() => {
+		headerStore.set({
+			showSearch: statusPages.length > 0,
+			searchPlaceholder: 'Search status pages...',
+			actionType: 'button',
+			actionLabel: 'Add status page',
+			onAction: openAddModal,
+			badge: {
+				text: `${statusPages.length} Status page${statusPages.length !== 1 ? 's' : ''}`,
+				variant: 'slate'
+			}
+		});
+	});
+
 	let filtered = $derived(
 		statusPages.filter((s) => {
-			const q = searchQuery.toLowerCase().trim();
+			const q = headerStore.searchQuery.toLowerCase().trim();
 			return !q || s.Title.toLowerCase().includes(q) || s.Subdomain.toLowerCase().includes(q);
 		})
 	);
@@ -155,6 +170,8 @@
 		const saved = localStorage.getItem('statusPageViewMode');
 		if (saved === 'grid' || saved === 'list') viewMode = saved;
 	});
+
+
 </script>
 
 <svelte:head>
@@ -201,14 +218,6 @@
 					</button>
 				</div>
 			{/if}
-
-			<Button
-				class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 gap-1.5 font-medium rounded-lg"
-				onclick={openAddModal}
-			>
-				<Plus class="size-4" />
-				Add status page
-			</Button>
 		</div>
 	</header>
 
@@ -232,21 +241,6 @@
 
 		<!-- ── Data ────────────────────────────────────────────────────────────── -->
 	{:else}
-		{#if statusPages.length > 0}
-			<!-- Search bar -->
-			<div class="relative w-full max-w-80 mb-6">
-				<Search
-					class="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/50 pointer-events-none"
-				/>
-				<input
-					type="search"
-					placeholder="Search status pages…"
-					bind:value={searchQuery}
-					class="w-full h-9 pl-8 pr-3 bg-foreground/10 border border-border rounded-lg text-[13px] text-foreground placeholder:text-muted-foreground/35 outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-colors"
-				/>
-			</div>
-		{/if}
-
 		<!-- Empty state (no status pages) -->
 		{#if statusPages.length === 0}
 			<div
@@ -279,13 +273,13 @@
 				<p class="text-[14px] text-muted-foreground">
 					No status pages match
 					<strong class="text-foreground font-medium"
-						>{searchQuery === '' ? '' : `"${searchQuery}"`}</strong
+						>{headerStore.searchQuery === '' ? '' : `"${headerStore.searchQuery}"`}</strong
 					>
 				</p>
 				<button
 					class="mt-3 text-[13px] text-primary hover:underline"
 					onclick={() => {
-						searchQuery = '';
+						headerStore.searchQuery = '';
 					}}
 				>
 					Clear filters

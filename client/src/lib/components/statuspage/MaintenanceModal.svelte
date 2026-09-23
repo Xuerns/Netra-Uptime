@@ -7,7 +7,16 @@
 	import { Label } from '$lib/components/ui/label';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { toast } from 'svelte-sonner';
-	import { Wrench, Plus, Trash2, CheckCircle2, Play, Calendar, AlertCircle, Pencil } from 'lucide-svelte';
+	import {
+		Wrench,
+		Plus,
+		Trash2,
+		CheckCircle2,
+		Play,
+		Calendar,
+		AlertCircle,
+		Pencil
+	} from 'lucide-svelte';
 	import { parseApiError } from '$lib/utils/parseApiError';
 
 	let {
@@ -209,7 +218,9 @@
 </script>
 
 <Dialog.Root bind:open={isOpen}>
-	<Dialog.Content class="sm:max-w-[620px] max-h-[85vh] flex flex-col bg-card border border-border rounded-2xl p-0 overflow-hidden shadow-2xl">
+	<Dialog.Content
+		class="sm:max-w-[620px] max-h-[85vh] flex flex-col bg-card border border-border rounded-2xl p-0 overflow-hidden shadow-2xl"
+	>
 		<!-- Header -->
 		<div class="p-6 border-b border-border/60 flex items-center justify-between">
 			<div class="flex items-center gap-3">
@@ -218,7 +229,9 @@
 						Scheduled Maintenance
 					</Dialog.Title>
 					<Dialog.Description class="text-xs text-muted-foreground mt-0.5">
-						Manage planned maintenance windows for <span class="text-foreground font-medium">{statusPage?.Title}</span>
+						Manage planned maintenance windows for <span class="text-foreground font-medium"
+							>{statusPage?.Title}</span
+						>
 					</Dialog.Description>
 				</div>
 			</div>
@@ -259,7 +272,9 @@
 					</div>
 
 					{#if formError}
-						<div class="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-2">
+						<div
+							class="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-2"
+						>
 							<AlertCircle class="size-4 shrink-0" />
 							<span>{formError}</span>
 						</div>
@@ -303,7 +318,9 @@
 
 					<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
 						<div class="space-y-1.5">
-							<Label for="m-start" class="text-xs font-medium text-foreground">Scheduled Start *</Label>
+							<Label for="m-start" class="text-xs font-medium text-foreground"
+								>Scheduled Start *</Label
+							>
 							<Input
 								id="m-start"
 								type="datetime-local"
@@ -325,7 +342,8 @@
 					<!-- Affected Monitors -->
 					{#if monitors.length > 0}
 						<div class="space-y-2">
-							<Label class="text-xs font-medium text-foreground">Affected Monitors (optional)</Label>
+							<Label class="text-xs font-medium text-foreground">Affected Monitors (optional)</Label
+							>
 							<div class="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
 								{#each monitors as mon}
 									{@const selected = selectedMonitors.includes(mon.ID)}
@@ -362,7 +380,11 @@
 							disabled={isSubmitting}
 							onclick={handleSaveMaintenance}
 						>
-							{isSubmitting ? 'Saving...' : editingMaintenance ? 'Update Maintenance' : 'Save Maintenance'}
+							{isSubmitting
+								? 'Saving...'
+								: editingMaintenance
+									? 'Update Maintenance'
+									: 'Save Maintenance'}
 						</Button>
 					</div>
 				</div>
@@ -372,7 +394,9 @@
 			{#if isLoading}
 				<div class="py-8 text-center text-xs text-muted-foreground">Loading maintenances...</div>
 			{:else if maintenances.length === 0 && !isFormOpen}
-				<div class="py-10 text-center space-y-2 border border-dashed border-border/80 rounded-xl p-6">
+				<div
+					class="py-10 text-center space-y-2 border border-dashed border-border/80 rounded-xl p-6"
+				>
 					<Wrench class="size-8 text-muted-foreground/40 mx-auto" />
 					<p class="text-xs font-medium text-foreground">No scheduled maintenances</p>
 					<p class="text-[11px] text-muted-foreground">
@@ -382,22 +406,30 @@
 			{:else}
 				<div class="space-y-3">
 					{#each maintenances as m}
-						<div class="rounded-xl border border-border/70 bg-white/3 p-4 space-y-2.5 transition-colors">
+						<div
+							class="rounded-xl border border-border/70 bg-white/3 p-4 space-y-2.5 transition-colors"
+						>
 							<div class="flex items-start justify-between gap-3">
 								<div class="space-y-1 min-w-0">
 									<div class="flex items-center gap-2">
 										{#if m.status === 'in_progress'}
-											<span class="inline-flex items-center gap-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+											<span
+												class="inline-flex items-center gap-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30"
+											>
 												<span class="size-1.5 rounded-full bg-blue-400 animate-pulse"></span>
 												In Progress
 											</span>
 										{:else if m.status === 'completed'}
-											<span class="inline-flex items-center gap-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+											<span
+												class="inline-flex items-center gap-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+											>
 												<CheckCircle2 class="size-3" />
 												Completed
 											</span>
 										{:else}
-											<span class="inline-flex items-center gap-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+											<span
+												class="inline-flex items-center gap-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
+											>
 												<Calendar class="size-3" />
 												Scheduled
 											</span>
@@ -408,7 +440,9 @@
 									</div>
 									<h4 class="text-sm font-semibold text-foreground truncate">{m.title}</h4>
 									{#if m.description}
-										<p class="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{m.description}</p>
+										<p class="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+											{m.description}
+										</p>
 									{/if}
 								</div>
 
@@ -466,7 +500,9 @@
 								<div class="pt-2 border-t border-border/40 flex flex-wrap gap-1.5 items-center">
 									<span class="text-[10px] text-muted-foreground">Affected:</span>
 									{#each m.affected_monitors as monName}
-										<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 border border-border/60 text-foreground/80">
+										<span
+											class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 border border-border/60 text-foreground/80"
+										>
 											{monName}
 										</span>
 									{/each}

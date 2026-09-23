@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import { headerStore } from '$lib/stores/headerStore.svelte';
 	import { IncidentAPI, type Incident, type IncidentUpdateResponse } from '$lib/api/incident';
 	import { userTimezone } from '$lib/stores/timezone';
 	import { formatDateTime, formatTimeOnly, formatIncidentTimeAgo } from '$lib/utils/datetime';
@@ -28,7 +29,6 @@
 	let currentOrgId = $state('');
 
 	let activeFilter = $state<'active' | 'resolved'>('active');
-	let searchQuery = $state('');
 	let severityFilter = $state<'all' | 'sev1' | 'sev2' | 'sev3' | 'sev4'>('all');
 	let currentPage = $state(1);
 	let itemsPerPage = $state(10);
@@ -54,8 +54,8 @@
 			if (severityFilter !== 'all' && inc.SeverityCode !== severityFilter) return false;
 
 			// Search Query Filter
-			if (searchQuery.trim()) {
-				const q = searchQuery.toLowerCase();
+			const q = headerStore.searchQuery.toLowerCase().trim();
+			if (q) {
 				const matchSummary = inc.Summary?.toLowerCase().includes(q);
 				const matchMonitor = inc.Monitor?.Name?.toLowerCase().includes(q);
 				const matchTarget = inc.Monitor?.Target?.toLowerCase().includes(q);
@@ -77,9 +77,25 @@
 	// Reset page when filters change
 	$effect(() => {
 		activeFilter;
-		searchQuery;
+		headerStore.searchQuery;
 		severityFilter;
 		currentPage = 1;
+	});
+
+	// Sync with layout top bar
+	$effect(() => {
+		const activeCount = allIncidents.filter((i) => i.Status !== 'resolved').length;
+		headerStore.set({
+			showSearch: true,
+			searchPlaceholder: 'Search incidents by summary, monitor...',
+			badge: {
+				text:
+					activeCount === 0
+						? 'All systems operational'
+						: `${activeCount} Active incident${activeCount > 1 ? 's' : ''}`,
+				variant: activeCount === 0 ? 'emerald' : 'rose'
+			}
+		});
 	});
 
 	onMount(async () => {
@@ -88,12 +104,14 @@
 			if (currentOrgId) {
 				await loadIncidents(currentOrgId);
 			}
-		} catch (err: any) {
-			error = err.message;
+		} catch (e: any) {
+			error = e.message || 'Failed to load incidents';
 		} finally {
 			isLoading = false;
 		}
 	});
+
+
 
 	let tz = $derived($userTimezone);
 
@@ -119,19 +137,8 @@
 		{error}
 	</div>
 {:else}
-	<!-- Search Control Bar Above Table -->
-	<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
-		<!-- Search Input -->
-		<div class="relative flex-1">
-			<Search class="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-			<input
-				type="text"
-				bind:value={searchQuery}
-				placeholder="Search incidents by summary, monitor, or ID..."
-				class="w-full bg-card border border-border rounded-lg pl-10 pr-3.5 py-2 text-xs text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary transition-colors"
-			/>
-		</div>
-
+	<!-- Control Bar Above Table -->
+	<div class="flex items-center justify-end gap-3 mb-4">
 		<!-- Severity Filter Select Dropdown -->
 		<select
 			bind:value={severityFilter}
@@ -161,9 +168,7 @@
 					onclick={() => (activeFilter = 'active')}
 				>
 					<Radio
-						class="size-3.5 {activeFilter === 'active'
-							? 'text-rose-400'
-							: 'text-foreground/40'}"
+						class="size-3.5 {activeFilter === 'active' ? 'text-rose-400' : 'text-foreground/40'}"
 					/>
 					<span>Active</span>
 					<span
@@ -208,7 +213,7 @@
 						? ''
 						: 's'}</span
 				>
-				{#if searchQuery || severityFilter !== 'all'}
+				{#if headerStore.searchQuery || severityFilter !== 'all'}
 					<span class="text-primary font-sans">(filtered)</span>
 				{/if}
 			</div>
