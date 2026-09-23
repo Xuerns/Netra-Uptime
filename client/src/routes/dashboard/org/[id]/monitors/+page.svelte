@@ -402,10 +402,10 @@
 					</button>
 				</div>
 
-				<!-- ── Grid view (3 columns per contohpage.html) ───────────────────────── -->
+				<!-- ── Grid view (up to 4 columns on wide screens) ─────────────────── -->
 			{:else if viewMode === 'grid'}
 				<div class="monitors-scroll-area">
-					<div data-lenis-prevent class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+					<div data-lenis-prevent class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 min-[1400px]:grid-cols-4 2xl:grid-cols-4 gap-4">
 						{#each filtered as monitor (monitor.ID)}
 							<div animate:flip={{ duration: 250 }} class="flex w-full h-full">
 								<MonitorCard

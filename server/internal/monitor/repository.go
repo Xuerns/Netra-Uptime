@@ -221,7 +221,8 @@ func (r *MonitorRepositoryImpl) TotalOrganizationMonitor(orgId string) (int64, e
 
 func (r *MonitorRepositoryImpl) GetDailyStats(monitorId string, days int) ([]model.MonitorDailyStat, error) {
 	var stats []model.MonitorDailyStat
-	startDate := time.Now().AddDate(0, 0, -days)
+	now := time.Now().UTC()
+	startDate := time.Date(now.Year(), now.Month(), now.Day()-days, 0, 0, 0, 0, time.UTC)
 	err := r.db.Where("monitor_id = ? AND date >= ?", monitorId, startDate).Order("date ASC").Find(&stats).Error
 	if err != nil {
 		return nil, err
@@ -235,6 +236,11 @@ func (r *MonitorRepositoryImpl) GetDailyStats(monitorId string, days int) ([]mod
 		AvgLatencyMs int       `gorm:"column:avg_latency_ms"`
 		MinLatencyMs int       `gorm:"column:min_latency_ms"`
 		MaxLatencyMs int       `gorm:"column:max_latency_ms"`
+		Count2xx     int       `gorm:"column:count_2xx"`
+		Count3xx     int       `gorm:"column:count_3xx"`
+		Count4xx     int       `gorm:"column:count_4xx"`
+		Count5xx     int       `gorm:"column:count_5xx"`
+		CountError   int       `gorm:"column:count_error"`
 	}
 
 	var rawAggs []RawDailyAgg
@@ -246,7 +252,12 @@ func (r *MonitorRepositoryImpl) GetDailyStats(monitorId string, days int) ([]mod
 			COUNT(CASE WHEN status = 'down' THEN 1 END) AS down_checks,
 			ROUND(AVG(response_time_ms)) AS avg_latency_ms,
 			MIN(response_time_ms) AS min_latency_ms,
-			MAX(response_time_ms) AS max_latency_ms
+			MAX(response_time_ms) AS max_latency_ms,
+			COUNT(CASE WHEN status_code >= 200 AND status_code < 300 THEN 1 END) AS count_2xx,
+			COUNT(CASE WHEN status_code >= 300 AND status_code < 400 THEN 1 END) AS count_3xx,
+			COUNT(CASE WHEN status_code >= 400 AND status_code < 500 THEN 1 END) AS count_4xx,
+			COUNT(CASE WHEN status_code >= 500 AND status_code < 600 THEN 1 END) AS count_5xx,
+			COUNT(CASE WHEN status_code = 0 OR status_code IS NULL THEN 1 END) AS count_error
 		`).
 		Where("monitor_id = ? AND checked_at >= ?", monitorId, startDate).
 		Group("DATE(checked_at)").
@@ -274,6 +285,11 @@ func (r *MonitorRepositoryImpl) GetDailyStats(monitorId string, days int) ([]mod
 				stats[idx].UpChecks = up
 				stats[idx].DownChecks = down
 				stats[idx].UptimePercentage = pct
+				stats[idx].Count2xx += raw.Count2xx
+				stats[idx].Count3xx += raw.Count3xx
+				stats[idx].Count4xx += raw.Count4xx
+				stats[idx].Count5xx += raw.Count5xx
+				stats[idx].CountError += raw.CountError
 				if raw.MinLatencyMs > 0 && (stats[idx].MinLatencyMs == 0 || raw.MinLatencyMs < stats[idx].MinLatencyMs) {
 					stats[idx].MinLatencyMs = raw.MinLatencyMs
 				}
@@ -298,6 +314,11 @@ func (r *MonitorRepositoryImpl) GetDailyStats(monitorId string, days int) ([]mod
 					AvgLatencyMs:     raw.AvgLatencyMs,
 					MinLatencyMs:     raw.MinLatencyMs,
 					MaxLatencyMs:     raw.MaxLatencyMs,
+					Count2xx:         raw.Count2xx,
+					Count3xx:         raw.Count3xx,
+					Count4xx:         raw.Count4xx,
+					Count5xx:         raw.Count5xx,
+					CountError:       raw.CountError,
 				})
 			}
 		}

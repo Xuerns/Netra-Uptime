@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Monitor } from '$lib/api/monitor';
-	import { TrendingUp, AlertTriangle } from 'lucide-svelte';
+	import { TrendingUp, AlertTriangle, Globe, Lock } from 'lucide-svelte';
+	import MiniBarChart from '$lib/components/MiniBarChart.svelte';
 
 	interface Props {
 		monitors: Monitor[];
@@ -12,6 +13,7 @@
 	let totalCount = $derived(monitors.length);
 	let downCount = $derived(monitors.filter((m) => m.Status === 'down').length);
 	let upCount = $derived(monitors.filter((m) => m.Status === 'up').length);
+	let pausedCount = $derived(monitors.filter((m) => m.Status === 'paused').length);
 
 	// ── 2. Response Time & Latency Metrics ─────────────────────────────────────
 	let activeLatencyMonitors = $derived(
@@ -81,6 +83,12 @@
 			.length
 	);
 
+	let healthyDnsCount = $derived(
+		monitors.filter(
+			(m) => m.DomainStatus === 'valid' || (!m.DomainStatus && m.EnableSSLDomainCheck)
+		).length
+	);
+
 	// ── 5. Fleet Probe Time ───────────────────────────────────────────────────
 	function formatProbeTimeAgo(dateStr?: string): string {
 		if (!dateStr) return 'recently';
@@ -100,6 +108,39 @@
 	});
 
 	let lastProbeTimeAgo = $derived(formatProbeTimeAgo(mostRecentCheck ?? undefined));
+
+	// ── 6. Sparkline Data: Aggregate daily uptime from recent_checks ─────────
+	let dailyUptimeBars = $derived.by(() => {
+		// Collect all recent_checks across monitors and bucket by date
+		const buckets = new Map<string, { up: number; total: number }>();
+
+		for (const monitor of monitors) {
+			if (!monitor.recent_checks || monitor.Status === 'paused') continue;
+			for (const check of monitor.recent_checks) {
+				const date = check.CheckedAt.substring(0, 10); // YYYY-MM-DD
+				if (!buckets.has(date)) {
+					buckets.set(date, { up: 0, total: 0 });
+				}
+				const bucket = buckets.get(date)!;
+				bucket.total++;
+				if (check.Status === 'up') bucket.up++;
+			}
+		}
+
+		// Sort by date and calculate percentage
+		const sorted = [...buckets.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+		// Take last 14 days max
+		const recent = sorted.slice(-14);
+		return recent.map(([date, { up, total }]) => ({
+			value: total > 0 ? (up / total) * 100 : 100,
+			label: date
+		}));
+	});
+
+	// ── 7. Fleet status percentages ───────────────────────────────────────────
+	let fleetUpPct = $derived(totalCount > 0 ? (upCount / totalCount) * 100 : 0);
+	let fleetDownPct = $derived(totalCount > 0 ? (downCount / totalCount) * 100 : 0);
+	let fleetPausedPct = $derived(totalCount > 0 ? (pausedCount / totalCount) * 100 : 0);
 </script>
 
 <section
@@ -107,7 +148,7 @@
 	data-purpose="health-overview"
 >
 	<!-- KPI 1: Avg Uptime (30d) -->
-	<div class="p-4 rounded-lg bg-card border border-border flex flex-col justify-between">
+	<div class="kpi-card p-4 rounded-lg bg-card border border-border flex flex-col justify-between">
 		<div class="flex items-center justify-between text-xs text-muted-foreground">
 			<span class="font-medium">Avg Uptime (30d)</span>
 			<span class="inline-flex items-center text-emerald-400 text-[11px] font-mono font-medium">
@@ -121,16 +162,24 @@
 			</div>
 			<span class="text-xs text-muted-foreground">across {totalCount} targets</span>
 		</div>
-		<div class="mt-3 w-full bg-muted rounded-full h-1 overflow-hidden">
-			<div
-				class="bg-emerald-500 h-1 rounded-full transition-all duration-500"
-				style="width: {avgUptimeNum}%"
-			></div>
-		</div>
+
+		<!-- Mini Bar Chart: Daily uptime -->
+		{#if dailyUptimeBars.length > 1}
+			<div class="mt-3">
+				<MiniBarChart data={dailyUptimeBars} height={24} barGap={1.5} />
+			</div>
+		{:else}
+			<div class="mt-3 w-full bg-muted rounded-full h-1 overflow-hidden">
+				<div
+					class="bg-emerald-500 h-1 rounded-full transition-all duration-500"
+					style="width: {avgUptimeNum}%"
+				></div>
+			</div>
+		{/if}
 	</div>
 
 	<!-- KPI 2: Global Avg Latency -->
-	<div class="p-4 rounded-lg bg-card border border-border flex flex-col justify-between">
+	<div class="kpi-card p-4 rounded-lg bg-card border border-border flex flex-col justify-between">
 		<div class="flex items-center justify-between text-xs text-muted-foreground">
 			<span class="font-medium">Global Avg Latency</span>
 			<span class="text-[11px] font-mono text-muted-foreground">Global median</span>
@@ -145,6 +194,8 @@
 				{latencyRating}
 			</span>
 		</div>
+
+		<!-- Sparkline Area Chart: Latency trend -->
 		<div class="mt-3 text-[11px] text-muted-foreground flex items-center justify-between">
 			<span
 				>Fastest: <strong class="text-foreground font-mono"
@@ -156,7 +207,7 @@
 	</div>
 
 	<!-- KPI 3: Certificates & DNS -->
-	<div class="p-4 rounded-lg bg-card border border-border flex flex-col justify-between">
+	<div class="kpi-card p-4 rounded-lg bg-card border border-border flex flex-col justify-between">
 		<div class="flex items-center justify-between text-xs text-muted-foreground">
 			<span class="font-medium">Certificates &amp; DNS</span>
 			{#if noticeCount > 0}
@@ -187,13 +238,44 @@
 				{noticeCount > 0 ? 'DNS / SSL notices' : 'DNS & SSL verified'}
 			</span>
 		</div>
-		<div class="mt-3 text-[11px] text-muted-foreground truncate">
-			{healthySslCount} SSL certificates healthy (&gt;30d)
+
+		<!-- Detailed breakdown instead of single line -->
+		<div class="mt-3 flex flex-col gap-1.5">
+			<div class="flex items-center justify-between text-[11px]">
+				<span class="inline-flex items-center gap-1.5 text-muted-foreground">
+					<Lock class="size-3 text-emerald-400/70" />
+					SSL
+				</span>
+				<span class="font-mono">
+					<span class="text-emerald-400">{healthySslCount}</span>
+					<span class="text-muted-foreground/60 mx-0.5">·</span>
+					{#if sslNoticeCount > 0}
+						<span class="text-amber-400">{sslNoticeCount} warning</span>
+					{:else}
+						<span class="text-muted-foreground">0 issues</span>
+					{/if}
+				</span>
+			</div>
+			<div class="flex items-center justify-between text-[11px]">
+				<span class="inline-flex items-center gap-1.5 text-muted-foreground">
+					<Globe class="size-3 text-emerald-400/70" />
+					DNS
+				</span>
+				<span class="font-mono">
+					<span class="text-emerald-400">{healthyDnsCount}</span>
+					<span class="text-muted-foreground/60 mx-0.5">·</span>
+					{#if dnsNoticeCount > 0}
+						<span class="text-amber-400">{dnsNoticeCount} warning</span>
+					{:else}
+						<span class="text-muted-foreground">0 issues</span>
+					{/if}
+				</span>
+			</div>
 		</div>
 	</div>
 
 	<!-- KPI 4: Fleet Engine -->
-	<div class="p-4 rounded-lg bg-card border border-border flex flex-col justify-between">
+	<div class="kpi-card p-4 rounded-lg bg-card border border-border flex flex-col justify-between">
 		<div class="flex items-center justify-between text-xs text-muted-foreground">
 			<span class="font-medium">Fleet Engine</span>
 			<span
@@ -212,8 +294,58 @@
 			</div>
 			<span class="text-xs text-muted-foreground">targets alive</span>
 		</div>
-		<div class="mt-3 text-[11px] text-muted-foreground">
-			Last check probe finished <span class="font-mono text-foreground">{lastProbeTimeAgo}</span>
+
+		<!-- Segmented status bar -->
+		<div class="mt-3 flex flex-col gap-1.5">
+			<div class="w-full h-1.5 rounded-full bg-muted overflow-hidden flex">
+				{#if fleetUpPct > 0}
+					<div
+						class="h-full bg-emerald-500 transition-all duration-500"
+						style="width: {fleetUpPct}%"
+					></div>
+				{/if}
+				{#if fleetDownPct > 0}
+					<div
+						class="h-full bg-rose-500 transition-all duration-500"
+						style="width: {fleetDownPct}%"
+					></div>
+				{/if}
+				{#if fleetPausedPct > 0}
+					<div
+						class="h-full bg-zinc-500 transition-all duration-500"
+						style="width: {fleetPausedPct}%"
+					></div>
+				{/if}
+			</div>
+			<div class="flex items-center gap-3 text-[11px] text-muted-foreground">
+				<span class="inline-flex items-center gap-1">
+					<span class="size-1.5 rounded-full bg-emerald-500"></span>
+					<span class="font-mono">{upCount}</span> up
+				</span>
+				{#if downCount > 0}
+					<span class="inline-flex items-center gap-1">
+						<span class="size-1.5 rounded-full bg-rose-500"></span>
+						<span class="font-mono text-rose-400">{downCount}</span> down
+					</span>
+				{/if}
+				{#if pausedCount > 0}
+					<span class="inline-flex items-center gap-1">
+						<span class="size-1.5 rounded-full bg-zinc-500"></span>
+						<span class="font-mono">{pausedCount}</span> paused
+					</span>
+				{/if}
+				<span class="ml-auto text-muted-foreground/70 font-mono">{lastProbeTimeAgo}</span>
+			</div>
 		</div>
 	</div>
 </section>
+
+<style>
+	.kpi-card {
+		transition: border-color 200ms ease, box-shadow 200ms ease;
+	}
+	.kpi-card:hover {
+		border-color: color-mix(in srgb, var(--color-border) 100%, white 20%);
+		box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-border) 50%, transparent);
+	}
+</style>

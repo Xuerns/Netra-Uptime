@@ -4,8 +4,8 @@
 
 	export interface DataPoint {
 		label: string;
-		value: number; // response time in ms
-		status?: 'up' | 'down' | 'degraded';
+		value: number | null; // response time in ms (null if no checks on this date)
+		status?: 'up' | 'down' | 'degraded' | 'no_data';
 		statusCode?: number;
 	}
 
@@ -27,6 +27,7 @@
 	let chartInstance: Chart<'line'> | null = null;
 
 	function getPointColor(status?: string, statusCode?: number): string {
+		if (status === 'no_data') return 'transparent';
 		if (statusCode && statusCode > 0) {
 			if (statusCode >= 200 && statusCode < 300) return '#10B981'; // Emerald 2xx
 			if (statusCode >= 300 && statusCode < 400) return '#3B82F6'; // Blue 3xx
@@ -54,6 +55,21 @@
 			gradient = g;
 		}
 
+		const isNoDataPoint = (idx: number) => {
+			const pt = data[idx];
+			return !pt || pt.status === 'no_data' || pt.value === 0;
+		};
+
+		const isGapSegment = (c: any) => {
+			return (
+				c.p0?.skip ||
+				c.p1?.skip ||
+				isNoDataPoint(c.p0DataIndex) ||
+				isNoDataPoint(c.p1DataIndex) ||
+				Math.abs(c.p1DataIndex - c.p0DataIndex) > 1
+			);
+		};
+
 		if (!chartInstance) {
 			chartInstance = new Chart(canvasEl, {
 				type: 'line',
@@ -61,19 +77,43 @@
 					labels,
 					datasets: [
 						{
-							data: values,
+							data: values as any,
 							borderColor: color,
 							borderWidth: 2,
 							tension: 0.3,
 							fill: true,
+							spanGaps: true,
+							segment: {
+								borderColor: (c: any) =>
+									isGapSegment(c) ? 'rgba(148, 163, 184, 0.45)' : color,
+								borderDash: (c: any) => (isGapSegment(c) ? [5, 5] : undefined)
+							},
 							backgroundColor: gradient,
 							pointBackgroundColor: pointColors,
-							pointBorderColor: '#0f172a',
+							pointBorderColor: (c: any) => {
+								const idx = c.dataIndex;
+								const pt = data[idx];
+								return !pt || pt.status === 'no_data' || pt.value === 0 ? 'transparent' : '#0f172a';
+							},
 							pointBorderWidth: 1.5,
-							pointRadius: data.length > 50 ? 2 : 3.5,
-							pointHoverRadius: 6,
+							pointRadius: (c: any) => {
+								const idx = c.dataIndex;
+								const pt = data[idx];
+								if (!pt || pt.status === 'no_data' || pt.value === 0) return 0;
+								return data.length > 50 ? 2 : 3.5;
+							},
+							pointHoverRadius: (c: any) => {
+								const idx = c.dataIndex;
+								const pt = data[idx];
+								if (!pt || pt.status === 'no_data' || pt.value === 0) return 0;
+								return 6;
+							},
 							pointHoverBackgroundColor: pointColors,
-							pointHoverBorderColor: '#ffffff',
+							pointHoverBorderColor: (c: any) => {
+								const idx = c.dataIndex;
+								const pt = data[idx];
+								return !pt || pt.status === 'no_data' || pt.value === 0 ? 'transparent' : '#ffffff';
+							},
 							pointHoverBorderWidth: 2
 						}
 					]
@@ -119,11 +159,17 @@
 								label: (item) => {
 									const idx = item.dataIndex;
 									const pt = data[idx];
+									if (!pt || pt.status === 'no_data' || pt.value === 0) {
+										return '0 ms (No Data Recorded)';
+									}
 									return `Latency: ${pt.value} ms`;
 								},
 								afterLabel: (item) => {
 									const idx = item.dataIndex;
 									const pt = data[idx];
+									if (!pt || pt.status === 'no_data' || pt.value === 0) {
+										return 'Status: Monitor Offline / No checks';
+									}
 									if (pt.statusCode && pt.statusCode > 0) {
 										return `HTTP Status: ${pt.statusCode}`;
 									}
@@ -172,10 +218,27 @@
 			});
 		} else {
 			chartInstance.data.labels = labels;
-			chartInstance.data.datasets[0].data = values;
+			chartInstance.data.datasets[0].data = values as any;
 			chartInstance.data.datasets[0].pointBackgroundColor = pointColors;
 			chartInstance.data.datasets[0].pointHoverBackgroundColor = pointColors;
-			chartInstance.data.datasets[0].pointRadius = data.length > 50 ? 2 : 3.5;
+			chartInstance.data.datasets[0].spanGaps = true;
+			chartInstance.data.datasets[0].segment = {
+				borderColor: (c: any) =>
+					isGapSegment(c) ? 'rgba(148, 163, 184, 0.45)' : color,
+				borderDash: (c: any) => (isGapSegment(c) ? [5, 5] : undefined)
+			} as any;
+			chartInstance.data.datasets[0].pointRadius = ((c: any) => {
+				const idx = c.dataIndex;
+				const pt = data[idx];
+				if (!pt || pt.status === 'no_data' || pt.value === 0) return 0;
+				return data.length > 50 ? 2 : 3.5;
+			}) as any;
+			chartInstance.data.datasets[0].pointHoverRadius = ((c: any) => {
+				const idx = c.dataIndex;
+				const pt = data[idx];
+				if (!pt || pt.status === 'no_data' || pt.value === 0) return 0;
+				return 6;
+			}) as any;
 			chartInstance.update();
 		}
 	}
@@ -217,6 +280,9 @@
 				>
 				<span class="flex items-center gap-1"
 					><span class="size-2 rounded-full bg-rose-500"></span> 5xx/Err</span
+				>
+				<span class="flex items-center gap-1.5 pl-1.5 border-l border-border/80"
+					><span class="w-3 border-t border-dashed border-slate-400"></span> No Data</span
 				>
 			</div>
 		</div>

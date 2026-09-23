@@ -267,7 +267,7 @@
 		>
 			<Users class="size-10 text-muted-foreground/40" />
 			<h3 class="text-sm font-semibold text-foreground">No members found</h3>
-			<p class="text-xs text-muted-foreground max-w-sm">
+			<p class="text-xs text-muted-foreground max-w-2xl">
 				{headerStore.searchQuery
 					? `No members matching "${headerStore.searchQuery}". Try a different search.`
 					: 'No members under the selected filter.'}

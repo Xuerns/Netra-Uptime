@@ -6,7 +6,7 @@
 	import { IncidentAPI, type Incident } from '$lib/api/incident';
 	import MonitorDetailHeader from '$lib/components/monitor/MonitorDetailHeader.svelte';
 	import MonitorStatsGrid from '$lib/components/monitor/MonitorStatsGrid.svelte';
-	import MonitorLatencyChart from '$lib/components/monitor/MonitorLatencyChart.svelte';
+	import MonitorLatencyChart, { type DataPoint } from '$lib/components/monitor/MonitorLatencyChart.svelte';
 	import MonitorStatusCodeChart from '$lib/components/monitor/MonitorStatusCodeChart.svelte';
 	import MonitorAlertRulesSection from '$lib/components/monitor/MonitorAlertRulesSection.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
@@ -45,6 +45,17 @@
 			case '1y':
 				return 365;
 		}
+	});
+
+	// Effective days to render: avoid rendering empty void before monitor was created
+	let effectiveDays = $derived.by(() => {
+		if (activePeriod === '24h') return 1;
+		if (!monitor?.CreatedAt) return periodDays;
+		const createdDate = new Date(monitor.CreatedAt);
+		const now = new Date();
+		const diffMs = now.getTime() - createdDate.getTime();
+		const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+		return Math.min(periodDays, Math.max(diffDays, 1));
 	});
 
 	// Calculated Metrics from stats / recent checks
@@ -109,7 +120,7 @@
 	});
 
 	// Chart Data Points
-	let chartPoints = $derived.by(() => {
+	let chartPoints = $derived.by<DataPoint[]>(() => {
 		if (activePeriod === '24h' && monitor?.recent_checks && monitor.recent_checks.length > 0) {
 			return [...monitor.recent_checks].reverse().map((c: any) => ({
 				label: formatDateTime(c.CheckedAt, tz),
@@ -119,7 +130,7 @@
 			}));
 		}
 
-		if (stats.length === 0 && monitor?.recent_checks) {
+		if (stats.length === 0 && monitor?.recent_checks && monitor.recent_checks.length > 0) {
 			return [...monitor.recent_checks].reverse().map((c: any) => ({
 				label: formatDateTime(c.CheckedAt, tz),
 				value: c.ResponseTimeMs,
@@ -128,11 +139,40 @@
 			}));
 		}
 
-		return stats.map((s) => ({
-			label: formatDateOnly(s.Date, tz),
-			value: s.AvgLatencyMs,
-			status: (s.DownChecks > 0 ? 'down' : 'up') as 'up' | 'down'
-		}));
+		// Build a lookup map of existing daily stats by formatted date
+		const statMap = new Map<string, MonitorDailyStat>();
+		for (const s of stats) {
+			const label = formatDateOnly(s.Date, tz);
+			statMap.set(label, s);
+		}
+
+		// Generate contiguous timeline of effectiveDays (trimmed to monitor creation date)
+		const points: DataPoint[] = [];
+		const baseDate = new Date();
+		baseDate.setHours(12, 0, 0, 0); // Midday avoids DST shifting
+
+		for (let i = effectiveDays - 1; i >= 0; i--) {
+			const d = new Date(baseDate);
+			d.setDate(baseDate.getDate() - i);
+			const label = formatDateOnly(d.toISOString(), tz);
+			const s = statMap.get(label);
+
+			if (s && s.TotalChecks > 0) {
+				points.push({
+					label,
+					value: s.AvgLatencyMs,
+					status: (s.DownChecks > 0 ? 'down' : 'up') as 'up' | 'down'
+				});
+			} else {
+				points.push({
+					label,
+					value: 0,
+					status: 'no_data'
+				});
+			}
+		}
+
+		return points;
 	});
 
 	// Status Code Aggregate Metrics
@@ -363,7 +403,7 @@
 			</div>
 
 			<div class="text-xs text-muted-foreground font-mono px-3 hidden sm:block">
-				Showing analytics for last {periodDays} day{periodDays > 1 ? 's' : ''}
+				Showing analytics for last {effectiveDays} day{effectiveDays > 1 ? 's' : ''}
 			</div>
 		</div>
 

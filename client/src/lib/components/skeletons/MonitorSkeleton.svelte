@@ -10,7 +10,7 @@
 <div class="h-9 w-full max-w-[320px] rounded-lg bg-white/6 animate-pulse mb-6"></div>
 
 {#if viewMode === 'grid'}
-	<div class="grid grid-cols-[repeat(auto-fill,minmax(350px,1fr))] gap-4">
+	<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 min-[1400px]:grid-cols-4 2xl:grid-cols-4 gap-4">
 		{#each Array(6) as _}
 			<div class="h-[148px] rounded-xl bg-white/4 border border-border animate-pulse"></div>
 		{/each}
