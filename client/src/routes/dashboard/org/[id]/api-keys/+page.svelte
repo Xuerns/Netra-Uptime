@@ -24,6 +24,7 @@
 	import { formatDateOnly } from '$lib/utils/datetime';
 	import { parseApiError } from '$lib/utils/parseApiError';
 	import APIKeySkeleton from '$lib/components/skeletons/APIKeySkeleton.svelte';
+	import { EmptyState } from '$lib/components/common';
 
 	const orgId = $derived($page.params.id as string);
 
@@ -181,30 +182,13 @@
 			{fetchError}
 		</div>
 	{:else if apiKeys.length === 0}
-		<div
-			class="p-12 text-center flex flex-col items-center justify-center gap-3 bg-white/2 border border-border rounded-lg"
-		>
-			<div
-				class="size-12 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary"
-			>
-				<Key class="size-6" />
-			</div>
-			<div>
-				<h3 class="text-base font-semibold text-foreground">No API keys created yet</h3>
-				<p class="text-xs text-muted-foreground mt-1 max-w-[42ch]">
-					Create an API key to allow CI/CD pipelines, automated scripts, or custom microservices to
-					access monitors and incidents.
-				</p>
-			</div>
-			{#if canManage}
-				<Button
-					class="mt-2 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 text-xs font-medium"
-					onclick={() => (isCreateOpen = true)}
-				>
-					<Plus class="size-3.5 mr-1" /> Create First Key
-				</Button>
-			{/if}
-		</div>
+		<EmptyState
+			icon={Key}
+			title="No API keys created yet"
+			description="Create an API key to allow CI/CD pipelines, automated scripts, or custom microservices to access monitors and incidents."
+			actionText={canManage ? 'Create First Key' : undefined}
+			onAction={() => (isCreateOpen = true)}
+		/>
 	{:else}
 		<!-- API Keys List -->
 		<div class="flex flex-col gap-3">

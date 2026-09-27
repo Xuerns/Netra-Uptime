@@ -7,6 +7,7 @@
 	import { formatDateTime, formatTimeOnly, formatIncidentTimeAgo } from '$lib/utils/datetime';
 	import { OrgAPI } from '$lib/api/organization';
 	import IncidentSkeleton from '$lib/components/skeletons/IncidentSkeleton.svelte';
+	import { Pagination } from '$lib/components/common';
 	import {
 		AlertTriangle,
 		Clock,
@@ -454,41 +455,14 @@
 
 		<!-- Pagination Footer Bar -->
 		{#if filteredIncidents.length > 0}
-			<div
-				class="bg-white/3 border-t border-border px-5 py-3 flex items-center justify-between text-xs text-muted-foreground flex-wrap gap-3"
-			>
-				<div class="font-mono">
-					Showing <span class="text-foreground">{(currentPage - 1) * itemsPerPage + 1}</span>
-					to{' '}
-					<span class="text-foreground"
-						>{Math.min(currentPage * itemsPerPage, filteredIncidents.length)}</span
-					>
-					of <span class="text-foreground">{filteredIncidents.length}</span> incidents
-				</div>
-
-				<div class="flex items-center gap-2">
-					<button
-						class="p-1.5 rounded-lg border border-border bg-white/5 hover:bg-white/10 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
-						disabled={currentPage <= 1}
-						onclick={() => (currentPage = Math.max(1, currentPage - 1))}
-						aria-label="Previous page"
-					>
-						<ChevronLeft class="size-4" />
-					</button>
-
-					<span class="font-mono text-xs text-foreground px-2">
-						Page {currentPage} of {totalPages}
-					</span>
-
-					<button
-						class="p-1.5 rounded-lg border border-border bg-white/5 hover:bg-white/10 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
-						disabled={currentPage >= totalPages}
-						onclick={() => (currentPage = Math.min(totalPages, currentPage + 1))}
-						aria-label="Next page"
-					>
-						<ChevronRight class="size-4" />
-					</button>
-				</div>
+			<div class="bg-white/3 border-t border-border px-5 py-3">
+				<Pagination
+					bind:currentPage
+					{totalPages}
+					totalItems={filteredIncidents.length}
+					itemName="incidents"
+					class="pt-0 border-t-0"
+				/>
 			</div>
 		{/if}
 	</div>

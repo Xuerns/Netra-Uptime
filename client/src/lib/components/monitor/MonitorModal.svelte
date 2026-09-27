@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { MonitorAPI } from '$lib/api/monitor';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import * as Select from '$lib/components/ui/select';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
+	import { MonitorAPI, type Monitor } from '$lib/api/monitor';
+	import { OrgAPI } from '$lib/api/organization';
+	import * as Dialog from '$lib/components/ui/dialog/index.js';
+	import * as Select from '$lib/components/ui/select/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
 	import {
 		debounce,
 		validateMonitorName,
@@ -11,31 +12,27 @@
 		validateMonitorInterval,
 		validateMonitorTimeout
 	} from '$lib/utils/validation';
+	import MonitorTypeGuide from '$lib/components/monitor/MonitorTypeGuide.svelte';
 	import { parseApiError } from '$lib/utils/parseApiError';
-
-	interface Monitor {
-		ID: string;
-		Name: string;
-		Type: string;
-		Target: string;
-		IntervalSeconds: number;
-		TimeoutSeconds: number;
-		ExpectedStatusCode?: number;
-		IsActive: boolean;
-		Criticality?: 'extreme' | 'high' | 'medium' | 'low';
-	}
 
 	let {
 		isOpen = $bindable(false),
+		monitorType = null,
 		monitor = null,
 		orgId,
 		onSuccess
 	} = $props<{
 		isOpen: boolean;
-		monitor: Monitor | null;
+		monitorType?: 'http' | 'ping' | 'tcp' | null;
+		monitor?: Monitor | null;
 		orgId: string;
 		onSuccess: () => void;
 	}>();
+
+	const isEdit = $derived(!!monitor);
+	const effectiveType = $derived<string>(
+		monitor?.Type || monitorType || 'http'
+	);
 
 	let name = $state('');
 	let target = $state('');
@@ -50,6 +47,9 @@
 
 	let fieldErrors = $state({ name: '', target: '', intervalSeconds: '', timeoutSeconds: '' });
 	let shake = $state({ name: false, target: false, intervalSeconds: false, timeoutSeconds: false });
+
+	let members = $state<any[]>([]);
+	let selectedPICs = $state<string[]>([]);
 
 	const handleNameValidation = debounce((val: string) => {
 		const err = validateMonitorName(val);
@@ -99,10 +99,6 @@
 		}
 	}, 500);
 
-	let members = $state<any[]>([]);
-	let selectedPICs = $state<string[]>([]);
-	import { OrgAPI } from '$lib/api/organization';
-
 	let canSubmit = $derived(
 		!loading &&
 			!fieldErrors.name &&
@@ -112,32 +108,49 @@
 			selectedPICs.length > 0
 	);
 
+	// Sync form state whenever dialog opens or monitor prop changes
 	$effect(() => {
-		if (isOpen && monitor) {
-			name = monitor.Name;
-			target = monitor.Target;
-			intervalSeconds = monitor.IntervalSeconds;
-			timeoutSeconds = monitor.TimeoutSeconds;
-			expectedStatusCodeStr = monitor.ExpectedStatusCode
-				? monitor.ExpectedStatusCode.toString()
-				: '200';
-			isActive = monitor.IsActive !== undefined ? monitor.IsActive : true;
-			criticality = monitor.Criticality || 'medium';
-			enableSSLDomainCheck =
-				monitor.EnableSSLDomainCheck !== undefined ? monitor.EnableSSLDomainCheck : true;
+		if (isOpen) {
 			error = '';
 			fieldErrors = { name: '', target: '', intervalSeconds: '', timeoutSeconds: '' };
 			shake = { name: false, target: false, intervalSeconds: false, timeoutSeconds: false };
 
-			// Extract existing PICs
-			const rawPics = monitor.MonitorPICs || (monitor as any).monitor_pics || [];
-			selectedPICs = Array.isArray(rawPics)
-				? rawPics
-						.map((pic: any) =>
-							typeof pic === 'string' ? pic : pic?.UserID || pic?.user_id || pic?.id
-						)
-						.filter(Boolean)
-				: [];
+			if (monitor) {
+				// Edit mode: prefill from existing monitor
+				name = monitor.Name || '';
+				target = monitor.Target || '';
+				intervalSeconds = monitor.IntervalSeconds || 60;
+				timeoutSeconds = monitor.TimeoutSeconds || 10;
+				expectedStatusCodeStr = monitor.ExpectedStatusCode
+					? monitor.ExpectedStatusCode.toString()
+					: '200';
+				isActive = monitor.IsActive !== undefined ? monitor.IsActive : true;
+				criticality = (monitor.Criticality as any) || 'medium';
+				enableSSLDomainCheck =
+					(monitor as any).EnableSSLDomainCheck !== undefined
+						? (monitor as any).EnableSSLDomainCheck
+						: true;
+
+				const rawPics = (monitor as any).MonitorPICs || (monitor as any).monitor_pics || [];
+				selectedPICs = Array.isArray(rawPics)
+					? rawPics
+							.map((pic: any) =>
+								typeof pic === 'string' ? pic : pic?.UserID || pic?.user_id || pic?.id
+							)
+							.filter(Boolean)
+					: [];
+			} else {
+				// Create mode: defaults
+				name = '';
+				target = '';
+				intervalSeconds = 60;
+				timeoutSeconds = 10;
+				expectedStatusCodeStr = '200';
+				isActive = true;
+				criticality = 'medium';
+				enableSSLDomainCheck = true;
+				selectedPICs = [];
+			}
 
 			if (orgId) {
 				OrgAPI.getMembers(orgId)
@@ -156,30 +169,57 @@
 		error = '';
 
 		try {
-			if (!monitor) throw new Error('No monitor selected for editing');
+			if (isEdit && monitor) {
+				await MonitorAPI.update(orgId, monitor.ID, {
+					name,
+					target,
+					interval_seconds: intervalSeconds,
+					timeout_seconds: timeoutSeconds,
+					expectation_status_code:
+						effectiveType === 'http' ? parseInt(expectedStatusCodeStr) : undefined,
+					is_active: isActive,
+					criticality,
+					MonitorPICs: selectedPICs,
+					enable_ssl_domain_check: enableSSLDomainCheck
+				});
+			} else {
+				if (!effectiveType) throw new Error('Monitor type is required');
+				await MonitorAPI.create(orgId, {
+					name,
+					type: effectiveType as 'http' | 'tcp' | 'ping',
+					target,
+					interval_seconds: intervalSeconds,
+					timeout_seconds: timeoutSeconds,
+					expectation_status_code:
+						effectiveType === 'http' ? parseInt(expectedStatusCodeStr) : undefined,
+					criticality,
+					MonitorPICs: selectedPICs.length > 0 ? selectedPICs : undefined,
+					enable_ssl_domain_check: enableSSLDomainCheck
+				});
+			}
 
-			await MonitorAPI.update(orgId, monitor.ID, {
-				name,
-				target,
-				interval_seconds: intervalSeconds,
-				timeout_seconds: timeoutSeconds,
-				expectation_status_code:
-					monitor.Type === 'http' ? parseInt(expectedStatusCodeStr) : undefined,
-				is_active: isActive,
-				criticality,
-				MonitorPICs: selectedPICs,
-				enable_ssl_domain_check: enableSSLDomainCheck
-			});
 			onSuccess();
 			isOpen = false;
 		} catch (err: any) {
-			error = parseApiError(err, 'Failed to update monitor');
+			error = parseApiError(err, isEdit ? 'Failed to update monitor' : 'Failed to create monitor');
 		} finally {
 			loading = false;
 		}
 	}
 
-	function avatarColor(name: string) {
+	let modalTitle = $derived(
+		isEdit
+			? 'Edit Monitor'
+			: effectiveType === 'http'
+				? 'Add HTTP/API Monitor'
+				: effectiveType === 'ping'
+					? 'Add Ping Monitor'
+					: effectiveType === 'tcp'
+						? 'Add TCP Port Monitor'
+						: 'Add Monitor'
+	);
+
+	function avatarColor(nameStr: string) {
 		const colors = [
 			'bg-red-500/10 text-red-500 border-red-500/20',
 			'bg-blue-500/10 text-blue-500 border-blue-500/20',
@@ -188,8 +228,8 @@
 			'bg-purple-500/10 text-purple-500 border-purple-500/20'
 		];
 		let hash = 0;
-		if (!name) return colors[0];
-		for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+		if (!nameStr) return colors[0];
+		for (let i = 0; i < nameStr.length; i++) hash = nameStr.charCodeAt(i) + ((hash << 5) - hash);
 		return colors[Math.abs(hash) % colors.length];
 	}
 </script>
@@ -199,9 +239,16 @@
 		class="sm:max-w-[750px] bg-card border border-border shadow-lg text-foreground p-6 rounded-2xl"
 	>
 		<Dialog.Header>
-			<Dialog.Title class="text-xl font-semibold tracking-tight">Edit Monitor</Dialog.Title>
-			<Dialog.Description class="text-muted-foreground text-sm">
-				Update your monitor settings below.
+			<div class="flex items-center gap-2">
+				<Dialog.Title class="text-xl font-semibold tracking-tight">{modalTitle}</Dialog.Title>
+				{#if !isEdit}
+					<MonitorTypeGuide monitorType={effectiveType as any} />
+				{/if}
+			</div>
+			<Dialog.Description class="text-muted-foreground text-sm mt-1">
+				{isEdit
+					? 'Update your monitor configurations and alert policies below.'
+					: 'Configure your new monitor settings and notification assignees below.'}
 			</Dialog.Description>
 		</Dialog.Header>
 
@@ -219,17 +266,18 @@
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 				<!-- Left Column: Monitor Settings -->
 				<div class="space-y-5">
+					<!-- Name -->
 					<div class="space-y-2">
 						<div class="flex items-center gap-3">
-							<Label for="edit-name" class="text-sm font-medium text-foreground"
-								>Monitor Name <span class="text-destructive font-bold">*</span></Label
-							>
+							<Label for="monitor-name" class="text-sm font-medium text-foreground">
+								Monitor Name <span class="text-destructive font-bold">*</span>
+							</Label>
 							{#if fieldErrors.name}
 								<span class="text-xs text-destructive font-medium">{fieldErrors.name}</span>
 							{/if}
 						</div>
 						<Input
-							id="edit-name"
+							id="monitor-name"
 							placeholder="e.g., Production API"
 							bind:value={name}
 							oninput={() => handleNameValidation(name)}
@@ -240,17 +288,28 @@
 						/>
 					</div>
 
+					<!-- Target -->
 					<div class="space-y-2">
 						<div class="flex items-center gap-3">
-							<Label for="edit-target" class="text-sm font-medium text-foreground"
-								>Target / URL <span class="text-destructive font-bold">*</span></Label
-							>
+							<Label for="monitor-target" class="text-sm font-medium text-foreground">
+								{effectiveType === 'http'
+									? 'URL'
+									: effectiveType === 'ping'
+										? 'Hostname / IP'
+										: 'Hostname / IP:Port'}
+								<span class="text-destructive font-bold">*</span>
+							</Label>
 							{#if fieldErrors.target}
 								<span class="text-xs text-destructive font-medium">{fieldErrors.target}</span>
 							{/if}
 						</div>
 						<Input
-							id="edit-target"
+							id="monitor-target"
+							placeholder={effectiveType === 'http'
+								? 'https://api.example.com'
+								: effectiveType === 'ping'
+									? '8.8.8.8'
+									: 'db.example.com:5432'}
 							bind:value={target}
 							oninput={() => handleTargetValidation(target)}
 							required
@@ -260,7 +319,8 @@
 						/>
 					</div>
 
-					{#if monitor?.Type === 'http'}
+					<!-- Expected Status Code (HTTP only) -->
+					{#if effectiveType === 'http'}
 						<div class="space-y-2">
 							<Label class="text-sm font-medium text-foreground">Expected Status Code</Label>
 							<Select.Root type="single" bind:value={expectedStatusCodeStr}>
@@ -337,36 +397,38 @@
 						</Select.Root>
 					</div>
 
-					<!-- Monitor Status (Active / Paused) Toggle -->
-					<div
-						class="flex items-center justify-between p-3 rounded-lg bg-white/4 border border-border mt-3"
-					>
-						<div class="flex flex-col gap-0.5">
-							<div class="flex items-center gap-2">
-								<span class="text-xs font-semibold text-foreground">Monitor Status</span>
-								<span
-									class="px-2 py-0.5 text-[10.5px] font-semibold rounded-full uppercase tracking-wider {isActive
-										? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-										: 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}"
-								>
-									{isActive ? 'Active' : 'Paused'}
+					<!-- Status Toggle (in Edit Mode) -->
+					{#if isEdit}
+						<div
+							class="flex items-center justify-between p-3 rounded-lg bg-white/4 border border-border mt-3"
+						>
+							<div class="flex flex-col gap-0.5">
+								<div class="flex items-center gap-2">
+									<span class="text-xs font-semibold text-foreground">Monitor Status</span>
+									<span
+										class="px-2 py-0.5 text-[10.5px] font-semibold rounded-full uppercase tracking-wider {isActive
+											? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+											: 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}"
+									>
+										{isActive ? 'Active' : 'Paused'}
+									</span>
+								</div>
+								<span class="text-[11px] text-muted-foreground">
+									{isActive
+										? 'Automated uptime checks and alerts are enabled'
+										: 'Paused: Automated checks & alert notifications are paused'}
 								</span>
 							</div>
-							<span class="text-[11px] text-muted-foreground">
-								{isActive
-									? 'Automated uptime checks and alerts are enabled'
-									: 'Paused: Automated checks & alert notifications are paused'}
-							</span>
+							<input
+								type="checkbox"
+								bind:checked={isActive}
+								class="size-4 accent-primary rounded cursor-pointer"
+							/>
 						</div>
-						<input
-							type="checkbox"
-							bind:checked={isActive}
-							class="size-4 accent-primary rounded cursor-pointer"
-						/>
-					</div>
+					{/if}
 
 					<!-- SSL & Domain Expiry Toggle (HTTP monitors) -->
-					{#if monitor && monitor.Type === 'http'}
+					{#if effectiveType === 'http'}
 						<div
 							class="flex items-center justify-between p-3 rounded-lg bg-white/4 border border-border mt-3"
 						>
@@ -385,11 +447,12 @@
 					{/if}
 
 					<div class="grid grid-cols-2 gap-4">
+						<!-- Interval -->
 						<div class="space-y-2">
 							<div class="flex items-center gap-3">
-								<Label for="edit-interval" class="text-sm font-medium text-foreground"
-									>Check Interval (sec) <span class="text-destructive font-bold">*</span></Label
-								>
+								<Label for="monitor-interval" class="text-sm font-medium text-foreground">
+									Check Interval (sec) <span class="text-destructive font-bold">*</span>
+								</Label>
 								{#if fieldErrors.intervalSeconds}
 									<span class="text-[10px] text-destructive font-medium"
 										>{fieldErrors.intervalSeconds}</span
@@ -397,9 +460,9 @@
 								{/if}
 							</div>
 							<Input
-								id="edit-interval"
+								id="monitor-interval"
 								type="number"
-								min="10"
+								min="60"
 								bind:value={intervalSeconds}
 								oninput={() => handleIntervalValidation(intervalSeconds)}
 								required
@@ -409,11 +472,12 @@
 							/>
 						</div>
 
+						<!-- Timeout -->
 						<div class="space-y-2">
 							<div class="flex items-center gap-3">
-								<Label for="edit-timeout" class="text-sm font-medium text-foreground"
-									>Timeout (sec) <span class="text-destructive font-bold">*</span></Label
-								>
+								<Label for="monitor-timeout" class="text-sm font-medium text-foreground">
+									Timeout (sec) <span class="text-destructive font-bold">*</span>
+								</Label>
 								{#if fieldErrors.timeoutSeconds}
 									<span class="text-[10px] text-destructive font-medium"
 										>{fieldErrors.timeoutSeconds}</span
@@ -421,7 +485,7 @@
 								{/if}
 							</div>
 							<Input
-								id="edit-timeout"
+								id="monitor-timeout"
 								type="number"
 								min="1"
 								max="60"
@@ -439,9 +503,9 @@
 				<!-- Right Column: PIC Settings -->
 				<div class="space-y-3 flex flex-col h-full">
 					<div class="flex items-center justify-between">
-						<Label class="text-sm font-medium text-foreground"
-							>Person in Charge (PIC) <span class="text-destructive font-bold">*</span></Label
-						>
+						<Label class="text-sm font-medium text-foreground">
+							Person in Charge (PIC) <span class="text-destructive font-bold">*</span>
+						</Label>
 						<span class="text-xs text-foreground/40">Select 1-2 PICs</span>
 					</div>
 
@@ -459,7 +523,6 @@
 									: ''}"
 							>
 								<div class="flex items-center gap-3 overflow-hidden">
-									<!-- Avatar -->
 									{#if member.User.AvatarURL}
 										<img
 											src={member.User.AvatarURL}
@@ -491,7 +554,7 @@
 											if (selectedPICs.length < 2) {
 												selectedPICs = [...selectedPICs, member.User.ID];
 											} else {
-												e.currentTarget.checked = false; // prevent checking more than 2
+												e.currentTarget.checked = false;
 											}
 										} else {
 											selectedPICs = selectedPICs.filter((id) => id !== member.User.ID);
@@ -551,9 +614,15 @@
 				<button
 					type="submit"
 					disabled={loading || !canSubmit}
-					class="h-11 px-6 rounded-lg text-sm font-medium bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 shadow-sm disabled:opacity-50"
+					class="h-11 px-6 rounded-lg text-sm font-medium bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 shadow-sm disabled:opacity-50 cursor-pointer"
 				>
-					{loading ? 'Saving...' : 'Save Changes'}
+					{loading
+						? isEdit
+							? 'Saving...'
+							: 'Creating...'
+						: isEdit
+							? 'Save Changes'
+							: 'Create Monitor'}
 				</button>
 			</Dialog.Footer>
 		</form>

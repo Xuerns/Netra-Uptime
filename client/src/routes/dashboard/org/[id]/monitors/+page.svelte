@@ -16,12 +16,10 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { MonitorAPI, type Monitor } from '$lib/api/monitor';
-	import MonitorCard from '$lib/components/monitor/MonitorCard.svelte';
-	import MonitorListRow from '$lib/components/monitor/MonitorListRow.svelte';
+	import MonitorItem from '$lib/components/monitor/MonitorItem.svelte';
 	import MonitorSkeleton from '$lib/components/skeletons/MonitorSkeleton.svelte';
 	import MonitorOverviewStats from '$lib/components/monitor/MonitorOverviewStats.svelte';
-	import AddMonitorModal from '$lib/components/monitor/AddMonitorModal.svelte';
-	import EditMonitorModal from '$lib/components/monitor/EditMonitorModal.svelte';
+	import MonitorModal from '$lib/components/monitor/MonitorModal.svelte';
 	import { wsClient, type MonitorUpdatePayload } from '$lib/utils/ws';
 	import { headerStore } from '$lib/stores/headerStore.svelte';
 	import { toast } from 'svelte-sonner';
@@ -242,7 +240,7 @@
 				</p>
 				<DropdownMenu.Root>
 					<DropdownMenu.Trigger
-						class="inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 px-3.5 py-1.5 rounded-lg font-semibold text-xs transition-colors active:scale-95 cursor-pointer focus:outline-none"
+						class="inline-flex items-center gap-1.5 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 rounded-lg font-medium text-xs cursor-pointer focus:outline-none"
 					>
 						<Plus class="size-3.5 stroke-[2.5]" />
 						<span>Add monitor</span>
@@ -408,8 +406,9 @@
 					<div data-lenis-prevent class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 min-[1400px]:grid-cols-4 2xl:grid-cols-4 gap-4">
 						{#each filtered as monitor (monitor.ID)}
 							<div animate:flip={{ duration: 250 }} class="flex w-full h-full">
-								<MonitorCard
+								<MonitorItem
 									{monitor}
+									viewMode="grid"
 									{openDropdownId}
 									{toggleDropdown}
 									{handleDeleteMonitor}
@@ -440,8 +439,9 @@
 						</div>
 
 						{#each filtered as monitor (monitor.ID)}
-							<MonitorListRow
+							<MonitorItem
 								{monitor}
+								viewMode="list"
 								{openDropdownId}
 								{toggleDropdown}
 								{handleDeleteMonitor}
@@ -456,14 +456,14 @@
 	{/if}
 </div>
 
-<AddMonitorModal
+<MonitorModal
 	bind:isOpen={isAddMonitorOpen}
 	monitorType={selectedMonitorType}
 	{orgId}
 	onSuccess={() => loadMonitors(true)}
 />
 
-<EditMonitorModal
+<MonitorModal
 	bind:isOpen={isEditMonitorOpen}
 	monitor={selectedMonitorToEdit}
 	{orgId}

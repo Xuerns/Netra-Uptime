@@ -6,11 +6,9 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { StatusPageAPI, type StatusPage } from '$lib/api/statuspage';
 	import { MonitorAPI, type Monitor } from '$lib/api/monitor';
-	import StatusPageCard from '$lib/components/statuspage/StatusPageCard.svelte';
-	import StatusPageListRow from '$lib/components/statuspage/StatusPageListRow.svelte';
+	import StatusPageItem from '$lib/components/statuspage/StatusPageItem.svelte';
 	import StatusPageSkeleton from '$lib/components/skeletons/StatusPageSkeleton.svelte';
-	import AddStatusPageModal from '$lib/components/statuspage/AddStatusPageModal.svelte';
-	import EditStatusPageModal from '$lib/components/statuspage/EditStatusPageModal.svelte';
+	import StatusPageModal from '$lib/components/statuspage/StatusPageModal.svelte';
 	import MaintenanceModal from '$lib/components/statuspage/MaintenanceModal.svelte';
 	import ComponentGroupModal from '$lib/components/statuspage/ComponentGroupModal.svelte';
 	import EmbedBadgeModal from '$lib/components/statuspage/EmbedBadgeModal.svelte';
@@ -290,8 +288,9 @@
 			<div class="grid grid-cols-[repeat(auto-fill,minmax(450px,1fr))] gap-6">
 				{#each filtered as sp (sp.ID)}
 					<div animate:flip={{ duration: 250 }} class="flex w-full h-full">
-						<StatusPageCard
+						<StatusPageItem
 							{sp}
+							viewMode="grid"
 							onEdit={openEditModal}
 							onDelete={openDeleteConfirm}
 							onMaintenance={openMaintenanceModal}
@@ -314,8 +313,9 @@
 				</div>
 
 				{#each filtered as sp (sp.ID)}
-					<StatusPageListRow
+					<StatusPageItem
 						{sp}
+						viewMode="list"
 						onEdit={openEditModal}
 						onDelete={openDeleteConfirm}
 						onMaintenance={openMaintenanceModal}
@@ -328,14 +328,14 @@
 	{/if}
 </div>
 
-<AddStatusPageModal
+<StatusPageModal
 	bind:isOpen={isAddModalOpen}
 	{orgId}
 	{monitors}
 	onSuccess={() => loadStatusPages(true)}
 />
 
-<EditStatusPageModal
+<StatusPageModal
 	bind:isOpen={isEditModalOpen}
 	{orgId}
 	{monitors}
