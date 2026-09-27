@@ -23,6 +23,7 @@
 	import { userTimezone } from '$lib/stores/timezone';
 	import { formatDateOnly } from '$lib/utils/datetime';
 	import { parseApiError } from '$lib/utils/parseApiError';
+	import APIKeySkeleton from '$lib/components/skeletons/APIKeySkeleton.svelte';
 
 	const orgId = $derived($page.params.id as string);
 
@@ -171,12 +172,7 @@
 
 	<!-- Content Area -->
 	{#if isLoading}
-		<div
-			class="p-8 text-center text-xs text-muted-foreground/60 bg-white/2 border border-border rounded-lg"
-		>
-			<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3"></div>
-			Loading API keys...
-		</div>
+		<APIKeySkeleton />
 	{:else if fetchError}
 		<div
 			class="p-4 text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg flex items-center gap-2"

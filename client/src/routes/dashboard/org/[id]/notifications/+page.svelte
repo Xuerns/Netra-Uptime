@@ -32,6 +32,7 @@
 	import { userTimezone } from '$lib/stores/timezone';
 	import { formatDateTime } from '$lib/utils/datetime';
 	import { parseApiError, truncateErrorDetail } from '$lib/utils/parseApiError';
+	import NotificationChannelSkeleton from '$lib/components/skeletons/NotificationChannelSkeleton.svelte';
 
 	const orgId = $derived($page.params.id as string);
 
@@ -276,9 +277,7 @@
 	<!-- TAB 1: CHANNELS -->
 	{#if activeSubTab === 'channels'}
 		{#if isLoadingChannels}
-			<div class="flex items-center justify-center h-32">
-				<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-			</div>
+			<NotificationChannelSkeleton variant="channels" />
 		{:else if channelsError}
 			<div
 				class="flex flex-col items-center justify-center gap-3 py-16 border border-border rounded-lg bg-white/3"
@@ -437,9 +436,7 @@
 	<!-- TAB 2: HISTORY LOGS -->
 	{#if activeSubTab === 'history'}
 		{#if isLoadingLogs && logs.length === 0}
-			<div class="flex items-center justify-center h-32">
-				<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-			</div>
+			<NotificationChannelSkeleton variant="history" />
 		{:else if logsError}
 			<div
 				class="flex flex-col items-center justify-center gap-3 py-16 border border-border rounded-lg bg-white/3"
