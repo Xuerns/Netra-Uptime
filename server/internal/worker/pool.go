@@ -79,10 +79,6 @@ func (wp *WorkerPool) runAllSSLDomainChecks() {
 	}
 }
 
-func (wp *WorkerPool) TriggerSingleSSLDomainCheck(monitor *model.Monitor) {
-	go ProcessSSLDomainCheck(wp.db, wp.emailSender, wp.dispatcher, monitor)
-}
-
 func (wp *WorkerPool) QueueJob(job Job) {
 	wp.jobQueue <- job
 }

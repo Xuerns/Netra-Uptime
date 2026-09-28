@@ -6,9 +6,9 @@
 	import {
 		validateEmail,
 		validatePassword,
-		validateConfirmPassword,
-		debounce
+		validateConfirmPassword
 	} from '$lib/utils/validation';
+	import { debounce } from '$lib/helper/utils';
 	import { parseApiError } from '$lib/utils/parseApiError';
 
 	const API_Route = `${env.PUBLIC_API_URL}`;

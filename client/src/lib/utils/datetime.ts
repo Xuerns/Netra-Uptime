@@ -101,15 +101,6 @@ export function formatTimeAgo(dateStr: string | undefined | null): string {
 }
 
 /**
- * Format "last checked" — alias formatTimeAgo dengan fallback 'Never'.
- * Digunakan di monitor cards & list rows.
- */
-export function formatLastChecked(dateStr: string | undefined | null): string {
-	if (!dateStr) return 'Never';
-	return formatTimeAgo(dateStr);
-}
-
-/**
  * Format incident time dengan pola militer: "T-HH:MM:00"
  * Contoh output: "T-02:15:00"
  */

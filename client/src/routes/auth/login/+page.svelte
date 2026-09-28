@@ -2,7 +2,8 @@
 	import Logo from '$lib/assets/Logo.svg';
 	import { ArrowLeft, Eye, EyeOff } from 'lucide-svelte';
 	import { env } from '$env/dynamic/public';
-	import { validateEmail, validatePassword, debounce } from '$lib/utils/validation';
+	import { validateEmail, validatePassword } from '$lib/utils/validation';
+	import { debounce } from '$lib/helper/utils';
 	import { isSelfHosted } from '$lib/utils/appMode';
 	import { parseApiError } from '$lib/utils/parseApiError';
 

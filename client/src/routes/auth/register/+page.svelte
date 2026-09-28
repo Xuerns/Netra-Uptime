@@ -6,9 +6,9 @@
 		validateEmail,
 		validatePassword,
 		validateName,
-		validateConfirmPassword,
-		debounce
+		validateConfirmPassword
 	} from '$lib/utils/validation';
+	import { debounce } from '$lib/helper/utils';
 	import { isSelfHosted } from '$lib/utils/appMode';
 	import { parseApiError } from '$lib/utils/parseApiError';
 

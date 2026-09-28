@@ -6,12 +6,12 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import {
-		debounce,
 		validateMonitorName,
 		validateMonitorTarget,
 		validateMonitorInterval,
 		validateMonitorTimeout
 	} from '$lib/utils/validation';
+	import { debounce } from '$lib/helper/utils';
 	import MonitorTypeGuide from '$lib/components/monitor/MonitorTypeGuide.svelte';
 	import { parseApiError } from '$lib/utils/parseApiError';
 

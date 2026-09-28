@@ -13,12 +13,6 @@ type GetIncidentUpdateResponse struct {
 	CreateAt  time.Time `json:"createAt"`
 }
 
-type JoinIncidentRequest struct {
-	IncidentID string `json:"incident_id"`
-	UserID     string `json:"user_id"`
-	Role       string `json:"role" binding:"required,oneof=lead member viewer"`
-}
-
 type IncidentResponse struct {
 	ID         string             `json:"id"`
 	MonitorID  string             `json:"monitor_id"`

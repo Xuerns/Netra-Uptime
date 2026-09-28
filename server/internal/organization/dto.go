@@ -19,10 +19,6 @@ type InvitationActionRequest struct {
 	Action       string `json:"action" binding:"required,oneof=accept reject"`
 }
 
-type KickMemberRequest struct {
-	MemberID string `json:"member_id" binding:"required"`
-}
-
 type InviteMemberRequest struct {
 	InviteeID string `json:"invitee_id" binding:"required"`
 	Role      string `json:"role" binding:"omitempty,oneof=admin member"`

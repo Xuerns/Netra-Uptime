@@ -76,17 +76,3 @@ export function validateMonitorTimeout(timeout: number): string {
 	if (timeout < 1) return 'Timeout must be at least 1 second';
 	return '';
 }
-
-// Debounce utility
-export function debounce<T extends (...args: any[]) => void>(
-	func: T,
-	wait: number
-): (...args: Parameters<T>) => void {
-	let timeout: ReturnType<typeof setTimeout> | null = null;
-	return function (...args: Parameters<T>) {
-		if (timeout) clearTimeout(timeout);
-		timeout = setTimeout(() => {
-			func(...args);
-		}, wait);
-	};
-}
