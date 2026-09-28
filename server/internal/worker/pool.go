@@ -40,6 +40,7 @@ func NewWorkerPool(db *gorm.DB, numWorkers int, sender email.EmailSender, hub *w
 }
 
 func (wp *WorkerPool) Start() {
+	log.Printf("[WorkerPool] Started %d workers\n", wp.numWorkers)
 	for i := 0; i < wp.numWorkers; i++ {
 		go wp.worker(i)
 	}
@@ -87,7 +88,6 @@ func (wp *WorkerPool) QueueJob(job Job) {
 }
 
 func (wp *WorkerPool) worker(id int) {
-	log.Printf("[Worker %d] Started", id)
 	for job := range wp.jobQueue {
 		wp.procces(&job.Monitor)
 	}
@@ -117,6 +117,9 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) {
 		log.Printf("Failed to fetch monitor for state evaluation: %v\n", err)
 		return
 	}
+
+	prevStatus := dbMonitor.Status
+	prevFailureCount := dbMonitor.FailureCount
 
 	eval := EvaluateRules(&dbMonitor, dbMonitor.AlertRules, statusCode, responseTime, checkErr)
 
@@ -233,8 +236,8 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) {
 
 	if err := wp.db.Save(&dbMonitor).Error; err != nil {
 		log.Printf("Failed to update monitor state in DB: %v\n", err)
-	} else {
-		log.Printf("[Check] %s | Current State: %s (Fail Count: %d)\n", dbMonitor.Name, dbMonitor.Status, dbMonitor.FailureCount)
+	} else if dbMonitor.Status != prevStatus || dbMonitor.FailureCount != prevFailureCount {
+		log.Printf("[Check] %s | State Changed: %s -> %s (Fail Count: %d)\n", dbMonitor.Name, prevStatus, dbMonitor.Status, dbMonitor.FailureCount)
 	}
 
 	if wp.hub != nil {

@@ -148,7 +148,9 @@
 				searchResults = [...searchResults, ...newResults];
 			}
 		} catch (error) {
-			console.error('Failed to search users:', error);
+			if (import.meta.env.DEV) {
+				console.error('Failed to search users:', error);
+			}
 			if (pageNum === 1) searchResults = [];
 		} finally {
 			isSearching = false;

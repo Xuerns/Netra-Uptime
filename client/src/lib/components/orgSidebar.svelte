@@ -32,6 +32,8 @@
 	import UserSettingsModal from '$lib/components/UserSettingsModal.svelte';
 	import { isSelfHosted } from '$lib/utils/appMode';
 	import { activeOrgId } from '$lib/stores/organization';
+	import { toast } from 'svelte-sonner';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	let isSettingsOpen = $state(false);
 
@@ -114,7 +116,7 @@
 				window.location.href = '/auth/login';
 			}
 		} catch (err: any) {
-			console.error(err.message);
+			toast.error(parseApiError(err, 'Failed to log out. Please try again.'));
 		}
 	}
 </script>

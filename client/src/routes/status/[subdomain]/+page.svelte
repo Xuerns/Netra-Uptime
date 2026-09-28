@@ -180,7 +180,9 @@
 				}
 			}
 		} catch (err) {
-			console.error('Error refreshing status page:', err);
+			if (import.meta.env.DEV) {
+				console.error('Error refreshing status page:', err);
+			}
 		} finally {
 			isRefreshing = false;
 			secondsUntilRefresh = 60;

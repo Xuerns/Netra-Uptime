@@ -157,7 +157,11 @@
 					.then((res) => {
 						members = res.data ?? [];
 					})
-					.catch((err) => console.error('Failed to load members', err));
+					.catch((err) => {
+						if (import.meta.env.DEV) {
+							console.error('Failed to load members', err);
+						}
+					});
 			}
 		}
 	});

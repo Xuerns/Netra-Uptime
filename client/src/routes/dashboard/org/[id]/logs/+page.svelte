@@ -21,12 +21,14 @@
 	import { AuditAPI, type AuditLogItem } from '$lib/api/audit';
 	import { debounce } from '$lib/helper/utils';
 	import LogsSkeleton from '$lib/components/skeletons/LogsSkeleton.svelte';
+	import { EmptyState, Pagination } from '$lib/components/common';
 	import { userTimezone } from '$lib/stores/timezone';
 	import { formatTimeAgo, formatDateTime } from '$lib/utils/datetime';
 
 	const orgId = $derived($page.params.id);
 
-	let isLoadingLogs = $state(true);
+	let isInitialLoading = $state(true);
+	let isFetching = $state(false);
 	let errorMsg = $state('');
 
 	let logs = $state<AuditLogItem[]>([]);
@@ -148,9 +150,13 @@
 	const fmtTimeAgo = formatTimeAgo;
 	const fmtFullDate = (iso: string) => formatDateTime(iso, tz);
 
-	async function fetchAuditLogs() {
+	async function fetchAuditLogs(showSkeleton = false) {
 		if (!orgId) return;
-		isLoadingLogs = true;
+		if (showSkeleton) {
+			isInitialLoading = true;
+		} else {
+			isFetching = true;
+		}
 		errorMsg = '';
 
 		try {
@@ -184,14 +190,15 @@
 			errorMsg = err.message || 'Failed to load audit logs.';
 			logs = [];
 		} finally {
-			isLoadingLogs = false;
+			isInitialLoading = false;
+			isFetching = false;
 		}
 	}
 
 	const debouncedFetchLogs = debounce(() => {
 		currentPage = 1;
-		fetchAuditLogs();
-	}, 400);
+		fetchAuditLogs(false);
+	}, 350);
 
 	function handleCategoryChange(cat: 'ALL' | 'MONITOR' | 'MEMBER' | 'STATUSPAGE') {
 		selectedCategory = cat;
@@ -206,7 +213,7 @@
 			}
 		}
 
-		fetchAuditLogs();
+		fetchAuditLogs(false);
 	}
 
 	function handleSearchInput() {
@@ -216,13 +223,13 @@
 	function handleActionFilterChange(action: string) {
 		selectedAction = action;
 		currentPage = 1;
-		fetchAuditLogs();
+		fetchAuditLogs(false);
 	}
 
 	function goToPage(p: number) {
 		if (p < 1 || p > totalPages || p === currentPage) return;
 		currentPage = p;
-		fetchAuditLogs();
+		fetchAuditLogs(false);
 	}
 
 	// Sync with layout top bar
@@ -237,13 +244,26 @@
 		});
 	});
 
+	let prevSearch = $state<string | null>(null);
+
+	// Only trigger search fetch when searchQuery actually changes after initial mount
 	$effect(() => {
-		searchQuery = headerStore.searchQuery;
-		debouncedFetchLogs();
+		const current = headerStore.searchQuery;
+		if (prevSearch === null) {
+			// First run on mount: initialize tracking without triggering duplicate fetch
+			prevSearch = current;
+			searchQuery = current;
+			return;
+		}
+		if (current !== prevSearch) {
+			prevSearch = current;
+			searchQuery = current;
+			debouncedFetchLogs();
+		}
 	});
 
 	onMount(() => {
-		fetchAuditLogs();
+		fetchAuditLogs(true);
 	});
 
 
@@ -289,27 +309,21 @@
 	{/if}
 
 	<!-- Logs List / Table -->
-	{#if isLoadingLogs}
+	{#if isInitialLoading}
 		<LogsSkeleton />
 	{:else if logs.length === 0}
-		<div
-			class="w-full border border-border rounded-lg bg-white/3 p-10 md:p-14 text-center flex flex-col items-center justify-center min-h-[260px]"
-		>
-			<div
-				class="size-12 rounded-lg bg-white/5 border border-border flex items-center justify-center text-muted-foreground mb-3 font-semibold"
-			>
-				<ScrollText class="size-6 opacity-60" />
-			</div>
-			<h3 class="text-base font-semibold text-foreground mb-1.5">No Audit Logs Found</h3>
-			<p class="text-sm text-muted-foreground max-w-[440px] w-full leading-relaxed mx-auto">
-				{searchQuery
-					? `No activity matching "${searchQuery}" in this organization.`
-					: 'No recorded activity events for this organization yet.'}
-			</p>
-		</div>
+		<EmptyState
+			icon={ScrollText}
+			title="No Audit Logs Found"
+			description={searchQuery
+				? `No activity matching "${searchQuery}" in this organization.`
+				: 'No recorded activity events for this organization yet.'}
+		/>
 	{:else}
 		<div
-			class="border border-border rounded-lg bg-white/3 backdrop-blur-md overflow-hidden flex flex-col max-h-[calc(100vh-16rem)]"
+			class="border border-border rounded-lg bg-white/3 backdrop-blur-md overflow-hidden flex flex-col max-h-[calc(100vh-16rem)] transition-opacity duration-200 {isFetching
+				? 'opacity-50 pointer-events-none'
+				: 'opacity-100'}"
 		>
 			<!-- Table Column Headers -->
 			<div class="log-table-header sticky top-0 bg-card z-10">
@@ -468,42 +482,14 @@
 		</div>
 
 		<!-- Pagination Footer -->
-		{#if totalPages > 1}
-			<div class="flex items-center justify-between pt-4 border-t border-border mt-4">
-				<p class="text-xs text-muted-foreground font-mono">
-					Showing {(currentPage - 1) * 20 + 1}–{Math.min(currentPage * 20, totalCount)} of {totalCount}
-					events
-				</p>
-
-				<div class="flex items-center gap-1.5">
-					<Button
-						variant="outline"
-						size="sm"
-						disabled={currentPage <= 1}
-						onclick={() => goToPage(currentPage - 1)}
-						class="h-8 px-2.5 gap-1 text-xs border-border bg-card hover:bg-white/5 text-foreground disabled:opacity-30 rounded-lg"
-					>
-						<ChevronLeft class="size-3.5" />
-						Previous
-					</Button>
-
-					<span class="text-xs text-muted-foreground px-2 font-mono">
-						Page {currentPage} of {totalPages}
-					</span>
-
-					<Button
-						variant="outline"
-						size="sm"
-						disabled={currentPage >= totalPages}
-						onclick={() => goToPage(currentPage + 1)}
-						class="h-8 px-2.5 gap-1 text-xs border-border bg-card hover:bg-white/5 text-foreground disabled:opacity-30 rounded-lg"
-					>
-						Next
-						<ChevronRight class="size-3.5" />
-					</Button>
-				</div>
-			</div>
-		{/if}
+		<Pagination
+			bind:currentPage
+			{totalPages}
+			totalItems={totalCount}
+			itemName="events"
+			onPageChange={() => fetchAuditLogs(false)}
+			class="mt-4"
+		/>
 	{/if}
 </div>
 

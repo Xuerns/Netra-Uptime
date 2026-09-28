@@ -17,6 +17,18 @@ export type MonitorUpdatePayload = {
 
 type Subscriber = (msg: WSMessage) => void;
 
+function logDev(...args: unknown[]) {
+	if (import.meta.env.DEV) {
+		console.log(...args);
+	}
+}
+
+function logDevError(...args: unknown[]) {
+	if (import.meta.env.DEV) {
+		console.error(...args);
+	}
+}
+
 class WebSocketClient {
 	private ws: WebSocket | null = null;
 	private subscribers: Set<Subscriber> = new Set();
@@ -33,11 +45,11 @@ class WebSocketClient {
 		const apiBase = env.PUBLIC_API_URL || 'http://localhost:8080/api/v1';
 		const wsUrl = apiBase.replace(/^http/, 'ws') + '/ws';
 
-		console.log('[WebSocket] Connecting to:', wsUrl);
+		logDev('[WebSocket] Connecting to:', wsUrl);
 		this.ws = new WebSocket(wsUrl);
 
 		this.ws.onopen = () => {
-			console.log('[WebSocket] Connected successfully');
+			logDev('[WebSocket] Connected successfully');
 			this.isConnecting = false;
 			this.reconnectAttempts = 0;
 		};
@@ -47,19 +59,19 @@ class WebSocketClient {
 				const data: WSMessage = JSON.parse(event.data);
 				this.notifySubscribers(data);
 			} catch (err) {
-				console.error('[WebSocket] Failed to parse message:', err);
+				logDevError('[WebSocket] Failed to parse message:', err);
 			}
 		};
 
 		this.ws.onclose = () => {
-			console.log('[WebSocket] Connection closed');
+			logDev('[WebSocket] Connection closed');
 			this.isConnecting = false;
 			this.ws = null;
 			this.scheduleReconnect();
 		};
 
 		this.ws.onerror = (err) => {
-			console.error('[WebSocket] Error:', err);
+			logDevError('[WebSocket] Error:', err);
 			this.ws?.close();
 		};
 	}
@@ -86,14 +98,14 @@ class WebSocketClient {
 
 	private scheduleReconnect() {
 		if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-			console.log('[WebSocket] Max reconnect attempts reached');
+			logDev('[WebSocket] Max reconnect attempts reached');
 			return;
 		}
 
 		const delay = Math.min(1000 * 2 ** this.reconnectAttempts, 10000); // Exponential backoff
 		this.reconnectAttempts++;
 
-		console.log(`[WebSocket] Reconnecting in ${delay}ms... (Attempt ${this.reconnectAttempts})`);
+		logDev(`[WebSocket] Reconnecting in ${delay}ms... (Attempt ${this.reconnectAttempts})`);
 		setTimeout(() => this.connect(), delay);
 	}
 

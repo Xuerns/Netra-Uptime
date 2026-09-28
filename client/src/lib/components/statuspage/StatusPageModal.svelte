@@ -78,8 +78,7 @@
 			const spMonitors = res.data ?? [];
 			selectedMonitors = spMonitors.map((spm: any) => spm.MonitorID);
 		} catch (err: any) {
-			error = 'Failed to load assigned monitors.';
-			console.error(err);
+			error = parseApiError(err, 'Failed to load assigned monitors.');
 		}
 	}
 

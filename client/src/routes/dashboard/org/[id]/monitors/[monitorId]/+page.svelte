@@ -273,7 +273,7 @@
 			}
 		} catch (err) {
 			if (reqId === currentReqId) {
-				console.warn('Failed to load daily stats:', err);
+				toast.error(parseApiError(err, 'Failed to load daily stats'));
 				stats = [];
 			}
 		}
@@ -295,7 +295,7 @@
 					const incRes = await IncidentAPI.getAll(orgId);
 					incidents = (incRes.data || []).filter((inc: any) => inc.MonitorID === monitorId);
 				} catch (err) {
-					console.warn('Failed to load incidents:', err);
+					toast.error(parseApiError(err, 'Failed to load incidents'));
 					incidents = [];
 				}
 			} else {

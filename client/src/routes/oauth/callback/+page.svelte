@@ -51,7 +51,9 @@
 			window.location.href = '/dashboard/org';
 		} catch (err: any) {
 			clearTimeout(timeout);
-			console.error(err);
+			if (import.meta.env.DEV) {
+				console.error(err);
+			}
 			if (err.name === 'AbortError') {
 				error = 'Authentication timed out. Please try again.';
 			} else {

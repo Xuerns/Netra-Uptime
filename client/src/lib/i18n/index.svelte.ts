@@ -31,7 +31,9 @@ export function t(keyPath: string): string {
 
 	for (const key of keys) {
 		if (current[key] === undefined) {
-			console.warn(`Translation key not found: ${keyPath}`);
+			if (import.meta.env.DEV) {
+				console.warn(`Translation key not found: ${keyPath}`);
+			}
 			return keyPath; // Fallback to returning the key itself
 		}
 		current = current[key];

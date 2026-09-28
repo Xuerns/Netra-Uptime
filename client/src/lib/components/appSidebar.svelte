@@ -17,6 +17,8 @@
 	import Logo from '$lib/assets/Logo.svg';
 	import { apiFetch } from '$lib/helper/api';
 	import UserSettingsModal from '$lib/components/UserSettingsModal.svelte';
+	import { toast } from 'svelte-sonner';
+	import { parseApiError } from '$lib/utils/parseApiError';
 
 	let isSettingsOpen = $state(false);
 
@@ -56,7 +58,7 @@
 				window.location.href = '/auth/login';
 			}
 		} catch (err: any) {
-			console.error(err.message);
+			toast.error(parseApiError(err, 'Failed to log out. Please try again.'));
 		}
 	}
 </script>

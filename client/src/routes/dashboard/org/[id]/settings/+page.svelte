@@ -89,7 +89,9 @@
 				}
 			}
 		} catch (error) {
-			console.error('Failed to load organization data:', error);
+			if (import.meta.env.DEV) {
+				console.error('Failed to load organization data:', error);
+			}
 			toast.error('Failed to load organization settings');
 		} finally {
 			isLoading = false;

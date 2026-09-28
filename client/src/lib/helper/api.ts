@@ -40,7 +40,9 @@ export async function apiFetch(
 				}
 			}
 		} catch (error) {
-			console.error('Failed to refresh token:', error);
+			if (import.meta.env.DEV) {
+				console.error('Failed to refresh token:', error);
+			}
 			if (typeof window !== 'undefined' && redirectOnFail) {
 				window.location.href = '/auth/login';
 			}

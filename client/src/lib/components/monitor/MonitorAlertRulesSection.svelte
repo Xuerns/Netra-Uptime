@@ -45,7 +45,7 @@
 			const res = await AlertRuleAPI.getByMonitor(orgId, monitorId);
 			rules = res.data || [];
 		} catch (err: any) {
-			console.warn('Failed to load alert rules:', err);
+			errorMsg = parseApiError(err, 'Failed to load alert rules');
 			rules = [];
 		} finally {
 			isLoading = false;

@@ -21,7 +21,9 @@ export const load: LayoutLoad = async ({ fetch }) => {
 			};
 		}
 	} catch (error) {
-		console.error('Gagal mengambil data user:', error);
+		if (import.meta.env.DEV) {
+			console.error('Gagal mengambil data user:', error);
+		}
 	}
 
 	// Nilai default jika gagal memuat (misal belum login)
