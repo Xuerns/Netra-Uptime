@@ -10,7 +10,7 @@
 	import MonitorStatusCodeChart from '$lib/components/monitor/MonitorStatusCodeChart.svelte';
 	import MonitorAlertRulesSection from '$lib/components/monitor/MonitorAlertRulesSection.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import MonitorDetailSkeleton from '$lib/components/skeletons/MonitorDetailSkeleton.svelte';
+	import { DataSkeleton } from '$lib/components/common';
 	import { AlertTriangle, CheckCircle2, Clock, Calendar, Activity, ArrowLeft } from 'lucide-svelte';
 	import { formatDateOnly, formatDateTime } from '$lib/utils/datetime';
 	import { userTimezone } from '$lib/stores/timezone';
@@ -364,7 +364,7 @@
 	</div>
 
 	{#if isLoading}
-		<MonitorDetailSkeleton />
+		<DataSkeleton variant="detail" />
 	{:else if fetchError || !monitor}
 		<div
 			class="border border-border rounded-lg bg-white/3 p-8 text-center space-y-3 max-w-full mx-auto"

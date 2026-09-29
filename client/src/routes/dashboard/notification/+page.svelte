@@ -3,7 +3,7 @@
 	import { OrgAPI } from '$lib/api/organization';
 	import { Check, X, Bell } from 'lucide-svelte';
 	import { invalidateAll } from '$app/navigation';
-	import NotificationSkeleton from '$lib/components/skeletons/NotificationSkeleton.svelte';
+	import { DataSkeleton } from '$lib/components/common';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
 
@@ -131,7 +131,7 @@
 		</h2>
 
 		{#if isLoading}
-			<NotificationSkeleton />
+			<DataSkeleton variant="list" count={3} />
 		{:else if !invitations || invitations.length === 0}
 			<div
 				class="flex flex-col items-center justify-center py-12 px-4 rounded-xl border border-border border-dashed bg-white/1"

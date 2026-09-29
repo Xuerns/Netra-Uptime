@@ -12,7 +12,7 @@
 	import IncidentResponders from '$lib/components/incident/IncidentResponders.svelte';
 	import IncidentTimeline from '$lib/components/incident/IncidentTimeline.svelte';
 	import IncidentUpdateForm from '$lib/components/incident/IncidentUpdateForm.svelte';
-	import IncidentDetailSkeleton from '$lib/components/skeletons/IncidentDetailSkeleton.svelte';
+	import { DataSkeleton } from '$lib/components/common';
 
 	const orgId = $derived($page.params.id as string);
 	const incidentId = $derived($page.params.incidentId as string);
@@ -111,7 +111,7 @@
 	</div>
 
 	{#if isLoading}
-		<IncidentDetailSkeleton />
+		<DataSkeleton variant="detail" />
 	{:else if error}
 		<div class="border border-border rounded-lg bg-white/3 p-8 text-center space-y-3">
 			<AlertTriangle class="size-10 text-primary mx-auto" />

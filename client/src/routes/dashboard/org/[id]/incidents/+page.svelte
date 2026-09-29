@@ -6,8 +6,7 @@
 	import { userTimezone } from '$lib/stores/timezone';
 	import { formatDateTime, formatTimeOnly, formatIncidentTimeAgo } from '$lib/utils/datetime';
 	import { OrgAPI } from '$lib/api/organization';
-	import IncidentSkeleton from '$lib/components/skeletons/IncidentSkeleton.svelte';
-	import { Pagination } from '$lib/components/common';
+	import { Pagination, DataSkeleton } from '$lib/components/common';
 	import {
 		AlertTriangle,
 		Clock,
@@ -134,7 +133,7 @@
 </svelte:head>
 
 {#if isLoading}
-	<IncidentSkeleton />
+	<DataSkeleton variant="list" count={5} />
 {:else if error}
 	<div class="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg">
 		{error}

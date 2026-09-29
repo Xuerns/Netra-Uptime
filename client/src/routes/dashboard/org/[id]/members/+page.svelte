@@ -21,7 +21,7 @@
 	import { headerStore } from '$lib/stores/headerStore.svelte';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
-	import MemberSkeleton from '$lib/components/skeletons/MemberSkeleton.svelte';
+	import { DataSkeleton } from '$lib/components/common';
 
 	interface MemberUser {
 		ID: string;
@@ -235,7 +235,7 @@
 
 	<!-- ── Content Area ──────────────────────────────────────────────────────── -->
 	{#if isLoading}
-		<MemberSkeleton />
+		<DataSkeleton variant="list" count={5} />
 	{:else if fetchError}
 		<div
 			class="flex flex-col items-center justify-center gap-3 py-20 border border-border rounded-lg bg-card"

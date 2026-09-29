@@ -17,7 +17,7 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { MonitorAPI, type Monitor } from '$lib/api/monitor';
 	import MonitorItem from '$lib/components/monitor/MonitorItem.svelte';
-	import MonitorSkeleton from '$lib/components/skeletons/MonitorSkeleton.svelte';
+	import { DataSkeleton } from '$lib/components/common';
 	import MonitorOverviewStats from '$lib/components/monitor/MonitorOverviewStats.svelte';
 	import MonitorModal from '$lib/components/monitor/MonitorModal.svelte';
 	import { wsClient, type MonitorUpdatePayload } from '$lib/utils/ws';
@@ -205,7 +205,7 @@
 <div class="monitors-page text-foreground antialiased space-y-6">
 	<!-- ── Loading Skeleton ──────────────────────────────────────────────────── -->
 	{#if isLoading}
-		<MonitorSkeleton {viewMode} />
+		<DataSkeleton variant="monitor" {viewMode} count={6} />
 
 		<!-- ── Error state ────────────────────────────────────────────────────────── -->
 	{:else if fetchError}

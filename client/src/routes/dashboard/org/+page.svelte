@@ -21,7 +21,7 @@
 	import { OrgAPI } from '$lib/api/organization';
 	import { debounce } from '$lib/helper/utils';
 	import { validateOrgName, validateOrgSlug } from '$lib/utils/validation';
-	import OrganizationSkeleton from '$lib/components/skeletons/OrganizationSkeleton.svelte';
+	import { DataSkeleton } from '$lib/components/common';
 	import { toast } from 'svelte-sonner';
 	import { activeOrgId, organizations } from '$lib/stores/organization';
 	import { parseApiError } from '$lib/utils/parseApiError';
@@ -343,7 +343,7 @@
 
 	<!-- Loading state -->
 	{#if isLoading}
-		<OrganizationSkeleton {viewMode} />
+		<DataSkeleton variant="cards" {viewMode} count={6} />
 
 		<!-- Fetch error state -->
 	{:else if fetchError}

@@ -23,8 +23,7 @@
 	import { userTimezone } from '$lib/stores/timezone';
 	import { formatDateOnly } from '$lib/utils/datetime';
 	import { parseApiError } from '$lib/utils/parseApiError';
-	import APIKeySkeleton from '$lib/components/skeletons/APIKeySkeleton.svelte';
-	import { EmptyState } from '$lib/components/common';
+	import { EmptyState, DataSkeleton } from '$lib/components/common';
 
 	const orgId = $derived($page.params.id as string);
 
@@ -173,7 +172,7 @@
 
 	<!-- Content Area -->
 	{#if isLoading}
-		<APIKeySkeleton />
+		<DataSkeleton variant="list" count={3} />
 	{:else if fetchError}
 		<div
 			class="p-4 text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg flex items-center gap-2"

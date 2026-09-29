@@ -7,7 +7,7 @@
 	import { StatusPageAPI, type StatusPage } from '$lib/api/statuspage';
 	import { MonitorAPI, type Monitor } from '$lib/api/monitor';
 	import StatusPageItem from '$lib/components/statuspage/StatusPageItem.svelte';
-	import StatusPageSkeleton from '$lib/components/skeletons/StatusPageSkeleton.svelte';
+	import { DataSkeleton } from '$lib/components/common';
 	import StatusPageModal from '$lib/components/statuspage/StatusPageModal.svelte';
 	import MaintenanceModal from '$lib/components/statuspage/MaintenanceModal.svelte';
 	import ComponentGroupModal from '$lib/components/statuspage/ComponentGroupModal.svelte';
@@ -221,7 +221,7 @@
 
 	<!-- ── Loading ──────────────────────────────────────────────────────────── -->
 	{#if isLoading}
-		<StatusPageSkeleton {viewMode} />
+		<DataSkeleton variant="cards" {viewMode} count={6} />
 		<!-- ── Error state ──────────────────────────────────────────────────────── -->
 	{:else if fetchError}
 		<div

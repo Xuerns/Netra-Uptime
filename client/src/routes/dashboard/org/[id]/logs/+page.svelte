@@ -20,8 +20,7 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { AuditAPI, type AuditLogItem } from '$lib/api/audit';
 	import { debounce } from '$lib/helper/utils';
-	import LogsSkeleton from '$lib/components/skeletons/LogsSkeleton.svelte';
-	import { EmptyState, Pagination } from '$lib/components/common';
+	import { EmptyState, Pagination, DataSkeleton } from '$lib/components/common';
 	import { userTimezone } from '$lib/stores/timezone';
 	import { formatTimeAgo, formatDateTime } from '$lib/utils/datetime';
 
@@ -310,7 +309,7 @@
 
 	<!-- Logs List / Table -->
 	{#if isInitialLoading}
-		<LogsSkeleton />
+		<DataSkeleton variant="table" count={8} />
 	{:else if logs.length === 0}
 		<EmptyState
 			icon={ScrollText}

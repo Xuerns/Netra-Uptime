@@ -9,7 +9,7 @@
 	import { toast } from 'svelte-sonner';
 	import { Loader2, AlertTriangle, ArrowLeft, ChevronDown, Check } from 'lucide-svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
-	import OrgSettingsSkeleton from '$lib/components/skeletons/OrgSettingsSkeleton.svelte';
+	import { DataSkeleton } from '$lib/components/common';
 	import { OrgAPI } from '$lib/api/organization';
 	import { parseApiError } from '$lib/utils/parseApiError';
 
@@ -189,7 +189,7 @@
 
 <div class="p-6 max-w-4xl mx-auto space-y-6">
 	{#if isLoading}
-		<OrgSettingsSkeleton />
+		<DataSkeleton variant="form" />
 	{:else if !hasAccess}
 		<Card.Root class="bg-card border-red-900/50">
 			<Card.Content class="p-8 text-center space-y-4">
