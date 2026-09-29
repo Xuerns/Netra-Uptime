@@ -22,21 +22,37 @@ type MonitorService interface {
 	DeleteMonitor(orgId, userId, ipAddress, monitorId string) error
 	GetAllMonitorByUserId(userId string) ([]MonitorResponse, error)
 	GetDailyStats(orgId, monitorId string, days int) ([]model.MonitorDailyStat, error)
+	TriggerCheck(orgId, monitorId string) (*RecentCheck, error)
 }
 
 type SubscriptionChecker interface {
 	GetOrganizationPlan(orgId string) (*model.Subscription, error)
 }
 
-type MonitorServiceImpl struct {
-	repo         MonitorRepository
-	rdb          *redis.Client
-	subsChecker  SubscriptionChecker
-	auditService audit.AuditService
+type ImmediateChecker interface {
+	ProcessImmediate(monitorID uuid.UUID) (*model.Check, error)
 }
 
-func NewMonitorService(repo MonitorRepository, rdb *redis.Client, checker SubscriptionChecker, auditService audit.AuditService) MonitorService {
-	return &MonitorServiceImpl{repo: repo, rdb: rdb, subsChecker: checker, auditService: auditService}
+type MonitorServiceImpl struct {
+	repo             MonitorRepository
+	rdb              *redis.Client
+	subsChecker      SubscriptionChecker
+	auditService     audit.AuditService
+	immediateChecker ImmediateChecker
+}
+
+func NewMonitorService(repo MonitorRepository, rdb *redis.Client, checker SubscriptionChecker, auditService audit.AuditService, immediateChecker ...ImmediateChecker) MonitorService {
+	var ic ImmediateChecker
+	if len(immediateChecker) > 0 {
+		ic = immediateChecker[0]
+	}
+	return &MonitorServiceImpl{
+		repo:             repo,
+		rdb:              rdb,
+		subsChecker:      checker,
+		auditService:     auditService,
+		immediateChecker: ic,
+	}
 }
 
 func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *CreateMonitorRequest) (*model.Monitor, error) {
@@ -69,19 +85,11 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 			maxInterval = 10
 		}
 		maxTimeout = cfg.SelfHostedMaxTimeout
-	} else {
-		switch subs.Plan {
-		case "pro":
-			maxMonitors = 10
-			maxPIC = 4
-			maxInterval = 180
-			maxTimeout = 15
-		case "max":
-			maxMonitors = 20
-			maxPIC = 6
-			maxInterval = 60
-			maxTimeout = 20
-		}
+	} else if subs.Plan != "free" && subs.Plan != "hobby" {
+		maxMonitors = 20
+		maxPIC = 6
+		maxInterval = 60
+		maxTimeout = 20
 	}
 
 	totalMonitorHave, err := s.repo.TotalOrganizationMonitor(orgId)
@@ -332,17 +340,10 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 		maxPIC = cfg.SelfHostedMaxPIC
 		maxInterval = cfg.SelfHostedMinInterval
 		maxTimeout = cfg.SelfHostedMaxTimeout
-	} else {
-		switch subs.Plan {
-		case "pro":
-			maxPIC = 4
-			maxInterval = 180
-			maxTimeout = 15
-		case "max":
-			maxPIC = 6
-			maxInterval = 60
-			maxTimeout = 20
-		}
+	} else if subs.Plan != "free" && subs.Plan != "hobby" {
+		maxPIC = 6
+		maxInterval = 60
+		maxTimeout = 20
 	}
 
 	updatedMonitor, err := s.repo.GetById(orgId, monitorId)
@@ -509,4 +510,35 @@ func (s *MonitorServiceImpl) GetDailyStats(orgId, monitorId string, days int) ([
 	}
 
 	return s.repo.GetDailyStats(monitorId, days)
+}
+
+func (s *MonitorServiceImpl) TriggerCheck(orgId, monitorId string) (*RecentCheck, error) {
+	mon, err := s.repo.GetById(orgId, monitorId)
+	if err != nil {
+		return nil, errors.New("Monitor not found or access denied")
+	}
+
+	if s.immediateChecker == nil {
+		return nil, errors.New("Checker engine is not available")
+	}
+
+	check, err := s.immediateChecker.ProcessImmediate(mon.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var errMsg *string
+	if check.ErrorMessage != "" {
+		errMsg = &check.ErrorMessage
+	}
+
+	return &RecentCheck{
+		ID:             check.ID.String(),
+		MonitorID:      check.MonitorID.String(),
+		Status:         check.Status,
+		StatusCode:     check.StatusCode,
+		ResponseTimeMs: check.ResponseTimeMs,
+		ErrorMessage:   errMsg,
+		CheckedAt:      check.CheckedAt.Format(time.RFC3339),
+	}, nil
 }

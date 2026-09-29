@@ -462,6 +462,9 @@ func (m *mockMonService) GetAllMonitorByUserId(userId string) ([]monitor.Monitor
 func (m *mockMonService) GetDailyStats(orgId, monitorId string, days int) ([]model.MonitorDailyStat, error) {
 	return []model.MonitorDailyStat{}, nil
 }
+func (m *mockMonService) TriggerCheck(orgId, monitorId string) (*monitor.RecentCheck, error) {
+	return &monitor.RecentCheck{ID: "chk-1"}, nil
+}
 
 type mockIncService struct{}
 

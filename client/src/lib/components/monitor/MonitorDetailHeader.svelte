@@ -1,16 +1,19 @@
 <script lang="ts">
 	import { type Monitor } from '$lib/api/monitor';
 	import { statusLabel } from '$lib/utils/monitor';
-	import { Globe, ShieldCheck, ExternalLink, Clock } from 'lucide-svelte';
+	import { Globe, ShieldCheck, ExternalLink, Clock, RefreshCw, Pause, Play, Trash2 } from 'lucide-svelte';
+	import Button from '$lib/components/ui/button/button.svelte';
 
 	interface Props {
 		monitor: Monitor;
 		onPauseResume?: () => void;
 		onEdit?: () => void;
 		onDelete?: () => void;
+		onCheckNow?: () => void;
+		isChecking?: boolean;
 	}
 
-	let { monitor, onPauseResume, onEdit, onDelete }: Props = $props();
+	let { monitor, onPauseResume, onEdit, onDelete, onCheckNow, isChecking = false }: Props = $props();
 
 	let statusColor = $derived.by(() => {
 		switch (monitor.Status) {
@@ -48,12 +51,12 @@
 
 <!-- Monitor Header Banner -->
 <div
-	class="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4"
+	class="bg-card border border-border rounded-lg p-5 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4"
 >
 	<div class="flex items-start gap-4">
 		<!-- Monitor Icon Box -->
 		<div
-			class="size-12 rounded-xl bg-white/5 border border-border flex items-center justify-center shrink-0"
+			class="size-12 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0"
 		>
 			<Globe class="size-6 text-primary" />
 		</div>
@@ -151,5 +154,50 @@
 				{/if}
 			</div>
 		</div>
+	</div>
+
+	<!-- Action Controls -->
+	<div class="flex items-center gap-2 shrink-0 flex-wrap">
+		{#if onCheckNow}
+			<Button
+				variant="outline"
+				size="sm"
+				disabled={isChecking || monitor.Status === 'paused'}
+				onclick={onCheckNow}
+				class="gap-1.5"
+			>
+				<RefreshCw class="size-3.5 {isChecking ? 'animate-spin' : ''}" />
+				<span>{isChecking ? 'Checking...' : 'Check Now'}</span>
+			</Button>
+		{/if}
+
+		{#if onPauseResume}
+			<Button
+				variant="outline"
+				size="sm"
+				onclick={onPauseResume}
+				class="gap-1.5"
+			>
+				{#if monitor.Status === 'paused'}
+					<Play class="size-3.5" />
+					<span>Resume</span>
+				{:else}
+					<Pause class="size-3.5" />
+					<span>Pause</span>
+				{/if}
+			</Button>
+		{/if}
+
+		{#if onDelete}
+			<Button
+				variant="outline"
+				size="sm"
+				onclick={onDelete}
+				class="gap-1.5 hover:border-destructive hover:text-destructive"
+			>
+				<Trash2 class="size-3.5" />
+				<span>Delete</span>
+			</Button>
+		{/if}
 	</div>
 </div>

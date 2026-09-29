@@ -321,7 +321,29 @@
 		}
 	});
 
-	// Actions
+	let isTriggeringCheck = $state(false);
+
+	async function handleTriggerCheck() {
+		if (!monitor || isTriggeringCheck) return;
+		isTriggeringCheck = true;
+		try {
+			const res = await MonitorAPI.triggerCheck(orgId, monitor.ID);
+			const checkResult = res?.data;
+			if (checkResult) {
+				const statusText = checkResult.status === 'up' ? 'UP' : 'DOWN';
+				const latency = checkResult.response_time_ms ?? checkResult.ResponseTimeMs ?? 0;
+				toast.success(`Check completed: ${statusText} (${latency}ms)`);
+			} else {
+				toast.success('Check completed successfully');
+			}
+			await loadMonitorData(true);
+		} catch (err: any) {
+			toast.error(parseApiError(err, 'Failed to trigger check'));
+		} finally {
+			isTriggeringCheck = false;
+		}
+	}
+
 	async function handlePauseResume() {
 		if (!monitor) return;
 		try {
@@ -381,7 +403,13 @@
 		</div>
 	{:else}
 		<!-- 1. Header & Actions Banner -->
-		<MonitorDetailHeader {monitor} onPauseResume={handlePauseResume} onDelete={handleDelete} />
+		<MonitorDetailHeader
+			{monitor}
+			onPauseResume={handlePauseResume}
+			onDelete={handleDelete}
+			onCheckNow={handleTriggerCheck}
+			isChecking={isTriggeringCheck}
+		/>
 
 		<!-- 2. Time Range Selector Control Bar -->
 		<div

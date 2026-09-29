@@ -6,6 +6,7 @@ import (
 	"PulseWatch/internal/websocket"
 	"PulseWatch/internal/worker/checker"
 	"PulseWatch/pkg/email"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -89,7 +90,19 @@ func (wp *WorkerPool) worker(id int) {
 	}
 }
 
-func (wp *WorkerPool) procces(monitor *model.Monitor) {
+func (wp *WorkerPool) ProcessImmediate(monitorID uuid.UUID) (*model.Check, error) {
+	var mon model.Monitor
+	if err := wp.db.First(&mon, "id = ?", monitorID).Error; err != nil {
+		return nil, err
+	}
+	check := wp.procces(&mon)
+	if check == nil {
+		return nil, errors.New("failed to execute check")
+	}
+	return check, nil
+}
+
+func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 	timeout := time.Duration(monitor.TimeoutSeconds) * time.Second
 	if timeout <= 0 {
 		timeout = 10 * time.Second
@@ -111,7 +124,7 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) {
 	var dbMonitor model.Monitor
 	if err := wp.db.Preload("AlertRules", "is_active = true").First(&dbMonitor, "id = ?", monitor.ID).Error; err != nil {
 		log.Printf("Failed to fetch monitor for state evaluation: %v\n", err)
-		return
+		return nil
 	}
 
 	prevStatus := dbMonitor.Status
@@ -251,6 +264,8 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) {
 			updatedData,
 		)
 	}
+
+	return &checkResult
 }
 
 func (wp *WorkerPool) sendNotification(monitor *model.Monitor, subject, message string) {

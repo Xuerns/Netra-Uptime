@@ -5,6 +5,7 @@ import (
 	"PulseWatch/internal/apikey"
 	"PulseWatch/internal/audit"
 	"PulseWatch/internal/auth"
+	"PulseWatch/internal/health"
 	"PulseWatch/internal/incident"
 	"PulseWatch/internal/middleware"
 	"PulseWatch/internal/monitor"
@@ -33,6 +34,7 @@ type Handlers struct {
 	APIKeyService       apikey.APIKeyService
 	NotificationHandler *notification.ChannelHandler
 	AlertRuleHandler    *alertrule.Handler
+	HealthHandler       *health.HealthHandler
 }
 
 func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, wsHandler *websocket.WsHandler) {
@@ -40,6 +42,12 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 	static.RegisterStaticRoutes(r)
 
 	api := r.Group("api/v1")
+
+	// System Health Check
+	if h.HealthHandler != nil {
+		r.GET("/healthz", h.HealthHandler.Check)
+		api.GET("/health", h.HealthHandler.Check)
+	}
 
 	authLimiter := middleware.RateLimiter(redis, 5, 1*time.Minute)
 	resetLimiter := middleware.RateLimiter(redis, 3, 15*time.Minute)
@@ -94,6 +102,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 	orgRoutes.GET("/monitors", h.MonitorHandler.GetAllMonitor)
 	orgRoutes.GET("/monitors/:monitorId", h.MonitorHandler.GetById)
 	orgRoutes.GET("/monitors/:monitorId/stats", h.MonitorHandler.GetDailyStats)
+	orgRoutes.POST("/monitors/:monitorId/check", h.MonitorHandler.TriggerCheck)
 	orgRoutes.PUT("/monitors/:monitorId", h.MonitorHandler.UpdateMonitor)
 	orgRoutes.DELETE("/monitors/:monitorId", h.MonitorHandler.DeleteMonitor)
 

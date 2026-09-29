@@ -202,3 +202,25 @@ func (h *MonitorHandler) GetDailyStats(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"status": "success", "data": stats})
 }
+
+func (h *MonitorHandler) TriggerCheck(c *gin.Context) {
+	orgId, exist := c.Get("organizationID")
+	if !exist {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
+		return
+	}
+
+	monitorId := c.Param("monitorId")
+	if monitorId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Monitor ID is required"})
+		return
+	}
+
+	result, err := h.service.TriggerCheck(orgId.(uuid.UUID).String(), monitorId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "data": result})
+}

@@ -10,8 +10,6 @@ const (
 	PlanFree = "free"
 	PlanPro  = "pro"
 	PlanMax  = "max"
-	PricePro = 199000.00
-	PriceMax = 299000.00
 )
 
 type Subscription struct {

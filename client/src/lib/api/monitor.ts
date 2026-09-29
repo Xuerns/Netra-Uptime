@@ -214,5 +214,13 @@ export const MonitorAPI = {
 		);
 		if (!res.ok) throw new Error('Failed to fetch monitor daily stats');
 		return res.json();
+	},
+
+	triggerCheck: async (orgId: string, monitorId: string) => {
+		const res = await apiFetch(`${API_Route}/organization/${orgId}/monitors/${monitorId}/check`, {
+			method: 'POST'
+		});
+		if (!res.ok) throw new Error('Failed to trigger monitor check');
+		return res.json();
 	}
 };

@@ -63,7 +63,7 @@ func main() {
 
 	rdb := cache.NewRedisClient(config)
 
-	handlers := BuildHandler(db, rdb)
+	handlers := BuildHandler(db, rdb, wp, config)
 	router.SetupRouter(r, db, rdb, handlers, wsHandler)
 
 	r.Run()

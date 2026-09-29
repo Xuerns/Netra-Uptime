@@ -1,10 +1,12 @@
 package main
 
 import (
+	"PulseWatch/config"
 	"PulseWatch/internal/alertrule"
 	"PulseWatch/internal/apikey"
 	"PulseWatch/internal/audit"
 	"PulseWatch/internal/auth"
+	"PulseWatch/internal/health"
 	"PulseWatch/internal/incident"
 	"PulseWatch/internal/monitor"
 	"PulseWatch/internal/notification"
@@ -12,12 +14,13 @@ import (
 	"PulseWatch/internal/publicapi"
 	"PulseWatch/internal/router"
 	"PulseWatch/internal/statuspage"
+	"PulseWatch/internal/worker"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
-func BuildHandler(db *gorm.DB, rdb *redis.Client) router.Handlers {
+func BuildHandler(db *gorm.DB, rdb *redis.Client, wp *worker.WorkerPool, cfg *config.Config) router.Handlers {
 	authRepo := auth.NewAuthRepository(db)
 	authService := auth.NewAuthService(authRepo, rdb)
 	authHandler := auth.NewAuthHandler(authService)
@@ -31,7 +34,7 @@ func BuildHandler(db *gorm.DB, rdb *redis.Client) router.Handlers {
 	organizationHandler := organization.NewOrganizationHandler(organizationService)
 
 	monitorRepo := monitor.NewMonitorRepository(db)
-	monitorServise := monitor.NewMonitorService(monitorRepo, rdb, organizationService, auditService)
+	monitorServise := monitor.NewMonitorService(monitorRepo, rdb, organizationService, auditService, wp)
 	monitorHandler := monitor.NewMonitorHandler(monitorServise)
 
 	incidentRepo := incident.NewMonitorRepository(db)
@@ -56,6 +59,8 @@ func BuildHandler(db *gorm.DB, rdb *redis.Client) router.Handlers {
 	alertRuleService := alertrule.NewService(alertRuleRepo)
 	alertRuleHandler := alertrule.NewHandler(alertRuleService)
 
+	healthHandler := health.NewHealthHandler(db, rdb, cfg)
+
 	return router.Handlers{
 		AuthHandler:         authHandler,
 		OrganizationHandler: organizationHandler,
@@ -68,5 +73,6 @@ func BuildHandler(db *gorm.DB, rdb *redis.Client) router.Handlers {
 		APIKeyService:       apiKeyService,
 		NotificationHandler: notificationHandler,
 		AlertRuleHandler:    alertRuleHandler,
+		HealthHandler:       healthHandler,
 	}
 }
