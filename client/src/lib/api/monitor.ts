@@ -12,6 +12,7 @@ export interface CreateMonitorRequest {
 	expectation_status_code?: number;
 	criticality: 'extreme' | 'high' | 'medium' | 'low';
 	MonitorPICs?: string[];
+	assignees?: string[];
 	enable_ssl_domain_check?: boolean;
 }
 
@@ -24,6 +25,7 @@ export interface UpdateMonitorRequest {
 	is_active?: boolean;
 	criticality?: 'extreme' | 'high' | 'medium' | 'low';
 	MonitorPICs?: string[];
+	assignees?: string[];
 	enable_ssl_domain_check?: boolean;
 }
 
@@ -84,11 +86,15 @@ export interface Monitor {
 	DomainStatus?: 'valid' | 'warning' | 'expired' | 'error';
 	DomainError?: string;
 	MonitorPICs?: { UserID: string }[];
+	Assignees?: { UserID: string }[];
 	recent_checks?: RecentCheck[];
 }
 
 function mapMonitor(m: any): Monitor {
 	if (!m) return m;
+	const assignees = (m.assignees || m.monitor_pics || m.MonitorPICs || []).map((pic: any) => ({
+		UserID: pic.user_id ?? pic.UserID ?? pic.id
+	}));
 	return {
 		ID: m.id ?? m.ID,
 		Name: m.name ?? m.Name,
@@ -124,9 +130,8 @@ function mapMonitor(m: any): Monitor {
 		DomainDaysLeft: m.domain_days_left ?? m.DomainDaysLeft,
 		DomainStatus: m.domain_status ?? m.DomainStatus,
 		DomainError: m.domain_error ?? m.DomainError,
-		MonitorPICs: (m.monitor_pics || m.MonitorPICs || []).map((pic: any) => ({
-			UserID: pic.user_id ?? pic.UserID ?? pic.id
-		})),
+		MonitorPICs: assignees,
+		Assignees: assignees,
 		recent_checks: (m.recent_checks || []).map((c: any) => ({
 			ID: c.id ?? c.ID,
 			MonitorID: c.monitor_id ?? c.MonitorID,

@@ -27,7 +27,7 @@ const ACRONYMS: Record<string, string> = {
 export function humanizeField(field: string): string {
 	if (!field) return 'Field';
 
-	if (field === 'MonitorPICs') return 'Monitor PICs';
+	if (field === 'MonitorPICs' || field === 'assignees') return 'Assignees';
 
 	const cleaned = field.replace(/[-_]/g, ' ');
 	const words = cleaned

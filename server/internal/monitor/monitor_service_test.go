@@ -315,11 +315,31 @@ func TestCreate_ExceedsPICLimit(t *testing.T) {
 		Target:          "https://api.example.com",
 		IntervalSeconds: 300,
 		TimeoutSeconds:  10,
-		MonitorPICs:     []string{uuid.New().String(), uuid.New().String(), uuid.New().String()}, // 3 PICs > 2 max
+		Assignees:       []string{uuid.New().String(), uuid.New().String(), uuid.New().String(), uuid.New().String(), uuid.New().String(), uuid.New().String()}, // 6 Assignees > 5 max
 	})
 
 	if err == nil {
-		t.Fatal("expected error for exceeding PIC limit, got nil")
+		t.Fatal("expected error for exceeding Assignee limit, got nil")
+	}
+}
+
+func TestCreate_ZeroAssignees_Success(t *testing.T) {
+	rdb, cleanup := newMockRedisClient(t)
+	defer cleanup()
+
+	svc := NewMonitorService(&mockMonitorRepo{}, rdb, &mockSubsChecker{plan: "hobby"}, nil)
+
+	_, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
+		Name:            "My API",
+		Type:            "http",
+		Target:          "https://api.example.com",
+		IntervalSeconds: 300,
+		TimeoutSeconds:  10,
+		Assignees:       []string{},
+	})
+
+	if err != nil {
+		t.Fatalf("expected nil error for 0 assignees, got: %v", err)
 	}
 }
 

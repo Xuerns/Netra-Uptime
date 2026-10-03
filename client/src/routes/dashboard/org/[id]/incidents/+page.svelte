@@ -406,7 +406,7 @@
 										<span>&middot;</span>
 										<span class="flex items-center gap-1">
 											<Users class="size-3 text-primary" />
-											<span>{incident.Assignees.length} PIC</span>
+											<span>{incident.Assignees.length} {incident.Assignees.length === 1 ? 'Assignee' : 'Assignees'}</span>
 										</span>
 									{/if}
 								</div>

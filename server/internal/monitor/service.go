@@ -68,7 +68,7 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 	}
 
 	maxMonitors := 5
-	maxPIC := 2
+	maxAssignees := 5
 	maxInterval := 300
 	maxTimeout := 10
 
@@ -79,7 +79,9 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 		} else {
 			maxMonitors = 999999
 		}
-		maxPIC = cfg.SelfHostedMaxPIC
+		if cfg.SelfHostedMaxPIC > 0 {
+			maxAssignees = cfg.SelfHostedMaxPIC
+		}
 		maxInterval = cfg.SelfHostedMinInterval
 		if maxInterval < 10 {
 			maxInterval = 10
@@ -87,7 +89,7 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 		maxTimeout = cfg.SelfHostedMaxTimeout
 	} else if subs.Plan != "free" && subs.Plan != "hobby" {
 		maxMonitors = 20
-		maxPIC = 6
+		maxAssignees = 10
 		maxInterval = 60
 		maxTimeout = 20
 	}
@@ -101,8 +103,13 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 		return nil, errors.New("You have reach max monitor limit for your plan")
 	}
 
-	if len(req.MonitorPICs) > maxPIC {
-		return nil, errors.New("You have reach max PIC limit for this monitor")
+	assignees := req.Assignees
+	if len(assignees) == 0 && len(req.MonitorPICs) > 0 {
+		assignees = req.MonitorPICs
+	}
+
+	if len(assignees) > maxAssignees {
+		return nil, errors.New("You have reach max assignee limit for this monitor")
 	}
 
 	if req.IntervalSeconds < maxInterval {
@@ -134,20 +141,19 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 		EnableSSLDomainCheck: enableCheck,
 	}
 
-	if len(req.MonitorPICs) > 0 {
-
-		if !s.repo.ValidateUsersInOrg(orgId, req.MonitorPICs) {
-			return nil, errors.New("Some of PIC is not member of this organization")
+	if len(assignees) > 0 {
+		if !s.repo.ValidateUsersInOrg(orgId, assignees) {
+			return nil, errors.New("Some of assignees are not member of this organization")
 		}
 
-		for _, pic := range req.MonitorPICs {
-			parceUUID, err := uuid.Parse(pic)
+		for _, a := range assignees {
+			parsedUUID, err := uuid.Parse(a)
 			if err != nil {
-				return nil, errors.New("invalid PIC UUID format")
+				return nil, errors.New("invalid assignee UUID format")
 			}
 
 			monitor.MonitorPICs = append(monitor.MonitorPICs, model.MonitorPIC{
-				UserID: parceUUID,
+				UserID: parsedUUID,
 			})
 		}
 	}
@@ -219,9 +225,11 @@ func mapMonitorToResponse(m model.Monitor) MonitorResponse {
 	}
 
 	for _, pic := range m.MonitorPICs {
-		resp.MonitorPICs = append(resp.MonitorPICs, MonitorPICInfo{
+		picInfo := MonitorPICInfo{
 			UserID: pic.UserID.String(),
-		})
+		}
+		resp.MonitorPICs = append(resp.MonitorPICs, picInfo)
+		resp.Assignees = append(resp.Assignees, picInfo)
 	}
 
 	if m.CalculatedUptime30D != nil {
@@ -331,17 +339,19 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 		return nil, errors.New("Failed to get organization subscription")
 	}
 
-	maxPIC := 2
+	maxAssignees := 5
 	maxInterval := 300
 	maxTimeout := 10
 
 	cfg := config.Load()
 	if cfg.AppMode == "selfhosted" {
-		maxPIC = cfg.SelfHostedMaxPIC
+		if cfg.SelfHostedMaxPIC > 0 {
+			maxAssignees = cfg.SelfHostedMaxPIC
+		}
 		maxInterval = cfg.SelfHostedMinInterval
 		maxTimeout = cfg.SelfHostedMaxTimeout
 	} else if subs.Plan != "free" && subs.Plan != "hobby" {
-		maxPIC = 6
+		maxAssignees = 10
 		maxInterval = 60
 		maxTimeout = 20
 	}
@@ -402,29 +412,34 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 		return nil, errors.New("Failed to update monitor")
 	}
 
-	if req.MonitorPICs != nil {
-		if len(*req.MonitorPICs) > maxPIC {
-			return nil, errors.New("You have reach max PIC limit for this monitor")
+	assignees := req.Assignees
+	if assignees == nil && req.MonitorPICs != nil {
+		assignees = req.MonitorPICs
+	}
+
+	if assignees != nil {
+		if len(*assignees) > maxAssignees {
+			return nil, errors.New("You have reach max assignee limit for this monitor")
 		}
 
-		if !s.repo.ValidateUsersInOrg(orgId, *req.MonitorPICs) {
-			return nil, errors.New("Some of PIC is not member of this organization")
+		if len(*assignees) > 0 && !s.repo.ValidateUsersInOrg(orgId, *assignees) {
+			return nil, errors.New("Some of assignees are not member of this organization")
 		}
 
 		var picIds []model.MonitorPIC
-		for _, id := range *req.MonitorPICs {
-			parceUUID, err := uuid.Parse(id)
+		for _, id := range *assignees {
+			parsedUUID, err := uuid.Parse(id)
 
 			if err != nil {
-				return nil, errors.New("Some of PIC is invalid")
+				return nil, errors.New("Some of assignee UUID is invalid")
 			}
 			picIds = append(picIds, model.MonitorPIC{
-				UserID: parceUUID,
+				UserID: parsedUUID,
 			})
 		}
 
 		if err := s.repo.ReplaceMonitorPICs(updatedMonitor, picIds); err != nil {
-			return nil, errors.New("Failed to replace PIC")
+			return nil, errors.New("Failed to replace assignees")
 		}
 	}
 

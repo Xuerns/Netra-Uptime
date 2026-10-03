@@ -25,4 +25,3 @@ vite.config.ts.timestamp-*
 # IDE
 .vscode
 .agents
-skills-lock.json

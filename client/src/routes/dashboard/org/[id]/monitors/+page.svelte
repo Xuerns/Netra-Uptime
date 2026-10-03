@@ -130,9 +130,11 @@
 	async function handleTogglePause(m: Monitor) {
 		if (!orgId) return;
 		try {
+			const willResume = m.Status === 'paused';
 			await MonitorAPI.update(orgId, m.ID, {
-				is_active: m.Status === 'paused'
+				is_active: willResume
 			});
+			toast.success(willResume ? 'Monitor resumed' : 'Monitor paused');
 			await loadMonitors(true);
 		} catch (err: any) {
 			toast.error(parseApiError(err, 'Failed to toggle monitor status'));

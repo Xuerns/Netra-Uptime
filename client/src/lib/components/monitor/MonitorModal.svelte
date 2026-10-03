@@ -13,7 +13,9 @@
 	} from '$lib/utils/validation';
 	import { debounce } from '$lib/helper/utils';
 	import MonitorTypeGuide from '$lib/components/monitor/MonitorTypeGuide.svelte';
+	import AssigneeGuide from '$lib/components/monitor/AssigneeGuide.svelte';
 	import { parseApiError } from '$lib/utils/parseApiError';
+	import { toast } from 'svelte-sonner';
 
 	let {
 		isOpen = $bindable(false),
@@ -49,7 +51,7 @@
 	let shake = $state({ name: false, target: false, intervalSeconds: false, timeoutSeconds: false });
 
 	let members = $state<any[]>([]);
-	let selectedPICs = $state<string[]>([]);
+	let selectedAssignees = $state<string[]>([]);
 
 	const handleNameValidation = debounce((val: string) => {
 		const err = validateMonitorName(val);
@@ -104,8 +106,7 @@
 			!fieldErrors.name &&
 			!fieldErrors.target &&
 			!fieldErrors.intervalSeconds &&
-			!fieldErrors.timeoutSeconds &&
-			selectedPICs.length > 0
+			!fieldErrors.timeoutSeconds
 	);
 
 	// Sync form state whenever dialog opens or monitor prop changes
@@ -131,9 +132,14 @@
 						? (monitor as any).EnableSSLDomainCheck
 						: true;
 
-				const rawPics = (monitor as any).MonitorPICs || (monitor as any).monitor_pics || [];
-				selectedPICs = Array.isArray(rawPics)
-					? rawPics
+				const rawAssignees =
+					(monitor as any).Assignees ||
+					(monitor as any).assignees ||
+					(monitor as any).MonitorPICs ||
+					(monitor as any).monitor_pics ||
+					[];
+				selectedAssignees = Array.isArray(rawAssignees)
+					? rawAssignees
 							.map((pic: any) =>
 								typeof pic === 'string' ? pic : pic?.UserID || pic?.user_id || pic?.id
 							)
@@ -149,7 +155,7 @@
 				isActive = true;
 				criticality = 'medium';
 				enableSSLDomainCheck = true;
-				selectedPICs = [];
+				selectedAssignees = [];
 			}
 
 			if (orgId) {
@@ -183,9 +189,11 @@
 						effectiveType === 'http' ? parseInt(expectedStatusCodeStr) : undefined,
 					is_active: isActive,
 					criticality,
-					MonitorPICs: selectedPICs,
+					assignees: selectedAssignees,
+					MonitorPICs: selectedAssignees,
 					enable_ssl_domain_check: enableSSLDomainCheck
 				});
+				toast.success('Monitor updated successfully');
 			} else {
 				if (!effectiveType) throw new Error('Monitor type is required');
 				await MonitorAPI.create(orgId, {
@@ -197,15 +205,18 @@
 					expectation_status_code:
 						effectiveType === 'http' ? parseInt(expectedStatusCodeStr) : undefined,
 					criticality,
-					MonitorPICs: selectedPICs.length > 0 ? selectedPICs : undefined,
+					assignees: selectedAssignees,
+					MonitorPICs: selectedAssignees,
 					enable_ssl_domain_check: enableSSLDomainCheck
 				});
+				toast.success('Monitor created successfully');
 			}
 
 			onSuccess();
 			isOpen = false;
 		} catch (err: any) {
 			error = parseApiError(err, isEdit ? 'Failed to update monitor' : 'Failed to create monitor');
+			toast.error(error);
 		} finally {
 			loading = false;
 		}
@@ -504,13 +515,16 @@
 					</div>
 				</div>
 
-				<!-- Right Column: PIC Settings -->
+				<!-- Right Column: Assignees Settings -->
 				<div class="space-y-3 flex flex-col h-full">
 					<div class="flex items-center justify-between">
-						<Label class="text-sm font-medium text-foreground">
-							Person in Charge (PIC) <span class="text-destructive font-bold">*</span>
-						</Label>
-						<span class="text-xs text-foreground/40">Select 1-2 PICs</span>
+						<div class="flex items-center gap-1.5">
+							<Label class="text-sm font-medium text-foreground">
+								Assignees
+							</Label>
+							<AssigneeGuide />
+						</div>
+						<span class="text-xs text-foreground/40 font-mono">{selectedAssignees.length}/5 selected</span>
 					</div>
 
 					<div
@@ -518,8 +532,8 @@
 						class="flex-1 min-h-[250px] overflow-y-auto bg-background border border-border rounded-lg p-2 space-y-1"
 					>
 						{#each members as member}
-							{@const isSelected = selectedPICs.includes(member.User.ID)}
-							{@const isDisabled = !isSelected && selectedPICs.length >= 2}
+							{@const isSelected = selectedAssignees.includes(member.User.ID)}
+							{@const isDisabled = !isSelected && selectedAssignees.length >= 5}
 
 							<label
 								class="flex items-center justify-between p-2 hover:bg-white/5 rounded-md cursor-pointer transition-colors {isDisabled
@@ -555,13 +569,13 @@
 									disabled={isDisabled}
 									onchange={(e) => {
 										if (e.currentTarget.checked) {
-											if (selectedPICs.length < 2) {
-												selectedPICs = [...selectedPICs, member.User.ID];
+											if (selectedAssignees.length < 5) {
+												selectedAssignees = [...selectedAssignees, member.User.ID];
 											} else {
 												e.currentTarget.checked = false;
 											}
 										} else {
-											selectedPICs = selectedPICs.filter((id) => id !== member.User.ID);
+											selectedAssignees = selectedAssignees.filter((id) => id !== member.User.ID);
 										}
 									}}
 								/>
@@ -595,12 +609,10 @@
 						{/each}
 					</div>
 
-					{#if selectedPICs.length === 0}
-						<span class="text-[11px] text-destructive font-medium block"
-							>At least 1 Person in Charge is required.</span
-						>
-					{:else if selectedPICs.length === 2}
-						<span class="text-[11px] text-primary font-medium block">Maximum 2 PICs selected.</span>
+					{#if selectedAssignees.length === 5}
+						<span class="text-[11px] text-primary font-medium block">Maximum 5 assignees selected.</span>
+					{:else if selectedAssignees.length === 0}
+						<span class="text-[11px] text-muted-foreground/60 block">No assignees selected. Team notification channels will be used.</span>
 					{/if}
 				</div>
 			</div>

@@ -275,10 +275,10 @@ func (wp *WorkerPool) sendNotification(monitor *model.Monitor, subject, message 
 
 	monitorID := monitor.ID
 
-	// 1. Collect PIC emails
+	// 1. Collect assignee emails
 	var pics []model.MonitorPIC
 	if err := wp.db.Preload("User").Where("monitor_id = ?", monitorID).Find(&pics).Error; err != nil {
-		log.Printf("[Notification] Failed to fetch PICs for monitor %s: %v\n", monitor.Name, err)
+		log.Printf("[Notification] Failed to fetch assignees for monitor %s: %v\n", monitor.Name, err)
 		return
 	}
 
@@ -289,25 +289,9 @@ func (wp *WorkerPool) sendNotification(monitor *model.Monitor, subject, message 
 		}
 	}
 
-	// 2. Fallback: if no PIC assigned, escalate to org owner + admins
+	// 2. If no assignees assigned or no valid emails found, skip direct email dispatch (assignee is optional)
 	if len(recipients) == 0 {
-		log.Printf("[Notification] No PIC found for monitor %s, escalating to org admins/owners\n", monitor.Name)
-		var members []model.OrganizationMember
-		if err := wp.db.Preload("User").
-			Where("organization_id = ? AND role IN ('owner', 'admin')", monitor.OrganizationID).
-			Find(&members).Error; err != nil {
-			log.Printf("[Notification] Failed to fetch org admins for monitor %s: %v\n", monitor.Name, err)
-			return
-		}
-		for _, m := range members {
-			if m.User.Email != "" {
-				recipients = append(recipients, m.User.Email)
-			}
-		}
-	}
-
-	if len(recipients) == 0 {
-		log.Printf("[Notification] No recipient found for monitor %s, skipping\n", monitor.Name)
+		log.Printf("[Notification] No assignees assigned for monitor %s, skipping direct email\n", monitor.Name)
 		return
 	}
 
@@ -320,7 +304,7 @@ func (wp *WorkerPool) sendNotification(monitor *model.Monitor, subject, message 
 		errDetail := err.Error()
 		wp.db.Create(&model.NotificationLog{
 			MonitorID:   &monitorID,
-			Channel:     "email_pic",
+			Channel:     "email_assignee",
 			Message:     logMsg,
 			Status:      "failed",
 			ErrorDetail: errDetail,
@@ -332,9 +316,10 @@ func (wp *WorkerPool) sendNotification(monitor *model.Monitor, subject, message 
 	log.Printf("[Notification] Email sent successfully for monitor %s to %v\n", monitor.Name, recipients)
 	wp.db.Create(&model.NotificationLog{
 		MonitorID: &monitorID,
-		Channel:   "email_pic",
+		Channel:   "email_assignee",
 		Message:   logMsg,
 		Status:    "sent",
 		SentAt:    time.Now(),
 	})
 }
+

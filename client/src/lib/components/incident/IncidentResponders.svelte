@@ -13,7 +13,7 @@
 	<div class="flex items-center justify-between">
 		<h2 class="text-sm font-semibold text-foreground tracking-tight flex items-center gap-2">
 			<Users class="size-4 text-primary" />
-			<span>Command Responders & PIC</span>
+			<span>Command Responders & Assignees</span>
 		</h2>
 		<span class="text-xs font-mono text-muted-foreground">
 			{assignees.length} responder{assignees.length === 1 ? '' : 's'}
@@ -40,7 +40,7 @@
 								class="size-full object-cover rounded-lg"
 							/>
 						{:else}
-							<span>{(assignee.User?.Name || 'PIC').substring(0, 2).toUpperCase()}</span>
+							<span>{(assignee.User?.Name || 'User').substring(0, 2).toUpperCase()}</span>
 						{/if}
 					</div>
 

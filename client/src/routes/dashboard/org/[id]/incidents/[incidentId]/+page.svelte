@@ -136,7 +136,7 @@
 					<IncidentTimeline {updates} isLoading={isLoadingUpdates} {tz} />
 				</div>
 
-				<!-- Command Responders & PIC (25%) -->
+				<!-- Command Responders & Assignees (25%) -->
 				<div class="lg:col-span-1">
 					<IncidentResponders assignees={incident.Assignees} />
 				</div>
