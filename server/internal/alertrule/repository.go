@@ -13,6 +13,7 @@ type Repository interface {
 	GetByID(orgID, ruleID uuid.UUID) (*model.AlertRule, error)
 	Update(rule *model.AlertRule) error
 	Delete(orgID, ruleID uuid.UUID) error
+	GetMonitorType(orgID, monitorID uuid.UUID) (string, error)
 }
 
 type repositoryImpl struct {
@@ -50,4 +51,13 @@ func (r *repositoryImpl) Update(rule *model.AlertRule) error {
 
 func (r *repositoryImpl) Delete(orgID, ruleID uuid.UUID) error {
 	return r.db.Where("organization_id = ? AND id = ?", orgID, ruleID).Delete(&model.AlertRule{}).Error
+}
+
+func (r *repositoryImpl) GetMonitorType(orgID, monitorID uuid.UUID) (string, error) {
+	var monitor model.Monitor
+	err := r.db.Select("type").Where("organization_id = ? AND id = ?", orgID, monitorID).First(&monitor).Error
+	if err != nil {
+		return "", err
+	}
+	return monitor.Type, nil
 }

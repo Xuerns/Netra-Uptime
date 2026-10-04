@@ -14,13 +14,15 @@
 		title?: string;
 		height?: number;
 		color?: string;
+		monitorType?: string;
 	}
 
 	let {
 		data = [],
 		title = 'Response Time (ms)',
 		height = 240,
-		color = '#10B981'
+		color = '#10B981',
+		monitorType = 'http'
 	}: Props = $props();
 
 	let canvasEl = $state<HTMLCanvasElement | null>(null);
@@ -28,7 +30,7 @@
 
 	function getPointColor(status?: string, statusCode?: number): string {
 		if (status === 'no_data') return 'transparent';
-		if (statusCode && statusCode > 0) {
+		if (monitorType === 'http' && statusCode && statusCode > 0) {
 			if (statusCode >= 200 && statusCode < 300) return '#10B981'; // Emerald 2xx
 			if (statusCode >= 300 && statusCode < 400) return '#3B82F6'; // Blue 3xx
 			if (statusCode >= 400 && statusCode < 500) return '#F59E0B'; // Amber 4xx
@@ -265,26 +267,45 @@
 				<span>{title}</span>
 			</h3>
 
-			<!-- Status Code Color Legend -->
-			<div
-				class="hidden md:flex items-center gap-2.5 text-[11px] font-mono text-muted-foreground pl-2 border-l border-border"
-			>
-				<span class="flex items-center gap-1"
-					><span class="size-2 rounded-full bg-emerald-400"></span> 2xx</span
+			<!-- Status Code Color Legend (Only for HTTP) or Status Legend (TCP / Ping) -->
+			{#if monitorType === 'http'}
+				<div
+					class="hidden md:flex items-center gap-2.5 text-[11px] font-mono text-muted-foreground pl-2 border-l border-border"
 				>
-				<span class="flex items-center gap-1"
-					><span class="size-2 rounded-full bg-blue-400"></span> 3xx</span
+					<span class="flex items-center gap-1"
+						><span class="size-2 rounded-full bg-emerald-400"></span> 2xx</span
+					>
+					<span class="flex items-center gap-1"
+						><span class="size-2 rounded-full bg-blue-400"></span> 3xx</span
+					>
+					<span class="flex items-center gap-1"
+						><span class="size-2 rounded-full bg-amber-400"></span> 4xx</span
+					>
+					<span class="flex items-center gap-1"
+						><span class="size-2 rounded-full bg-rose-500"></span> 5xx/Err</span
+					>
+					<span class="flex items-center gap-1.5 pl-1.5 border-l border-border/80"
+						><span class="w-3 border-t border-dashed border-slate-400"></span> No Data</span
+					>
+				</div>
+			{:else}
+				<div
+					class="hidden md:flex items-center gap-2.5 text-[11px] font-mono text-muted-foreground pl-2 border-l border-border"
 				>
-				<span class="flex items-center gap-1"
-					><span class="size-2 rounded-full bg-amber-400"></span> 4xx</span
-				>
-				<span class="flex items-center gap-1"
-					><span class="size-2 rounded-full bg-rose-500"></span> 5xx/Err</span
-				>
-				<span class="flex items-center gap-1.5 pl-1.5 border-l border-border/80"
-					><span class="w-3 border-t border-dashed border-slate-400"></span> No Data</span
-				>
-			</div>
+					<span class="flex items-center gap-1"
+						><span class="size-2 rounded-full bg-emerald-400"></span> Operational</span
+					>
+					<span class="flex items-center gap-1"
+						><span class="size-2 rounded-full bg-amber-400"></span> Degraded</span
+					>
+					<span class="flex items-center gap-1"
+						><span class="size-2 rounded-full bg-rose-500"></span> Down / Timeout</span
+					>
+					<span class="flex items-center gap-1.5 pl-1.5 border-l border-border/80"
+						><span class="w-3 border-t border-dashed border-slate-400"></span> No Data</span
+					>
+				</div>
+			{/if}
 		</div>
 	</div>
 

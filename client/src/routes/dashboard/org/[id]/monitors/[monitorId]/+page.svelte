@@ -452,6 +452,7 @@
 			data={chartPoints}
 			title={`Response Time Latency (${activePeriod.toUpperCase()})`}
 			height={240}
+			monitorType={monitor.Type}
 		/>
 
 		<!-- 5. HTTP Status Code Distribution Chart -->

@@ -71,6 +71,10 @@ func (m *mockAlertRuleRepo) Delete(orgID, ruleID uuid.UUID) error {
 	return nil
 }
 
+func (m *mockAlertRuleRepo) GetMonitorType(orgID, monitorID uuid.UUID) (string, error) {
+	return "http", nil
+}
+
 // Mock Service for handler tests
 type mockAlertRuleService struct {
 	createFunc       func(orgID, monitorID uuid.UUID, req *CreateAlertRuleRequest) (*AlertRuleResponse, error)

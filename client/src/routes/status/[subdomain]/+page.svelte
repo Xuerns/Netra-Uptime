@@ -52,6 +52,7 @@
 	let historyRange = $state<'7d' | '14d' | 'all'>('7d');
 
 	let overallStatus = $derived(statusPage?.overall_status || 'operational');
+	let themeColor = $derived(statusPage?.theme_color || '#10b981');
 
 	const statusConfig = $derived.by(() => {
 		switch (overallStatus) {
@@ -61,9 +62,12 @@
 					description: 'We are currently experiencing severe disruption across our services.',
 					bannerClass:
 						'bg-red-500/10 border-red-500/30 text-red-400 shadow-[0_0_30px_rgba(239,68,68,0.1)]',
+					bannerStyle: '',
 					dotClass: 'bg-red-500 shadow-[0_0_14px_rgba(239,68,68,0.8)]',
+					dotStyle: '',
 					icon: XCircle,
-					accentColor: '#ef4444'
+					accentColor: '#ef4444',
+					isThemed: false
 				};
 			case 'partial_outage':
 				return {
@@ -71,9 +75,12 @@
 					description: 'Some of our services are currently experiencing disruptions.',
 					bannerClass:
 						'bg-orange-500/10 border-orange-500/30 text-orange-400 shadow-[0_0_30px_rgba(249,115,22,0.1)]',
+					bannerStyle: '',
 					dotClass: 'bg-orange-500 shadow-[0_0_14px_rgba(249,115,22,0.8)]',
+					dotStyle: '',
 					icon: AlertTriangle,
-					accentColor: '#f97316'
+					accentColor: '#f97316',
+					isThemed: false
 				};
 			case 'degraded':
 				return {
@@ -81,19 +88,24 @@
 					description: 'We are experiencing elevated latency or minor service issues.',
 					bannerClass:
 						'bg-amber-500/10 border-amber-500/30 text-amber-400 shadow-[0_0_30px_rgba(245,158,11,0.1)]',
+					bannerStyle: '',
 					dotClass: 'bg-amber-500 shadow-[0_0_14px_rgba(245,158,11,0.8)]',
+					dotStyle: '',
 					icon: AlertCircle,
-					accentColor: '#f59e0b'
+					accentColor: '#f59e0b',
+					isThemed: false
 				};
 			default:
 				return {
 					title: 'All Systems Operational',
 					description: 'All services are online and operating within optimal parameters.',
-					bannerClass:
-						'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.1)]',
-					dotClass: 'bg-emerald-500 shadow-[0_0_14px_rgba(16,185,129,0.8)]',
+					bannerClass: '',
+					bannerStyle: `background-color: color-mix(in srgb, ${themeColor} 12%, transparent); border-color: color-mix(in srgb, ${themeColor} 30%, transparent); color: ${themeColor}; box-shadow: 0 0 30px color-mix(in srgb, ${themeColor} 15%, transparent);`,
+					dotClass: '',
+					dotStyle: `background-color: ${themeColor}; box-shadow: 0 0 14px ${themeColor};`,
 					icon: CheckCircle2,
-					accentColor: '#10b981'
+					accentColor: themeColor,
+					isThemed: true
 				};
 		}
 	});
@@ -198,29 +210,37 @@
 			case 'up':
 				return {
 					label: 'Operational',
-					dotClass: 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]',
-					textClass: 'text-emerald-400',
-					sparklineColor: '#10b981'
+					dotClass: '',
+					dotStyle: `background-color: ${themeColor}; box-shadow: 0 0 8px ${themeColor}b3;`,
+					textClass: '',
+					textStyle: `color: ${themeColor};`,
+					sparklineColor: themeColor
 				};
 			case 'degraded':
 				return {
 					label: 'Degraded',
 					dotClass: 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.7)]',
+					dotStyle: '',
 					textClass: 'text-amber-400',
+					textStyle: '',
 					sparklineColor: '#f59e0b'
 				};
 			case 'paused':
 				return {
 					label: 'Paused',
 					dotClass: 'bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.7)]',
+					dotStyle: '',
 					textClass: 'text-blue-400',
+					textStyle: '',
 					sparklineColor: '#60a5fa'
 				};
 			default:
 				return {
 					label: 'Down',
 					dotClass: 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.7)]',
+					dotStyle: '',
 					textClass: 'text-red-400',
+					textStyle: '',
 					sparklineColor: '#ef4444'
 				};
 		}
@@ -232,19 +252,25 @@
 				return {
 					label: 'Disrupted',
 					dotClass: 'bg-red-500',
-					textClass: 'text-red-400'
+					dotStyle: '',
+					textClass: 'text-red-400',
+					textStyle: ''
 				};
 			case 'degraded':
 				return {
 					label: 'Degraded',
 					dotClass: 'bg-amber-500',
-					textClass: 'text-amber-400'
+					dotStyle: '',
+					textClass: 'text-amber-400',
+					textStyle: ''
 				};
 			default:
 				return {
 					label: 'Operational',
-					dotClass: 'bg-emerald-500',
-					textClass: 'text-emerald-400'
+					dotClass: '',
+					dotStyle: `background-color: ${themeColor};`,
+					textClass: '',
+					textStyle: `color: ${themeColor};`
 				};
 		}
 	}
@@ -327,9 +353,7 @@
 
 <div
 	class="min-h-screen relative overflow-x-hidden text-foreground bg-background pattern-bg flex flex-col selection:bg-primary/20"
-	style={statusPage.theme_color
-		? `--primary: ${statusPage.theme_color}; --theme-primary: ${statusPage.theme_color};`
-		: ''}
+	style="--primary: {themeColor}; --theme-primary: {themeColor};"
 >
 	<!-- Top Navigation Bar -->
 	<header
@@ -352,7 +376,8 @@
 							{statusPage.title}
 						</span>
 						<span
-							class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-surface-dim text-muted-foreground border border-outline-variant"
+							style="border-color: color-mix(in srgb, {themeColor} 35%, transparent); color: {themeColor};"
+							class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-surface-dim border"
 						>
 							STATUS
 						</span>
@@ -385,7 +410,10 @@
 					class="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-white/5 border border-border/80 px-2.5 py-1 rounded-full"
 					title={`Auto-refresh in ${secondsUntilRefresh}s`}
 				>
-					<span class="size-2 rounded-full {statusConfig.dotClass} animate-pulse"></span>
+					<span
+						style={statusConfig.isThemed ? statusConfig.dotStyle : ''}
+						class="size-2 rounded-full {statusConfig.dotClass} animate-pulse"
+					></span>
 					<span class="font-mono">{secondsUntilRefresh}s</span>
 				</span>
 			</div>
@@ -396,15 +424,20 @@
 	<main class="flex-1 pb-16 px-4 sm:px-6 max-w-5xl mx-auto w-full space-y-10 mt-6">
 		<!-- 1. Overall Status Banner -->
 		<section
+			style={statusConfig.isThemed ? statusConfig.bannerStyle : ''}
 			class="rounded-xl border p-6 sm:p-7 backdrop-blur-md transition-all duration-300 {statusConfig.bannerClass}"
 		>
 			<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 				<div class="flex items-center gap-4">
 					<div class="relative flex items-center justify-center">
 						<span
+							style={statusConfig.isThemed ? statusConfig.dotStyle : ''}
 							class="size-3.5 rounded-full {statusConfig.dotClass} animate-ping absolute opacity-75"
 						></span>
-						<span class="size-3.5 rounded-full {statusConfig.dotClass} relative"></span>
+						<span
+							style={statusConfig.isThemed ? statusConfig.dotStyle : ''}
+							class="size-3.5 rounded-full {statusConfig.dotClass} relative"
+						></span>
 					</div>
 					<div>
 						<h1
@@ -597,8 +630,8 @@
 									<div
 										class="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 border border-border/60 shrink-0"
 									>
-										<span class="size-2 rounded-full {gBadge.dotClass}"></span>
-										<span class={gBadge.textClass}>{gBadge.label}</span>
+										<span style={gBadge.dotStyle} class="size-2 rounded-full {gBadge.dotClass}"></span>
+										<span style={gBadge.textStyle} class={gBadge.textClass}>{gBadge.label}</span>
 									</div>
 								</button>
 
@@ -686,15 +719,15 @@
 						<div
 							class="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 border border-border/60"
 						>
-							<span class="size-2 rounded-full {statusInfo.dotClass}"></span>
-							<span class={statusInfo.textClass}>{statusInfo.label}</span>
+							<span style={statusInfo.dotStyle} class="size-2 rounded-full {statusInfo.dotClass}"></span>
+							<span style={statusInfo.textStyle} class={statusInfo.textClass}>{statusInfo.label}</span>
 						</div>
 					</div>
 				</div>
 
 				<!-- 90-Day Uptime Bar Component -->
 				<div class="pt-1">
-					<UptimeBar dailyStats={monitor.daily_stats} overallUptime={monitor.uptime_percent} />
+					<UptimeBar dailyStats={monitor.daily_stats} overallUptime={monitor.uptime_percent} accentColor={themeColor} />
 				</div>
 
 				<!-- Latency Sparkline Footer -->
@@ -729,8 +762,9 @@
 				<div class="flex items-center rounded-lg bg-white/5 p-1 border border-border/60 text-xs">
 					<button
 						type="button"
-						class="px-2.5 py-1 rounded-md transition-colors {historyRange === '7d'
-							? 'bg-primary text-primary-foreground font-medium'
+						style={historyRange === '7d' ? `background-color: ${themeColor}; color: #ffffff;` : ''}
+						class="px-2.5 py-1 rounded-md transition-colors font-medium {historyRange === '7d'
+							? 'shadow-sm'
 							: 'text-muted-foreground hover:text-foreground'}"
 						onclick={() => (historyRange = '7d')}
 					>
@@ -738,8 +772,9 @@
 					</button>
 					<button
 						type="button"
-						class="px-2.5 py-1 rounded-md transition-colors {historyRange === '14d'
-							? 'bg-primary text-primary-foreground font-medium'
+						style={historyRange === '14d' ? `background-color: ${themeColor}; color: #ffffff;` : ''}
+						class="px-2.5 py-1 rounded-md transition-colors font-medium {historyRange === '14d'
+							? 'shadow-sm'
 							: 'text-muted-foreground hover:text-foreground'}"
 						onclick={() => (historyRange = '14d')}
 					>
@@ -747,8 +782,9 @@
 					</button>
 					<button
 						type="button"
-						class="px-2.5 py-1 rounded-md transition-colors {historyRange === 'all'
-							? 'bg-primary text-primary-foreground font-medium'
+						style={historyRange === 'all' ? `background-color: ${themeColor}; color: #ffffff;` : ''}
+						class="px-2.5 py-1 rounded-md transition-colors font-medium {historyRange === 'all'
+							? 'shadow-sm'
 							: 'text-muted-foreground hover:text-foreground'}"
 						onclick={() => (historyRange = 'all')}
 					>
@@ -772,8 +808,8 @@
 									<span
 										class="text-[11px] text-muted-foreground flex items-center gap-1.5 font-medium"
 									>
-										<ShieldCheck class="size-3.5 text-emerald-400" />
-										No incidents
+										<ShieldCheck class="size-3.5" style="color: {themeColor};" />
+										<span style="color: {themeColor};">No incidents</span>
 									</span>
 								{:else}
 									<span
@@ -791,7 +827,8 @@
 											<div class="flex flex-wrap items-center justify-between gap-2">
 												<div class="flex items-center gap-2">
 													<span
-														class="inline-flex items-center gap-1 text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+														style="background-color: color-mix(in srgb, {themeColor} 12%, transparent); border-color: color-mix(in srgb, {themeColor} 25%, transparent); color: {themeColor};"
+														class="inline-flex items-center gap-1 text-[11px] font-mono uppercase px-2 py-0.5 rounded border"
 													>
 														<CheckCircle2 class="size-3" />
 														Resolved
@@ -853,9 +890,10 @@
 					class="rounded-xl border border-border/60 bg-white/2 backdrop-blur-md p-6 flex items-center gap-4 text-muted-foreground"
 				>
 					<div
-						class="size-9 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0"
+						style="background-color: color-mix(in srgb, {themeColor} 12%, transparent); border-color: color-mix(in srgb, {themeColor} 25%, transparent);"
+						class="size-9 rounded-full border flex items-center justify-center shrink-0"
 					>
-						<ShieldCheck class="size-5 text-emerald-400" />
+						<ShieldCheck class="size-5" style="color: {themeColor};" />
 					</div>
 					<div>
 						<p class="text-sm font-medium text-foreground">No past incidents on record.</p>

@@ -3,6 +3,7 @@ package alertrule
 import (
 	"PulseWatch/internal/model"
 	"errors"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -24,6 +25,13 @@ func NewService(repo Repository) Service {
 }
 
 func (s *serviceImpl) Create(orgID, monitorID uuid.UUID, req *CreateAlertRuleRequest) (*AlertRuleResponse, error) {
+	if strings.ToLower(req.Metric) == "status_code" {
+		monType, err := s.repo.GetMonitorType(orgID, monitorID)
+		if err == nil && strings.ToLower(monType) != "http" {
+			return nil, errors.New("metric 'status_code' is only valid for HTTP monitors")
+		}
+	}
+
 	isActive := true
 	if req.IsActive != nil {
 		isActive = *req.IsActive
@@ -81,6 +89,12 @@ func (s *serviceImpl) Update(orgID, ruleID uuid.UUID, req *UpdateAlertRuleReques
 		rule.Name = *req.Name
 	}
 	if req.Metric != nil {
+		if strings.ToLower(*req.Metric) == "status_code" && rule.MonitorID != nil {
+			monType, err := s.repo.GetMonitorType(orgID, *rule.MonitorID)
+			if err == nil && strings.ToLower(monType) != "http" {
+				return nil, errors.New("metric 'status_code' is only valid for HTTP monitors")
+			}
+		}
 		rule.Metric = *req.Metric
 	}
 	if req.Operator != nil {

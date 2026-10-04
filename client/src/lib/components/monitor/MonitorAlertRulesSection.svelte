@@ -24,6 +24,8 @@
 
 	let { orgId, monitorId, monitorType = 'http' }: Props = $props();
 
+	let isHttp = $derived(monitorType?.toLowerCase() === 'http');
+
 	let rules = $state<AlertRule[]>([]);
 	let isLoading = $state(true);
 	let isSaving = $state(false);
@@ -37,6 +39,16 @@
 	let targetValue = $state('5xx');
 	let consecutive = $state(2);
 	let severity = $state<'critical' | 'warning'>('critical');
+
+	$effect(() => {
+		if (!isHttp && metric === 'status_code') {
+			metric = 'response_time_ms';
+			operator = '>';
+			targetValue = '1000';
+			ruleName = 'High Latency Warning';
+			severity = 'warning';
+		}
+	});
 
 	async function loadRules() {
 		isLoading = true;
@@ -58,7 +70,7 @@
 		}
 	});
 
-	function applyPreset(preset: '5xx' | 'latency' | 'not200') {
+	function applyPreset(preset: '5xx' | 'latency' | 'not200' | 'timeout') {
 		if (preset === '5xx') {
 			ruleName = '5xx Server Error Alert';
 			metric = 'status_code';
@@ -67,10 +79,10 @@
 			consecutive = 2;
 			severity = 'critical';
 		} else if (preset === 'latency') {
-			ruleName = 'Degraded Response Time';
+			ruleName = 'High Latency Warning';
 			metric = 'response_time_ms';
 			operator = '>';
-			targetValue = '2000';
+			targetValue = isHttp ? '2000' : '1000';
 			consecutive = 3;
 			severity = 'warning';
 		} else if (preset === 'not200') {
@@ -79,6 +91,13 @@
 			operator = '!=';
 			targetValue = '200';
 			consecutive = 2;
+			severity = 'critical';
+		} else if (preset === 'timeout') {
+			ruleName = monitorType?.toLowerCase() === 'ping' ? 'Packet Loss / Timeout' : 'Connection Timeout';
+			metric = 'timeout';
+			operator = '>';
+			targetValue = '5000';
+			consecutive = 3;
 			severity = 'critical';
 		}
 	}
@@ -147,7 +166,7 @@
 		<Button
 			class="bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-3 text-xs gap-1.5 font-medium rounded-lg"
 			onclick={() => {
-				applyPreset('5xx');
+				applyPreset(isHttp ? '5xx' : 'latency');
 				showAddModal = true;
 			}}
 		>
@@ -167,8 +186,13 @@
 			<div class="space-y-1">
 				<p class="text-sm font-medium text-foreground">Using Default Fallback Rule</p>
 				<p class="text-xs text-muted-foreground max-w-[560px] mx-auto leading-relaxed">
-					No custom rules configured. Currently alerting if connection times out or status code
-					doesn't match expected after 3 consecutive failures.
+					{#if isHttp}
+						No custom rules configured. Currently alerting if connection times out or status code
+						doesn't match expected after 3 consecutive failures.
+					{:else}
+						No custom rules configured. Currently alerting if connection times out or target host/port
+						is unreachable after 3 consecutive failures.
+					{/if}
 				</p>
 			</div>
 		</div>
@@ -273,32 +297,53 @@
 			<!-- Quick Presets -->
 			<div class="space-y-1.5">
 				<div class="text-xs text-muted-foreground font-medium">Quick Presets</div>
-				<div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-					<button
-						type="button"
-						class="text-xs p-2 rounded-lg border border-border bg-white/3 hover:bg-white/8 text-left transition-colors"
-						onclick={() => applyPreset('5xx')}
-					>
-						<span class="block font-bold text-rose-400">5xx Error</span>
-						<span class="text-[10px] text-muted-foreground">HTTP 500/502/503</span>
-					</button>
-					<button
-						type="button"
-						class="text-xs p-2 rounded-lg border border-border bg-white/3 hover:bg-white/8 text-left transition-colors"
-						onclick={() => applyPreset('latency')}
-					>
-						<span class="block font-bold text-amber-400">High Latency</span>
-						<span class="text-[10px] text-muted-foreground">> 2000ms warning</span>
-					</button>
-					<button
-						type="button"
-						class="text-xs p-2 rounded-lg border border-border bg-white/3 hover:bg-white/8 text-left transition-colors"
-						onclick={() => applyPreset('not200')}
-					>
-						<span class="block font-bold text-blue-400">Not 200 OK</span>
-						<span class="text-[10px] text-muted-foreground">Status != 200</span>
-					</button>
-				</div>
+				{#if isHttp}
+					<div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+						<button
+							type="button"
+							class="text-xs p-2 rounded-lg border border-border bg-white/3 hover:bg-white/8 text-left transition-colors"
+							onclick={() => applyPreset('5xx')}
+						>
+							<span class="block font-bold text-rose-400">5xx Error</span>
+							<span class="text-[10px] text-muted-foreground">HTTP 500/502/503</span>
+						</button>
+						<button
+							type="button"
+							class="text-xs p-2 rounded-lg border border-border bg-white/3 hover:bg-white/8 text-left transition-colors"
+							onclick={() => applyPreset('latency')}
+						>
+							<span class="block font-bold text-amber-400">High Latency</span>
+							<span class="text-[10px] text-muted-foreground">> 2000ms warning</span>
+						</button>
+						<button
+							type="button"
+							class="text-xs p-2 rounded-lg border border-border bg-white/3 hover:bg-white/8 text-left transition-colors"
+							onclick={() => applyPreset('not200')}
+						>
+							<span class="block font-bold text-blue-400">Not 200 OK</span>
+							<span class="text-[10px] text-muted-foreground">Status != 200</span>
+						</button>
+					</div>
+				{:else}
+					<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+						<button
+							type="button"
+							class="text-xs p-2 rounded-lg border border-border bg-white/3 hover:bg-white/8 text-left transition-colors"
+							onclick={() => applyPreset('latency')}
+						>
+							<span class="block font-bold text-amber-400">High Latency</span>
+							<span class="text-[10px] text-muted-foreground">> 1000ms warning</span>
+						</button>
+						<button
+							type="button"
+							class="text-xs p-2 rounded-lg border border-border bg-white/3 hover:bg-white/8 text-left transition-colors"
+							onclick={() => applyPreset('timeout')}
+						>
+							<span class="block font-bold text-rose-400">Connection Timeout</span>
+							<span class="text-[10px] text-muted-foreground">> 5000ms / Unreachable</span>
+						</button>
+					</div>
+				{/if}
 			</div>
 
 			<form onsubmit={handleCreateRule} class="space-y-4">
@@ -318,7 +363,7 @@
 						type="text"
 						required
 						bind:value={ruleName}
-						placeholder="e.g. 5xx Server Error Alert"
+						placeholder={isHttp ? 'e.g. 5xx Server Error Alert' : 'e.g. High Latency Warning'}
 						class="w-full h-9 rounded-lg bg-secondary border border-border px-3 text-xs text-foreground focus:outline-none focus:border-primary"
 					/>
 				</div>
@@ -330,9 +375,24 @@
 						<select
 							id="metric-select"
 							bind:value={metric}
+							onchange={() => {
+								if (metric === 'status_code') {
+									targetValue = '5xx';
+									operator = '==';
+									ruleName = '5xx Server Error Alert';
+								} else if (metric === 'response_time_ms') {
+									targetValue = isHttp ? '2000' : '1000';
+									operator = '>';
+									ruleName = 'High Latency Warning';
+								} else if (metric === 'timeout') {
+									targetValue = '5000';
+									operator = '>';
+									ruleName = 'Connection Timeout';
+								}
+							}}
 							class="w-full h-9 rounded-lg bg-secondary border border-border px-2 text-xs text-foreground focus:outline-none focus:border-primary"
 						>
-							{#if monitorType === 'http'}
+							{#if isHttp}
 								<option value="status_code">Status Code</option>
 							{/if}
 							<option value="response_time_ms">Latency (ms)</option>
@@ -366,7 +426,7 @@
 							type="text"
 							required
 							bind:value={targetValue}
-							placeholder="e.g. 5xx, 200, 2000"
+							placeholder={metric === 'status_code' ? 'e.g. 5xx, 200' : metric === 'response_time_ms' ? 'e.g. 1000 (ms)' : 'e.g. 5000 (ms)'}
 							class="w-full h-9 rounded-lg bg-secondary border border-border px-3 text-xs text-foreground focus:outline-none focus:border-primary"
 						/>
 					</div>

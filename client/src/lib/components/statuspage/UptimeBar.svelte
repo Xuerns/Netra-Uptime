@@ -1,9 +1,14 @@
 <script lang="ts">
 	import type { PublicUptimeDay } from '$lib/api/statuspage';
 
-	let { dailyStats = [], overallUptime = null } = $props<{
+	let {
+		dailyStats = [],
+		overallUptime = null,
+		accentColor = null
+	} = $props<{
 		dailyStats?: PublicUptimeDay[];
 		overallUptime?: number | null;
+		accentColor?: string | null;
 	}>();
 
 	let hoveredIndex = $state<number | null>(null);
@@ -43,7 +48,9 @@
 			return 'bg-white/10 hover:bg-white/20';
 		}
 		if (day.uptime_percentage >= 99.0) {
-			return 'bg-emerald-500 hover:bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.25)]';
+			return accentColor
+				? ''
+				: 'bg-emerald-500 hover:bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.25)]';
 		}
 		if (day.uptime_percentage >= 95.0) {
 			return 'bg-amber-400 hover:bg-amber-300 shadow-[0_0_6px_rgba(251,191,36,0.3)]';
@@ -102,8 +109,9 @@
 							class="text-[11px] font-mono text-muted-foreground flex items-center gap-1.5 justify-center mt-0.5"
 						>
 							<span
+								style={day.uptime_percentage >= 99.0 && accentColor ? `color: ${accentColor};` : ''}
 								class={day.uptime_percentage >= 99.0
-									? 'text-emerald-400'
+									? (accentColor ? 'font-medium' : 'text-emerald-400')
 									: day.uptime_percentage >= 95.0
 										? 'text-amber-400'
 										: 'text-red-400'}
@@ -132,6 +140,9 @@
 				<button
 					type="button"
 					aria-label={`Uptime for ${day.date}`}
+					style={day.has_data && day.uptime_percentage >= 99.0 && accentColor
+						? `background-color: ${accentColor}; box-shadow: 0 0 6px ${accentColor}40;`
+						: ''}
 					class="flex-1 h-full rounded-[2px] sm:rounded-sm transition-all duration-150 {getBarColor(
 						day
 					)} {hoveredIndex === i ? 'scale-y-125 z-10 brightness-125' : 'opacity-90'}"
@@ -148,7 +159,10 @@
 	>
 		<span>90 days ago</span>
 		{#if overallUptime !== null && overallUptime !== undefined}
-			<span class="text-emerald-400/90 font-medium">
+			<span
+				style={accentColor ? `color: ${accentColor};` : ''}
+				class={accentColor ? 'font-medium' : 'text-emerald-400/90 font-medium'}
+			>
 				{overallUptime.toFixed(2)}% uptime
 			</span>
 		{:else}
