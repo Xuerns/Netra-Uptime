@@ -29,6 +29,10 @@ type ProfileResponse struct {
 	AuthProvider string `json:"auth_provider"`
 }
 
+type UpdateProfileRequest struct {
+	Name string `json:"name" binding:"required,min=3,max=30,nohtml"`
+}
+
 type ForgotPasswordRequest struct {
 	Email string `json:"email" binding:"required,email,max=50"`
 }

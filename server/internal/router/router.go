@@ -74,6 +74,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 	protected.GET("/ws", wsHandler.ServeWS)
 
 	protected.GET("/auth/profile", h.AuthHandler.GetProfile)
+	protected.PUT("/auth/profile", h.AuthHandler.UpdateProfile)
 	protected.POST("/auth/password/change/init", h.AuthHandler.InitPasswordChange)
 	protected.POST("/auth/password/change/verify", h.AuthHandler.VerifyPasswordChange)
 

@@ -137,6 +137,29 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"user": response})
 }
 
+func (h *AuthHandler) UpdateProfile(c *gin.Context) {
+	userId, exist := c.Get("userID")
+
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found"})
+		return
+	}
+
+	var req UpdateProfileRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
+		return
+	}
+
+	response, err := h.service.UpdateProfile(userId.(string), req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Profile updated successfully", "user": response})
+}
+
 func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 	var req ForgotPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

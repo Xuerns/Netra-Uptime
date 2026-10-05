@@ -109,6 +109,9 @@ func CheckSSLExpiry(target string, timeout time.Duration) *SSLCheckResult {
 
 func mapSSLError(err error) string {
 	errStr := err.Error()
+	if strings.Contains(errStr, "no such host") {
+		return "DNS Lookup Failed: Hostname could not be resolved"
+	}
 	if strings.Contains(errStr, "timeout") || strings.Contains(errStr, "i/o timeout") {
 		return "Connection Timeout: Port 443 blocked or unreachable"
 	}

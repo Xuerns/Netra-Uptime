@@ -34,6 +34,7 @@ type AuthService interface {
 	Logout(refreshToken string) error
 	RefreshAccessToken(token string) (string, error)
 	GetProfile(userId string) (*ProfileResponse, error)
+	UpdateProfile(userId string, req UpdateProfileRequest) (*ProfileResponse, error)
 	ForgotPassword(email string) (string, error)
 	ResetPassword(newPassword, resetToken string) error
 	InitPasswordChange(userId string, req InitPasswordChangeRequest) error
@@ -378,6 +379,23 @@ func (s *AuthServiceImpl) GetProfile(userId string) (*ProfileResponse, error) {
 
 	if err != nil {
 		return nil, errors.New("User does't exist")
+	}
+
+	response := ProfileResponse{
+		ID:           user.ID.String(),
+		Name:         user.Name,
+		Email:        user.Email,
+		AvatarURL:    user.AvatarURL,
+		AuthProvider: user.AuthProvider,
+	}
+
+	return &response, nil
+}
+
+func (s *AuthServiceImpl) UpdateProfile(userId string, req UpdateProfileRequest) (*ProfileResponse, error) {
+	user, err := s.repo.UpdateProfile(userId, req.Name)
+	if err != nil {
+		return nil, errors.New("User doesn't exist")
 	}
 
 	response := ProfileResponse{

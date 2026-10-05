@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { type Monitor } from '$lib/api/monitor';
-	import { statusLabel } from '$lib/utils/monitor';
+	import { statusLabel, formatSSLBadge, formatDomainBadge } from '$lib/utils/monitor';
 	import { Globe, ShieldCheck, ExternalLink, Clock, RefreshCw, Pause, Play, Trash2 } from 'lucide-svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 
@@ -14,6 +14,18 @@
 	}
 
 	let { monitor, onPauseResume, onEdit, onDelete, onCheckNow, isChecking = false }: Props = $props();
+
+	let sslBadge = $derived(
+		formatSSLBadge(monitor.SSLStatus, monitor.SSLDaysLeft, monitor.SSLExpiresAt, monitor.SSLError)
+	);
+	let domainBadge = $derived(
+		formatDomainBadge(
+			monitor.DomainStatus,
+			monitor.DomainDaysLeft,
+			monitor.DomainExpiresAt,
+			monitor.DomainError
+		)
+	);
 
 	let statusColor = $derived.by(() => {
 		switch (monitor.Status) {
@@ -100,55 +112,23 @@
 				</div>
 
 				{#if monitor.Type === 'http' && (monitor.EnableSSLDomainCheck ?? true)}
-					{#if monitor.SSLStatus}
+					{#if monitor.SSLStatus && monitor.SSLStatus !== 'none'}
 						<span
-							class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono font-medium text-[11px] {monitor.SSLStatus ===
-							'valid'
-								? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-								: monitor.SSLStatus === 'warning'
-									? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
-									: 'bg-rose-500/10 border-rose-500/20 text-rose-400'}"
-							title={monitor.SSLError ||
-								(monitor.SSLExpiresAt
-									? `SSL Expires: ${new Date(monitor.SSLExpiresAt).toLocaleDateString()}`
-									: '')}
+							class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono font-medium text-[11px] {sslBadge.badgeClass}"
+							title={sslBadge.tooltip}
 						>
 							<ShieldCheck class="size-3 shrink-0" />
-							{#if monitor.SSLStatus === 'valid'}
-								SSL: {monitor.SSLDaysLeft}d
-							{:else if monitor.SSLStatus === 'warning'}
-								SSL: {monitor.SSLDaysLeft}d left
-							{:else if monitor.SSLStatus === 'expired'}
-								SSL: Expired
-							{:else}
-								SSL Error
-							{/if}
+							<span>{sslBadge.label}</span>
 						</span>
 					{/if}
 
-					{#if monitor.DomainStatus}
+					{#if monitor.DomainStatus && monitor.DomainStatus !== 'none'}
 						<span
-							class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono font-medium text-[11px] {monitor.DomainStatus ===
-							'valid'
-								? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-								: monitor.DomainStatus === 'warning'
-									? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
-									: 'bg-rose-500/10 border-rose-500/20 text-rose-400'}"
-							title={monitor.DomainError ||
-								(monitor.DomainExpiresAt
-									? `Domain Expires: ${new Date(monitor.DomainExpiresAt).toLocaleDateString()}`
-									: '')}
+							class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono font-medium text-[11px] {domainBadge.badgeClass}"
+							title={domainBadge.tooltip}
 						>
 							<Globe class="size-3 shrink-0" />
-							{#if monitor.DomainStatus === 'valid'}
-								Domain: {monitor.DomainDaysLeft}d
-							{:else if monitor.DomainStatus === 'warning'}
-								Domain: {monitor.DomainDaysLeft}d left
-							{:else if monitor.DomainStatus === 'expired'}
-								Domain: Expired
-							{:else}
-								Domain Error
-							{/if}
+							<span>{domainBadge.label}</span>
 						</span>
 					{/if}
 				{/if}

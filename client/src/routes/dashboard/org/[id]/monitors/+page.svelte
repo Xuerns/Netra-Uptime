@@ -68,9 +68,8 @@
 			(m) =>
 				m.Status === 'down' ||
 				m.DomainStatus === 'warning' ||
-				m.DomainStatus === 'error' ||
+				m.DomainStatus === 'expired' ||
 				m.SSLStatus === 'warning' ||
-				m.SSLStatus === 'error' ||
 				m.SSLStatus === 'expired'
 		).length
 	});
@@ -110,9 +109,8 @@
 				matchesStatus =
 					m.Status === 'down' ||
 					m.DomainStatus === 'warning' ||
-					m.DomainStatus === 'error' ||
+					m.DomainStatus === 'expired' ||
 					m.SSLStatus === 'warning' ||
-					m.SSLStatus === 'error' ||
 					m.SSLStatus === 'expired';
 			}
 			const q = headerStore.searchQuery.toLowerCase().trim();

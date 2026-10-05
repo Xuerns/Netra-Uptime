@@ -64,13 +64,12 @@
 
 	// ── 4. Certificates & DNS Notices ─────────────────────────────────────────
 	let dnsNoticeCount = $derived(
-		monitors.filter((m) => m.DomainStatus === 'warning' || m.DomainStatus === 'error').length
+		monitors.filter((m) => m.DomainStatus === 'warning' || m.DomainStatus === 'expired').length
 	);
 
 	let sslNoticeCount = $derived(
 		monitors.filter(
 			(m) =>
-				m.SSLStatus === 'error' ||
 				m.SSLStatus === 'expired' ||
 				(m.SSLDaysLeft != null && m.SSLDaysLeft <= 30)
 		).length

@@ -38,6 +38,7 @@ type mockAuthRepo struct {
 	findRefreshTokenByTokenFunc  func(hashedToken string) (*model.RefreshToken, error)
 	createUserWithDefaultOrgFunc func(user *model.User, org *model.Organization, orgMember *model.OrganizationMember, subscription *model.Subscription) error
 	getUserByIdFunc              func(userId string) (*model.User, error)
+	updateProfileFunc            func(userId string, name string) (*model.User, error)
 	createResetTokenFunc         func(token *model.PasswordResetToken) error
 	createNewPasswordFunc        func(userId, password string) error
 	deleteResetTokenFunc         func(userId, token string) (*model.PasswordResetToken, error)
@@ -82,6 +83,13 @@ func (m *mockAuthRepo) CreateUserWithDefaultOrg(user *model.User, org *model.Org
 func (m *mockAuthRepo) GetUserById(userId string) (*model.User, error) {
 	if m.getUserByIdFunc != nil {
 		return m.getUserByIdFunc(userId)
+	}
+	return nil, errors.New("user not found")
+}
+
+func (m *mockAuthRepo) UpdateProfile(userId string, name string) (*model.User, error) {
+	if m.updateProfileFunc != nil {
+		return m.updateProfileFunc(userId, name)
 	}
 	return nil, errors.New("user not found")
 }
@@ -359,6 +367,43 @@ func TestGetProfile_UserNotFound(t *testing.T) {
 	}
 }
 
+func TestUpdateProfile_Success(t *testing.T) {
+	userID := uuid.New()
+	repo := &mockAuthRepo{
+		updateProfileFunc: func(id string, name string) (*model.User, error) {
+			return &model.User{
+				ID:           userID,
+				Name:         name,
+				Email:        "john@example.com",
+				AuthProvider: "local",
+			}, nil
+		},
+	}
+	svc := NewAuthService(repo, nil)
+
+	profile, err := svc.UpdateProfile(userID.String(), UpdateProfileRequest{Name: "Jane Doe"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if profile.Name != "Jane Doe" {
+		t.Errorf("expected Jane Doe, got %s", profile.Name)
+	}
+}
+
+func TestUpdateProfile_UserNotFound(t *testing.T) {
+	repo := &mockAuthRepo{
+		updateProfileFunc: func(id string, name string) (*model.User, error) {
+			return nil, errors.New("not found")
+		},
+	}
+	svc := NewAuthService(repo, nil)
+
+	_, err := svc.UpdateProfile(uuid.New().String(), UpdateProfileRequest{Name: "Jane Doe"})
+	if err == nil {
+		t.Fatal("expected error when user not found, got nil")
+	}
+}
+
 func TestForgotPassword_UserNotFound_NoError(t *testing.T) {
 	// Anti-enumeration test: user not found should return empty URL and no error!
 	repo := &mockAuthRepo{
@@ -610,5 +655,63 @@ func TestAuthHandler_GetProfile_Success(t *testing.T) {
 
 	if w.Code != http.StatusOK {
 		t.Errorf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestAuthHandler_UpdateProfile_Success(t *testing.T) {
+	userID := uuid.New()
+	repo := &mockAuthRepo{
+		updateProfileFunc: func(id string, name string) (*model.User, error) {
+			return &model.User{
+				ID:           userID,
+				Name:         name,
+				Email:        "john@profile.com",
+				AuthProvider: "local",
+			}, nil
+		},
+	}
+	svc := NewAuthService(repo, nil)
+	handler := NewAuthHandler(svc)
+
+	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		c.Set("userID", userID.String())
+		c.Next()
+	})
+	r.PUT("/auth/profile", handler.UpdateProfile)
+
+	body := `{"name":"Updated Name"}`
+	req, _ := http.NewRequest(http.MethodPut, "/auth/profile", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d, body: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestAuthHandler_UpdateProfile_ValidationError(t *testing.T) {
+	userID := uuid.New()
+	repo := &mockAuthRepo{}
+	svc := NewAuthService(repo, nil)
+	handler := NewAuthHandler(svc)
+
+	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		c.Set("userID", userID.String())
+		c.Next()
+	})
+	r.PUT("/auth/profile", handler.UpdateProfile)
+
+	// Name too short (< 3 chars)
+	body := `{"name":"ab"}`
+	req, _ := http.NewRequest(http.MethodPut, "/auth/profile", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for short name, got %d", w.Code)
 	}
 }

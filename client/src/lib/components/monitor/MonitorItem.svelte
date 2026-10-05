@@ -21,7 +21,9 @@
 		formatLastChecked,
 		formatResponseTime,
 		uptimeColor,
-		trimTarget
+		trimTarget,
+		formatSSLBadge,
+		formatDomainBadge
 	} from '$lib/utils/monitor';
 
 	let {
@@ -53,6 +55,18 @@
 	let TypeIcon = $derived(typeIcon(monitor.Type));
 	let sparkColor = $derived(
 		monitor.Status === 'up' ? '#4edea3' : monitor.Status === 'down' ? '#ff6b6b' : '#888899'
+	);
+
+	let sslBadge = $derived(
+		formatSSLBadge(monitor.SSLStatus, monitor.SSLDaysLeft, monitor.SSLExpiresAt, monitor.SSLError)
+	);
+	let domainBadge = $derived(
+		formatDomainBadge(
+			monitor.DomainStatus,
+			monitor.DomainDaysLeft,
+			monitor.DomainExpiresAt,
+			monitor.DomainError
+		)
 	);
 
 	let sparkData = $derived(
@@ -207,39 +221,25 @@
 			</div>
 
 			<!-- Domain & SSL Badges (HTTP only) -->
-			{#if monitor.Type === 'http'}
+			{#if monitor.Type === 'http' && (monitor.EnableSSLDomainCheck ?? true) && ((monitor.SSLStatus && monitor.SSLStatus !== 'none') || (monitor.DomainStatus && monitor.DomainStatus !== 'none'))}
 				<div class="flex items-center gap-2 pt-1 border-t border-white/4 flex-wrap">
 					{#if monitor.SSLStatus && monitor.SSLStatus !== 'none'}
 						<div
-							class="flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded border {monitor.SSLStatus ===
-							'valid'
-								? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-								: monitor.SSLStatus === 'warning'
-									? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
-									: 'bg-rose-500/10 border-rose-500/20 text-rose-400'}"
-							title={monitor.SSLExpiresAt
-								? `SSL Expires: ${new Date(monitor.SSLExpiresAt).toLocaleDateString()}`
-								: ''}
+							class="flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded border {sslBadge.badgeClass}"
+							title={sslBadge.tooltip}
 						>
 							<ShieldCheck class="size-3" />
-							<span>SSL: {monitor.SSLDaysLeft != null ? monitor.SSLDaysLeft + 'd' : monitor.SSLStatus}</span>
+							<span>{sslBadge.label}</span>
 						</div>
 					{/if}
 
 					{#if monitor.DomainStatus && monitor.DomainStatus !== 'none'}
 						<div
-							class="flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded border {monitor.DomainStatus ===
-							'valid'
-								? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-								: monitor.DomainStatus === 'warning'
-									? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
-									: 'bg-rose-500/10 border-rose-500/20 text-rose-400'}"
-							title={monitor.DomainExpiresAt
-								? `Domain Expires: ${new Date(monitor.DomainExpiresAt).toLocaleDateString()}`
-								: ''}
+							class="flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded border {domainBadge.badgeClass}"
+							title={domainBadge.tooltip}
 						>
 							<Globe class="size-3" />
-							<span>Domain: {monitor.DomainDaysLeft != null ? monitor.DomainDaysLeft + 'd' : monitor.DomainStatus}</span>
+							<span>{domainBadge.label}</span>
 						</div>
 					{/if}
 				</div>
@@ -287,16 +287,10 @@
 					</p>
 					{#if monitor.Type === 'http' && monitor.SSLStatus && monitor.SSLStatus !== 'none'}
 						<span
-							class="text-[10px] font-mono px-1.5 py-0.2 rounded border {monitor.SSLStatus === 'valid'
-								? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-								: monitor.SSLStatus === 'warning'
-									? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-									: 'bg-rose-500/10 text-rose-400 border-rose-500/20'}"
-							title={monitor.SSLExpiresAt
-								? `SSL Expires: ${new Date(monitor.SSLExpiresAt).toLocaleDateString()}`
-								: ''}
+							class="text-[10px] font-mono px-1.5 py-0.2 rounded border {sslBadge.badgeClass}"
+							title={sslBadge.tooltip}
 						>
-							SSL:{monitor.SSLDaysLeft != null ? monitor.SSLDaysLeft + 'd' : monitor.SSLStatus}
+							{sslBadge.label}
 						</span>
 					{/if}
 				</div>

@@ -55,8 +55,13 @@
 				throw new Error(error.error || 'Failed to update profile');
 			}
 
-			user.name = formData.name;
-			toast.success('Profile updated successfully');
+			const data = await res.json();
+			if (data.user) {
+				user = data.user;
+			} else {
+				user.name = formData.name;
+			}
+			toast.success(data.message || 'Profile updated successfully');
 		} catch (error: any) {
 			toast.error(parseApiError(error, 'Failed to update profile'));
 		} finally {

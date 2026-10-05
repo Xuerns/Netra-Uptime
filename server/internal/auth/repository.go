@@ -13,6 +13,7 @@ type AuthRepository interface {
 	FindRefreshTokenByToken(hashedToken string) (*model.RefreshToken, error)
 	CreateUserWithDefaultOrg(user *model.User, org *model.Organization, orgMember *model.OrganizationMember, subscription *model.Subscription) error
 	GetUserById(userId string) (*model.User, error)
+	UpdateProfile(userId string, name string) (*model.User, error)
 	CreateResetToken(token *model.PasswordResetToken) error
 	CreateNewPassword(userId, password string) error
 	DeleteResetToken(userId, token string) (*model.PasswordResetToken, error)
@@ -83,6 +84,18 @@ func (r *AuthRepositoryImpl) CreateUserWithDefaultOrg(user *model.User, org *mod
 func (r *AuthRepositoryImpl) GetUserById(userId string) (*model.User, error) {
 	var user model.User
 	if err := r.db.Where("id = ?", userId).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *AuthRepositoryImpl) UpdateProfile(userId string, name string) (*model.User, error) {
+	var user model.User
+	if err := r.db.Where("id = ?", userId).First(&user).Error; err != nil {
+		return nil, err
+	}
+	user.Name = name
+	if err := r.db.Save(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil

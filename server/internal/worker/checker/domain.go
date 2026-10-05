@@ -9,12 +9,14 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"golang.org/x/net/publicsuffix"
 )
 
 type DomainCheckResult struct {
 	ExpiresAt *time.Time
 	DaysLeft  *int
-	Status    string // valid | warning | expired | error
+	Status    string // valid | warning | expired | error | none
 	ErrorMsg  string
 }
 
@@ -23,6 +25,35 @@ type rdapResponse struct {
 		Action string    `json:"eventAction"`
 		Date   time.Time `json:"eventDate"`
 	} `json:"events"`
+}
+
+var sharedPlatformSuffixes = []string{
+	".workers.dev",
+	".vercel.app",
+	".pages.dev",
+	".github.io",
+	".gitlab.io",
+	".netlify.app",
+	".herokuapp.com",
+	".railway.app",
+	".render.com",
+	".onrender.com",
+	".fly.dev",
+	".glitch.me",
+	".supabase.co",
+	".ngrok-free.app",
+	".ngrok.io",
+	".loca.lt",
+}
+
+func isSharedPlatformSubdomain(hostname string) bool {
+	h := strings.ToLower(strings.TrimSpace(hostname))
+	for _, suffix := range sharedPlatformSuffixes {
+		if strings.HasSuffix(h, suffix) && h != strings.TrimPrefix(suffix, ".") {
+			return true
+		}
+	}
+	return false
 }
 
 // CheckDomainExpiry checks domain expiration date via RDAP JSON API with WHOIS TCP fallback
@@ -36,6 +67,14 @@ func CheckDomainExpiry(target string, timeout time.Duration) *DomainCheckResult 
 		return &DomainCheckResult{
 			Status:   "error",
 			ErrorMsg: "Invalid Target: URL format incorrect",
+		}
+	}
+
+	// Subdomains on shared platforms (e.g. *.workers.dev, *.vercel.app) do not have independent domain registrations
+	if isSharedPlatformSubdomain(hostname) {
+		return &DomainCheckResult{
+			Status:   "none",
+			ErrorMsg: "Domain expiration not applicable for shared platform subdomains",
 		}
 	}
 
@@ -207,12 +246,26 @@ func parseWHOISExpiry(whoisOutput string) time.Time {
 }
 
 func getApexDomain(hostname string) string {
-	parts := strings.Split(hostname, ".")
-	if len(parts) < 2 {
-		return hostname
+	h := strings.ToLower(strings.TrimSpace(hostname))
+	if apex, err := publicsuffix.EffectiveTLDPlusOne(h); err == nil && apex != "" {
+		return apex
 	}
-	if len(parts) >= 3 && (parts[len(parts)-2] == "co" || parts[len(parts)-2] == "com" || parts[len(parts)-2] == "org" || parts[len(parts)-2] == "go") {
-		return strings.Join(parts[len(parts)-3:], ".")
+
+	parts := strings.Split(h, ".")
+	if len(parts) < 2 {
+		return h
+	}
+	if len(parts) >= 3 {
+		secondToLast := parts[len(parts)-2]
+		knownSLDs := map[string]bool{
+			"co": true, "com": true, "org": true, "go": true, "gov": true,
+			"edu": true, "ac": true, "sch": true, "mil": true, "net": true,
+			"web": true, "my": true, "biz": true, "or": true, "desa": true,
+			"ponpes": true,
+		}
+		if knownSLDs[secondToLast] {
+			return strings.Join(parts[len(parts)-3:], ".")
+		}
 	}
 	return strings.Join(parts[len(parts)-2:], ".")
 }

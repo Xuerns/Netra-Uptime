@@ -382,6 +382,9 @@ func (m *mockAuthService) RefreshAccessToken(token string) (string, error) { ret
 func (m *mockAuthService) GetProfile(userId string) (*auth.ProfileResponse, error) {
 	return &auth.ProfileResponse{ID: userId}, nil
 }
+func (m *mockAuthService) UpdateProfile(userId string, req auth.UpdateProfileRequest) (*auth.ProfileResponse, error) {
+	return &auth.ProfileResponse{ID: userId, Name: req.Name}, nil
+}
 func (m *mockAuthService) ForgotPassword(email string) (string, error) { return "", nil }
 func (m *mockAuthService) ResetPassword(newPassword, resetToken string) error { return nil }
 func (m *mockAuthService) InitPasswordChange(userId string, req auth.InitPasswordChangeRequest) error {
