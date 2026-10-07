@@ -1,0 +1,34 @@
+{
+  "name": "pulsewatch",
+  "version": "1.0.0",
+  "description": "CLI to install and run PulseWatch with Docker Compose",
+  "main": "bin/index.js",
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xuerns/PulseWatch.git"
+  },
+  "homepage": "https://github.com/xuerns/PulseWatch#readme",
+  "keywords": [
+    "pulsewatch",
+    "uptime",
+    "monitoring",
+    "status-page",
+    "docker",
+    "self-hosted",
+    "cli"
+  ],
+  "author": "xuerns",
+  "license": "AGPL-3.0",
+  "type": "module",
+  "bin": {
+    "pulsewatch": "./bin/index.js"
+  }
+}
