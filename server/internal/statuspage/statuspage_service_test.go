@@ -35,7 +35,7 @@ type mockStatusPageRepo struct {
 	updateFunc                      func(statuspageID, orgID string, statuspage *model.StatusPage) (*model.StatusPage, error)
 	getByIdFunc                     func(statuspageID, orgID string) (*model.StatusPage, error)
 	getBySubdomainFunc              func(subdomain string) (*model.StatusPage, error)
-	getStatusPageMonitorFunc        func(statusPageID string) ([]model.StatusPageMonitor, error)
+	getStatusPageMonitorFunc        func(statusPageID, orgID string) ([]model.StatusPageMonitor, error)
 	getStatusPageByUserIdFunc       func(userId string) ([]model.StatusPage, error)
 	totalOrganizationStatusPageFunc           func(orgId string) (int64, error)
 	getActiveIncidentsByMonitorIDsFunc        func(monitorIDs []string) ([]model.Incident, error)
@@ -88,9 +88,9 @@ func (m *mockStatusPageRepo) GetBySubdomain(subdomain string) (*model.StatusPage
 	}
 	return nil, errors.New("status page not found")
 }
-func (m *mockStatusPageRepo) GetStatusPageMonitor(statusPageID string) ([]model.StatusPageMonitor, error) {
+func (m *mockStatusPageRepo) GetStatusPageMonitor(statusPageID, orgID string) ([]model.StatusPageMonitor, error) {
 	if m.getStatusPageMonitorFunc != nil {
-		return m.getStatusPageMonitorFunc(statusPageID)
+		return m.getStatusPageMonitorFunc(statusPageID, orgID)
 	}
 	return nil, nil
 }
@@ -443,8 +443,12 @@ func TestStatusPageService_GetAllByOrganizationID(t *testing.T) {
 
 func TestStatusPageService_GetStatusPageMonitor(t *testing.T) {
 	spID := uuid.New()
+	orgID := uuid.New()
 	repo := &mockStatusPageRepo{
-		getStatusPageMonitorFunc: func(id string) ([]model.StatusPageMonitor, error) {
+		getStatusPageMonitorFunc: func(id, oId string) ([]model.StatusPageMonitor, error) {
+			if oId != orgID.String() {
+				return nil, errors.New("unauthorized org")
+			}
 			return []model.StatusPageMonitor{
 				{ID: uuid.New(), StatusPageID: spID},
 			}, nil
@@ -453,12 +457,18 @@ func TestStatusPageService_GetStatusPageMonitor(t *testing.T) {
 	checker := &mockStatusPageChecker{}
 	svc := NewStatusPageService(repo, checker, nil, nil)
 
-	monitors, err := svc.GetStatusPageMonitor(spID.String())
+	monitors, err := svc.GetStatusPageMonitor(spID.String(), orgID.String())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if len(monitors) != 1 {
 		t.Fatalf("expected 1 monitor, got %d", len(monitors))
+	}
+
+	// Test IDOR rejection with wrong org
+	_, err = svc.GetStatusPageMonitor(spID.String(), uuid.New().String())
+	if err == nil {
+		t.Fatal("expected error for unauthorized org accessing status page monitors, got nil")
 	}
 }
 

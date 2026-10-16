@@ -18,7 +18,7 @@ func RateLimiter(rdb *redis.Client, limit int, window time.Duration) gin.Handler
 
 		pipe := rdb.Pipeline()
 		incr := pipe.Incr(ctx, key)
-		pipe.Expire(ctx, key, window)
+		pipe.ExpireNX(ctx, key, window)
 
 		_, err := pipe.Exec(ctx)
 		if err != nil {

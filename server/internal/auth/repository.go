@@ -18,6 +18,8 @@ type AuthRepository interface {
 	CreateNewPassword(userId, password string) error
 	DeleteResetToken(userId, token string) (*model.PasswordResetToken, error)
 	GetUserByResetToken(token string) (string, error)
+	RevokeAllRefreshTokensByUserID(userId string) error
+	LimitActiveRefreshTokens(userId string, maxTokens int) error
 }
 
 type AuthRepositoryImpl struct {
@@ -136,4 +138,30 @@ func (r *AuthRepositoryImpl) DeleteResetToken(userId, token string) (*model.Pass
 		return nil, err
 	}
 	return &passwordResetToken, nil
+}
+
+func (r *AuthRepositoryImpl) RevokeAllRefreshTokensByUserID(userId string) error {
+	return r.db.Where("user_id = ?", userId).Delete(&model.RefreshToken{}).Error
+}
+
+func (r *AuthRepositoryImpl) LimitActiveRefreshTokens(userId string, maxTokens int) error {
+	var count int64
+	if err := r.db.Model(&model.RefreshToken{}).Where("user_id = ?", userId).Count(&count).Error; err != nil {
+		return err
+	}
+	if count >= int64(maxTokens) {
+		excess := count - int64(maxTokens) + 1
+		var ids []string
+		if err := r.db.Model(&model.RefreshToken{}).
+			Where("user_id = ?", userId).
+			Order("created_at asc").
+			Limit(int(excess)).
+			Pluck("id", &ids).Error; err != nil {
+			return err
+		}
+		if len(ids) > 0 {
+			return r.db.Where("id IN ?", ids).Delete(&model.RefreshToken{}).Error
+		}
+	}
+	return nil
 }

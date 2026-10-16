@@ -135,9 +135,14 @@ func (h *StatusPageHandler) UpdateStatusPage(c *gin.Context) {
 }
 
 func (h *StatusPageHandler) GetStatusPageMonitor(c *gin.Context) {
+	orgId, exist := c.Get("organizationID")
+	if !exist {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
+		return
+	}
 	statusPageID := c.Param("statusPageId")
 
-	statusPageMonitors, err := h.service.GetStatusPageMonitor(statusPageID)
+	statusPageMonitors, err := h.service.GetStatusPageMonitor(statusPageID, orgId.(string))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return

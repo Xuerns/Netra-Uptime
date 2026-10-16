@@ -13,6 +13,8 @@ import (
 	"PulseWatch/pkg/email"
 	"PulseWatch/pkg/utils"
 	"log"
+	"os"
+	"strings"
 	_ "time/tzdata"
 
 	"github.com/gin-gonic/gin"
@@ -55,11 +57,23 @@ func main() {
 
 	r := gin.Default()
 
+	// Disable untrusted proxies by default to prevent IP spoofing / rate limit bypass (VULN-21)
+	if trustedProxies := os.Getenv("TRUSTED_PROXIES"); trustedProxies != "" {
+		proxies := strings.Split(trustedProxies, ",")
+		for i := range proxies {
+			proxies[i] = strings.TrimSpace(proxies[i])
+		}
+		_ = r.SetTrustedProxies(proxies)
+	} else {
+		_ = r.SetTrustedProxies(nil)
+	}
+
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterValidation("nohtml", utils.NoHTMLValidator)
 	}
 
 	r.Use(middleware.SetupCORS())
+	r.Use(middleware.SecurityHeaders())
 
 	rdb := cache.NewRedisClient(config)
 

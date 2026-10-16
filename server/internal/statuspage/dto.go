@@ -10,7 +10,7 @@ type CreateStatusPageRequest struct {
 	LogoURL     string   `json:"logo_url" binding:"omitempty"`
 	FaviconURL  string   `json:"favicon_url" binding:"omitempty"`
 	ThemeColor  string   `json:"theme_color" binding:"omitempty"`
-	CustomCSS   string   `json:"custom_css" binding:"omitempty"`
+	CustomCSS   string   `json:"custom_css" binding:"omitempty,nohtml,max=10000"`
 	MonitorID   []string `json:"monitor_id" binding:"required,min=1,max=40,dive,uuid"`
 }
 
@@ -22,7 +22,7 @@ type UpdateStatusPageRequest struct {
 	LogoURL     *string   `json:"logo_url" binding:"omitempty"`
 	FaviconURL  *string   `json:"favicon_url" binding:"omitempty"`
 	ThemeColor  *string   `json:"theme_color" binding:"omitempty"`
-	CustomCSS   *string   `json:"custom_css" binding:"omitempty"`
+	CustomCSS   *string   `json:"custom_css" binding:"omitempty,nohtml,max=10000"`
 	MonitorID   *[]string `json:"monitor_id" binding:"omitempty,dive,uuid"`
 }
 

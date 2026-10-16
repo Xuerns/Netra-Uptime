@@ -71,6 +71,8 @@ func APIKeyAuthMiddleware(service apikey.APIKeyService, rdb *redis.Client) gin.H
 		}(key.ID.String(), c.ClientIP())
 
 		c.Set("org_id", key.OrganizationID.String())
+		c.Set("userID", key.CreatedByID.String())
+		c.Set("api_key_id", key.ID.String())
 		c.Set("api_key_permissions", key.Permissions)
 		c.Next()
 	}

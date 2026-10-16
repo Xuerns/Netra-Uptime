@@ -2,6 +2,7 @@ package notification
 
 import (
 	"PulseWatch/internal/model"
+	"PulseWatch/pkg/utils"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -279,6 +280,10 @@ func validateExternalURL(rawURL string) error {
 		if strings.HasPrefix(host, prefix) || host == strings.TrimSuffix(prefix, ".") {
 			return fmt.Errorf("URL points to a private or reserved address (SSRF protection): %s", host)
 		}
+	}
+
+	if err := utils.ValidateTargetHost(host); err != nil {
+		return fmt.Errorf("SSRF protection: %w", err)
 	}
 
 	return nil

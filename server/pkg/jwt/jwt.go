@@ -2,10 +2,13 @@ package jwt
 
 import (
 	"errors"
+	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 type JWTClaims struct {
@@ -14,13 +17,23 @@ type JWTClaims struct {
 }
 
 func getJWTSecret() []byte {
-	return []byte(os.Getenv("JWT_SECRET"))
+	secret := os.Getenv("JWT_SECRET")
+	if len(secret) < 32 {
+		if strings.EqualFold(os.Getenv("APP_ENV"), "production") {
+			log.Fatal("FATAL SECURITY CONFIGURATION: JWT_SECRET must be at least 32 characters long in production")
+		}
+		if len(secret) == 0 {
+			return []byte("pulsewatch-dev-secret-must-be-at-least-32-chars-long!")
+		}
+	}
+	return []byte(secret)
 }
 
 func GenerateToken(userID string, expiryTime time.Duration) (string, error) {
 	claims := JWTClaims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        uuid.NewString(),
 			Issuer:    "pulsewatch",
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiryTime)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

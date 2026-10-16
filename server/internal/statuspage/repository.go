@@ -3,6 +3,7 @@ package statuspage
 import (
 	"PulseWatch/config"
 	"PulseWatch/internal/model"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,7 +18,7 @@ type StatusPageRepository interface {
 	Update(statuspageID, orgID string, statuspage *model.StatusPage) (*model.StatusPage, error)
 	GetById(statuspageID, orgID string) (*model.StatusPage, error)
 	GetBySubdomain(subdomain string) (*model.StatusPage, error)
-	GetStatusPageMonitor(statusPageID string) ([]model.StatusPageMonitor, error)
+	GetStatusPageMonitor(statusPageID, orgID string) ([]model.StatusPageMonitor, error)
 	GetStatusPageByUserId(userId string) ([]model.StatusPage, error)
 	TotalOrganizationStatusPage(orgId string) (int64, error)
 	GetActiveIncidentsByMonitorIDs(monitorIDs []string) ([]model.Incident, error)
@@ -128,7 +129,15 @@ func (r *StatusPageRepositoryImpl) GetById(statuspageID, orgID string) (*model.S
 	return &statuspage, nil
 }
 
-func (r *StatusPageRepositoryImpl) GetStatusPageMonitor(statusPageID string) ([]model.StatusPageMonitor, error) {
+func (r *StatusPageRepositoryImpl) GetStatusPageMonitor(statusPageID, orgID string) ([]model.StatusPageMonitor, error) {
+	var count int64
+	if err := r.db.Model(&model.StatusPage{}).Where("id = ? AND organization_id = ?", statusPageID, orgID).Count(&count).Error; err != nil {
+		return nil, err
+	}
+	if count == 0 {
+		return nil, errors.New("status page not found or unauthorized")
+	}
+
 	var statusPageMonitors []model.StatusPageMonitor
 	if err := r.db.Preload("Monitor").Where("status_page_id = ?", statusPageID).Order("display_order").Find(&statusPageMonitors).Error; err != nil {
 		return nil, err

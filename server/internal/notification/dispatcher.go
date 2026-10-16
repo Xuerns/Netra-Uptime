@@ -4,6 +4,7 @@ import (
 	"PulseWatch/internal/model"
 	"PulseWatch/pkg/apierror"
 	"PulseWatch/pkg/email"
+	"PulseWatch/pkg/utils"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -40,9 +41,7 @@ func NewDispatcher(db *gorm.DB, emailSender email.EmailSender) *Dispatcher {
 	return &Dispatcher{
 		db:          db,
 		emailSender: emailSender,
-		httpClient: &http.Client{
-			Timeout: 20 * time.Second,
-		},
+		httpClient:  utils.NewSafeHTTPClient(20 * time.Second),
 	}
 }
 

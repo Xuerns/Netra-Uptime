@@ -61,6 +61,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 	api.POST("/auth/refresh", authLimiter, h.AuthHandler.RefreshAccessToken)
 	api.POST("/auth/forgotpassword", resetLimiter, h.AuthHandler.ForgotPassword)
 	api.PATCH("/auth/resetpassword", resetLimiter, h.AuthHandler.ResetPassword)
+	api.GET("/auth/oauth/state", authLimiter, h.AuthHandler.GetOAuthState)
 	api.POST("/auth", authLimiter, h.AuthHandler.OauthLoginAndRegister)
 
 	api.GET("/public/statuspage/:subdomain", h.StatusPageHandler.GetPublicBySubdomain)

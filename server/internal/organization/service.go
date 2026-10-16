@@ -142,16 +142,25 @@ func (s *OrganizationServiceImpl) CreateOrganization(req *CreateOrganizationRequ
 		Slug: req.Slug,
 	}
 
+	ownerUUID, err := uuid.Parse(ownerMemberId)
+	if err != nil {
+		return "", errors.New("Invalid owner member ID")
+	}
+
 	owner := model.OrganizationMember{
-		UserID: uuid.MustParse(ownerMemberId),
+		UserID: ownerUUID,
 		Role:   "owner",
 	}
 
 	var invitations []model.OrganizationInvitation
 	if req.Invitations != nil {
 		for _, member := range *req.Invitations {
+			inviteeUUID, err := uuid.Parse(member.InviteeID)
+			if err != nil {
+				return "", fmt.Errorf("Invalid invitee ID format: %s", member.InviteeID)
+			}
 			invitations = append(invitations, model.OrganizationInvitation{
-				InviteeID: uuid.MustParse(member.InviteeID),
+				InviteeID: inviteeUUID,
 				Status:    "pending",
 				ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
 			})
@@ -234,6 +243,10 @@ func (s *OrganizationServiceImpl) InvitationAction(req *InvitationActionRequest,
 
 	if invitation.InviteeID.String() != userId {
 		return "", errors.New("Unauthorized: this is not your invitation")
+	}
+
+	if invitation.Status != "pending" {
+		return "", fmt.Errorf("invitation is already %s", invitation.Status)
 	}
 
 	if invitation.ExpiresAt.Before(time.Now()) {
@@ -374,12 +387,26 @@ func (s *OrganizationServiceImpl) InviteMember(orgId, ownerId, ipAddress string,
 		if role == "" {
 			role = "member"
 		}
+
+		orgUUID, err := uuid.Parse(orgId)
+		if err != nil {
+			return "", errors.New("Invalid organization ID format")
+		}
+		inviteeUUID, err := uuid.Parse(invite.InviteeID)
+		if err != nil {
+			return "", fmt.Errorf("Invalid invitee ID format: %s", invite.InviteeID)
+		}
+		inviterUUID, err := uuid.Parse(ownerId)
+		if err != nil {
+			return "", errors.New("Invalid inviter ID format")
+		}
+
 		dbInvitations = append(dbInvitations, model.OrganizationInvitation{
-			OrganizationID: uuid.MustParse(orgId),
-			InviteeID:      uuid.MustParse(invite.InviteeID),
+			OrganizationID: orgUUID,
+			InviteeID:      inviteeUUID,
 			Status:         "pending",
 			ExpiresAt:      time.Now().Add(7 * 24 * time.Hour),
-			InviterID:      uuid.MustParse(ownerId),
+			InviterID:      inviterUUID,
 		})
 	}
 

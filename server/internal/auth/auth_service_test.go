@@ -43,6 +43,8 @@ type mockAuthRepo struct {
 	createNewPasswordFunc        func(userId, password string) error
 	deleteResetTokenFunc         func(userId, token string) (*model.PasswordResetToken, error)
 	getUserByResetTokenFunc      func(token string) (string, error)
+	revokeAllRefreshTokensByUserIDFunc func(userId string) error
+	limitActiveRefreshTokensFunc       func(userId string, maxTokens int) error
 }
 
 func (m *mockAuthRepo) FindUserByEmail(email string) (*model.User, error) {
@@ -120,6 +122,20 @@ func (m *mockAuthRepo) GetUserByResetToken(token string) (string, error) {
 		return m.getUserByResetTokenFunc(token)
 	}
 	return "", errors.New("reset token not found")
+}
+
+func (m *mockAuthRepo) RevokeAllRefreshTokensByUserID(userId string) error {
+	if m.revokeAllRefreshTokensByUserIDFunc != nil {
+		return m.revokeAllRefreshTokensByUserIDFunc(userId)
+	}
+	return nil
+}
+
+func (m *mockAuthRepo) LimitActiveRefreshTokens(userId string, maxTokens int) error {
+	if m.limitActiveRefreshTokensFunc != nil {
+		return m.limitActiveRefreshTokensFunc(userId, maxTokens)
+	}
+	return nil
 }
 
 // ====================== SERVICE TESTS ======================
@@ -294,6 +310,7 @@ func TestLogout_Success(t *testing.T) {
 
 func TestRefreshAccessToken_Success(t *testing.T) {
 	userID := uuid.New()
+	oldRevoked := false
 	repo := &mockAuthRepo{
 		findRefreshTokenByTokenFunc: func(hashedToken string) (*model.RefreshToken, error) {
 			return &model.RefreshToken{
@@ -301,15 +318,22 @@ func TestRefreshAccessToken_Success(t *testing.T) {
 				ExpiresAt: time.Now().Add(time.Hour),
 			}, nil
 		},
+		revokeRefreshTokenFunc: func(hashedToken string) error {
+			oldRevoked = true
+			return nil
+		},
 	}
 	svc := NewAuthService(repo, nil)
 
-	token, err := svc.RefreshAccessToken("valid-token")
+	res, err := svc.RefreshAccessToken("valid-token")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if token == "" {
-		t.Fatal("expected new access token, got empty string")
+	if res.AccessToken == "" || res.RefreshToken == "" {
+		t.Fatal("expected both access and rotated refresh token, got empty")
+	}
+	if !oldRevoked {
+		t.Fatal("expected old refresh token to be revoked on rotation")
 	}
 }
 
@@ -446,6 +470,7 @@ func TestForgotPassword_Success(t *testing.T) {
 func TestResetPassword_Success(t *testing.T) {
 	userID := uuid.New()
 	user := &model.User{ID: userID}
+	allSessionsRevoked := false
 
 	repo := &mockAuthRepo{
 		getUserByResetTokenFunc: func(token string) (string, error) {
@@ -463,12 +488,19 @@ func TestResetPassword_Success(t *testing.T) {
 		createNewPasswordFunc: func(userId, password string) error {
 			return nil
 		},
+		revokeAllRefreshTokensByUserIDFunc: func(userId string) error {
+			allSessionsRevoked = true
+			return nil
+		},
 	}
 	svc := NewAuthService(repo, nil)
 
 	err := svc.ResetPassword("new-secure-password", "raw-token-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+	if !allSessionsRevoked {
+		t.Fatal("expected all sessions to be revoked on password reset")
 	}
 }
 

@@ -4,6 +4,9 @@ import (
 	"PulseWatch/internal/model"
 	"log"
 	"net/http"
+	"net/url"
+	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -14,7 +17,27 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 
-	CheckOrigin: func(r *http.Request) bool { return true },
+	CheckOrigin: func(r *http.Request) bool {
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			return true // Non-browser clients (CLI, agents, curl) may omit Origin
+		}
+		allowedOrigin := os.Getenv("ALLOWED_ORIGIN")
+		if allowedOrigin == "" {
+			// In development fallback if not set: allow localhost
+			u, err := url.Parse(origin)
+			if err != nil {
+				return false
+			}
+			return u.Hostname() == "localhost" || u.Hostname() == "127.0.0.1"
+		}
+		for _, o := range strings.Split(allowedOrigin, ",") {
+			if strings.TrimSpace(o) == origin {
+				return true
+			}
+		}
+		return false
+	},
 }
 
 type WsHandler struct {

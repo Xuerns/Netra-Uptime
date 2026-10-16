@@ -4,6 +4,7 @@ import (
 	"PulseWatch/config"
 	"PulseWatch/internal/audit"
 	"PulseWatch/internal/model"
+	"PulseWatch/pkg/utils"
 	"context"
 	"encoding/json"
 	"errors"
@@ -60,6 +61,10 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 
 	if err != nil {
 		return nil, errors.New("Something wrong, please try again")
+	}
+
+	if err := utils.ValidateTargetHost(req.Target); err != nil {
+		return nil, fmt.Errorf("Invalid target: %w", err)
 	}
 
 	subs, err := s.subsChecker.GetOrganizationPlan(orgId)
@@ -367,6 +372,9 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 	}
 
 	if req.Target != nil {
+		if err := utils.ValidateTargetHost(*req.Target); err != nil {
+			return nil, fmt.Errorf("Invalid target: %w", err)
+		}
 		updatedMonitor.Target = *req.Target
 	}
 

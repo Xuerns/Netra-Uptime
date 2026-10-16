@@ -347,7 +347,7 @@
 		<link rel="icon" href={statusPage.favicon_url} />
 	{/if}
 	{#if statusPage.custom_css}
-		{@html `<style>${statusPage.custom_css}</style>`}
+		{@html `<style>${statusPage.custom_css.replace(/<\/?style[^>]*>/gi, '').replace(/<[^>]*>/g, '')}</style>`}
 	{/if}
 </svelte:head>
 

@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/xuerns/PulseWatch.git"
+    "url": "git+https://github.com/xuerns/PulseWatch.git"
   },
   "homepage": "https://github.com/xuerns/PulseWatch#readme",
   "keywords": [
@@ -29,6 +29,6 @@
   "license": "AGPL-3.0",
   "type": "module",
   "bin": {
-    "pulsewatch": "./bin/index.js"
+    "pulsewatch": "bin/index.js"
   }
 }

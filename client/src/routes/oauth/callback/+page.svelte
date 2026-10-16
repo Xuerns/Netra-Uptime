@@ -35,7 +35,7 @@
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify({ provider, code }),
+				body: JSON.stringify({ provider, code, state }),
 				credentials: 'include',
 				signal: controller.signal
 			});

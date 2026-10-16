@@ -21,7 +21,7 @@ type StatusPageService interface {
 	Update(statuspageID, orgID, userID, ipAddress string, req *UpdateStatusPageRequest) (*model.StatusPage, error)
 	GetById(statusPageID, orgID, userID string) (*StatusPageResponse, error)
 	GetBySubdomain(subdomain string) (*PublicStatusPageResponse, error)
-	GetStatusPageMonitor(statusPageID string) ([]model.StatusPageMonitor, error)
+	GetStatusPageMonitor(statusPageID, orgID string) ([]model.StatusPageMonitor, error)
 	GetStatusPageByUserId(userId string) ([]StatusPageResponse, error)
 	CreateMaintenance(orgID, statusPageID, userID, ipAddress string, req *CreateMaintenanceRequest) (*model.ScheduledMaintenance, error)
 	GetMaintenances(orgID, statusPageID, userID string) ([]MaintenanceResponse, error)
@@ -337,8 +337,8 @@ func (s *StatusPageServiceImpl) Update(statuspageID, orgID, userID, ipAddress st
 	return updatedStatusPage, nil
 }
 
-func (s *StatusPageServiceImpl) GetStatusPageMonitor(statusPageID string) ([]model.StatusPageMonitor, error) {
-	statusPageMonitors, err := s.repo.GetStatusPageMonitor(statusPageID)
+func (s *StatusPageServiceImpl) GetStatusPageMonitor(statusPageID, orgID string) ([]model.StatusPageMonitor, error) {
+	statusPageMonitors, err := s.repo.GetStatusPageMonitor(statusPageID, orgID)
 	if err != nil {
 		return nil, errors.New("Something wrong, please try again")
 	}

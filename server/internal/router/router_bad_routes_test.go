@@ -374,11 +374,16 @@ func (m *mockAuthService) Register(req auth.RegisterRequest) (string, error) { r
 func (m *mockAuthService) Login(req auth.LoginRequest) (*auth.LoginResponse, error) {
 	return &auth.LoginResponse{AccessToken: "at", RefreshToken: "rt"}, nil
 }
+func (m *mockAuthService) GenerateOAuthState() (string, error) {
+	return "mock-state-uuid", nil
+}
 func (m *mockAuthService) OauthLoginAndRegister(req auth.OAuthRequest) (*auth.LoginResponse, error) {
 	return nil, nil
 }
-func (m *mockAuthService) Logout(refreshToken string) error             { return nil }
-func (m *mockAuthService) RefreshAccessToken(token string) (string, error) { return "at", nil }
+func (m *mockAuthService) Logout(refreshToken string) error { return nil }
+func (m *mockAuthService) RefreshAccessToken(token string) (*auth.LoginResponse, error) {
+	return &auth.LoginResponse{AccessToken: "at", RefreshToken: "rt"}, nil
+}
 func (m *mockAuthService) GetProfile(userId string) (*auth.ProfileResponse, error) {
 	return &auth.ProfileResponse{ID: userId}, nil
 }
@@ -503,7 +508,7 @@ func (m *mockStatService) GetById(statusPageID, orgID, userID string) (*statuspa
 func (m *mockStatService) GetBySubdomain(subdomain string) (*statuspage.PublicStatusPageResponse, error) {
 	return &statuspage.PublicStatusPageResponse{Subdomain: subdomain}, nil
 }
-func (m *mockStatService) GetStatusPageMonitor(statusPageID string) ([]model.StatusPageMonitor, error) {
+func (m *mockStatService) GetStatusPageMonitor(statusPageID, orgID string) ([]model.StatusPageMonitor, error) {
 	return []model.StatusPageMonitor{}, nil
 }
 func (m *mockStatService) GetStatusPageByUserId(userId string) ([]statuspage.StatusPageResponse, error) {

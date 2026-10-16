@@ -60,6 +60,7 @@ func (h *PublicAPIHandler) GetMonitor(c *gin.Context) {
 
 func (h *PublicAPIHandler) CreateMonitor(c *gin.Context) {
 	orgID := c.GetString("org_id")
+	userID := c.GetString("userID")
 
 	var req monitor.CreateMonitorRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -67,7 +68,7 @@ func (h *PublicAPIHandler) CreateMonitor(c *gin.Context) {
 		return
 	}
 
-	created, err := h.monitorService.Create(orgID, "APIKeySystem", c.ClientIP(), &req)
+	created, err := h.monitorService.Create(orgID, userID, c.ClientIP(), &req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
@@ -81,6 +82,7 @@ func (h *PublicAPIHandler) CreateMonitor(c *gin.Context) {
 
 func (h *PublicAPIHandler) UpdateMonitor(c *gin.Context) {
 	orgID := c.GetString("org_id")
+	userID := c.GetString("userID")
 	monitorID := c.Param("id")
 
 	var req monitor.UpdatedMonitorRequest
@@ -89,7 +91,7 @@ func (h *PublicAPIHandler) UpdateMonitor(c *gin.Context) {
 		return
 	}
 
-	updated, err := h.monitorService.UpdateMonitor(orgID, "APIKeySystem", c.ClientIP(), monitorID, req)
+	updated, err := h.monitorService.UpdateMonitor(orgID, userID, c.ClientIP(), monitorID, req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
@@ -103,9 +105,10 @@ func (h *PublicAPIHandler) UpdateMonitor(c *gin.Context) {
 
 func (h *PublicAPIHandler) DeleteMonitor(c *gin.Context) {
 	orgID := c.GetString("org_id")
+	userID := c.GetString("userID")
 	monitorID := c.Param("id")
 
-	if err := h.monitorService.DeleteMonitor(orgID, "APIKeySystem", c.ClientIP(), monitorID); err != nil {
+	if err := h.monitorService.DeleteMonitor(orgID, userID, c.ClientIP(), monitorID); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
@@ -138,6 +141,7 @@ type CreateIncidentNoteRequest struct {
 
 func (h *PublicAPIHandler) CreateIncidentNote(c *gin.Context) {
 	orgID := c.GetString("org_id")
+	userID := c.GetString("userID")
 
 	var req CreateIncidentNoteRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -145,7 +149,7 @@ func (h *PublicAPIHandler) CreateIncidentNote(c *gin.Context) {
 		return
 	}
 
-	note, err := h.incidentService.AddIncidentUpdate(orgID, req.IncidentID, "APIKeySystem", req.Message)
+	note, err := h.incidentService.AddIncidentUpdate(orgID, req.IncidentID, userID, req.Message)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return

@@ -70,7 +70,7 @@ func Load() *Config {
 		minInterval = 10
 	}
 
-	return &Config{
+	cfg := &Config{
 		AppEnv: os.Getenv("APP_ENV"),
 		Port:   os.Getenv("PORT"),
 
@@ -96,6 +96,20 @@ func Load() *Config {
 
 		JwtSecret: os.Getenv("JWT_SECRET"),
 	}
+
+	if strings.EqualFold(cfg.AppEnv, "production") {
+		if len(cfg.JwtSecret) < 32 {
+			log.Fatal("FATAL SECURITY CONFIGURATION: JWT_SECRET must be at least 32 characters in production")
+		}
+		if cfg.DBSSLMode == "disable" {
+			log.Println("SECURITY WARNING: DB_SSLMODE is set to 'disable' in production. Configure 'require' or 'verify-full' to prevent unencrypted database traffic.")
+		}
+	} else if len(cfg.JwtSecret) == 0 {
+		log.Println("WARNING: JWT_SECRET is not set in development. Using development fallback.")
+		cfg.JwtSecret = "pulsewatch-dev-secret-must-be-at-least-32-chars-long!"
+	}
+
+	return cfg
 }
 
 func (c *Config) PostgresDSN() string {

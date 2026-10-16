@@ -14,6 +14,7 @@ type LoginRequest struct {
 type OAuthRequest struct {
 	Provider string `json:"provider" binding:"required,eq=google|eq=github"`
 	Code     string `json:"code" binding:"required"`
+	State    string `json:"state"`
 }
 
 type LoginResponse struct {

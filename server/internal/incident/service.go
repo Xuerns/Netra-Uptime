@@ -100,8 +100,14 @@ func (s *IncidentServiceImpl) AddIncidentUpdate(orgId, incidentId, userId, messa
 		return nil, errors.New("Cannot add update to resolved incident")
 	}
 
-	parcedIncidentId := uuid.MustParse(incidentId)
-	parcedUserId := uuid.MustParse(userId)
+	parsedIncidentId, err := uuid.Parse(incidentId)
+	if err != nil {
+		return nil, errors.New("Invalid incident ID format")
+	}
+	parsedUserId, err := uuid.Parse(userId)
+	if err != nil {
+		return nil, errors.New("Invalid user ID format")
+	}
 
 	assignee, err := s.repo.GetAssignee(userId, incidentId)
 
@@ -110,8 +116,8 @@ func (s *IncidentServiceImpl) AddIncidentUpdate(orgId, incidentId, userId, messa
 	}
 
 	update := &model.IncidentUpdate{
-		IncidentID: parcedIncidentId,
-		CreatedBy:  parcedUserId,
+		IncidentID: parsedIncidentId,
+		CreatedBy:  parsedUserId,
 		Message:    message,
 	}
 
@@ -134,13 +140,18 @@ func (s *IncidentServiceImpl) JoinAssignee(orgId, incidentId, userId string) err
 		return errors.New("You already joined this incident")
 	}
 
-	if err == nil {
-		return errors.New("You're not involved in this incident / Please participate in this incident first")
+	parsedIncidentId, err := uuid.Parse(incidentId)
+	if err != nil {
+		return errors.New("Invalid incident ID format")
+	}
+	parsedUserId, err := uuid.Parse(userId)
+	if err != nil {
+		return errors.New("Invalid user ID format")
 	}
 
 	incidentAssignee := &model.IncidentAssignee{
-		IncidentID: uuid.MustParse(incidentId),
-		UserID:     uuid.MustParse(userId),
+		IncidentID: parsedIncidentId,
+		UserID:     parsedUserId,
 	}
 
 	if err := s.repo.AddAssignee(incidentAssignee); err != nil {

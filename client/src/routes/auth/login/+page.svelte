@@ -84,10 +84,19 @@
 		}
 	}
 
-	function loginWithGoogle() {
+	async function loginWithGoogle() {
 		const clientId = env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
 		const redirectUri = env.PUBLIC_GOOGLE_REDIRECT_URL ?? '';
-		const state = crypto.randomUUID();
+		let state = crypto.randomUUID();
+		try {
+			const res = await fetch(`${env.PUBLIC_API_URL}/auth/oauth/state`);
+			if (res.ok) {
+				const data = await res.json();
+				if (data.state) state = data.state;
+			}
+		} catch (e) {
+			// fallback to local UUID
+		}
 		sessionStorage.setItem('oauth_state', state);
 		const params = new URLSearchParams({
 			client_id: clientId,

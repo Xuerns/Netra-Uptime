@@ -69,7 +69,7 @@ func (h AuthHandler) Login(c *gin.Context) {
 
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("access_token", response.AccessToken, accessMaxAge, "/", "", isProduction, true)
-	c.SetCookie("refresh_token", response.RefreshToken, refreshMaxAge, "/", "", isProduction, true)
+	c.SetCookie("refresh_token", response.RefreshToken, refreshMaxAge, "/api/v1/auth", "", isProduction, true)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Login Succesfully"})
 }
@@ -84,8 +84,10 @@ func (h AuthHandler) Logout(c *gin.Context) {
 		}
 	}
 
-	c.SetCookie("refresh_token", "", -1, "/", "", false, true)
-	c.SetCookie("access_token", "", -1, "/", "", false, true)
+	isProduction := strings.EqualFold(os.Getenv("APP_ENV"), "production")
+	c.SetSameSite(http.SameSiteStrictMode)
+	c.SetCookie("refresh_token", "", -1, "/api/v1/auth", "", isProduction, true)
+	c.SetCookie("access_token", "", -1, "/", "", isProduction, true)
 
 	c.JSON(200, gin.H{"message": "Logout succesfully"})
 }
@@ -98,7 +100,7 @@ func (h AuthHandler) RefreshAccessToken(c *gin.Context) {
 		return
 	}
 
-	accessToken, err := h.service.RefreshAccessToken(token)
+	response, err := h.service.RefreshAccessToken(token)
 
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": apierror.SanitizeServiceError(err)})
@@ -112,10 +114,17 @@ func (h AuthHandler) RefreshAccessToken(c *gin.Context) {
 	}
 	accessMaxAge := int(expiryAccess.Seconds())
 
+	expiryRefresh, err := time.ParseDuration(os.Getenv("JWT_REFRESH_EXPIRY"))
+	if err != nil {
+		expiryRefresh = 168 * time.Hour
+	}
+	refreshMaxAge := int(expiryRefresh.Seconds())
+
 	isProduction := strings.EqualFold(os.Getenv("APP_ENV"), "production")
 
 	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("access_token", accessToken, accessMaxAge, "/", "", isProduction, true)
+	c.SetCookie("access_token", response.AccessToken, accessMaxAge, "/", "", isProduction, true)
+	c.SetCookie("refresh_token", response.RefreshToken, refreshMaxAge, "/api/v1/auth", "", isProduction, true)
 	c.JSON(http.StatusOK, gin.H{"message": "New access Token granted"})
 }
 
@@ -230,9 +239,18 @@ func (h *AuthHandler) OauthLoginAndRegister(c *gin.Context) {
 
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("access_token", response.AccessToken, int(expiryAccess.Seconds()), "/", "", isProduction, true)
-	c.SetCookie("refresh_token", response.RefreshToken, int(expiryRefresh.Seconds()), "/", "", isProduction, true)
+	c.SetCookie("refresh_token", response.RefreshToken, int(expiryRefresh.Seconds()), "/api/v1/auth", "", isProduction, true)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Login successfully"})
+}
+
+func (h *AuthHandler) GetOAuthState(c *gin.Context) {
+	state, err := h.service.GenerateOAuthState()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate oauth state"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"state": state})
 }
 
 func (h AuthHandler) InitPasswordChange(c *gin.Context) {

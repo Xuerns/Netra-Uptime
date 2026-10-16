@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/oauth2"
@@ -30,9 +31,10 @@ import (
 type AuthService interface {
 	Register(req RegisterRequest) (string, error)
 	Login(req LoginRequest) (*LoginResponse, error)
+	GenerateOAuthState() (string, error)
 	OauthLoginAndRegister(req OAuthRequest) (*LoginResponse, error)
 	Logout(refreshToken string) error
-	RefreshAccessToken(token string) (string, error)
+	RefreshAccessToken(token string) (*LoginResponse, error)
 	GetProfile(userId string) (*ProfileResponse, error)
 	UpdateProfile(userId string, req UpdateProfileRequest) (*ProfileResponse, error)
 	ForgotPassword(email string) (string, error)
@@ -140,7 +142,7 @@ func (s *AuthServiceImpl) Login(req LoginRequest) (*LoginResponse, error) {
 	err = bcrypt.CompareHashAndPassword([]byte(*user.PasswordHash), []byte(req.Password))
 
 	if err != nil {
-		return nil, errors.New("Password Incorrent, Please try again")
+		return nil, errors.New("Invalid email or password")
 	}
 
 	// Make Access Token and Refresh Token
@@ -181,6 +183,9 @@ func (s *AuthServiceImpl) Login(req LoginRequest) (*LoginResponse, error) {
 	createRefreshToken.Token = string(hashedRefreshToken)
 	createRefreshToken.ExpiresAt = time.Now().Add(expiryRefresh)
 
+	// Enforce session limit per user (VULN-04)
+	_ = s.repo.LimitActiveRefreshTokens(user.ID.String(), 5)
+
 	if err := s.repo.CreateRefreshToken(&createRefreshToken); err != nil {
 		return nil, errors.New("Failed to store refresh token")
 	}
@@ -191,7 +196,28 @@ func (s *AuthServiceImpl) Login(req LoginRequest) (*LoginResponse, error) {
 	}, nil
 }
 
+func (s *AuthServiceImpl) GenerateOAuthState() (string, error) {
+	state := uuid.NewString()
+	if s.rdb != nil {
+		ctx := context.Background()
+		if err := s.rdb.Set(ctx, fmt.Sprintf("oauth_state:%s", state), "valid", 10*time.Minute).Err(); err != nil {
+			return "", errors.New("failed to store oauth state")
+		}
+	}
+	return state, nil
+}
+
 func (s *AuthServiceImpl) OauthLoginAndRegister(req OAuthRequest) (*LoginResponse, error) {
+	if s.rdb != nil && req.State != "" {
+		ctx := context.Background()
+		stateKey := fmt.Sprintf("oauth_state:%s", req.State)
+		val, err := s.rdb.Get(ctx, stateKey).Result()
+		if err != nil || val == "" {
+			return nil, errors.New("Invalid or expired OAuth state")
+		}
+		s.rdb.Del(ctx, stateKey)
+	}
+
 	var conf *oauth2.Config
 	var userInfoURL string
 
@@ -324,6 +350,9 @@ func (s *AuthServiceImpl) OauthLoginAndRegister(req OAuthRequest) (*LoginRespons
 		ExpiresAt: time.Now().Add(expiryRefresh),
 	}
 
+	// Enforce session limit per user (VULN-04)
+	_ = s.repo.LimitActiveRefreshTokens(user.ID.String(), 5)
+
 	if err := s.repo.CreateRefreshToken(&createRefreshToken); err != nil {
 		return nil, errors.New("Something went wrong, please try again")
 	}
@@ -344,7 +373,7 @@ func (s *AuthServiceImpl) Logout(refreshToken string) error {
 	return nil
 }
 
-func (s *AuthServiceImpl) RefreshAccessToken(token string) (string, error) {
+func (s *AuthServiceImpl) RefreshAccessToken(token string) (*LoginResponse, error) {
 	hash := sha256.New()
 	hash.Write([]byte(token))
 	hashedToken := hex.EncodeToString(hash.Sum(nil))
@@ -352,26 +381,57 @@ func (s *AuthServiceImpl) RefreshAccessToken(token string) (string, error) {
 	refreshToken, err := s.repo.FindRefreshTokenByToken(hashedToken)
 
 	if err != nil {
-		return "", errors.New("Refreshtoken not found")
+		return nil, errors.New("Refreshtoken not found")
 	}
 
 	if refreshToken.ExpiresAt.Before(time.Now()) {
-		return "", errors.New("Refresh token expired")
+		_ = s.repo.RevokeRefreshToken(hashedToken)
+		return nil, errors.New("Refresh token expired")
 	}
 
-	expiryAccess, err := time.ParseDuration(os.Getenv("JWT_ACCESS_EXPIRY"))
+	// Revoke old refresh token (Token Rotation - VULN-03)
+	_ = s.repo.RevokeRefreshToken(hashedToken)
 
+	expiryAccess, err := time.ParseDuration(os.Getenv("JWT_ACCESS_EXPIRY"))
 	if err != nil {
 		expiryAccess = 15 * time.Minute
 	}
 
-	AccessToken, err := jwt.GenerateToken(refreshToken.UserID.String(), expiryAccess)
-
+	expiryRefresh, err := time.ParseDuration(os.Getenv("JWT_REFRESH_EXPIRY"))
 	if err != nil {
-		return "", errors.New("Failed to generate access token")
+		expiryRefresh = 168 * time.Hour
 	}
 
-	return AccessToken, nil
+	newAccessToken, err := jwt.GenerateToken(refreshToken.UserID.String(), expiryAccess)
+	if err != nil {
+		return nil, errors.New("Failed to generate access token")
+	}
+
+	newRefreshToken, err := jwt.GenerateToken(refreshToken.UserID.String(), expiryRefresh)
+	if err != nil {
+		return nil, errors.New("Failed to generate refresh token")
+	}
+
+	newHash := sha256.New()
+	newHash.Write([]byte(newRefreshToken))
+	hashedNewToken := hex.EncodeToString(newHash.Sum(nil))
+
+	_ = s.repo.LimitActiveRefreshTokens(refreshToken.UserID.String(), 5)
+
+	createRefreshToken := model.RefreshToken{
+		UserID:    refreshToken.UserID,
+		Token:     string(hashedNewToken),
+		ExpiresAt: time.Now().Add(expiryRefresh),
+	}
+
+	if err := s.repo.CreateRefreshToken(&createRefreshToken); err != nil {
+		return nil, errors.New("Failed to store refresh token")
+	}
+
+	return &LoginResponse{
+		AccessToken:  newAccessToken,
+		RefreshToken: newRefreshToken,
+	}, nil
 }
 
 func (s *AuthServiceImpl) GetProfile(userId string) (*ProfileResponse, error) {
@@ -478,6 +538,9 @@ func (s *AuthServiceImpl) ResetPassword(newPassword, resetToken string) error {
 		return errors.New("Failed to change password")
 	}
 
+	// Revoke all existing sessions for this user (VULN-05)
+	_ = s.repo.RevokeAllRefreshTokensByUserID(user.ID.String())
+
 	return nil
 }
 
@@ -546,6 +609,9 @@ func (s *AuthServiceImpl) VerifyPasswordChange(userId string, req VerifyPassword
 		return errors.New("Failed to change password")
 	}
 	s.rdb.Del(ctx, key)
+
+	// Revoke all existing sessions for this user (VULN-05)
+	_ = s.repo.RevokeAllRefreshTokensByUserID(userId)
 
 	return nil
 }

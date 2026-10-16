@@ -341,6 +341,7 @@ func TestInvitationAction_Accept_Success(t *testing.T) {
 				OrganizationID: orgID,
 				ExpiresAt:      time.Now().Add(24 * time.Hour),
 				Role:           "member",
+				Status:         "pending",
 			}, nil
 		},
 		totalOrgUserFunc: func(userId string) (int64, error) {
@@ -377,6 +378,7 @@ func TestInvitationAction_Reject_Success(t *testing.T) {
 			return &model.OrganizationInvitation{
 				InviteeID: inviteeID,
 				ExpiresAt: time.Now().Add(24 * time.Hour),
+				Status:    "pending",
 			}, nil
 		},
 		rejectInvitationFunc: func(inv *model.OrganizationInvitation) error {
@@ -406,6 +408,7 @@ func TestInvitationAction_Expired(t *testing.T) {
 			return &model.OrganizationInvitation{
 				InviteeID: inviteeID,
 				ExpiresAt: time.Now().Add(-1 * time.Hour), // Expired
+				Status:    "pending",
 			}, nil
 		},
 		rejectInvitationFunc: func(inv *model.OrganizationInvitation) error {
@@ -430,6 +433,7 @@ func TestInvitationAction_NotYourInvitation(t *testing.T) {
 			return &model.OrganizationInvitation{
 				InviteeID: uuid.New(), // different user
 				ExpiresAt: time.Now().Add(24 * time.Hour),
+				Status:    "pending",
 			}, nil
 		},
 	}
@@ -445,6 +449,29 @@ func TestInvitationAction_NotYourInvitation(t *testing.T) {
 	}
 }
 
+func TestInvitationAction_AlreadyAccepted_ReplayBlocked(t *testing.T) {
+	inviteeID := uuid.New()
+	repo := &mockOrgRepo{
+		getInvitationByIdFunc: func(id string) (*model.OrganizationInvitation, error) {
+			return &model.OrganizationInvitation{
+				InviteeID: inviteeID,
+				ExpiresAt: time.Now().Add(24 * time.Hour),
+				Status:    "accepted", // Already processed
+			}, nil
+		},
+	}
+	svc := NewOrganizationService(repo, nil)
+
+	_, err := svc.InvitationAction(&InvitationActionRequest{
+		InvitationID: "inv-1",
+		Action:       "accept",
+	}, inviteeID.String(), "127.0.0.1")
+
+	if err == nil {
+		t.Fatal("expected error when replaying already accepted invitation, got nil")
+	}
+}
+
 func TestInvitationAction_InvalidAction(t *testing.T) {
 	inviteeID := uuid.New()
 	repo := &mockOrgRepo{
@@ -452,6 +479,7 @@ func TestInvitationAction_InvalidAction(t *testing.T) {
 			return &model.OrganizationInvitation{
 				InviteeID: inviteeID,
 				ExpiresAt: time.Now().Add(24 * time.Hour),
+				Status:    "pending",
 			}, nil
 		},
 	}
