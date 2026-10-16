@@ -1,5 +1,5 @@
 ---
-name: PulseWatch Dual-Mode Design System
+name: Netra Uptime Dual-Mode Design System
 modes:
   - dark
   - light
@@ -180,10 +180,10 @@ spacing:
   gutter: 24px
 ---
 
-# PulseWatch Dual-Mode Design System (`design.md`)
+# Netra Uptime Dual-Mode Design System (`design.md`)
 
 ## 1. Brand & Style Philosophy
-PulseWatch is a high-performance cloud infrastructure and uptime monitoring workspace. The brand personality is **vigilant, technical, and premium**, evoking a sense of "mission control" across both operating modes:
+Netra Uptime is a high-performance cloud infrastructure and uptime monitoring workspace. The brand personality is **vigilant, technical, and premium**, evoking a sense of "mission control" across both operating modes:
 
 - **Dark Mode ("Mission Control Glassmorphism")**: Engineered to reduce eye strain during prolonged monitoring sessions. Features deep obsidian surfaces (`#0A0A0B`), translucent frosted layers, and glowing neon telemetry lines to simulate a multi-layered digital cockpit.
 - **Light Mode ("Precision Engineering")**: Optimized for daylight operation, executive reporting, and rapid incident triage. Delivers crisp contrast with an airy slate canvas (`#F8FAFC`), pure white elevated cards (`#FFFFFF`), subtle dot-matrix micro-textures, and sharp border delineation.

@@ -129,7 +129,7 @@
 </script>
 
 <svelte:head>
-	<title>Incident Command Board | PulseWatch</title>
+	<title>Incident Command Board | Netra Uptime</title>
 </svelte:head>
 
 {#if isLoading}

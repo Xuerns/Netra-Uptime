@@ -184,7 +184,7 @@
 </script>
 
 <svelte:head>
-	<title>Organization Settings | PulseWatch</title>
+	<title>Organization Settings | Netra Uptime</title>
 </svelte:head>
 
 <div class="p-6 max-w-4xl mx-auto space-y-6">
@@ -244,7 +244,7 @@
 								<div
 									class="flex-1 flex items-center bg-muted border border-border rounded-md h-11 px-3 text-muted-foreground font-mono text-sm overflow-hidden"
 								>
-									<span class="truncate">https://status.pulsewatch.com/</span>
+									<span class="truncate">https://status.netrauptime.com/</span>
 								</div>
 								<Input
 									id="slug"

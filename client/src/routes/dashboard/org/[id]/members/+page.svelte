@@ -179,7 +179,7 @@
 </script>
 
 <svelte:head>
-	<title>Members | PulseWatch</title>
+	<title>Members | Netra Uptime</title>
 </svelte:head>
 
 <div class="members-page text-foreground antialiased space-y-6">

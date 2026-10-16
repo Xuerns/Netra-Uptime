@@ -168,7 +168,7 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 			dbMonitor.Status = "up"
 			dbMonitor.FailureCount = 0
 
-			subject := fmt.Sprintf("[PulseWatch] Resolved: %s is back UP", monitor.Name)
+			subject := fmt.Sprintf("[Netra Uptime] Resolved: %s is back UP", monitor.Name)
 			message := fmt.Sprintf("<h3>Service Restored</h3><p>Your monitor <b>%s</b> (%s) has returned to healthy state (previously %s).</p>", dbMonitor.Name, dbMonitor.Target, prevStatus)
 
 			go wp.sendNotification(&dbMonitor, subject, message)
@@ -197,7 +197,7 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 			if dbMonitor.FailureCount >= eval.RequiredBreaches && dbMonitor.Status != "down" {
 				dbMonitor.Status = "down"
 
-				subject := fmt.Sprintf("[PulseWatch] ALERT: %s is DOWN (%s)", monitor.Name, eval.RuleName)
+				subject := fmt.Sprintf("[Netra Uptime] ALERT: %s is DOWN (%s)", monitor.Name, eval.RuleName)
 				message := fmt.Sprintf("<h3>Service Down Alert</h3><p>Your monitor <b>%s</b> (%s) triggered alert rule <b>%s</b>.<br>Reason: <i>%s</i> (breached %d consecutive times)</p>", dbMonitor.Name, dbMonitor.Target, eval.RuleName, eval.Reason, eval.RequiredBreaches)
 
 				go wp.sendNotification(&dbMonitor, subject, message)
@@ -233,7 +233,7 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 			// Degraded Warning (e.g. high latency)
 			if dbMonitor.Status == "up" {
 				dbMonitor.Status = "degraded"
-				subject := fmt.Sprintf("[PulseWatch] WARNING: %s is DEGRADED (%s)", monitor.Name, eval.RuleName)
+				subject := fmt.Sprintf("[Netra Uptime] WARNING: %s is DEGRADED (%s)", monitor.Name, eval.RuleName)
 				message := fmt.Sprintf("<h3>Service Degraded Warning</h3><p>Your monitor <b>%s</b> (%s) is experiencing degraded performance.<br>Rule: <b>%s</b><br>Reason: <i>%s</i></p>", dbMonitor.Name, dbMonitor.Target, eval.RuleName, eval.Reason)
 
 				go wp.sendNotification(&dbMonitor, subject, message)

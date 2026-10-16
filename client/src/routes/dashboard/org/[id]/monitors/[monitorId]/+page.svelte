@@ -372,7 +372,7 @@
 </script>
 
 <svelte:head>
-	<title>{monitor ? `${monitor.Name} • Analytics` : 'Monitor Analytics'} | PulseWatch</title>
+	<title>{monitor ? `${monitor.Name} • Analytics` : 'Monitor Analytics'} | Netra Uptime</title>
 </svelte:head>
 
 <div class="space-y-6 max-w-7xl mx-auto text-foreground antialiased">

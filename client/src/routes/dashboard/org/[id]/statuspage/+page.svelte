@@ -173,7 +173,7 @@
 </script>
 
 <svelte:head>
-	<title>Status Pages | PulseWatch</title>
+	<title>Status Pages | Netra Uptime</title>
 </svelte:head>
 
 <div class="statuspages-page text-foreground antialiased">

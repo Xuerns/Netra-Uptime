@@ -30,7 +30,7 @@
 </script>
 
 <svelte:head>
-	<title>{statusCode} | PulseWatch</title>
+	<title>{statusCode} | Netra Uptime</title>
 </svelte:head>
 
 <div

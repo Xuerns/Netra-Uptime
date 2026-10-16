@@ -233,7 +233,7 @@
 </script>
 
 <svelte:head>
-	<title>Notification Channels | PulseWatch</title>
+	<title>Notification Channels | Netra Uptime</title>
 </svelte:head>
 
 <div class="text-foreground antialiased">
@@ -728,7 +728,7 @@
 						id="ch-webhook"
 						type="url"
 						bind:value={newWebhookUrl}
-						placeholder="https://api.yourdomain.com/webhooks/pulsewatch"
+						placeholder="https://api.yourdomain.com/webhooks/netra-uptime"
 						class="bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 text-sm font-mono"
 						required
 					/>

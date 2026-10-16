@@ -23,7 +23,7 @@
 	let isSettingsOpen = $state(false);
 
 	let activeTeam = $state<{ name: string; logo: any }>({
-		name: 'PulseWatch Workspace',
+		name: 'Netra Uptime Workspace',
 		logo: Logo
 	});
 

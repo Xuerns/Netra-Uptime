@@ -292,7 +292,7 @@
 </script>
 
 <svelte:head>
-	<title>Select Organization | PulseWatch</title>
+	<title>Select Organization | Netra Uptime</title>
 </svelte:head>
 
 <div class="text-foreground antialiased">
@@ -407,7 +407,7 @@
 									class="flex items-center gap-1.5 text-[12.5px] text-muted-foreground font-mono truncate"
 								>
 									<Link2 class="size-3.5 opacity-70 shrink-0" />
-									<span class="truncate">pulsewatch.app/o/{org.Slug}</span>
+									<span class="truncate">netra.app/o/{org.Slug}</span>
 								</div>
 							</div>
 						</div>
@@ -497,7 +497,7 @@
 									class="flex items-center gap-1.5 text-[12.5px] text-muted-foreground font-mono truncate"
 								>
 									<Link2 class="size-3.5 opacity-70 shrink-0" />
-									<span class="truncate">pulsewatch.app/o/{org.Slug}</span>
+									<span class="truncate">netra.app/o/{org.Slug}</span>
 								</div>
 							</div>
 						</div>
@@ -612,7 +612,7 @@
 					<span
 						class="flex items-center px-3 text-[12px] text-muted-foreground/50 font-mono bg-white/4 border-r border-border select-none shrink-0 whitespace-nowrap"
 					>
-						pulsewatch.app/o/
+						netra.app/o/
 					</span>
 					<input
 						id="orgSlug"

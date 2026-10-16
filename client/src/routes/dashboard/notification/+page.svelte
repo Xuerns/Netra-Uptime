@@ -113,7 +113,7 @@
 </script>
 
 <svelte:head>
-	<title>Notification | PulseWatch</title>
+	<title>Notification | Netra Uptime</title>
 </svelte:head>
 
 <div class="w-full text-foreground antialiased py-4">

@@ -137,7 +137,7 @@
 </script>
 
 <svelte:head>
-	<title>{isResetMode ? 'Reset Password' : 'Forgot Password'} | PulseWatch</title>
+	<title>{isResetMode ? 'Reset Password' : 'Forgot Password'} | Netra Uptime</title>
 </svelte:head>
 
 <main
@@ -354,7 +354,7 @@
 				<form class="space-y-md" onsubmit={handleRequestReset}>
 					<div class="flex flex-col items-center mb-lg">
 						<div class="mb-sm">
-							<img alt="Pulsewatch Logo" class="h-10 w-auto" src={Logo} />
+							<img alt="Netra Uptime Logo" class="h-10 w-auto" src={Logo} />
 						</div>
 						<h1
 							class="font-headline-lg text-[24px] font-semibold text-foreground tracking-tight"

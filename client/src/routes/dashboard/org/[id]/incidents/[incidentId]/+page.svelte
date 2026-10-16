@@ -93,8 +93,8 @@
 <svelte:head>
 	<title
 		>{incident
-			? `Incident #${incident.ID.substring(0, 8)} | PulseWatch`
-			: 'Incident Detail | PulseWatch'}</title
+			? `Incident #${incident.ID.substring(0, 8)} | Netra Uptime`
+			: 'Incident Detail | Netra Uptime'}</title
 	>
 </svelte:head>
 

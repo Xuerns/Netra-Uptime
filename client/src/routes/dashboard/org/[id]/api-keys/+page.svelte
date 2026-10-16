@@ -154,7 +154,7 @@
 </script>
 
 <svelte:head>
-	<title>API Keys | PulseWatch</title>
+	<title>API Keys | Netra Uptime</title>
 </svelte:head>
 
 <div class="text-foreground antialiased">
@@ -165,7 +165,7 @@
 				API Keys
 			</h1>
 			<p class="text-base leading-relaxed text-muted-foreground max-w-[50ch]">
-				Manage API tokens for programmatically integrating and accessing the PulseWatch REST API.
+				Manage API tokens for programmatically integrating and accessing the Netra Uptime REST API.
 			</p>
 		</div>
 	</header>
@@ -428,7 +428,7 @@
 <ConfirmDialog
 	bind:open={isRevokeOpen}
 	title="Revoke API Key?"
-	description="Are you sure you want to revoke '{keyToRevoke?.name}'? Any scripts or integrations using this key will immediately lose access to the PulseWatch API."
+	description="Are you sure you want to revoke '{keyToRevoke?.name}'? Any scripts or integrations using this key will immediately lose access to the Netra Uptime API."
 	confirmText={isRevoking ? 'Revoking...' : 'Revoke Key'}
 	cancelText="Cancel"
 	destructive={true}

@@ -208,7 +208,7 @@ func (d *Dispatcher) dispatchDiscord(config map[string]string, payload WebhookPa
 					{"name": "Target", "value": fmt.Sprintf("`%s`", payload.Target), "inline": true},
 					{"name": "Status", "value": strings.ToUpper(payload.Status), "inline": true},
 				},
-				"footer":    map[string]string{"text": "PulseWatch Alerts"},
+				"footer":    map[string]string{"text": "Netra Uptime Alerts"},
 				"timestamp": payload.Timestamp.Format(time.RFC3339),
 			},
 		},
@@ -231,7 +231,7 @@ func (d *Dispatcher) postJSON(targetURL string, v interface{}) error {
 		return fmt.Errorf("failed to build request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "PulseWatch-Notifier/1.0")
+	req.Header.Set("User-Agent", "NetraUptime-Notifier/1.0")
 
 	resp, err := d.httpClient.Do(req)
 	if err != nil {

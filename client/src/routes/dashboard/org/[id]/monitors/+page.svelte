@@ -199,7 +199,7 @@
 </script>
 
 <svelte:head>
-	<title>Monitors | PulseWatch</title>
+	<title>Monitors | Netra Uptime</title>
 </svelte:head>
 
 <div class="monitors-page text-foreground antialiased space-y-6">

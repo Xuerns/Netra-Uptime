@@ -156,7 +156,7 @@
 </script>
 
 <svelte:head>
-	<title>Profile | PulseWatch</title>
+	<title>Profile | Netra Uptime</title>
 </svelte:head>
 
 <div class="p-6 max-w-4xl mx-auto space-y-3">

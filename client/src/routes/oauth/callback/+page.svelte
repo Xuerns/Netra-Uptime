@@ -64,7 +64,7 @@
 </script>
 
 <svelte:head>
-	<title>Authenticating... | PulseWatch</title>
+	<title>Authenticating... | Netra Uptime</title>
 </svelte:head>
 
 <main

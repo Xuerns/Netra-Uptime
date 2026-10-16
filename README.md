@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="assets/Logo.png" alt="PulseWatch Logo" width="80" />
-  <h1 style="border:none;">PulseWatch</h1>
+  <img src="assets/Logo.png" alt="Netra Uptime Logo" width="80" />
+  <h1 style="border:none;">Netra Uptime</h1>
   <p><strong>Modern, Lightweight, Self-Hosted Uptime & Status Monitoring</strong></p>
 
   <a href="https://kit.svelte.dev/" target="_blank"><img src="https://img.shields.io/badge/SvelteKit-5-brightgreen?logo=svelte&logoColor=orange" alt="SvelteKit"></a>
@@ -11,7 +11,7 @@
 
 ## Overview
 
-**PulseWatch** is a high-performance, open-source uptime monitoring and status page platform designed for self-hosting. Built with a concurrent Go backend worker pool and a reactive SvelteKit interface, PulseWatch provides low-latency telemetry, automated incident lifecycle tracking, and customizable alert rules.
+**Netra Uptime** is a high-performance, open-source uptime monitoring and status page platform designed for self-hosting. Built with a concurrent Go backend worker pool and a reactive SvelteKit interface, Netra Uptime provides low-latency telemetry, automated incident lifecycle tracking, and customizable alert rules.
 
 ## Key Features
 

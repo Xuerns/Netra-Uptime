@@ -8,5 +8,5 @@
 </script>
 
 <svelte:head>
-	<title>PulseWatch</title>
+	<title>Netra Uptime</title>
 </svelte:head>

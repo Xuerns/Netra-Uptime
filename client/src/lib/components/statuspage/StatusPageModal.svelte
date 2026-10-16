@@ -261,7 +261,7 @@
 								<span
 									class="h-10 px-3 bg-muted border border-l-0 border-border rounded-r-lg text-xs font-mono text-muted-foreground flex items-center shrink-0"
 								>
-									.pulsewatch.dev
+									.netrauptime.com
 								</span>
 							</div>
 						</div>

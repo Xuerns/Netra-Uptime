@@ -12,7 +12,7 @@
 	<div class="flex items-center gap-3">
 		<a href="/" class="flex items-center gap-2 text-foreground">
 			<img src={Logo} alt="Logo" class="size-5 text-primary" />
-			<span class="font-bold tracking-tight text-sm">PulseWatch</span>
+			<span class="font-bold tracking-tight text-sm">Netra Uptime</span>
 		</a>
 		<span class="text-xs text-muted-foreground font-mono">/</span>
 		<span class="text-xs font-mono text-muted-foreground uppercase tracking-wider">

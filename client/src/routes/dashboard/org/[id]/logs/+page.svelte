@@ -269,7 +269,7 @@
 </script>
 
 <svelte:head>
-	<title>Audit Logs | PulseWatch</title>
+	<title>Audit Logs | Netra Uptime</title>
 </svelte:head>
 
 <div class="text-foreground antialiased mx-auto w-full flex-1 flex flex-col min-h-full">

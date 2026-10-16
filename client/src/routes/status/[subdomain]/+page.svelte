@@ -368,7 +368,7 @@
 						alt={`${statusPage.title} Logo`}
 					/>
 				{:else}
-					<img class="h-8 w-8 object-contain" src={logo} alt="PulseWatch Logo" />
+					<img class="h-8 w-8 object-contain" src={logo} alt="Netra Uptime Logo" />
 				{/if}
 				<div class="flex flex-col">
 					<div class="flex items-center gap-2">
@@ -924,7 +924,7 @@
 				<span>Powered by</span>
 				<span class="text-foreground font-semibold flex items-center gap-1">
 					<img class="h-3.5 w-3.5 object-contain" src={logo} alt="" />
-					PulseWatch
+					Netra Uptime
 				</span>
 			</div>
 		</div>

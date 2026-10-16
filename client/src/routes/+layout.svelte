@@ -1,6 +1,6 @@
 <script lang="ts">
 	import './layout.css';
-	import PulseWatchLogo from '$lib/assets/Logo.svg';
+	import NetraUptimeLogo from '$lib/assets/Logo.svg';
 	import { onMount } from 'svelte';
 	import Lenis from 'lenis';
 	import 'lenis/dist/lenis.css';

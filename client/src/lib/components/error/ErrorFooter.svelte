@@ -7,5 +7,5 @@
 <footer
 	class="border-t border-border px-6 py-4 flex flex-col sm:flex-row items-center justify-between` text-xs font-mono text-muted-foreground bg-card z-10 gap-3"
 >
-	<div>&copy; {currentYear} PulseWatch. All rights reserved.</div>
+	<div>&copy; {currentYear} Netra Uptime. All rights reserved.</div>
 </footer>

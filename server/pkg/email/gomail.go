@@ -120,7 +120,7 @@ func (s *SMTPSender) SendExpiryReminder(to []string, monitorName, target, expiry
       <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#131314;border:1px solid #2a2a2b;border-radius:12px;padding:40px 32px;">
 
         <tr><td align="center" style="padding-bottom:24px;">
-          <span style="font-size:22px;font-weight:700;color:#4edea3;letter-spacing:-0.02em;">PulseWatch</span>
+          <span style="font-size:22px;font-weight:700;color:#4edea3;letter-spacing:-0.02em;">Netra Uptime</span>
         </td></tr>
 
         <tr><td align="center" style="padding-bottom:12px;">
@@ -155,7 +155,7 @@ func (s *SMTPSender) SendExpiryReminder(to []string, monitorName, target, expiry
         </td></tr>
 
         <tr><td align="center">
-          <p style="margin:0;font-size:12px;color:#86948a;">© 2026 PulseWatch SaaS. Automated Monitoring Alert.</p>
+          <p style="margin:0;font-size:12px;color:#86948a;">© 2026 Netra Uptime SaaS. Automated Monitoring Alert.</p>
         </td></tr>
       </table>
     </td></tr>
@@ -190,7 +190,7 @@ func MailSender(to, link string) error {
 		return errors.New("Failed to set to Address")
 	}
 
-	message.Subject("Reset your Pulsewatch password")
+	message.Subject("Reset your Netra Uptime password")
 
 	htmlBody := `<!DOCTYPE html>
 <html lang="en">
@@ -201,7 +201,7 @@ func MailSender(to, link string) error {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#131314;border:1px solid #2a2a2b;border-radius:12px;padding:40px 32px;">
 
         <tr><td align="center" style="padding-bottom:32px;">
-          <span style="font-size:22px;font-weight:700;color:#4edea3;letter-spacing:-0.02em;">Pulsewatch</span>
+          <span style="font-size:22px;font-weight:700;color:#4edea3;letter-spacing:-0.02em;">Netra Uptime</span>
         </td></tr>
 
         <tr><td align="center" style="padding-bottom:8px;">
@@ -240,7 +240,7 @@ func MailSender(to, link string) error {
 
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;padding:24px 0;">
         <tr><td align="center">
-          <p style="margin:0;font-size:12px;color:#86948a;">© 2026 Pulsewatch. All rights reserved.</p>
+          <p style="margin:0;font-size:12px;color:#86948a;">© 2026 Netra Uptime. All rights reserved.</p>
         </td></tr>
       </table>
     </td></tr>
@@ -291,7 +291,7 @@ func SendVerificationCodeEmail(to, code string) error {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#131314;border:1px solid #2a2a2b;border-radius:12px;padding:40px 32px;">
 
         <tr><td align="center" style="padding-bottom:32px;">
-          <span style="font-size:22px;font-weight:700;color:#4edea3;letter-spacing:-0.02em;">Pulsewatch</span>
+          <span style="font-size:22px;font-weight:700;color:#4edea3;letter-spacing:-0.02em;">Netra Uptime</span>
         </td></tr>
 
         <tr><td align="center" style="padding-bottom:8px;">
@@ -324,7 +324,7 @@ func SendVerificationCodeEmail(to, code string) error {
 
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;padding:24px 0;">
         <tr><td align="center">
-          <p style="margin:0;font-size:12px;color:#86948a;">© 2026 Pulsewatch. All rights reserved.</p>
+          <p style="margin:0;font-size:12px;color:#86948a;">© 2026 Netra Uptime. All rights reserved.</p>
         </td></tr>
       </table>
     </td></tr>

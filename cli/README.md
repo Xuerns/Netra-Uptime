@@ -1,12 +1,12 @@
-# Pulsewatch
+# Netra Uptime CLI
 
-Official CLI to quickly initialize, run, and manage **PulseWatch** self-hosted uptime monitoring and status pages.
+Official CLI to quickly initialize, run, and manage **Netra Uptime** self-hosted uptime monitoring and status pages.
 
 ## Quick Start
 
 ### 1. Instant Run (No installation required)
 
-You can run PulseWatch immediately using your preferred package runner:
+You can run Netra Uptime immediately using your preferred package runner:
 
 ```bash
 # npm / npx
@@ -46,7 +46,7 @@ Then run anywhere:
 pulsewatch start
 ```
 
-PulseWatch web dashboard will be available at: **http://localhost:8080**
+Netra Uptime web dashboard will be available at: **http://localhost:8080**
 
 ---
 
@@ -57,7 +57,7 @@ PulseWatch web dashboard will be available at: **http://localhost:8080**
 | `pulsewatch init` | Generate `.env` and `docker-compose.yml` with secure random credentials. |
 | `pulsewatch start` | Initialize (if not already done) and start containers (`docker compose up -d`). |
 | `pulsewatch stop` | Stop and remove running containers (`docker compose down`). |
-| `pulsewatch status` | Show status and health checks of PulseWatch, Postgres, and Redis (`docker compose ps`). |
+| `pulsewatch status` | Show status and health checks of Netra Uptime, Postgres, and Redis (`docker compose ps`). |
 | `pulsewatch logs` | Stream live container logs (`docker compose logs -f`). |
 | `pulsewatch update` | Pull the latest Docker images and restart containers. |
 | `pulsewatch help` | Display available commands and options. |
@@ -67,14 +67,14 @@ PulseWatch web dashboard will be available at: **http://localhost:8080**
 ## Options
 
 ### Custom Port
-By default, PulseWatch runs on port `8080`. You can change the port with `--port`:
+By default, Netra Uptime runs on port `8080`. You can change the port with `--port`:
 
 ```bash
 npx pulsewatch start --port 3000
 ```
 
 ### Custom Directory
-By default, configuration files are stored globally in `~/.pulsewatch` so you can manage PulseWatch from any folder. If you want to store configuration in the current folder or a specific directory:
+By default, configuration files are stored globally in `~/.pulsewatch` so you can manage Netra Uptime from any folder. If you want to store configuration in the current folder or a specific directory:
 
 ```bash
 # In the current directory
