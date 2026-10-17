@@ -106,7 +106,7 @@ func checkRDAP(domain string, timeout time.Duration) *DomainCheckResult {
 	if err != nil {
 		return nil
 	}
-	req.Header.Set("User-Agent", "PulseWatch-UptimeBot/1.0")
+	req.Header.Set("User-Agent", "NetraUptime-UptimeBot/1.0")
 
 	resp, err := client.Do(req)
 	if err != nil {

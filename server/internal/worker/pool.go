@@ -1,11 +1,11 @@
 package worker
 
 import (
-	"PulseWatch/internal/model"
-	"PulseWatch/internal/notification"
-	"PulseWatch/internal/websocket"
-	"PulseWatch/internal/worker/checker"
-	"PulseWatch/pkg/email"
+	"netra-uptime/internal/model"
+	"netra-uptime/internal/notification"
+	"netra-uptime/internal/websocket"
+	"netra-uptime/internal/worker/checker"
+	"netra-uptime/pkg/email"
 	"errors"
 	"fmt"
 	"log"

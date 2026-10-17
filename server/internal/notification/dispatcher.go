@@ -1,10 +1,10 @@
 package notification
 
 import (
-	"PulseWatch/internal/model"
-	"PulseWatch/pkg/apierror"
-	"PulseWatch/pkg/email"
-	"PulseWatch/pkg/utils"
+	"netra-uptime/internal/model"
+	"netra-uptime/pkg/apierror"
+	"netra-uptime/pkg/email"
+	"netra-uptime/pkg/utils"
 	"bytes"
 	"context"
 	"encoding/json"

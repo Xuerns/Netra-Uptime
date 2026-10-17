@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"PulseWatch/config"
+	"netra-uptime/config"
 
 	"github.com/gin-gonic/gin"
 )

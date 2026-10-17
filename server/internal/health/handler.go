@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"PulseWatch/config"
+	"netra-uptime/config"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"

@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"PulseWatch/internal/apikey"
-	"PulseWatch/internal/model"
-	"PulseWatch/pkg/jwt"
+	"netra-uptime/internal/apikey"
+	"netra-uptime/internal/model"
+	"netra-uptime/pkg/jwt"
 	"errors"
 	"net/http"
 	"net/http/httptest"

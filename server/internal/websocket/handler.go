@@ -1,7 +1,7 @@
 package websocket
 
 import (
-	"PulseWatch/internal/model"
+	"netra-uptime/internal/model"
 	"log"
 	"net/http"
 	"net/url"

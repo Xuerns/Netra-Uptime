@@ -1,7 +1,7 @@
 package notification
 
 import (
-	"PulseWatch/internal/model"
+	"netra-uptime/internal/model"
 
 	"gorm.io/gorm"
 )

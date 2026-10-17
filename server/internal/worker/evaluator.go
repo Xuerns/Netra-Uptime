@@ -1,7 +1,7 @@
 package worker
 
 import (
-	"PulseWatch/internal/model"
+	"netra-uptime/internal/model"
 	"fmt"
 	"strconv"
 	"strings"

@@ -1,7 +1,7 @@
 package alertrule
 
 import (
-	"PulseWatch/internal/model"
+	"netra-uptime/internal/model"
 	"errors"
 	"strings"
 

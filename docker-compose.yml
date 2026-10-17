@@ -4,30 +4,30 @@ services:
   # ─────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
-    container_name: pulsewatch_postgres
+    container_name: netra_uptime_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-pulsewatch}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pulsewatch_secret}
-      POSTGRES_DB: ${POSTGRES_DB:-pulsewatch}
+      POSTGRES_USER: ${POSTGRES_USER:-netra}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-netra_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-netra_uptime}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data:z
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pulsewatch} -d ${POSTGRES_DB:-pulsewatch}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-netra} -d ${POSTGRES_DB:-netra_uptime}"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - pulsewatch_net
+      - netra_uptime_net
 
   # ─────────────────────────────────────────────
   # Redis
   # ─────────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: pulsewatch_redis
+    container_name: netra_uptime_redis
     restart: unless-stopped
     command: redis-server --requirepass ${REDIS_PASSWORD:-redis_secret}
     ports:
@@ -40,16 +40,16 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - pulsewatch_net
+      - netra_uptime_net
 
   # ─────────────────────────────────────────────
-  # PulseWatch App (Single Container: Go API + Embedded UI)
+  # Netra Uptime App (Single Container: Go API + Embedded UI)
   # ─────────────────────────────────────────────
-  pulsewatch:
+  netra-uptime:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: pulsewatch_app
+    container_name: netra_uptime_app
     restart: unless-stopped
     env_file:
       - .env
@@ -91,7 +91,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - pulsewatch_net
+      - netra_uptime_net
 
 # ─────────────────────────────────────────────
 # Volumes
@@ -104,5 +104,5 @@ volumes:
 # Networks
 # ─────────────────────────────────────────────
 networks:
-  pulsewatch_net:
+  netra_uptime_net:
     driver: bridge

@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"PulseWatch/pkg/jwt"
+	"netra-uptime/pkg/jwt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

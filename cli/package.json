@@ -1,7 +1,7 @@
 {
-  "name": "pulsewatch",
+  "name": "netra-uptime",
   "version": "1.0.0",
-  "description": "CLI to install and run PulseWatch with Docker Compose",
+  "description": "CLI to install and run Netra Uptime with Docker Compose",
   "main": "bin/index.js",
   "files": [
     "bin",
@@ -17,7 +17,8 @@
   },
   "homepage": "https://github.com/xuerns/PulseWatch#readme",
   "keywords": [
-    "pulsewatch",
+    "netra",
+    "netra-uptime",
     "uptime",
     "monitoring",
     "status-page",
@@ -29,6 +30,6 @@
   "license": "AGPL-3.0",
   "type": "module",
   "bin": {
-    "pulsewatch": "bin/index.js"
+    "netra-uptime": "bin/index.js"
   }
 }

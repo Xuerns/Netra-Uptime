@@ -8,10 +8,10 @@ import { spawnSync } from 'node:child_process';
 import { generateEnv, generateCompose } from '../src/templates.js';
 
 const HELP = `
-PulseWatch CLI
+Netra Uptime CLI
 
 Usage:
-  pulsewatch <command> [options]
+  netra-uptime <command> [options]
 
 Commands:
   init      Generate .env and docker-compose.yml (random secrets)
@@ -24,7 +24,7 @@ Commands:
 
 Options:
   --port <n>   Host port for the web UI (default: 8080)
-  --dir <path> Install directory (default: ~/.pulsewatch)
+  --dir <path> Install directory (default: ~/.netra-uptime)
   --force      Overwrite existing .env / docker-compose.yml (init)
 `;
 
@@ -104,24 +104,24 @@ function getPortFromEnv(dir, fallback = '8080') {
 function main() {
   const opts = parseArgs(process.argv.slice(2));
   const command = opts._[0] || 'help';
-  const dir = resolve(opts.dir || join(homedir(), '.pulsewatch'));
+  const dir = resolve(opts.dir || join(homedir(), '.netra-uptime'));
   const dirFlag = opts.dir ? ` --dir ${opts.dir}` : '';
 
   switch (command) {
     case 'init': {
       const { port } = init(dir, opts);
       console.log(`
-⪢ PulseWatch initialized successfully! ⪡
+⪢ Netra Uptime initialized successfully! ⪡
 
 Next steps:
-  1. Start PulseWatch:
-     pulsewatch start${dirFlag}
+  1. Start Netra Uptime:
+     netra-uptime start${dirFlag}
 
   2. Check container status:
-     pulsewatch status${dirFlag}
+     netra-uptime status${dirFlag}
 
   3. Need more info? Run:
-     pulsewatch help
+     netra-uptime help
 `);
       break;
     }
@@ -131,14 +131,14 @@ Next steps:
       run('docker', ['compose', 'up', '-d'], dir);
       const activePort = opts.port || getPortFromEnv(dir, '8080');
       console.log(`
-⫸ PulseWatch is up and running! ⫷
+⫸ Netra Uptime is up and running! ⫷
    Web Dashboard: http://localhost:${activePort}
 
 Useful commands:
-  • pulsewatch status${dirFlag}  - Check container health
-  • pulsewatch logs${dirFlag}    - Stream live logs
-  • pulsewatch stop${dirFlag}    - Stop all containers
-  • pulsewatch help          - View all commands
+  • netra-uptime status${dirFlag}  - Check container health
+  • netra-uptime logs${dirFlag}    - Stream live logs
+  • netra-uptime stop${dirFlag}    - Stop all containers
+  • netra-uptime help          - View all commands
 `);
       break;
     }

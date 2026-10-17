@@ -1,7 +1,7 @@
 package audit
 
 import (
-	"PulseWatch/internal/model"
+	"netra-uptime/internal/model"
 	"errors"
 	"math"
 	"time"

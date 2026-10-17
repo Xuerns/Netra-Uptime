@@ -1,7 +1,7 @@
 package worker
 
 import (
-	"PulseWatch/internal/monitor"
+	"netra-uptime/internal/monitor"
 	"log"
 	"sync"
 	"time"

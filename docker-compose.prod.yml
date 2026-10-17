@@ -1,10 +1,10 @@
 services:
   # ─────────────────────────────────────────────
-  # PulseWatch App (Pre-built Single Container)
+  # Netra Uptime App (Pre-built Single Container)
   # ─────────────────────────────────────────────
-  pulsewatch:
-    image: ghcr.io/xuerns/pulsewatch:latest
-    container_name: pulsewatch_app
+  netra-uptime:
+    image: ghcr.io/xuerns/netra-uptime:latest
+    container_name: netra_uptime_app
     restart: unless-stopped
     environment:
       - APP_ENV=production
@@ -12,9 +12,9 @@ services:
       - PORT=8080
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_USER=pulsewatch
-      - DB_PASSWORD=pulsewatch_secret_change_me
-      - DB_NAME=pulsewatch
+      - DB_USER=netra
+      - DB_PASSWORD=netra_secret_change_me
+      - DB_NAME=netra_uptime
       - DB_SSLMODE=disable
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -40,35 +40,35 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - pulsewatch_net
+      - netra_uptime_net
 
   # ─────────────────────────────────────────────
   # PostgreSQL
   # ─────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
-    container_name: pulsewatch_postgres
+    container_name: netra_uptime_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: pulsewatch
-      POSTGRES_PASSWORD: pulsewatch_secret_change_me
-      POSTGRES_DB: pulsewatch
+      POSTGRES_USER: netra
+      POSTGRES_PASSWORD: netra_secret_change_me
+      POSTGRES_DB: netra_uptime
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pulsewatch -d pulsewatch"]
+      test: ["CMD-SHELL", "pg_isready -U netra -d netra_uptime"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - pulsewatch_net
+      - netra_uptime_net
 
   # ─────────────────────────────────────────────
   # Redis
   # ─────────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: pulsewatch_redis
+    container_name: netra_uptime_redis
     restart: unless-stopped
     command: redis-server --requirepass redis_secret_change_me
     volumes:
@@ -79,12 +79,12 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - pulsewatch_net
+      - netra_uptime_net
 
 volumes:
   postgres_data:
   redis_data:
 
 networks:
-  pulsewatch_net:
+  netra_uptime_net:
     driver: bridge

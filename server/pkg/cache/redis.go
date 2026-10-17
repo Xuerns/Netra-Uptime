@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"PulseWatch/config"
+	"netra-uptime/config"
 	"fmt"
 
 	"github.com/redis/go-redis/v9"

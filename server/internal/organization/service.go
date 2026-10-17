@@ -1,9 +1,9 @@
 package organization
 
 import (
-	"PulseWatch/config"
-	"PulseWatch/internal/audit"
-	"PulseWatch/internal/model"
+	"netra-uptime/config"
+	"netra-uptime/internal/audit"
+	"netra-uptime/internal/model"
 	"errors"
 	"fmt"
 

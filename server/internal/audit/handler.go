@@ -1,7 +1,7 @@
 package audit
 
 import (
-	"PulseWatch/pkg/apierror"
+	"netra-uptime/pkg/apierror"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

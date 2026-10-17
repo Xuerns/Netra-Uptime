@@ -1,8 +1,8 @@
 package organization
 
 import (
-	"PulseWatch/internal/model"
-	"PulseWatch/pkg/utils"
+	"netra-uptime/internal/model"
+	"netra-uptime/pkg/utils"
 	"bytes"
 	"encoding/json"
 	"errors"

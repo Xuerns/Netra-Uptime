@@ -1,4 +1,4 @@
-module PulseWatch
+module netra-uptime
 
 go 1.26.4
 

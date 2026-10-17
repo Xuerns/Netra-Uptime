@@ -1,10 +1,10 @@
 package publicapi
 
 import (
-	"PulseWatch/internal/incident"
-	"PulseWatch/internal/monitor"
-	"PulseWatch/internal/statuspage"
-	"PulseWatch/pkg/apierror"
+	"netra-uptime/internal/incident"
+	"netra-uptime/internal/monitor"
+	"netra-uptime/internal/statuspage"
+	"netra-uptime/pkg/apierror"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

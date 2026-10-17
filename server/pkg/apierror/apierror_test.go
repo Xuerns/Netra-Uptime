@@ -1,7 +1,7 @@
 package apierror_test
 
 import (
-	"PulseWatch/pkg/apierror"
+	"netra-uptime/pkg/apierror"
 	"errors"
 	"io"
 	"testing"

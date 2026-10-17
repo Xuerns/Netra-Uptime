@@ -1,8 +1,8 @@
 package apikey
 
 import (
-	"PulseWatch/internal/audit"
-	"PulseWatch/internal/model"
+	"netra-uptime/internal/audit"
+	"netra-uptime/internal/model"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"

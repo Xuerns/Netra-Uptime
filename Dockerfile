@@ -24,7 +24,7 @@ COPY server/ ./
 COPY --from=client-builder /app/client/build ./internal/static/build
 
 # Build static binary
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o pulsewatch ./cmd/pulsewatch
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o netra-uptime ./cmd/netra-uptime
 
 # ── STAGE 3: Minimal Single Container Runner ────────
 FROM alpine:3.20 AS runner
@@ -33,7 +33,7 @@ WORKDIR /app
 
 COPY --from=server-builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-COPY --from=server-builder /app/server/pulsewatch ./pulsewatch
+COPY --from=server-builder /app/server/netra-uptime ./netra-uptime
 
 EXPOSE 8080
 
@@ -41,4 +41,4 @@ ENV PORT=8080
 ENV APP_ENV=production
 ENV APP_MODE=selfhosted
 
-CMD ["./pulsewatch"]
+CMD ["./netra-uptime"]

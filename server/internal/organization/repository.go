@@ -1,7 +1,7 @@
 package organization
 
 import (
-	"PulseWatch/internal/model"
+	"netra-uptime/internal/model"
 	"errors"
 	"time"
 

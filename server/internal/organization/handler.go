@@ -1,7 +1,7 @@
 package organization
 
 import (
-	"PulseWatch/pkg/apierror"
+	"netra-uptime/pkg/apierror"
 	"net/http"
 	"strconv"
 

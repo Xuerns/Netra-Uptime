@@ -10,7 +10,7 @@ import (
 	"github.com/wneessen/go-mail"
 )
 
-// EmailSender defines the generic email-sending contract for PulseWatch
+// EmailSender defines the generic email-sending contract for Netra Uptime
 type EmailSender interface {
 	SendEmail(to []string, subject, htmlContent string) (string, error)
 	SendAlert(to []string, subject, htmlContent string) error

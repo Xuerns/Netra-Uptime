@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"PulseWatch/internal/model"
-	"PulseWatch/pkg/jwt"
+	"netra-uptime/internal/model"
+	"netra-uptime/pkg/jwt"
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
@@ -16,7 +16,7 @@ import (
 	"net/url"
 	"os"
 
-	"PulseWatch/pkg/email"
+	"netra-uptime/pkg/email"
 	"strconv"
 	"strings"
 	"time"

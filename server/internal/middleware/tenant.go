@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"PulseWatch/internal/model"
+	"netra-uptime/internal/model"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

@@ -1,10 +1,10 @@
 package monitor
 
 import (
-	"PulseWatch/config"
-	"PulseWatch/internal/audit"
-	"PulseWatch/internal/model"
-	"PulseWatch/pkg/utils"
+	"netra-uptime/config"
+	"netra-uptime/internal/audit"
+	"netra-uptime/internal/model"
+	"netra-uptime/pkg/utils"
 	"context"
 	"encoding/json"
 	"errors"

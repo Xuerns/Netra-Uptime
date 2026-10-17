@@ -1,0 +1,89 @@
+name: Continuous Integration
+
+on:
+  push: 
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    defaults:
+      run: 
+        working-directory: server  
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+    
+    - name: Set Up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: "stable"
+        cache-dependency-path: "server/go.sum"
+    
+    - name: Verify dependencies
+      run: |
+        go mod verify
+        go mod tidy
+    
+    - name: Run go Vet
+      run: go vet ./...
+
+    - name: Run Unit & Integration Tests
+      run: go test -v -race -timeout 3m ./...
+
+    - name: Build
+      run: go build -v -o /dev/null ./cmd/netra-uptime
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set Up node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+          cache-dependency-path: "client/pnpm-lock.yaml"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm run check
+
+      - name: Build 
+        run: pnpm run build
+    
+  cli:
+    name: CLI Smoke Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set Up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check CLI Help Command
+        run: node bin/index.js --help
+
+
+  

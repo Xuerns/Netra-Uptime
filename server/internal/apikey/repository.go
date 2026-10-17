@@ -1,7 +1,7 @@
 package apikey
 
 import (
-	"PulseWatch/internal/model"
+	"netra-uptime/internal/model"
 	"time"
 
 	"gorm.io/gorm"

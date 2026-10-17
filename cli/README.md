@@ -10,40 +10,40 @@ You can run Netra Uptime immediately using your preferred package runner:
 
 ```bash
 # npm / npx
-npx pulsewatch start
+npx netra-uptime start
 
 # pnpm
-pnpm dlx pulsewatch start
+pnpm dlx netra-uptime start
 
 # yarn
-yarn dlx pulsewatch start
+yarn dlx netra-uptime start
 
 # bun
-bunx pulsewatch start
+bunx netra-uptime start
 ```
 
 ### 2. Global Installation (Optional)
 
-If you prefer having the `pulsewatch` command permanently available:
+If you prefer having the `netra-uptime` command permanently available:
 
 ```bash
 # npm
-npm install -g pulsewatch
+npm install -g netra-uptime
 
 # pnpm
-pnpm add -g pulsewatch
+pnpm add -g netra-uptime
 
 # yarn
-yarn global add pulsewatch
+yarn global add netra-uptime
 
 # bun
-bun add -g pulsewatch
+bun add -g netra-uptime
 ```
 
 Then run anywhere:
 
 ```bash
-pulsewatch start
+netra-uptime start
 ```
 
 Netra Uptime web dashboard will be available at: **http://localhost:8080**
@@ -54,13 +54,13 @@ Netra Uptime web dashboard will be available at: **http://localhost:8080**
 
 | Command | Description |
 | :--- | :--- |
-| `pulsewatch init` | Generate `.env` and `docker-compose.yml` with secure random credentials. |
-| `pulsewatch start` | Initialize (if not already done) and start containers (`docker compose up -d`). |
-| `pulsewatch stop` | Stop and remove running containers (`docker compose down`). |
-| `pulsewatch status` | Show status and health checks of Netra Uptime, Postgres, and Redis (`docker compose ps`). |
-| `pulsewatch logs` | Stream live container logs (`docker compose logs -f`). |
-| `pulsewatch update` | Pull the latest Docker images and restart containers. |
-| `pulsewatch help` | Display available commands and options. |
+| `netra-uptime init` | Generate `.env` and `docker-compose.yml` with secure random credentials. |
+| `netra-uptime start` | Initialize (if not already done) and start containers (`docker compose up -d`). |
+| `netra-uptime stop` | Stop and remove running containers (`docker compose down`). |
+| `netra-uptime status` | Show status and health checks of Netra Uptime, Postgres, and Redis (`docker compose ps`). |
+| `netra-uptime logs` | Stream live container logs (`docker compose logs -f`). |
+| `netra-uptime update` | Pull the latest Docker images and restart containers. |
+| `netra-uptime help` | Display available commands and options. |
 
 ---
 
@@ -70,25 +70,25 @@ Netra Uptime web dashboard will be available at: **http://localhost:8080**
 By default, Netra Uptime runs on port `8080`. You can change the port with `--port`:
 
 ```bash
-npx pulsewatch start --port 3000
+npx netra-uptime start --port 3000
 ```
 
 ### Custom Directory
-By default, configuration files are stored globally in `~/.pulsewatch` so you can manage Netra Uptime from any folder. If you want to store configuration in the current folder or a specific directory:
+By default, configuration files are stored globally in `~/.netra-uptime` so you can manage Netra Uptime from any folder. If you want to store configuration in the current folder or a specific directory:
 
 ```bash
 # In the current directory
-npx pulsewatch start --dir .
+npx netra-uptime start --dir .
 
 # Or in a specific path
-npx pulsewatch start --dir /opt/pulsewatch
+npx netra-uptime start --dir /opt/netra-uptime
 ```
 
 ### Force Overwrite
 To re-generate `.env` and `docker-compose.yml` (overwriting existing files):
 
 ```bash
-npx pulsewatch init --force
+npx netra-uptime init --force
 ```
 
 ---

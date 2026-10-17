@@ -1,8 +1,8 @@
 package incident
 
 import (
-	"PulseWatch/pkg/apierror"
-	"PulseWatch/pkg/utils"
+	"netra-uptime/pkg/apierror"
+	"netra-uptime/pkg/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

@@ -1,10 +1,10 @@
 package worker
 
 import (
-	"PulseWatch/internal/model"
-	"PulseWatch/internal/notification"
-	"PulseWatch/internal/worker/checker"
-	"PulseWatch/pkg/email"
+	"netra-uptime/internal/model"
+	"netra-uptime/internal/notification"
+	"netra-uptime/internal/worker/checker"
+	"netra-uptime/pkg/email"
 	"fmt"
 	"log"
 	"time"
@@ -111,7 +111,7 @@ func sendExpiryNotification(db *gorm.DB, emailSender email.EmailSender, dispatch
 
 	// Also dispatch to org NotificationChannels (slack, webhook, email channels)
 	if dispatcher != nil {
-		subject := fmt.Sprintf("[PulseWatch] %s Expiry Warning: %s (%d days left)", expiryType, monitor.Name, daysLeft)
+		subject := fmt.Sprintf("[Netra Uptime] %s Expiry Warning: %s (%d days left)", expiryType, monitor.Name, daysLeft)
 		body := fmt.Sprintf("<h3>%s Expiry Warning</h3><p>Monitor <b>%s</b> (%s): %s expires in <b>%d days</b> on %s.</p>",
 			expiryType, monitor.Name, monitor.Target, expiryType, daysLeft, expiresStr)
 		go dispatcher.Dispatch(monitor, nil, "expiry.warning", subject, body)

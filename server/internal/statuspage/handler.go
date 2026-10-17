@@ -1,7 +1,7 @@
 package statuspage
 
 import (
-	"PulseWatch/pkg/apierror"
+	"netra-uptime/pkg/apierror"
 	"fmt"
 	"net/http"
 	"time"

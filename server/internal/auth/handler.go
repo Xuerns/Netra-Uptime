@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"PulseWatch/pkg/apierror"
-	"PulseWatch/pkg/email"
+	"netra-uptime/pkg/apierror"
+	"netra-uptime/pkg/email"
 	"net/http"
 	"os"
 	"strings"

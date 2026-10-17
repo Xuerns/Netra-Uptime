@@ -1,9 +1,9 @@
 package statuspage
 
 import (
-	"PulseWatch/internal/audit"
-	"PulseWatch/internal/model"
-	"PulseWatch/config"
+	"netra-uptime/internal/audit"
+	"netra-uptime/internal/model"
+	"netra-uptime/config"
 	"context"
 	"encoding/json"
 	"errors"

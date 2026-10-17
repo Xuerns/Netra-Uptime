@@ -1,7 +1,7 @@
 package database
 
 import (
-	"PulseWatch/config"
+	"netra-uptime/config"
 	"time"
 
 	"gorm.io/driver/postgres"

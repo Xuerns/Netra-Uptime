@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"PulseWatch/internal/apikey"
+	"netra-uptime/internal/apikey"
 	"context"
 	"fmt"
 	"net/http"

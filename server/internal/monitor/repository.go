@@ -1,8 +1,8 @@
 package monitor
 
 import (
-	"PulseWatch/config"
-	"PulseWatch/internal/model"
+	"netra-uptime/config"
+	"netra-uptime/internal/model"
 	"sort"
 	"time"
 
@@ -188,17 +188,22 @@ func (r *MonitorRepositoryImpl) CreateMonitorPIC(monitorPIC *model.MonitorPIC) e
 }
 
 func (r *MonitorRepositoryImpl) ReplaceMonitorPICs(monitor *model.Monitor, newPICs []model.MonitorPIC) error {
-	if err := r.db.Where("monitor_id = ?", monitor.ID).Delete(&model.MonitorPIC{}).Error; err != nil {
-		return err
-	}
-
-	for _, pic := range newPICs {
-		pic.MonitorID = monitor.ID
-		if err := r.db.Create(&pic).Error; err != nil {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("monitor_id = ?", monitor.ID).Delete(&model.MonitorPIC{}).Error; err != nil {
 			return err
 		}
-	}
-	return nil
+
+		if len(newPICs) == 0 {
+			return nil
+		}
+
+		for i := range newPICs {
+			newPICs[i].MonitorID = monitor.ID
+		}
+
+		// Single multi-row INSERT instead of one query per PIC.
+		return tx.CreateInBatches(&newPICs, 100).Error
+	})
 }
 
 func (r *MonitorRepositoryImpl) GetNumberOfPIC(orgId, monitorId string) (int, error) {
