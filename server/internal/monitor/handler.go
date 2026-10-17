@@ -1,8 +1,8 @@
 package monitor
 
 import (
-	"netra-uptime/pkg/apierror"
 	"net/http"
+	"netra-uptime/pkg/apierror"
 	"strconv"
 
 	"github.com/gin-gonic/gin"

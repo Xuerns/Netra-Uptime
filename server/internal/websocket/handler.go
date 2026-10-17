@@ -1,10 +1,10 @@
 package websocket
 
 import (
-	"netra-uptime/internal/model"
 	"log"
 	"net/http"
 	"net/url"
+	"netra-uptime/internal/model"
 	"os"
 	"strings"
 

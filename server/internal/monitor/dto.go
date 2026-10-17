@@ -27,33 +27,33 @@ type UpdatedMonitorRequest struct {
 }
 
 type MonitorResponse struct {
-	ID                 string                `json:"id"`
-	Name               string                `json:"name"`
-	Type               string                `json:"type"`
-	Target             string                `json:"target"`
-	Status             string                `json:"status"`
-	IntervalSeconds    int                   `json:"interval_seconds"`
-	TimeoutSeconds     int                   `json:"timeout_seconds"`
-	ExpectedStatusCode int                   `json:"expectation_status_code"` // Kept to match binding
-	Criticality        string                `json:"criticality"`
-	IsActive           bool                  `json:"is_active"`
-	EnableSSLDomainCheck bool                `json:"enable_ssl_domain_check"`
-	SSLExpiresAt       *string               `json:"ssl_expires_at,omitempty"`
-	SSLDaysLeft        *int                  `json:"ssl_days_left,omitempty"`
-	SSLStatus          string                `json:"ssl_status,omitempty"`
-	SSLError           string                `json:"ssl_error,omitempty"`
-	DomainExpiresAt    *string               `json:"domain_expires_at,omitempty"`
-	DomainDaysLeft     *int                  `json:"domain_days_left,omitempty"`
-	DomainStatus       string                `json:"domain_status,omitempty"`
-	DomainError        string                `json:"domain_error,omitempty"`
-	UptimePercent      *float64              `json:"uptime_percent,omitempty"`
-	ResponseTimeMs     *int                  `json:"response_time_ms,omitempty"`
-	LastCheckedAt      *string               `json:"last_checked_at,omitempty"`
-	OrganizationID     string                `json:"organization_id"`
-	Organization       *OrgInfo              `json:"organization,omitempty"`
-	MonitorPICs        []MonitorPICInfo      `json:"monitor_pics,omitempty"`
-	Assignees          []MonitorAssigneeInfo `json:"assignees,omitempty"`
-	RecentChecks       []RecentCheck         `json:"recent_checks,omitempty"`
+	ID                   string                `json:"id"`
+	Name                 string                `json:"name"`
+	Type                 string                `json:"type"`
+	Target               string                `json:"target"`
+	Status               string                `json:"status"`
+	IntervalSeconds      int                   `json:"interval_seconds"`
+	TimeoutSeconds       int                   `json:"timeout_seconds"`
+	ExpectedStatusCode   int                   `json:"expectation_status_code"` // Kept to match binding
+	Criticality          string                `json:"criticality"`
+	IsActive             bool                  `json:"is_active"`
+	EnableSSLDomainCheck bool                  `json:"enable_ssl_domain_check"`
+	SSLExpiresAt         *string               `json:"ssl_expires_at,omitempty"`
+	SSLDaysLeft          *int                  `json:"ssl_days_left,omitempty"`
+	SSLStatus            string                `json:"ssl_status,omitempty"`
+	SSLError             string                `json:"ssl_error,omitempty"`
+	DomainExpiresAt      *string               `json:"domain_expires_at,omitempty"`
+	DomainDaysLeft       *int                  `json:"domain_days_left,omitempty"`
+	DomainStatus         string                `json:"domain_status,omitempty"`
+	DomainError          string                `json:"domain_error,omitempty"`
+	UptimePercent        *float64              `json:"uptime_percent,omitempty"`
+	ResponseTimeMs       *int                  `json:"response_time_ms,omitempty"`
+	LastCheckedAt        *string               `json:"last_checked_at,omitempty"`
+	OrganizationID       string                `json:"organization_id"`
+	Organization         *OrgInfo              `json:"organization,omitempty"`
+	MonitorPICs          []MonitorPICInfo      `json:"monitor_pics,omitempty"`
+	Assignees            []MonitorAssigneeInfo `json:"assignees,omitempty"`
+	RecentChecks         []RecentCheck         `json:"recent_checks,omitempty"`
 }
 
 type OrgInfo struct {

@@ -86,8 +86,7 @@
 							fill: true,
 							spanGaps: true,
 							segment: {
-								borderColor: (c: any) =>
-									isGapSegment(c) ? 'rgba(148, 163, 184, 0.45)' : color,
+								borderColor: (c: any) => (isGapSegment(c) ? 'rgba(148, 163, 184, 0.45)' : color),
 								borderDash: (c: any) => (isGapSegment(c) ? [5, 5] : undefined)
 							},
 							backgroundColor: gradient,
@@ -225,8 +224,7 @@
 			chartInstance.data.datasets[0].pointHoverBackgroundColor = pointColors;
 			chartInstance.data.datasets[0].spanGaps = true;
 			chartInstance.data.datasets[0].segment = {
-				borderColor: (c: any) =>
-					isGapSegment(c) ? 'rgba(148, 163, 184, 0.45)' : color,
+				borderColor: (c: any) => (isGapSegment(c) ? 'rgba(148, 163, 184, 0.45)' : color),
 				borderDash: (c: any) => (isGapSegment(c) ? [5, 5] : undefined)
 			} as any;
 			chartInstance.data.datasets[0].pointRadius = ((c: any) => {

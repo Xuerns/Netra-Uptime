@@ -1,7 +1,16 @@
 <script lang="ts">
 	import { type Monitor } from '$lib/api/monitor';
 	import { statusLabel, formatSSLBadge, formatDomainBadge } from '$lib/utils/monitor';
-	import { Globe, ShieldCheck, ExternalLink, Clock, RefreshCw, Pause, Play, Trash2 } from 'lucide-svelte';
+	import {
+		Globe,
+		ShieldCheck,
+		ExternalLink,
+		Clock,
+		RefreshCw,
+		Pause,
+		Play,
+		Trash2
+	} from 'lucide-svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 
 	interface Props {
@@ -13,7 +22,14 @@
 		isChecking?: boolean;
 	}
 
-	let { monitor, onPauseResume, onEdit, onDelete, onCheckNow, isChecking = false }: Props = $props();
+	let {
+		monitor,
+		onPauseResume,
+		onEdit,
+		onDelete,
+		onCheckNow,
+		isChecking = false
+	}: Props = $props();
 
 	let sslBadge = $derived(
 		formatSSLBadge(monitor.SSLStatus, monitor.SSLDaysLeft, monitor.SSLExpiresAt, monitor.SSLError)
@@ -152,12 +168,7 @@
 		{/if}
 
 		{#if onPauseResume}
-			<Button
-				variant="outline"
-				size="sm"
-				onclick={onPauseResume}
-				class="gap-1.5"
-			>
+			<Button variant="outline" size="sm" onclick={onPauseResume} class="gap-1.5">
 				{#if monitor.Status === 'paused'}
 					<Play class="size-3.5" />
 					<span>Resume</span>

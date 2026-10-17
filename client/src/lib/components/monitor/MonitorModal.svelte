@@ -32,9 +32,7 @@
 	}>();
 
 	const isEdit = $derived(!!monitor);
-	const effectiveType = $derived<string>(
-		monitor?.Type || monitorType || 'http'
-	);
+	const effectiveType = $derived<string>(monitor?.Type || monitorType || 'http');
 
 	let name = $state('');
 	let target = $state('');
@@ -519,12 +517,12 @@
 				<div class="space-y-3 flex flex-col h-full">
 					<div class="flex items-center justify-between">
 						<div class="flex items-center gap-1.5">
-							<Label class="text-sm font-medium text-foreground">
-								Assignees
-							</Label>
+							<Label class="text-sm font-medium text-foreground">Assignees</Label>
 							<AssigneeGuide />
 						</div>
-						<span class="text-xs text-foreground/40 font-mono">{selectedAssignees.length}/5 selected</span>
+						<span class="text-xs text-foreground/40 font-mono"
+							>{selectedAssignees.length}/5 selected</span
+						>
 					</div>
 
 					<div
@@ -610,9 +608,13 @@
 					</div>
 
 					{#if selectedAssignees.length === 5}
-						<span class="text-[11px] text-primary font-medium block">Maximum 5 assignees selected.</span>
+						<span class="text-[11px] text-primary font-medium block"
+							>Maximum 5 assignees selected.</span
+						>
 					{:else if selectedAssignees.length === 0}
-						<span class="text-[11px] text-muted-foreground/60 block">No assignees selected. Team notification channels will be used.</span>
+						<span class="text-[11px] text-muted-foreground/60 block"
+							>No assignees selected. Team notification channels will be used.</span
+						>
 					{/if}
 				</div>
 			</div>

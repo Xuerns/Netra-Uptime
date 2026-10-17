@@ -1,8 +1,8 @@
 package worker
 
 import (
-	"netra-uptime/internal/model"
 	"fmt"
+	"netra-uptime/internal/model"
 	"strconv"
 	"strings"
 	"time"
@@ -10,12 +10,12 @@ import (
 
 // RuleEvaluationResult represents the outcome of evaluating check results against rules.
 type RuleEvaluationResult struct {
-	IsBreached      bool
-	Severity        string // "critical" | "warning"
-	RuleName        string
-	Reason          string
+	IsBreached       bool
+	Severity         string // "critical" | "warning"
+	RuleName         string
+	Reason           string
 	RequiredBreaches int
-	RuleID          *string
+	RuleID           *string
 }
 
 // EvaluateRules evaluates check metrics against custom monitor rules or default rules.

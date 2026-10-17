@@ -111,7 +111,9 @@
 							<span
 								style={day.uptime_percentage >= 99.0 && accentColor ? `color: ${accentColor};` : ''}
 								class={day.uptime_percentage >= 99.0
-									? (accentColor ? 'font-medium' : 'text-emerald-400')
+									? accentColor
+										? 'font-medium'
+										: 'text-emerald-400'
 									: day.uptime_percentage >= 95.0
 										? 'text-amber-400'
 										: 'text-red-400'}

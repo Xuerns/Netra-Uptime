@@ -1,13 +1,13 @@
 package alertrule
 
 import (
-	"netra-uptime/internal/model"
-	"netra-uptime/pkg/utils"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"netra-uptime/internal/model"
+	"netra-uptime/pkg/utils"
 	"testing"
 	"time"
 

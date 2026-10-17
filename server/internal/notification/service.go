@@ -1,12 +1,12 @@
 package notification
 
 import (
-	"netra-uptime/internal/model"
-	"netra-uptime/pkg/utils"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
+	"netra-uptime/internal/model"
+	"netra-uptime/pkg/utils"
 	"strings"
 
 	"github.com/google/uuid"
@@ -93,7 +93,6 @@ func (s *channelServiceImpl) Create(orgID string, req *CreateChannelRequest) (*C
 	return mapChannelToResponse(ch, req.Config), nil
 }
 
-
 func (s *channelServiceImpl) GetAll(orgID string) ([]ChannelResponse, error) {
 	channels, err := s.repo.GetAll(orgID)
 	if err != nil {
@@ -108,7 +107,6 @@ func (s *channelServiceImpl) GetAll(orgID string) ([]ChannelResponse, error) {
 	return resp, nil
 }
 
-
 func (s *channelServiceImpl) GetByID(orgID, channelID string) (*ChannelResponse, error) {
 	ch, err := s.repo.GetByID(orgID, channelID)
 	if err != nil {
@@ -117,7 +115,6 @@ func (s *channelServiceImpl) GetByID(orgID, channelID string) (*ChannelResponse,
 	config, _ := unmarshalConfig(ch.Config)
 	return mapChannelToResponse(ch, config), nil
 }
-
 
 func (s *channelServiceImpl) Update(orgID, channelID string, req *UpdateChannelRequest) (*ChannelResponse, error) {
 	ch, err := s.repo.GetByID(orgID, channelID)
@@ -154,7 +151,6 @@ func (s *channelServiceImpl) Update(orgID, channelID string, req *UpdateChannelR
 	return mapChannelToResponse(ch, mergedConfig), nil
 }
 
-
 func (s *channelServiceImpl) Delete(orgID, channelID string) error {
 	// Verify the channel exists and belongs to the org before deleting
 	if _, err := s.repo.GetByID(orgID, channelID); err != nil {
@@ -165,7 +161,6 @@ func (s *channelServiceImpl) Delete(orgID, channelID string) error {
 	}
 	return nil
 }
-
 
 func (s *channelServiceImpl) GetLogs(orgID string, limit, offset int) (*LogListResponse, error) {
 	if limit <= 0 || limit > 100 {
@@ -269,8 +264,8 @@ func validateExternalURL(rawURL string) error {
 		"172.21.", "172.22.", "172.23.", "172.24.", "172.25.",
 		"172.26.", "172.27.", "172.28.", "172.29.", "172.30.", "172.31.",
 		"192.168.",
-		"169.254.",  // link-local (AWS metadata default)
-		"[::1]",    // IPv6 loopback
+		"169.254.",   // link-local (AWS metadata default)
+		"[::1]",      // IPv6 loopback
 		"[fc", "[fd", // IPv6 private
 		"metadata.google.internal",
 		"169.254.169.254", // AWS/GCP/Azure metadata

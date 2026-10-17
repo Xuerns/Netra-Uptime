@@ -1,9 +1,9 @@
 package statuspage
 
 import (
-	"netra-uptime/pkg/apierror"
 	"fmt"
 	"net/http"
+	"netra-uptime/pkg/apierror"
 	"time"
 
 	"github.com/gin-gonic/gin"

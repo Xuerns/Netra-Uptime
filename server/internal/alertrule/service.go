@@ -1,8 +1,8 @@
 package alertrule
 
 import (
-	"netra-uptime/internal/model"
 	"errors"
+	"netra-uptime/internal/model"
 	"strings"
 
 	"github.com/google/uuid"

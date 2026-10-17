@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"netra-uptime/internal/model"
-	"netra-uptime/pkg/jwt"
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
@@ -14,6 +12,8 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"netra-uptime/internal/model"
+	"netra-uptime/pkg/jwt"
 	"os"
 
 	"netra-uptime/pkg/email"

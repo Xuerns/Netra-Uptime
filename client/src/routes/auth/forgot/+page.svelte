@@ -3,11 +3,7 @@
 	import { ArrowLeft, Eye, EyeOff, Mail, KeyRound, CheckCircle2, Loader2 } from 'lucide-svelte';
 	import { env } from '$env/dynamic/public';
 	import { page } from '$app/stores';
-	import {
-		validateEmail,
-		validatePassword,
-		validateConfirmPassword
-	} from '$lib/utils/validation';
+	import { validateEmail, validatePassword, validateConfirmPassword } from '$lib/utils/validation';
 	import { debounce } from '$lib/helper/utils';
 	import { parseApiError } from '$lib/utils/parseApiError';
 

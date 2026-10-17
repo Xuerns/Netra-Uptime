@@ -6,7 +6,6 @@ import (
 	"gorm.io/gorm"
 )
 
-
 type ChannelRepository interface {
 	Create(channel *model.NotificationChannel) error
 	GetAll(orgID string) ([]model.NotificationChannel, error)
@@ -18,7 +17,6 @@ type ChannelRepository interface {
 	CreateLog(log *model.NotificationLog) error
 	GetLogs(orgID string, limit, offset int) ([]model.NotificationLog, int64, error)
 }
-
 
 type channelRepositoryImpl struct {
 	db *gorm.DB

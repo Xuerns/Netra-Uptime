@@ -1,14 +1,14 @@
 package monitor
 
 import (
-	"netra-uptime/config"
-	"netra-uptime/internal/audit"
-	"netra-uptime/internal/model"
-	"netra-uptime/pkg/utils"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"netra-uptime/config"
+	"netra-uptime/internal/audit"
+	"netra-uptime/internal/model"
+	"netra-uptime/pkg/utils"
 	"time"
 
 	"github.com/google/uuid"

@@ -1,8 +1,8 @@
 package cache
 
 import (
-	"netra-uptime/config"
 	"fmt"
+	"netra-uptime/config"
 
 	"github.com/redis/go-redis/v9"
 )

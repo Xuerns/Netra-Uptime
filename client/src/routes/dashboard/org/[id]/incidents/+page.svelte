@@ -113,8 +113,6 @@
 		}
 	});
 
-
-
 	let tz = $derived($userTimezone);
 
 	function fmtDateTime(d: string) {
@@ -139,7 +137,6 @@
 		{error}
 	</div>
 {:else}
-
 	<!-- GitHub Style Table List Box -->
 	<div class="bg-card border border-border rounded-lg overflow-hidden">
 		<!-- Table Header Bar with GitHub-Style Active/Resolved Toggles -->
@@ -406,7 +403,10 @@
 										<span>&middot;</span>
 										<span class="flex items-center gap-1">
 											<Users class="size-3 text-primary" />
-											<span>{incident.Assignees.length} {incident.Assignees.length === 1 ? 'Assignee' : 'Assignees'}</span>
+											<span
+												>{incident.Assignees.length}
+												{incident.Assignees.length === 1 ? 'Assignee' : 'Assignees'}</span
+											>
 										</span>
 									{/if}
 								</div>

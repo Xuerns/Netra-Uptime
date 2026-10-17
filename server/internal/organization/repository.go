@@ -1,8 +1,8 @@
 package organization
 
 import (
-	"netra-uptime/internal/model"
 	"errors"
+	"netra-uptime/internal/model"
 	"time"
 
 	"gorm.io/gorm"

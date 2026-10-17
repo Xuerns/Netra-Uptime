@@ -1,11 +1,11 @@
 package organization
 
 import (
+	"errors"
+	"fmt"
 	"netra-uptime/config"
 	"netra-uptime/internal/audit"
 	"netra-uptime/internal/model"
-	"errors"
-	"fmt"
 
 	"time"
 

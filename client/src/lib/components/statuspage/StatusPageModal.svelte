@@ -163,7 +163,10 @@
 			isOpen = false;
 			onSuccess();
 		} catch (err: any) {
-			error = parseApiError(err, isEdit ? 'Failed to update status page' : 'Failed to create status page');
+			error = parseApiError(
+				err,
+				isEdit ? 'Failed to update status page' : 'Failed to create status page'
+			);
 			toast.error(error);
 		} finally {
 			loading = false;
@@ -345,7 +348,10 @@
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<!-- Logo URL -->
 						<div class="space-y-1.5">
-							<Label for="sp-logo" class="text-xs font-medium text-foreground flex items-center gap-1.5">
+							<Label
+								for="sp-logo"
+								class="text-xs font-medium text-foreground flex items-center gap-1.5"
+							>
 								<Image class="size-3.5 text-muted-foreground" />
 								Logo URL
 							</Label>
@@ -359,7 +365,10 @@
 
 						<!-- Favicon URL -->
 						<div class="space-y-1.5">
-							<Label for="sp-favicon" class="text-xs font-medium text-foreground flex items-center gap-1.5">
+							<Label
+								for="sp-favicon"
+								class="text-xs font-medium text-foreground flex items-center gap-1.5"
+							>
 								<Sparkles class="size-3.5 text-muted-foreground" />
 								Favicon URL
 							</Label>
@@ -406,7 +415,10 @@
 
 					<!-- Custom CSS -->
 					<div class="space-y-1.5">
-						<Label for="sp-css" class="text-xs font-medium text-foreground flex items-center gap-1.5">
+						<Label
+							for="sp-css"
+							class="text-xs font-medium text-foreground flex items-center gap-1.5"
+						>
 							<Code2 class="size-3.5 text-muted-foreground" />
 							Custom CSS Injection
 						</Label>
@@ -423,7 +435,9 @@
 		</div>
 
 		<!-- Footer -->
-		<div class="p-4 px-6 border-t border-border/70 bg-card/60 flex items-center justify-end gap-3 shrink-0">
+		<div
+			class="p-4 px-6 border-t border-border/70 bg-card/60 flex items-center justify-end gap-3 shrink-0"
+		>
 			<Button
 				type="button"
 				variant="ghost"

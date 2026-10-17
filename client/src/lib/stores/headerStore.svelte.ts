@@ -50,4 +50,3 @@ class HeaderStore {
 }
 
 export const headerStore = new HeaderStore();
-

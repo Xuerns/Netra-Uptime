@@ -1,13 +1,13 @@
 package apikey
 
 import (
-	"netra-uptime/internal/audit"
-	"netra-uptime/internal/model"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"netra-uptime/internal/audit"
+	"netra-uptime/internal/model"
 	"time"
 
 	"github.com/google/uuid"

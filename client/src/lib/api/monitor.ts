@@ -79,11 +79,11 @@ export interface Monitor {
 	EnableSSLDomainCheck?: boolean;
 	SSLExpiresAt?: string;
 	SSLDaysLeft?: number;
-	SSLStatus?: 'valid' | 'warning' | 'expired' | 'error';
+	SSLStatus?: 'none' | 'valid' | 'warning' | 'expired' | 'error';
 	SSLError?: string;
 	DomainExpiresAt?: string;
 	DomainDaysLeft?: number;
-	DomainStatus?: 'valid' | 'warning' | 'expired' | 'error';
+	DomainStatus?: 'none' | 'valid' | 'warning' | 'expired' | 'error';
 	DomainError?: string;
 	MonitorPICs?: { UserID: string }[];
 	Assignees?: { UserID: string }[];

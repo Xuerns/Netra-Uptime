@@ -1,13 +1,13 @@
 package statuspage
 
 import (
-	"netra-uptime/internal/model"
-	"netra-uptime/pkg/utils"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"netra-uptime/internal/model"
+	"netra-uptime/pkg/utils"
 	"os"
 	"strings"
 	"testing"
@@ -29,25 +29,25 @@ func init() {
 
 // Mock Repository
 type mockStatusPageRepo struct {
-	createFunc                      func(statuspage *model.StatusPage) (*model.StatusPage, error)
-	getAllByOrganizationIDFunc     func(orgID string) ([]model.StatusPage, error)
-	deleteFunc                      func(statusPageID, orgID string) error
-	updateFunc                      func(statuspageID, orgID string, statuspage *model.StatusPage) (*model.StatusPage, error)
-	getByIdFunc                     func(statuspageID, orgID string) (*model.StatusPage, error)
-	getBySubdomainFunc              func(subdomain string) (*model.StatusPage, error)
-	getStatusPageMonitorFunc        func(statusPageID, orgID string) ([]model.StatusPageMonitor, error)
-	getStatusPageByUserIdFunc       func(userId string) ([]model.StatusPage, error)
-	totalOrganizationStatusPageFunc           func(orgId string) (int64, error)
-	getActiveIncidentsByMonitorIDsFunc        func(monitorIDs []string) ([]model.Incident, error)
+	createFunc                                 func(statuspage *model.StatusPage) (*model.StatusPage, error)
+	getAllByOrganizationIDFunc                 func(orgID string) ([]model.StatusPage, error)
+	deleteFunc                                 func(statusPageID, orgID string) error
+	updateFunc                                 func(statuspageID, orgID string, statuspage *model.StatusPage) (*model.StatusPage, error)
+	getByIdFunc                                func(statuspageID, orgID string) (*model.StatusPage, error)
+	getBySubdomainFunc                         func(subdomain string) (*model.StatusPage, error)
+	getStatusPageMonitorFunc                   func(statusPageID, orgID string) ([]model.StatusPageMonitor, error)
+	getStatusPageByUserIdFunc                  func(userId string) ([]model.StatusPage, error)
+	totalOrganizationStatusPageFunc            func(orgId string) (int64, error)
+	getActiveIncidentsByMonitorIDsFunc         func(monitorIDs []string) ([]model.Incident, error)
 	getRecentResolvedIncidentsByMonitorIDsFunc func(monitorIDs []string, days int) ([]model.Incident, error)
-	get30DayUptimeMapFunc                     func(monitorIDs []string) (map[string]float64, error)
-	getMonitorDailyStatsFunc                  func(monitorIDs []string, days int) (map[string][]model.MonitorDailyStat, error)
-	getActiveMaintenancesFunc                 func(statusPageID string) ([]model.ScheduledMaintenance, []model.ScheduledMaintenance, error)
-	createMaintenanceFunc                     func(maintenance *model.ScheduledMaintenance, monitorIDs []string) (*model.ScheduledMaintenance, error)
-	getMaintenancesByStatusPageIDFunc         func(statusPageID, orgID string) ([]model.ScheduledMaintenance, error)
-	getMaintenanceByIDFunc                    func(maintenanceID, orgID string) (*model.ScheduledMaintenance, error)
-	updateMaintenanceFunc                     func(maintenance *model.ScheduledMaintenance, monitorIDs *[]string) (*model.ScheduledMaintenance, error)
-	deleteMaintenanceFunc                     func(maintenanceID, orgID string) error
+	get30DayUptimeMapFunc                      func(monitorIDs []string) (map[string]float64, error)
+	getMonitorDailyStatsFunc                   func(monitorIDs []string, days int) (map[string][]model.MonitorDailyStat, error)
+	getActiveMaintenancesFunc                  func(statusPageID string) ([]model.ScheduledMaintenance, []model.ScheduledMaintenance, error)
+	createMaintenanceFunc                      func(maintenance *model.ScheduledMaintenance, monitorIDs []string) (*model.ScheduledMaintenance, error)
+	getMaintenancesByStatusPageIDFunc          func(statusPageID, orgID string) ([]model.ScheduledMaintenance, error)
+	getMaintenanceByIDFunc                     func(maintenanceID, orgID string) (*model.ScheduledMaintenance, error)
+	updateMaintenanceFunc                      func(maintenance *model.ScheduledMaintenance, monitorIDs *[]string) (*model.ScheduledMaintenance, error)
+	deleteMaintenanceFunc                      func(maintenanceID, orgID string) error
 }
 
 func (m *mockStatusPageRepo) Create(statuspage *model.StatusPage) (*model.StatusPage, error) {
@@ -1114,4 +1114,3 @@ func TestStatusPageBrandingAndBadgeEndpoints(t *testing.T) {
 		t.Errorf("expected valid SVG with operational text, got: %s", svgContent)
 	}
 }
-

@@ -6,7 +6,9 @@
 	import { IncidentAPI, type Incident } from '$lib/api/incident';
 	import MonitorDetailHeader from '$lib/components/monitor/MonitorDetailHeader.svelte';
 	import MonitorStatsGrid from '$lib/components/monitor/MonitorStatsGrid.svelte';
-	import MonitorLatencyChart, { type DataPoint } from '$lib/components/monitor/MonitorLatencyChart.svelte';
+	import MonitorLatencyChart, {
+		type DataPoint
+	} from '$lib/components/monitor/MonitorLatencyChart.svelte';
 	import MonitorStatusCodeChart from '$lib/components/monitor/MonitorStatusCodeChart.svelte';
 	import MonitorAlertRulesSection from '$lib/components/monitor/MonitorAlertRulesSection.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';

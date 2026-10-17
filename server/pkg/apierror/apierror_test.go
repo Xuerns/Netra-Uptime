@@ -1,9 +1,9 @@
 package apierror_test
 
 import (
-	"netra-uptime/pkg/apierror"
 	"errors"
 	"io"
+	"netra-uptime/pkg/apierror"
 	"testing"
 
 	"github.com/go-playground/validator/v10"

@@ -264,8 +264,6 @@
 	onMount(() => {
 		fetchAuditLogs(true);
 	});
-
-
 </script>
 
 <svelte:head>

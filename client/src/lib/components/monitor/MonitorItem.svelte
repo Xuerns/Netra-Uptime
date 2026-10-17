@@ -246,7 +246,9 @@
 			{/if}
 
 			<!-- Row 3: footer (last checked + view details arrow) -->
-			<div class="flex items-center justify-between pt-1 border-t border-white/4 text-[12px] text-muted-foreground/60">
+			<div
+				class="flex items-center justify-between pt-1 border-t border-white/4 text-[12px] text-muted-foreground/60"
+			>
 				<span class="flex items-center gap-1.5">
 					<Clock class="size-3" aria-hidden="true" />
 					{formatLastChecked(monitor.LastCheckedAt)}
@@ -282,7 +284,10 @@
 					{monitor.Name}
 				</a>
 				<div class="flex items-center gap-1.5 truncate">
-					<p class="text-[11.5px] font-mono text-muted-foreground/60 truncate" title={monitor.Target}>
+					<p
+						class="text-[11.5px] font-mono text-muted-foreground/60 truncate"
+						title={monitor.Target}
+					>
 						{trimTarget(monitor.Target, 36)}
 					</p>
 					{#if monitor.Type === 'http' && monitor.SSLStatus && monitor.SSLStatus !== 'none'}

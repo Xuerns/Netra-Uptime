@@ -630,7 +630,8 @@
 									<div
 										class="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 border border-border/60 shrink-0"
 									>
-										<span style={gBadge.dotStyle} class="size-2 rounded-full {gBadge.dotClass}"></span>
+										<span style={gBadge.dotStyle} class="size-2 rounded-full {gBadge.dotClass}"
+										></span>
 										<span style={gBadge.textStyle} class={gBadge.textClass}>{gBadge.label}</span>
 									</div>
 								</button>
@@ -719,15 +720,22 @@
 						<div
 							class="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 border border-border/60"
 						>
-							<span style={statusInfo.dotStyle} class="size-2 rounded-full {statusInfo.dotClass}"></span>
-							<span style={statusInfo.textStyle} class={statusInfo.textClass}>{statusInfo.label}</span>
+							<span style={statusInfo.dotStyle} class="size-2 rounded-full {statusInfo.dotClass}"
+							></span>
+							<span style={statusInfo.textStyle} class={statusInfo.textClass}
+								>{statusInfo.label}</span
+							>
 						</div>
 					</div>
 				</div>
 
 				<!-- 90-Day Uptime Bar Component -->
 				<div class="pt-1">
-					<UptimeBar dailyStats={monitor.daily_stats} overallUptime={monitor.uptime_percent} accentColor={themeColor} />
+					<UptimeBar
+						dailyStats={monitor.daily_stats}
+						overallUptime={monitor.uptime_percent}
+						accentColor={themeColor}
+					/>
 				</div>
 
 				<!-- Latency Sparkline Footer -->

@@ -1,16 +1,16 @@
 package notification
 
 import (
-	"netra-uptime/internal/model"
-	"netra-uptime/pkg/apierror"
-	"netra-uptime/pkg/email"
-	"netra-uptime/pkg/utils"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"netra-uptime/internal/model"
+	"netra-uptime/pkg/apierror"
+	"netra-uptime/pkg/email"
+	"netra-uptime/pkg/utils"
 	"strings"
 	"time"
 
@@ -19,11 +19,11 @@ import (
 
 // WebhookPayload is the JSON body sent to custom webhook endpoints.
 type WebhookPayload struct {
-	Event     string    `json:"event"`      // "monitor.down" | "monitor.up"
-	Monitor   string    `json:"monitor"`    // monitor name
-	Target    string    `json:"target"`     // monitor target URL
-	Status    string    `json:"status"`     // "down" | "up"
-	Message   string    `json:"message"`    // human-readable description
+	Event     string    `json:"event"`   // "monitor.down" | "monitor.up"
+	Monitor   string    `json:"monitor"` // monitor name
+	Target    string    `json:"target"`  // monitor target URL
+	Status    string    `json:"status"`  // "down" | "up"
+	Message   string    `json:"message"` // human-readable description
 	Timestamp time.Time `json:"timestamp"`
 }
 

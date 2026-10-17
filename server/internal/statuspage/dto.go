@@ -126,16 +126,16 @@ type UpdateMaintenanceRequest struct {
 }
 
 type MaintenanceResponse struct {
-	ID               string     `json:"id"`
-	StatusPageID     string     `json:"status_page_id"`
-	Title            string     `json:"title"`
-	Description      string     `json:"description"`
-	Status           string     `json:"status"`
-	ScheduledStart   time.Time  `json:"scheduled_start"`
-	ScheduledEnd     time.Time  `json:"scheduled_end"`
-	ActualStart      *time.Time `json:"actual_start,omitempty"`
-	ActualEnd        *time.Time `json:"actual_end,omitempty"`
-	CreatedAt        time.Time  `json:"created_at"`
+	ID                 string     `json:"id"`
+	StatusPageID       string     `json:"status_page_id"`
+	Title              string     `json:"title"`
+	Description        string     `json:"description"`
+	Status             string     `json:"status"`
+	ScheduledStart     time.Time  `json:"scheduled_start"`
+	ScheduledEnd       time.Time  `json:"scheduled_end"`
+	ActualStart        *time.Time `json:"actual_start,omitempty"`
+	ActualEnd          *time.Time `json:"actual_end,omitempty"`
+	CreatedAt          time.Time  `json:"created_at"`
 	AffectedMonitors   []string   `json:"affected_monitors"`
 	AffectedMonitorIDs []string   `json:"affected_monitor_ids"`
 }

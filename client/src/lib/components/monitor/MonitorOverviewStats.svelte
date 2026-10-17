@@ -69,9 +69,7 @@
 
 	let sslNoticeCount = $derived(
 		monitors.filter(
-			(m) =>
-				m.SSLStatus === 'expired' ||
-				(m.SSLDaysLeft != null && m.SSLDaysLeft <= 30)
+			(m) => m.SSLStatus === 'expired' || (m.SSLDaysLeft != null && m.SSLDaysLeft <= 30)
 		).length
 	);
 
@@ -341,7 +339,9 @@
 
 <style>
 	.kpi-card {
-		transition: border-color 200ms ease, box-shadow 200ms ease;
+		transition:
+			border-color 200ms ease,
+			box-shadow 200ms ease;
 	}
 	.kpi-card:hover {
 		border-color: color-mix(in srgb, var(--color-border) 100%, white 20%);

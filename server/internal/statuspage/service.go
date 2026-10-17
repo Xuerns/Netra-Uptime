@@ -1,13 +1,13 @@
 package statuspage
 
 import (
-	"netra-uptime/internal/audit"
-	"netra-uptime/internal/model"
-	"netra-uptime/config"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"netra-uptime/config"
+	"netra-uptime/internal/audit"
+	"netra-uptime/internal/model"
 	"time"
 
 	"github.com/google/uuid"
@@ -1018,4 +1018,3 @@ func (s *StatusPageServiceImpl) AssignMonitorToGroup(orgID, statusPageID, monito
 
 	return nil
 }
-

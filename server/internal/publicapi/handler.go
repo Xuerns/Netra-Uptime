@@ -1,11 +1,11 @@
 package publicapi
 
 import (
+	"net/http"
 	"netra-uptime/internal/incident"
 	"netra-uptime/internal/monitor"
 	"netra-uptime/internal/statuspage"
 	"netra-uptime/pkg/apierror"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )

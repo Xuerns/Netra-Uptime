@@ -3,7 +3,7 @@ package apikey
 type CreateAPIKeyRequest struct {
 	Name        string `json:"name" binding:"required,min=2,max=100"`
 	Permissions string `json:"permissions" binding:"required,oneof=read write"` // read or write
-	ExpiresIn   *int   `json:"expires_in_days"`                         // optional: days until expiry (e.g., 30, 90, 365, or null for never)
+	ExpiresIn   *int   `json:"expires_in_days"`                                 // optional: days until expiry (e.g., 30, 90, 365, or null for never)
 }
 
 type APIKeyResponse struct {

@@ -1,12 +1,12 @@
 package middleware
 
 import (
-	"netra-uptime/internal/apikey"
-	"netra-uptime/internal/model"
-	"netra-uptime/pkg/jwt"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"netra-uptime/internal/apikey"
+	"netra-uptime/internal/model"
+	"netra-uptime/pkg/jwt"
 	"os"
 	"testing"
 	"time"

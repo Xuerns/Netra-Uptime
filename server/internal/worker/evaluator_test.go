@@ -1,8 +1,8 @@
 package worker
 
 import (
-	"netra-uptime/internal/model"
 	"errors"
+	"netra-uptime/internal/model"
 	"testing"
 	"time"
 

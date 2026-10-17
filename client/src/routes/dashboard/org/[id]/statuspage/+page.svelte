@@ -168,8 +168,6 @@
 		const saved = localStorage.getItem('statusPageViewMode');
 		if (saved === 'grid' || saved === 'list') viewMode = saved;
 	});
-
-
 </script>
 
 <svelte:head>

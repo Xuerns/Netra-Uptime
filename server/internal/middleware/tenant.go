@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"netra-uptime/internal/model"
 	"net/http"
+	"netra-uptime/internal/model"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

@@ -93,7 +93,8 @@
 			consecutive = 2;
 			severity = 'critical';
 		} else if (preset === 'timeout') {
-			ruleName = monitorType?.toLowerCase() === 'ping' ? 'Packet Loss / Timeout' : 'Connection Timeout';
+			ruleName =
+				monitorType?.toLowerCase() === 'ping' ? 'Packet Loss / Timeout' : 'Connection Timeout';
 			metric = 'timeout';
 			operator = '>';
 			targetValue = '5000';
@@ -190,8 +191,8 @@
 						No custom rules configured. Currently alerting if connection times out or status code
 						doesn't match expected after 3 consecutive failures.
 					{:else}
-						No custom rules configured. Currently alerting if connection times out or target host/port
-						is unreachable after 3 consecutive failures.
+						No custom rules configured. Currently alerting if connection times out or target
+						host/port is unreachable after 3 consecutive failures.
 					{/if}
 				</p>
 			</div>
@@ -426,7 +427,11 @@
 							type="text"
 							required
 							bind:value={targetValue}
-							placeholder={metric === 'status_code' ? 'e.g. 5xx, 200' : metric === 'response_time_ms' ? 'e.g. 1000 (ms)' : 'e.g. 5000 (ms)'}
+							placeholder={metric === 'status_code'
+								? 'e.g. 5xx, 200'
+								: metric === 'response_time_ms'
+									? 'e.g. 1000 (ms)'
+									: 'e.g. 5000 (ms)'}
 							class="w-full h-9 rounded-lg bg-secondary border border-border px-3 text-xs text-foreground focus:outline-none focus:border-primary"
 						/>
 					</div>

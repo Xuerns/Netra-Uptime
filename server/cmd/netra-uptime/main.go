@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"netra-uptime/config"
 	"netra-uptime/internal/middleware"
 	"netra-uptime/internal/model"
@@ -12,7 +13,6 @@ import (
 	"netra-uptime/pkg/database"
 	"netra-uptime/pkg/email"
 	"netra-uptime/pkg/utils"
-	"log"
 	"os"
 	"strings"
 	_ "time/tzdata"

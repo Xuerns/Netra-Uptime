@@ -1,12 +1,12 @@
 package incident
 
 import (
-	"netra-uptime/internal/model"
-	"netra-uptime/pkg/utils"
 	"bytes"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"netra-uptime/internal/model"
+	"netra-uptime/pkg/utils"
 	"testing"
 	"time"
 

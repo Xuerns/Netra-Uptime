@@ -1,8 +1,8 @@
 package incident
 
 import (
-	"netra-uptime/internal/model"
 	"errors"
+	"netra-uptime/internal/model"
 	"time"
 
 	"github.com/google/uuid"

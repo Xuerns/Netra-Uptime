@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"netra-uptime/pkg/jwt"
 	"net/http"
+	"netra-uptime/pkg/jwt"
 
 	"github.com/gin-gonic/gin"
 )

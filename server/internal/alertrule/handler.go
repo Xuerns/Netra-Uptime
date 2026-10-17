@@ -1,8 +1,8 @@
 package alertrule
 
 import (
-	"netra-uptime/pkg/apierror"
 	"net/http"
+	"netra-uptime/pkg/apierror"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

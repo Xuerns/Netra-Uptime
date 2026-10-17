@@ -1,9 +1,9 @@
 package auth
 
 import (
+	"net/http"
 	"netra-uptime/pkg/apierror"
 	"netra-uptime/pkg/email"
-	"net/http"
 	"os"
 	"strings"
 	"time"

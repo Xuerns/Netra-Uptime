@@ -1,9 +1,9 @@
 package incident
 
 import (
+	"net/http"
 	"netra-uptime/pkg/apierror"
 	"netra-uptime/pkg/utils"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

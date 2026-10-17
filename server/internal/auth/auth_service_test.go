@@ -1,13 +1,13 @@
 package auth
 
 import (
-	"netra-uptime/internal/model"
-	"netra-uptime/pkg/utils"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"netra-uptime/internal/model"
+	"netra-uptime/pkg/utils"
 	"os"
 	"strings"
 	"testing"
@@ -32,17 +32,17 @@ func init() {
 
 // Mock Repository
 type mockAuthRepo struct {
-	findUserByEmailFunc          func(email string) (*model.User, error)
-	createRefreshTokenFunc       func(refreshToken *model.RefreshToken) error
-	revokeRefreshTokenFunc       func(hashedToken string) error
-	findRefreshTokenByTokenFunc  func(hashedToken string) (*model.RefreshToken, error)
-	createUserWithDefaultOrgFunc func(user *model.User, org *model.Organization, orgMember *model.OrganizationMember, subscription *model.Subscription) error
-	getUserByIdFunc              func(userId string) (*model.User, error)
-	updateProfileFunc            func(userId string, name string) (*model.User, error)
-	createResetTokenFunc         func(token *model.PasswordResetToken) error
-	createNewPasswordFunc        func(userId, password string) error
-	deleteResetTokenFunc         func(userId, token string) (*model.PasswordResetToken, error)
-	getUserByResetTokenFunc      func(token string) (string, error)
+	findUserByEmailFunc                func(email string) (*model.User, error)
+	createRefreshTokenFunc             func(refreshToken *model.RefreshToken) error
+	revokeRefreshTokenFunc             func(hashedToken string) error
+	findRefreshTokenByTokenFunc        func(hashedToken string) (*model.RefreshToken, error)
+	createUserWithDefaultOrgFunc       func(user *model.User, org *model.Organization, orgMember *model.OrganizationMember, subscription *model.Subscription) error
+	getUserByIdFunc                    func(userId string) (*model.User, error)
+	updateProfileFunc                  func(userId string, name string) (*model.User, error)
+	createResetTokenFunc               func(token *model.PasswordResetToken) error
+	createNewPasswordFunc              func(userId, password string) error
+	deleteResetTokenFunc               func(userId, token string) (*model.PasswordResetToken, error)
+	getUserByResetTokenFunc            func(token string) (string, error)
 	revokeAllRefreshTokensByUserIDFunc func(userId string) error
 	limitActiveRefreshTokensFunc       func(userId string, maxTokens int) error
 }

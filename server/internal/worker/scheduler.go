@@ -1,8 +1,8 @@
 package worker
 
 import (
-	"netra-uptime/internal/monitor"
 	"log"
+	"netra-uptime/internal/monitor"
 	"sync"
 	"time"
 

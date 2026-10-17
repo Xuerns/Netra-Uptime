@@ -1,9 +1,9 @@
 package statuspage
 
 import (
+	"errors"
 	"netra-uptime/config"
 	"netra-uptime/internal/model"
-	"errors"
 	"time"
 
 	"github.com/google/uuid"

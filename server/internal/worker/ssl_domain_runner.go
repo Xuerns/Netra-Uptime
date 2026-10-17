@@ -1,12 +1,12 @@
 package worker
 
 import (
+	"fmt"
+	"log"
 	"netra-uptime/internal/model"
 	"netra-uptime/internal/notification"
 	"netra-uptime/internal/worker/checker"
 	"netra-uptime/pkg/email"
-	"fmt"
-	"log"
 	"time"
 
 	"gorm.io/gorm"

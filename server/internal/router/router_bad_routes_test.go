@@ -1,6 +1,17 @@
 package router
 
 import (
+	"bufio"
+	"bytes"
+	"context"
+	"database/sql"
+	"database/sql/driver"
+	"errors"
+	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"net/http/httptest"
 	"netra-uptime/internal/alertrule"
 	"netra-uptime/internal/apikey"
 	"netra-uptime/internal/audit"
@@ -15,17 +26,6 @@ import (
 	"netra-uptime/internal/websocket"
 	"netra-uptime/pkg/jwt"
 	"netra-uptime/pkg/utils"
-	"bufio"
-	"bytes"
-	"context"
-	"database/sql"
-	"database/sql/driver"
-	"errors"
-	"fmt"
-	"io"
-	"net"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"strconv"
 	"strings"
@@ -390,7 +390,7 @@ func (m *mockAuthService) GetProfile(userId string) (*auth.ProfileResponse, erro
 func (m *mockAuthService) UpdateProfile(userId string, req auth.UpdateProfileRequest) (*auth.ProfileResponse, error) {
 	return &auth.ProfileResponse{ID: userId, Name: req.Name}, nil
 }
-func (m *mockAuthService) ForgotPassword(email string) (string, error) { return "", nil }
+func (m *mockAuthService) ForgotPassword(email string) (string, error)        { return "", nil }
 func (m *mockAuthService) ResetPassword(newPassword, resetToken string) error { return nil }
 func (m *mockAuthService) InitPasswordChange(userId string, req auth.InitPasswordChangeRequest) error {
 	return nil

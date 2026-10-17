@@ -149,8 +149,6 @@
 			loadAPIKeys();
 		}
 	});
-
-
 </script>
 
 <svelte:head>

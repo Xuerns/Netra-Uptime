@@ -1,8 +1,6 @@
 package monitor
 
 import (
-	"netra-uptime/internal/model"
-	"netra-uptime/pkg/utils"
 	"bufio"
 	"bytes"
 	"encoding/json"
@@ -12,6 +10,8 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"netra-uptime/internal/model"
+	"netra-uptime/pkg/utils"
 	"os"
 	"strconv"
 	"strings"

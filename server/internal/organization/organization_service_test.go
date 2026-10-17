@@ -1,13 +1,13 @@
 package organization
 
 import (
-	"netra-uptime/internal/model"
-	"netra-uptime/pkg/utils"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"netra-uptime/internal/model"
+	"netra-uptime/pkg/utils"
 	"os"
 	"testing"
 	"time"
@@ -28,28 +28,28 @@ func init() {
 
 // Mock Repository
 type mockOrgRepo struct {
-	getAllSlugOrgFunc          func(slug string) (*[]model.Organization, error)
-	getMemberByIdFunc          func(orgId, memberId string) (*model.OrganizationMember, error)
-	getOrgMemberFunc           func(orgId, memberId string) error
-	getOrgAllMemberFunc        func(orgId string) (*[]model.OrganizationMember, error)
-	getAllOrgByUserIdFunc      func(userId string) (*[]model.Organization, error)
-	createOrgFunc              func(org *model.Organization, ownerMember *model.OrganizationMember, invitations *[]model.OrganizationInvitation, subscription *model.Subscription) error
-	acceptInvitationFunc       func(invitation *model.OrganizationInvitation, member *model.OrganizationMember) error
-	rejectInvitationFunc       func(invitation *model.OrganizationInvitation) error
-	kickMemberFunc             func(orgId, memberId string) error
-	inviteMemberFunc           func(invitations *[]model.OrganizationInvitation) error
-	getInvitationFunc          func(userId string) (*[]model.OrganizationInvitation, error)
-	getInvitationByIdFunc      func(invitationId string) (*model.OrganizationInvitation, error)
-	disbandFunc                func(orgId, ownerId string) error
-	updateOrgFunc              func(updateData *map[string]interface{}, orgId string) error
-	searchPersonsFunc          func(name string, excludeUserId string, limit int, offset int, orgId string) ([]model.User, error)
-	promoteToAdminFunc         func(userId, orgId string) error
-	demotedToMemberFunc        func(userId, orgId string) error
-	transferOwnershipFunc      func(ownerId, newOwnerId, orgId string) error
-	leaveOrgFunc               func(userId, orgId string) error
-	totalOrgUserFunc           func(userId string) (int64, error)
-	totalOrgMemberFunc         func(orgId string) (int64, error)
-	getOrgPlanFunc             func(orgId string) (*model.Subscription, error)
+	getAllSlugOrgFunc     func(slug string) (*[]model.Organization, error)
+	getMemberByIdFunc     func(orgId, memberId string) (*model.OrganizationMember, error)
+	getOrgMemberFunc      func(orgId, memberId string) error
+	getOrgAllMemberFunc   func(orgId string) (*[]model.OrganizationMember, error)
+	getAllOrgByUserIdFunc func(userId string) (*[]model.Organization, error)
+	createOrgFunc         func(org *model.Organization, ownerMember *model.OrganizationMember, invitations *[]model.OrganizationInvitation, subscription *model.Subscription) error
+	acceptInvitationFunc  func(invitation *model.OrganizationInvitation, member *model.OrganizationMember) error
+	rejectInvitationFunc  func(invitation *model.OrganizationInvitation) error
+	kickMemberFunc        func(orgId, memberId string) error
+	inviteMemberFunc      func(invitations *[]model.OrganizationInvitation) error
+	getInvitationFunc     func(userId string) (*[]model.OrganizationInvitation, error)
+	getInvitationByIdFunc func(invitationId string) (*model.OrganizationInvitation, error)
+	disbandFunc           func(orgId, ownerId string) error
+	updateOrgFunc         func(updateData *map[string]interface{}, orgId string) error
+	searchPersonsFunc     func(name string, excludeUserId string, limit int, offset int, orgId string) ([]model.User, error)
+	promoteToAdminFunc    func(userId, orgId string) error
+	demotedToMemberFunc   func(userId, orgId string) error
+	transferOwnershipFunc func(ownerId, newOwnerId, orgId string) error
+	leaveOrgFunc          func(userId, orgId string) error
+	totalOrgUserFunc      func(userId string) (int64, error)
+	totalOrgMemberFunc    func(orgId string) (int64, error)
+	getOrgPlanFunc        func(orgId string) (*model.Subscription, error)
 }
 
 func (m *mockOrgRepo) GetAllSlugOrganization(slug string) (*[]model.Organization, error) {

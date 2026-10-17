@@ -1,8 +1,8 @@
 package worker
 
 import (
-	"netra-uptime/internal/model"
 	"log"
+	"netra-uptime/internal/model"
 	"time"
 
 	"github.com/google/uuid"

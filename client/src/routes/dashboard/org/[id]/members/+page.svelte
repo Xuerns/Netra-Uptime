@@ -174,8 +174,6 @@
 	onMount(() => {
 		loadMembers();
 	});
-
-
 </script>
 
 <svelte:head>

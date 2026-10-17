@@ -1,14 +1,14 @@
 package worker
 
 import (
+	"errors"
+	"fmt"
+	"log"
 	"netra-uptime/internal/model"
 	"netra-uptime/internal/notification"
 	"netra-uptime/internal/websocket"
 	"netra-uptime/internal/worker/checker"
 	"netra-uptime/pkg/email"
-	"errors"
-	"fmt"
-	"log"
 	"time"
 
 	"gorm.io/gorm"
@@ -322,4 +322,3 @@ func (wp *WorkerPool) sendNotification(monitor *model.Monitor, subject, message 
 		SentAt:    time.Now(),
 	})
 }
-

@@ -25,15 +25,15 @@ type ChannelResponse struct {
 }
 
 type LogResponse struct {
-	ID          string     `json:"id"`
-	MonitorID   *string    `json:"monitor_id,omitempty"`
-	IncidentID  *string    `json:"incident_id,omitempty"`
-	ChannelID   *string    `json:"channel_id,omitempty"`
-	Channel     string     `json:"channel"`
-	Message     string     `json:"message"`
-	Status      string     `json:"status"`
-	ErrorDetail string     `json:"error_detail,omitempty"`
-	SentAt      time.Time  `json:"sent_at"`
+	ID          string    `json:"id"`
+	MonitorID   *string   `json:"monitor_id,omitempty"`
+	IncidentID  *string   `json:"incident_id,omitempty"`
+	ChannelID   *string   `json:"channel_id,omitempty"`
+	Channel     string    `json:"channel"`
+	Message     string    `json:"message"`
+	Status      string    `json:"status"`
+	ErrorDetail string    `json:"error_detail,omitempty"`
+	SentAt      time.Time `json:"sent_at"`
 }
 
 type LogListResponse struct {

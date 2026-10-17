@@ -1,12 +1,12 @@
 package apikey
 
 import (
-	"netra-uptime/internal/model"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"netra-uptime/internal/model"
 	"strings"
 	"testing"
 	"time"

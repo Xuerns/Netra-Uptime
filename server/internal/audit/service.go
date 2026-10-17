@@ -1,9 +1,9 @@
 package audit
 
 import (
-	"netra-uptime/internal/model"
 	"errors"
 	"math"
+	"netra-uptime/internal/model"
 	"time"
 
 	"github.com/google/uuid"
