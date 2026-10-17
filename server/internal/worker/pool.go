@@ -9,6 +9,7 @@ import (
 	"netra-uptime/internal/websocket"
 	"netra-uptime/internal/worker/checker"
 	"netra-uptime/pkg/email"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -84,7 +85,7 @@ func (wp *WorkerPool) QueueJob(job Job) {
 	wp.jobQueue <- job
 }
 
-func (wp *WorkerPool) worker(id int) {
+func (wp *WorkerPool) worker(_ int) {
 	for job := range wp.jobQueue {
 		wp.procces(&job.Monitor)
 	}
@@ -127,14 +128,27 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 		return nil
 	}
 
+	var effectiveRules []model.AlertRule
+	if dbMonitor.AlertTemplateID != nil {
+		if err := wp.db.Where("template_id = ? AND is_active = true", *dbMonitor.AlertTemplateID).Find(&effectiveRules).Error; err != nil {
+			log.Printf("[Worker] Failed to load template rules for monitor %s: %v", monitor.Name, err)
+		}
+	} else {
+		// If monitor has no explicit template assigned, check if organization has a default template
+		var defaultTemplate model.AlertRuleTemplate
+		if err := wp.db.Where("organization_id = ? AND is_default = true", dbMonitor.OrganizationID).First(&defaultTemplate).Error; err == nil {
+			_ = wp.db.Where("template_id = ? AND is_active = true", defaultTemplate.ID).Find(&effectiveRules).Error
+		}
+	}
+
 	prevStatus := dbMonitor.Status
 	prevFailureCount := dbMonitor.FailureCount
 
-	eval := EvaluateRules(&dbMonitor, dbMonitor.AlertRules, statusCode, responseTime, checkErr)
+	eval := EvaluateRules(&dbMonitor, effectiveRules, statusCode, responseTime, checkErr)
 
 	errMsg := ""
 	if checkErr != nil {
-		errMsg = checkErr.Error()
+		errMsg = checker.FormatErrorMessage(checkErr, timeout)
 	} else if eval.IsBreached {
 		errMsg = eval.Reason
 	}
@@ -191,7 +205,8 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 		}
 	} else {
 		// Rule Breached Scenario
-		if eval.Severity == "critical" {
+		switch eval.Severity {
+		case "critical":
 			dbMonitor.FailureCount++
 
 			if dbMonitor.FailureCount >= eval.RequiredBreaches && dbMonitor.Status != "down" {
@@ -229,16 +244,52 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 			} else {
 				log.Printf("[Check] Monitor %s breached critical rule %s %d time(s) (waiting for %d)\n", monitor.Name, eval.RuleName, dbMonitor.FailureCount, eval.RequiredBreaches)
 			}
-		} else if eval.Severity == "warning" {
-			// Degraded Warning (e.g. high latency)
-			if dbMonitor.Status == "up" {
+		case "warning":
+			// Degraded / Unresponsive Warning (e.g. timeout, high latency)
+			dbMonitor.FailureCount++
+
+			if dbMonitor.FailureCount >= eval.RequiredBreaches && dbMonitor.Status != "degraded" && dbMonitor.Status != "down" {
 				dbMonitor.Status = "degraded"
-				subject := fmt.Sprintf("[Netra Uptime] WARNING: %s is DEGRADED (%s)", monitor.Name, eval.RuleName)
-				message := fmt.Sprintf("<h3>Service Degraded Warning</h3><p>Your monitor <b>%s</b> (%s) is experiencing degraded performance.<br>Rule: <b>%s</b><br>Reason: <i>%s</i></p>", dbMonitor.Name, dbMonitor.Target, eval.RuleName, eval.Reason)
+
+				isTimeout := eval.RuleName == "Request Timeout" || strings.Contains(strings.ToLower(eval.RuleName), "timeout")
+
+				var subject, message string
+				if isTimeout {
+					subject = fmt.Sprintf("[Netra Uptime] UNRESPONSIVE: %s is not responding in time (%s)", monitor.Name, eval.RuleName)
+					message = fmt.Sprintf("<h3>Service Unresponsive</h3><p>Your monitor <b>%s</b> (%s) did not respond within the expected timeout limit.<br>Reason: <i>%s</i> (breached %d consecutive times)</p><p style=\"color: #6B7280; font-size: 13px;\">Note: The service may be experiencing high traffic, slow queries, or cold starts rather than a complete outage.</p>", dbMonitor.Name, dbMonitor.Target, eval.Reason, eval.RequiredBreaches)
+				} else {
+					subject = fmt.Sprintf("[Netra Uptime] WARNING: %s is DEGRADED (%s)", monitor.Name, eval.RuleName)
+					message = fmt.Sprintf("<h3>Service Degraded Warning</h3><p>Your monitor <b>%s</b> (%s) is experiencing degraded performance.<br>Rule: <b>%s</b><br>Reason: <i>%s</i> (breached %d consecutive times)</p>", dbMonitor.Name, dbMonitor.Target, eval.RuleName, eval.Reason, eval.RequiredBreaches)
+				}
 
 				go wp.sendNotification(&dbMonitor, subject, message)
-				go wp.dispatcher.Dispatch(&dbMonitor, nil, "monitor.degraded", subject, message)
-				log.Printf("[Check] MONITOR DEGRADED: %s (%s). %s\n", monitor.Name, eval.RuleName, eval.Reason)
+
+				var alertRuleUUID *uuid.UUID
+				if eval.RuleID != nil {
+					if parsed, err := uuid.Parse(*eval.RuleID); err == nil {
+						alertRuleUUID = &parsed
+					}
+				}
+
+				newIncident := model.Incident{
+					MonitorID:     monitor.ID,
+					Status:        "ongoing",
+					Severity:      "medium",
+					StartedAt:     time.Now(),
+					Summary:       fmt.Sprintf("%s: %s", eval.RuleName, eval.Reason),
+					TriggeredRule: eval.RuleName,
+					AlertRuleID:   alertRuleUUID,
+				}
+
+				if err := wp.db.Create(&newIncident).Error; err != nil {
+					log.Printf("[Incident] Failed to create incident for monitor %s: %v\n", monitor.Name, err)
+				} else {
+					incidentIDStr := newIncident.ID.String()
+					go wp.dispatcher.Dispatch(&dbMonitor, &incidentIDStr, "monitor.degraded", subject, message)
+					log.Printf("[Incident] MONITOR UNRESPONSIVE / DEGRADED: %s (%s). %s\n", monitor.Name, eval.RuleName, eval.Reason)
+				}
+			} else {
+				log.Printf("[Check] Monitor %s breached warning rule %s %d time(s) (waiting for %d)\n", monitor.Name, eval.RuleName, dbMonitor.FailureCount, eval.RequiredBreaches)
 			}
 		}
 	}

@@ -20,15 +20,14 @@
 		role: 'admin' | 'member';
 	}
 
-	let {
-		open = $bindable(false),
-		orgId = '',
-		onInvited
-	} = $props<{
-		open: boolean;
-		orgId: string;
+	interface Props {
+		open?: boolean;
+		orgId?: string;
+		isOwner?: boolean;
 		onInvited?: () => void;
-	}>();
+	}
+
+	let { open = $bindable(false), orgId = '', isOwner = false, onInvited }: Props = $props();
 
 	let searchQuery = $state('');
 	let searchResults = $state<UserResult[]>([]);
@@ -118,6 +117,10 @@
 	}
 
 	function setRole(id: string, role: 'admin' | 'member') {
+		if (role === 'admin' && !isOwner) {
+			toast.error('Only organization owners can invite admins');
+			return;
+		}
 		invitedUsers = invitedUsers.map((u) => (u.id === id ? { ...u, role } : u));
 	}
 
@@ -161,7 +164,7 @@
 
 <Dialog.Root bind:open onOpenChange={(v) => (!v ? handleClose() : null)}>
 	<Dialog.Content
-		class="sm:max-w-[480px] bg-card border border-border shadow-lg text-foreground p-6 rounded-2xl"
+		class="sm:max-w-120 bg-card border border-border shadow-lg text-foreground p-6 rounded-2xl"
 	>
 		<Dialog.Header>
 			<div class="flex items-center gap-2.5">
@@ -314,16 +317,27 @@
 									>
 										Member
 									</button>
-									<button
-										type="button"
-										class="h-6 px-2.5 rounded text-[11px] font-medium transition-colors {user.role ===
-										'admin'
-											? 'bg-blue-500/20 text-blue-400 font-semibold'
-											: 'text-muted-foreground hover:text-foreground hover:bg-accent/40'}"
-										onclick={() => setRole(user.id, 'admin')}
-									>
-										Admin
-									</button>
+									{#if isOwner}
+										<button
+											type="button"
+											class="h-6 px-2.5 rounded text-[11px] font-medium transition-colors {user.role ===
+											'admin'
+												? 'bg-blue-500/20 text-blue-400 font-semibold'
+												: 'text-muted-foreground hover:text-foreground hover:bg-accent/40'}"
+											onclick={() => setRole(user.id, 'admin')}
+										>
+											Admin
+										</button>
+									{:else}
+										<button
+											type="button"
+											disabled
+											title="Only organization owners can invite admins"
+											class="h-6 px-2.5 rounded text-[11px] font-medium text-muted-foreground/40 cursor-not-allowed"
+										>
+											Admin
+										</button>
+									{/if}
 								</div>
 
 								<!-- Remove button -->

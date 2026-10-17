@@ -152,8 +152,19 @@ func (d *Dispatcher) dispatchSlack(config map[string]string, payload WebhookPayl
 	// Slack Incoming Webhook expects {"text": "..."} format.
 	// Use a richer Block Kit message for better UX.
 	emoji := "✅"
-	if payload.Status == "down" {
+	color := "#10B981" // Green
+
+	statusLower := strings.ToLower(payload.Status)
+	if statusLower == "down" {
 		emoji = "🚨"
+		color = "#EF4444" // Red
+	} else if statusLower == "degraded" || statusLower == "unresponsive" {
+		color = "#F59E0B" // Amber
+		if strings.Contains(strings.ToLower(payload.Message), "timeout") || strings.Contains(strings.ToLower(payload.Message), "unresponsive") {
+			emoji = "⏳"
+		} else {
+			emoji = "⚠️"
+		}
 	}
 
 	unixTime := payload.Timestamp.Unix()
@@ -161,9 +172,14 @@ func (d *Dispatcher) dispatchSlack(config map[string]string, payload WebhookPayl
 		unixTime, payload.Timestamp.Format("02 Jan 2006 15:04:05 UTC"))
 
 	slackBody := map[string]interface{}{
-		"text": fmt.Sprintf("%s *%s* — %s\n>Target: `%s`\n>Time: %s",
-			emoji, payload.Monitor, payload.Message,
-			payload.Target, formattedTime),
+		"text": fmt.Sprintf("%s *%s* — %s", emoji, payload.Monitor, payload.Message),
+		"attachments": []map[string]interface{}{
+			{
+				"color": color,
+				"text": fmt.Sprintf(">Target: `%s`\n>Status: *%s*\n>Time: %s",
+					payload.Target, strings.ToUpper(payload.Status), formattedTime),
+			},
+		},
 	}
 	return d.postJSON(webhookURL, slackBody)
 }
@@ -193,20 +209,28 @@ func (d *Dispatcher) dispatchDiscord(config map[string]string, payload WebhookPa
 	}
 
 	color := 3066993 // Green (0x2ECC71) for UP
-	if payload.Status == "down" {
+	statusLower := strings.ToLower(payload.Status)
+	if statusLower == "down" {
 		color = 15158332 // Red (0xE74C3C) for DOWN
+	} else if statusLower == "degraded" || statusLower == "unresponsive" {
+		color = 16096779 // Amber (0xF59E0B) for UNRESPONSIVE / DEGRADED
+	}
+
+	statusDisplay := strings.ToUpper(payload.Status)
+	if (statusLower == "degraded" || statusLower == "unresponsive") && strings.Contains(strings.ToLower(payload.Message), "unresponsive") {
+		statusDisplay = "UNRESPONSIVE"
 	}
 
 	discordBody := map[string]interface{}{
 		"embeds": []map[string]interface{}{
 			{
 				"title":       payload.Message,
-				"description": fmt.Sprintf("Monitor **%s** (`%s`) status is **%s**.", payload.Monitor, payload.Target, strings.ToUpper(payload.Status)),
+				"description": fmt.Sprintf("Monitor **%s** (`%s`) status is **%s**.", payload.Monitor, payload.Target, statusDisplay),
 				"color":       color,
 				"fields": []map[string]interface{}{
 					{"name": "Monitor", "value": payload.Monitor, "inline": true},
 					{"name": "Target", "value": fmt.Sprintf("`%s`", payload.Target), "inline": true},
-					{"name": "Status", "value": strings.ToUpper(payload.Status), "inline": true},
+					{"name": "Status", "value": statusDisplay, "inline": true},
 				},
 				"footer":    map[string]string{"text": "Netra Uptime Alerts"},
 				"timestamp": payload.Timestamp.Format(time.RFC3339),

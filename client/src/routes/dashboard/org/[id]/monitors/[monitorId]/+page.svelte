@@ -471,7 +471,12 @@
 		{/if}
 
 		<!-- 6. Alert Rules & Incident Policies -->
-		<MonitorAlertRulesSection {orgId} {monitorId} monitorType={monitor.Type} />
+		<MonitorAlertRulesSection
+			{orgId}
+			{monitorId}
+			monitorType={monitor.Type}
+			alertTemplateId={monitor.AlertTemplateID}
+		/>
 
 		<!-- 7. Recent Incident Logs History -->
 		<div class="bg-card border border-border rounded-lg p-5 md:p-6 space-y-4">
@@ -498,7 +503,7 @@
 					{#each incidents as inc}
 						<a
 							href="/dashboard/org/{orgId}/incidents/{inc.ID}"
-							class="flex items-center justify-between bg-white/5 border border-border rounded-lg p-4 transition-colors hover:bg-white/8 hover:border-primary/30 group block"
+							class="flex items-center justify-between bg-white/5 border border-border rounded-lg p-4 transition-colors hover:bg-white/8 hover:border-primary/30 group"
 						>
 							<div class="space-y-1">
 								<div class="flex items-center gap-2">

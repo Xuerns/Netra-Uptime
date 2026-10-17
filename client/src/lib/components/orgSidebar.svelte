@@ -17,6 +17,7 @@
 	import Settings from 'lucide-svelte/icons/settings';
 	import Key from 'lucide-svelte/icons/key';
 	import Users from 'lucide-svelte/icons/users';
+	import Layers from 'lucide-svelte/icons/layers';
 
 	// Footer Icons
 	import LogOut from 'lucide-svelte/icons/log-out';
@@ -63,6 +64,7 @@
 
 	const navMonitoring = [
 		{ title: 'Monitors', icon: Activity, segment: 'monitors' },
+		{ title: 'Alert Templates', icon: Layers, segment: 'alert-templates' },
 		{ title: 'Incidents', icon: AlertTriangle, segment: 'incidents' },
 		{ title: 'Status Pages', icon: Globe, segment: 'statuspage' }
 	];
@@ -123,7 +125,7 @@
 
 <Sidebar.Root
 	collapsible="icon"
-	class="bg-sidebar! !border-r !border-sidebar-border text-sidebar-foreground"
+	class="bg-sidebar! border-r! border-sidebar-border! text-sidebar-foreground"
 >
 	<!-- Header: Org Switcher -->
 	<Sidebar.Header class="p-3 border-b border-sidebar-border">
@@ -155,7 +157,7 @@
 			</DropdownMenu.Trigger>
 
 			<DropdownMenu.Content
-				class="w-64 !bg-popover backdrop-blur-[20px] !border-border text-popover-foreground"
+				class="w-64 bg-popover! backdrop-blur-[20px] border-border! text-popover-foreground"
 				side={sidebar.state === 'collapsed' ? 'right' : 'bottom'}
 				align="start"
 				sideOffset={4}
@@ -168,7 +170,7 @@
 				<DropdownMenu.Separator class="bg-border" />
 				{#each allOrgs as orgItem}
 					<DropdownMenu.Item
-						class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg hover:!bg-accent hover:!text-accent-foreground"
+						class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg hover:bg-accent! hover:text-accent-foreground!"
 						onSelect={() => switchOrg(orgItem.ID)}
 						onclick={() => switchOrg(orgItem.ID)}
 					>
@@ -189,7 +191,7 @@
 				<DropdownMenu.Separator class="bg-border" />
 				<a href="/dashboard/org" onclick={viewAllOrganizations} class="w-full">
 					<DropdownMenu.Item
-						class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg hover:!bg-accent hover:!text-accent-foreground text-muted-foreground"
+						class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg hover:bg-accent! hover:text-accent-foreground! text-muted-foreground"
 						onSelect={viewAllOrganizations}
 					>
 						<span class="text-[13px]">View all organizations</span>
@@ -364,7 +366,7 @@
 			</DropdownMenu.Trigger>
 
 			<DropdownMenu.Content
-				class="w-56 !bg-popover backdrop-blur-[20px] !border-border text-popover-foreground"
+				class="w-56 bg-popover! backdrop-blur-[20px] border-border! text-popover-foreground"
 				side={sidebar.state === 'collapsed' ? 'right' : 'top'}
 				align="end"
 				sideOffset={4}
@@ -394,18 +396,18 @@
 				<DropdownMenu.Group>
 					<a href="/dashboard/profile">
 						<DropdownMenu.Item
-							class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg hover:!bg-accent hover:!text-accent-foreground"
+							class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg hover:bg-accent! hover:text-accent-foreground!"
 							><BadgeCheck class="size-4" />Profile</DropdownMenu.Item
 						>
 					</a>
 					<DropdownMenu.Item
-						class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg hover:!bg-accent hover:!text-accent-foreground"
+						class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg hover:bg-accent! hover:text-accent-foreground!"
 						onclick={() => (isSettingsOpen = true)}
 						><Settings2 class="size-4" /> User Settings</DropdownMenu.Item
 					>
 					<a class="" href="/dashboard/notification">
 						<DropdownMenu.Item
-							class="cursor-pointer rounded-lg p-2 flex items-center gap-2.5 hover:!bg-accent hover:!text-accent-foreground"
+							class="cursor-pointer rounded-lg p-2 flex items-center gap-2.5 hover:bg-accent! hover:text-accent-foreground!"
 							><Bell class="size-4" /> Notifications
 						</DropdownMenu.Item></a
 					>
@@ -413,7 +415,7 @@
 				<DropdownMenu.Separator class="bg-border" />
 				<DropdownMenu.Item
 					onclick={handleLogout}
-					class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg text-destructive hover:!text-destructive hover:!bg-destructive/10"
+					class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg text-destructive hover:text-destructive! hover:bg-destructive/10!"
 					><LogOut class="size-4" /> Log out</DropdownMenu.Item
 				>
 			</DropdownMenu.Content>

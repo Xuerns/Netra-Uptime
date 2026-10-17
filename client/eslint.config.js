@@ -36,6 +36,17 @@ export default defineConfig(
 	{
 		// Override or add rule settings here, such as:
 		// 'svelte/button-has-type': 'error'
-		rules: {}
+		rules: {
+			'@typescript-eslint/no-explicit-any': 'warn',
+			'@typescript-eslint/no-unused-vars': 'warn',
+			'@typescript-eslint/no-unused-expressions': 'warn',
+			'svelte/no-navigation-without-resolve': 'off',
+			'svelte/require-each-key': 'warn',
+			'svelte/prefer-svelte-reactivity': 'off',
+			'svelte/no-at-html-tags': 'off',
+			'svelte/prefer-writable-derived': 'warn',
+			'svelte/no-unused-svelte-ignore': 'off',
+			'svelte/no-useless-mustaches': 'off'
+		}
 	}
 );

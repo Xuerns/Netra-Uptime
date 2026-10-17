@@ -21,7 +21,7 @@ func SecurityHeaders() gin.HandlerFunc {
 		c.Header("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()")
 
 		// Content Security Policy for API/backend
-		c.Header("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none';")
+		c.Header("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' ws: wss:; frame-ancestors 'none';")
 
 		// HTTP Strict Transport Security if TLS or behind HTTPS reverse proxy
 		if c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https" {

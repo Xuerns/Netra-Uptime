@@ -1,3 +1,5 @@
+name: netra-uptime
+
 services:
   # ─────────────────────────────────────────────
   # PostgreSQL
@@ -15,7 +17,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data:z
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-netra} -d ${POSTGRES_DB:-netra_uptime}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-netra} -d ${POSTGRES_DB:-netra_uptime}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -35,7 +37,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_secret}", "ping"]
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_secret}", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -49,6 +51,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: netra-uptime:latest
     container_name: netra_uptime_app
     restart: unless-stopped
     env_file:
@@ -80,7 +83,7 @@ services:
     ports:
       - "${PORT:-8080}:8080"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/healthz || exit 1"]
+      test: [ "CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/healthz || exit 1" ]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -100,9 +103,9 @@ volumes:
   postgres_data:
   redis_data:
 
-# ─────────────────────────────────────────────
-# Networks
-# ─────────────────────────────────────────────
+    # ─────────────────────────────────────────────
+    # Networks
+    # ─────────────────────────────────────────────
 networks:
   netra_uptime_net:
     driver: bridge

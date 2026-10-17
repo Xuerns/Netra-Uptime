@@ -3,6 +3,7 @@ package worker
 import (
 	"fmt"
 	"netra-uptime/internal/model"
+	"netra-uptime/internal/worker/checker"
 	"strconv"
 	"strings"
 	"time"
@@ -16,11 +17,17 @@ type RuleEvaluationResult struct {
 	Reason           string
 	RequiredBreaches int
 	RuleID           *string
+	ErrorType        checker.ErrorType
 }
 
 // EvaluateRules evaluates check metrics against custom monitor rules or default rules.
 func EvaluateRules(monitor *model.Monitor, rules []model.AlertRule, statusCode int, responseTime time.Duration, checkErr error) RuleEvaluationResult {
 	respMs := int(responseTime.Milliseconds())
+
+	timeoutDur := time.Duration(monitor.TimeoutSeconds) * time.Second
+	if timeoutDur <= 0 {
+		timeoutDur = 10 * time.Second
+	}
 
 	// Filter active rules
 	var activeRules []model.AlertRule
@@ -35,7 +42,7 @@ func EvaluateRules(monitor *model.Monitor, rules []model.AlertRule, statusCode i
 		var warningResult *RuleEvaluationResult
 
 		for _, rule := range activeRules {
-			breached, reason := evaluateSingleRule(rule, statusCode, respMs, checkErr)
+			breached, reason := evaluateSingleRule(rule, statusCode, respMs, checkErr, timeoutDur)
 			if breached {
 				ruleIDStr := rule.ID.String()
 				consecutive := rule.Consecutive
@@ -50,6 +57,7 @@ func EvaluateRules(monitor *model.Monitor, rules []model.AlertRule, statusCode i
 					Reason:           reason,
 					RequiredBreaches: consecutive,
 					RuleID:           &ruleIDStr,
+					ErrorType:        checker.ClassifyNetworkError(checkErr),
 				}
 
 				if rule.Severity == "critical" {
@@ -66,12 +74,24 @@ func EvaluateRules(monitor *model.Monitor, rules []model.AlertRule, statusCode i
 
 		// Also evaluate basic fatal connection errors if no rule explicitly matched but connection failed
 		if checkErr != nil {
+			isTimeout := checker.IsTimeoutError(checkErr)
+			if isTimeout {
+				return RuleEvaluationResult{
+					IsBreached:       true,
+					Severity:         "warning",
+					RuleName:         "Request Timeout",
+					Reason:           checker.FormatErrorMessage(checkErr, timeoutDur),
+					RequiredBreaches: 3,
+					ErrorType:        checker.ErrorTypeTimeout,
+				}
+			}
 			return RuleEvaluationResult{
 				IsBreached:       true,
 				Severity:         "critical",
 				RuleName:         "Connection Failure",
-				Reason:           checkErr.Error(),
+				Reason:           checker.FormatErrorMessage(checkErr, timeoutDur),
 				RequiredBreaches: 3,
+				ErrorType:        checker.ClassifyNetworkError(checkErr),
 			}
 		}
 
@@ -83,12 +103,24 @@ func EvaluateRules(monitor *model.Monitor, rules []model.AlertRule, statusCode i
 
 	// 2. Default Fallback Rules (when monitor has no custom alert rules configured)
 	if checkErr != nil {
+		isTimeout := checker.IsTimeoutError(checkErr)
+		if isTimeout {
+			return RuleEvaluationResult{
+				IsBreached:       true,
+				Severity:         "warning",
+				RuleName:         "Request Timeout",
+				Reason:           checker.FormatErrorMessage(checkErr, timeoutDur),
+				RequiredBreaches: 3,
+				ErrorType:        checker.ErrorTypeTimeout,
+			}
+		}
 		return RuleEvaluationResult{
 			IsBreached:       true,
 			Severity:         "critical",
 			RuleName:         "Connection Failure",
-			Reason:           checkErr.Error(),
+			Reason:           checker.FormatErrorMessage(checkErr, timeoutDur),
 			RequiredBreaches: 3,
+			ErrorType:        checker.ClassifyNetworkError(checkErr),
 		}
 	}
 
@@ -107,17 +139,17 @@ func EvaluateRules(monitor *model.Monitor, rules []model.AlertRule, statusCode i
 	}
 }
 
-func evaluateSingleRule(rule model.AlertRule, statusCode, respMs int, checkErr error) (bool, string) {
+func evaluateSingleRule(rule model.AlertRule, statusCode, respMs int, checkErr error, timeout time.Duration) (bool, string) {
 	switch strings.ToLower(rule.Metric) {
 	case "status_code":
 		if checkErr != nil {
 			// If connection failed entirely, status code is 0
 			if rule.Operator == "!=" || rule.Operator == "not_in" {
-				return true, fmt.Sprintf("Connection error (%s) before HTTP status code", checkErr.Error())
+				return true, fmt.Sprintf("Connection error (%s) before HTTP status code", checker.FormatErrorMessage(checkErr, timeout))
 			}
 			return false, ""
 		}
-		return evaluateStatusCode(statusCode, rule.Operator, rule.TargetValue, rule.Name)
+		return evaluateStatusCode(statusCode, rule.Operator, rule.TargetValue)
 
 	case "response_time_ms", "latency":
 		if checkErr != nil {
@@ -129,9 +161,23 @@ func evaluateSingleRule(rule model.AlertRule, statusCode, respMs int, checkErr e
 		}
 		return evaluateNumeric(respMs, rule.Operator, targetVal, fmt.Sprintf("Response time %dms", respMs))
 
-	case "timeout", "connection":
+	case "timeout":
 		if checkErr != nil {
-			return true, fmt.Sprintf("Connection error: %s", checkErr.Error())
+			if checker.IsTimeoutError(checkErr) {
+				return true, checker.FormatErrorMessage(checkErr, timeout)
+			}
+			return false, ""
+		}
+		// Also evaluate if explicit latency target given in ms
+		targetVal, err := strconv.Atoi(strings.TrimSpace(rule.TargetValue))
+		if err == nil && targetVal > 0 {
+			return evaluateNumeric(respMs, rule.Operator, targetVal, fmt.Sprintf("Response time %dms exceeded timeout threshold", respMs))
+		}
+		return false, ""
+
+	case "connection":
+		if checkErr != nil {
+			return true, fmt.Sprintf("Connection error: %s", checker.FormatErrorMessage(checkErr, timeout))
 		}
 		return false, ""
 
@@ -140,7 +186,7 @@ func evaluateSingleRule(rule model.AlertRule, statusCode, respMs int, checkErr e
 	}
 }
 
-func evaluateStatusCode(actual int, op, target, ruleName string) (bool, string) {
+func evaluateStatusCode(actual int, op, target string) (bool, string) {
 	targetClean := strings.TrimSpace(strings.ToLower(target))
 
 	// Handle status families like "5xx", "4xx", "3xx", "2xx"

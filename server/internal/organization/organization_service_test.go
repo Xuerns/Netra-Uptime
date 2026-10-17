@@ -562,6 +562,77 @@ func TestInviteMember_ExceedsMemberLimit(t *testing.T) {
 	}
 }
 
+func TestInviteMember_AdminRoleSuccess(t *testing.T) {
+	orgID := uuid.New()
+	inviteeID := uuid.New()
+	ownerID := uuid.New()
+	var capturedInvitations *[]model.OrganizationInvitation
+
+	repo := &mockOrgRepo{
+		totalOrgMemberFunc: func(orgId string) (int64, error) {
+			return 2, nil
+		},
+		getMemberByIdFunc: func(o, m string) (*model.OrganizationMember, error) {
+			if m == ownerID.String() {
+				return &model.OrganizationMember{Role: "owner"}, nil
+			}
+			return nil, errors.New("not found")
+		},
+		getInvitationFunc: func(userId string) (*[]model.OrganizationInvitation, error) {
+			return &[]model.OrganizationInvitation{}, nil
+		},
+		inviteMemberFunc: func(invitations *[]model.OrganizationInvitation) error {
+			capturedInvitations = invitations
+			return nil
+		},
+	}
+	svc := NewOrganizationService(repo, nil)
+
+	_, err := svc.InviteMember(orgID.String(), ownerID.String(), "127.0.0.1", BulkInviteMemberRequest{
+		Invitations: []InviteMemberRequest{{InviteeID: inviteeID.String(), Role: "admin"}},
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error inviting member: %v", err)
+	}
+	if capturedInvitations == nil || len(*capturedInvitations) == 0 {
+		t.Fatal("expected invitations to be saved, got nil or empty")
+	}
+	if (*capturedInvitations)[0].Role != "admin" {
+		t.Fatalf("expected invitation role to be 'admin', got '%s'", (*capturedInvitations)[0].Role)
+	}
+}
+
+func TestInviteMember_NonOwnerCannotInviteAdmin(t *testing.T) {
+	orgID := uuid.New()
+	inviteeID := uuid.New()
+	adminID := uuid.New()
+
+	repo := &mockOrgRepo{
+		totalOrgMemberFunc: func(orgId string) (int64, error) {
+			return 2, nil
+		},
+		getMemberByIdFunc: func(o, m string) (*model.OrganizationMember, error) {
+			if m == adminID.String() {
+				return &model.OrganizationMember{Role: "admin"}, nil
+			}
+			return nil, errors.New("not found")
+		},
+		getInvitationFunc: func(userId string) (*[]model.OrganizationInvitation, error) {
+			return &[]model.OrganizationInvitation{}, nil
+		},
+	}
+	svc := NewOrganizationService(repo, nil)
+
+	_, err := svc.InviteMember(orgID.String(), adminID.String(), "127.0.0.1", BulkInviteMemberRequest{
+		Invitations: []InviteMemberRequest{{InviteeID: inviteeID.String(), Role: "admin"}},
+	})
+
+	if err == nil {
+		t.Fatal("expected error when admin tries to invite another admin, got nil")
+	}
+}
+
 func TestPromoteToAdmin_AlreadyAdmin(t *testing.T) {
 	repo := &mockOrgRepo{
 		getMemberByIdFunc: func(orgId, memberId string) (*model.OrganizationMember, error) {

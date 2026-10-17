@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { MonitorAPI, type Monitor } from '$lib/api/monitor';
 	import { OrgAPI } from '$lib/api/organization';
+	import { AlertTemplateAPI, type AlertTemplate } from '$lib/api/alertTemplate';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -17,19 +18,21 @@
 	import { parseApiError } from '$lib/utils/parseApiError';
 	import { toast } from 'svelte-sonner';
 
+	interface Props {
+		isOpen?: boolean;
+		monitorType?: 'http' | 'ping' | 'tcp' | null;
+		monitor?: Monitor | null;
+		orgId: string;
+		onSuccess: () => void;
+	}
+
 	let {
 		isOpen = $bindable(false),
 		monitorType = null,
 		monitor = null,
 		orgId,
 		onSuccess
-	} = $props<{
-		isOpen: boolean;
-		monitorType?: 'http' | 'ping' | 'tcp' | null;
-		monitor?: Monitor | null;
-		orgId: string;
-		onSuccess: () => void;
-	}>();
+	}: Props = $props();
 
 	const isEdit = $derived(!!monitor);
 	const effectiveType = $derived<string>(monitor?.Type || monitorType || 'http');
@@ -38,6 +41,8 @@
 	let target = $state('');
 	let intervalSeconds = $state<number>(60);
 	let timeoutSeconds = $state<number>(10);
+	let alertTemplates = $state<AlertTemplate[]>([]);
+	let selectedTemplateId = $state<string>('');
 	let expectedStatusCodeStr = $state<string>('200');
 	let isActive = $state<boolean>(true);
 	let criticality = $state<'extreme' | 'high' | 'medium' | 'low'>('medium');
@@ -129,6 +134,8 @@
 					(monitor as any).EnableSSLDomainCheck !== undefined
 						? (monitor as any).EnableSSLDomainCheck
 						: true;
+				selectedTemplateId =
+					(monitor as any).AlertTemplateID || (monitor as any).alert_template_id || '';
 
 				const rawAssignees =
 					(monitor as any).Assignees ||
@@ -154,6 +161,7 @@
 				criticality = 'medium';
 				enableSSLDomainCheck = true;
 				selectedAssignees = [];
+				selectedTemplateId = '';
 			}
 
 			if (orgId) {
@@ -166,6 +174,18 @@
 							console.error('Failed to load members', err);
 						}
 					});
+
+				AlertTemplateAPI.list(orgId)
+					.then((res) => {
+						alertTemplates = res.data ?? [];
+						if (!monitor) {
+							const defaultTmpl = alertTemplates.find((t) => t.is_default);
+							if (defaultTmpl && !selectedTemplateId) {
+								selectedTemplateId = defaultTmpl.id;
+							}
+						}
+					})
+					.catch(() => {});
 			}
 		}
 	});
@@ -173,6 +193,7 @@
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
 		if (!canSubmit) return;
+
 		loading = true;
 		error = '';
 
@@ -189,7 +210,8 @@
 					criticality,
 					assignees: selectedAssignees,
 					MonitorPICs: selectedAssignees,
-					enable_ssl_domain_check: enableSSLDomainCheck
+					enable_ssl_domain_check: enableSSLDomainCheck,
+					alert_template_id: selectedTemplateId || null
 				});
 				toast.success('Monitor updated successfully');
 			} else {
@@ -205,7 +227,8 @@
 					criticality,
 					assignees: selectedAssignees,
 					MonitorPICs: selectedAssignees,
-					enable_ssl_domain_check: enableSSLDomainCheck
+					enable_ssl_domain_check: enableSSLDomainCheck,
+					alert_template_id: selectedTemplateId || null
 				});
 				toast.success('Monitor created successfully');
 			}
@@ -249,7 +272,7 @@
 
 <Dialog.Root bind:open={isOpen}>
 	<Dialog.Content
-		class="sm:max-w-[750px] bg-card border border-border shadow-lg text-foreground p-6 rounded-2xl"
+		class="sm:max-w-187.5 bg-card border border-border shadow-lg text-foreground p-6 rounded-2xl"
 	>
 		<Dialog.Header>
 			<div class="flex items-center gap-2">
@@ -511,6 +534,29 @@
 							/>
 						</div>
 					</div>
+
+					<!-- Alert Template Profile -->
+					<div class="space-y-1.5 pt-1">
+						<Label
+							for="monitor-template"
+							class="text-sm font-medium text-foreground flex items-center justify-between"
+						>
+							<span>Alert Template</span>
+							<span class="text-[11px] text-muted-foreground font-normal">Optional</span>
+						</Label>
+						<select
+							id="monitor-template"
+							bind:value={selectedTemplateId}
+							class="w-full bg-background border border-border text-foreground rounded-lg h-10 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer"
+						>
+							<option value="">None (Use System Defaults)</option>
+							{#each alertTemplates as tmpl}
+								<option value={tmpl.id}>
+									{tmpl.name} ({tmpl.rules?.length || 0} rules) {tmpl.is_default ? '★ Default' : ''}
+								</option>
+							{/each}
+						</select>
+					</div>
 				</div>
 
 				<!-- Right Column: Assignees Settings -->
@@ -527,7 +573,7 @@
 
 					<div
 						data-lenis-prevent
-						class="flex-1 min-h-[250px] overflow-y-auto bg-background border border-border rounded-lg p-2 space-y-1"
+						class="flex-1 min-h-62.5 overflow-y-auto bg-background border border-border rounded-lg p-2 space-y-1"
 					>
 						{#each members as member}
 							{@const isSelected = selectedAssignees.includes(member.User.ID)}

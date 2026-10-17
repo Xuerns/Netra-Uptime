@@ -3,6 +3,7 @@ package main
 import (
 	"netra-uptime/config"
 	"netra-uptime/internal/alertrule"
+	"netra-uptime/internal/alerttemplate"
 	"netra-uptime/internal/apikey"
 	"netra-uptime/internal/audit"
 	"netra-uptime/internal/auth"
@@ -59,20 +60,25 @@ func BuildHandler(db *gorm.DB, rdb *redis.Client, wp *worker.WorkerPool, cfg *co
 	alertRuleService := alertrule.NewService(alertRuleRepo)
 	alertRuleHandler := alertrule.NewHandler(alertRuleService)
 
+	alertTemplateRepo := alerttemplate.NewRepository(db)
+	alertTemplateService := alerttemplate.NewService(alertTemplateRepo)
+	alertTemplateHandler := alerttemplate.NewHandler(alertTemplateService)
+
 	healthHandler := health.NewHealthHandler(db, rdb, cfg)
 
 	return router.Handlers{
-		AuthHandler:         authHandler,
-		OrganizationHandler: organizationHandler,
-		MonitorHandler:      monitorHandler,
-		IncidentHandler:     incidentHandler,
-		StatusPageHandler:   statuspageHandler,
-		AuditHandler:        auditHandler,
-		APIKeyHandler:       apiKeyHandler,
-		PublicAPIHandler:    publicAPIHandler,
-		APIKeyService:       apiKeyService,
-		NotificationHandler: notificationHandler,
-		AlertRuleHandler:    alertRuleHandler,
-		HealthHandler:       healthHandler,
+		AuthHandler:          authHandler,
+		OrganizationHandler:  organizationHandler,
+		MonitorHandler:       monitorHandler,
+		IncidentHandler:      incidentHandler,
+		StatusPageHandler:    statuspageHandler,
+		AuditHandler:         auditHandler,
+		APIKeyHandler:        apiKeyHandler,
+		PublicAPIHandler:     publicAPIHandler,
+		APIKeyService:        apiKeyService,
+		NotificationHandler:  notificationHandler,
+		AlertRuleHandler:     alertRuleHandler,
+		AlertTemplateHandler: alertTemplateHandler,
+		HealthHandler:        healthHandler,
 	}
 }

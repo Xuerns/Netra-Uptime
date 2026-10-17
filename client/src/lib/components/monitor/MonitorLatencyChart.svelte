@@ -5,7 +5,7 @@
 	export interface DataPoint {
 		label: string;
 		value: number | null; // response time in ms (null if no checks on this date)
-		status?: 'up' | 'down' | 'degraded' | 'no_data';
+		status?: 'up' | 'down' | 'degraded' | 'unresponsive' | 'no_data';
 		statusCode?: number;
 	}
 
@@ -37,7 +37,7 @@
 			if (statusCode >= 500 && statusCode < 600) return '#EF4444'; // Rose 5xx
 		}
 		if (status === 'down') return '#EF4444';
-		if (status === 'degraded') return '#F59E0B';
+		if (status === 'degraded' || status === 'unresponsive') return '#F59E0B';
 		return '#10B981';
 	}
 
@@ -175,10 +175,10 @@
 										return `HTTP Status: ${pt.statusCode}`;
 									}
 									if (pt.status === 'down') {
-										return `Status: Down (Timeout / Error)`;
+										return `Status: Down (Connection Error)`;
 									}
-									if (pt.status === 'degraded') {
-										return `Status: Degraded (Slow Response)`;
+									if (pt.status === 'degraded' || pt.status === 'unresponsive') {
+										return `Status: Unresponsive / Degraded`;
 									}
 									return `Status: OK`;
 								}

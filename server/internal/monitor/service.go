@@ -146,6 +146,12 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 		EnableSSLDomainCheck: enableCheck,
 	}
 
+	if req.AlertTemplateID != nil && *req.AlertTemplateID != "" {
+		if parsed, err := uuid.Parse(*req.AlertTemplateID); err == nil {
+			monitor.AlertTemplateID = &parsed
+		}
+	}
+
 	if len(assignees) > 0 {
 		if !s.repo.ValidateUsersInOrg(orgId, assignees) {
 			return nil, errors.New("Some of assignees are not member of this organization")
@@ -277,6 +283,12 @@ func mapMonitorToResponse(m model.Monitor) MonitorResponse {
 			CheckedAt:      checkedAt,
 		})
 	}
+
+	if m.AlertTemplateID != nil {
+		tmplIDStr := m.AlertTemplateID.String()
+		resp.AlertTemplateID = &tmplIDStr
+	}
+
 	return resp
 }
 
@@ -414,6 +426,14 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 
 	if req.EnableSSLDomainCheck != nil {
 		updatedMonitor.EnableSSLDomainCheck = *req.EnableSSLDomainCheck
+	}
+
+	if req.AlertTemplateID != nil {
+		if *req.AlertTemplateID == "" {
+			updatedMonitor.AlertTemplateID = nil
+		} else if parsed, err := uuid.Parse(*req.AlertTemplateID); err == nil {
+			updatedMonitor.AlertTemplateID = &parsed
+		}
 	}
 
 	if err := s.repo.Update(updatedMonitor); err != nil {

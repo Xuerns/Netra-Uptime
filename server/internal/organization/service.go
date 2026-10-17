@@ -159,8 +159,13 @@ func (s *OrganizationServiceImpl) CreateOrganization(req *CreateOrganizationRequ
 			if err != nil {
 				return "", fmt.Errorf("Invalid invitee ID format: %s", member.InviteeID)
 			}
+			role := member.Role
+			if role == "" {
+				role = "member"
+			}
 			invitations = append(invitations, model.OrganizationInvitation{
 				InviteeID: inviteeUUID,
+				Role:      role,
 				Status:    "pending",
 				ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
 			})
@@ -388,6 +393,13 @@ func (s *OrganizationServiceImpl) InviteMember(orgId, ownerId, ipAddress string,
 			role = "member"
 		}
 
+		if role == "admin" {
+			inviterMember, err := s.repo.GetMemberById(orgId, ownerId)
+			if err != nil || inviterMember == nil || inviterMember.Role != "owner" {
+				return "", errors.New("Only organization owners can invite members as admin")
+			}
+		}
+
 		orgUUID, err := uuid.Parse(orgId)
 		if err != nil {
 			return "", errors.New("Invalid organization ID format")
@@ -404,6 +416,7 @@ func (s *OrganizationServiceImpl) InviteMember(orgId, ownerId, ipAddress string,
 		dbInvitations = append(dbInvitations, model.OrganizationInvitation{
 			OrganizationID: orgUUID,
 			InviteeID:      inviteeUUID,
+			Role:           role,
 			Status:         "pending",
 			ExpiresAt:      time.Now().Add(7 * 24 * time.Hour),
 			InviterID:      inviterUUID,

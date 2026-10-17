@@ -338,7 +338,7 @@
 									align="end"
 									class="bg-card border-border text-foreground min-w-[150px] p-1 rounded-lg"
 								>
-									{#if m.Role === 'member'}
+									{#if m.Role === 'member' && isOwner}
 										<DropdownMenu.Item
 											class="hover:bg-white/10 cursor-pointer rounded-md p-2 text-xs"
 											onclick={() => handlePromote(m.UserID)}
@@ -371,7 +371,7 @@
 </div>
 
 <!-- ── Invite Member Modal ────────────────────────────────────────────────── -->
-<InviteMemberModal bind:open={isInviteOpen} {orgId} onInvited={() => loadMembers(true)} />
+<InviteMemberModal bind:open={isInviteOpen} {orgId} {isOwner} onInvited={() => loadMembers(true)} />
 
 <!-- ── Confirm Kick Dialog ────────────────────────────────────────────────── -->
 <ConfirmDialog

@@ -14,6 +14,7 @@ export interface CreateMonitorRequest {
 	MonitorPICs?: string[];
 	assignees?: string[];
 	enable_ssl_domain_check?: boolean;
+	alert_template_id?: string | null;
 }
 
 export interface UpdateMonitorRequest {
@@ -27,6 +28,7 @@ export interface UpdateMonitorRequest {
 	MonitorPICs?: string[];
 	assignees?: string[];
 	enable_ssl_domain_check?: boolean;
+	alert_template_id?: string | null;
 }
 
 export interface RecentCheck {
@@ -87,6 +89,7 @@ export interface Monitor {
 	DomainError?: string;
 	MonitorPICs?: { UserID: string }[];
 	Assignees?: { UserID: string }[];
+	AlertTemplateID?: string | null;
 	recent_checks?: RecentCheck[];
 }
 
@@ -132,6 +135,7 @@ function mapMonitor(m: any): Monitor {
 		DomainError: m.domain_error ?? m.DomainError,
 		MonitorPICs: assignees,
 		Assignees: assignees,
+		AlertTemplateID: m.alert_template_id ?? m.AlertTemplateID ?? null,
 		recent_checks: (m.recent_checks || []).map((c: any) => ({
 			ID: c.id ?? c.ID,
 			MonitorID: c.monitor_id ?? c.MonitorID,
@@ -226,6 +230,19 @@ export const MonitorAPI = {
 			method: 'POST'
 		});
 		if (!res.ok) throw new Error('Failed to trigger monitor check');
+		return res.json();
+	},
+
+	applyTemplate: async (orgId: string, monitorId: string, templateId: string | null) => {
+		const res = await apiFetch(
+			`${API_Route}/organization/${orgId}/monitors/${monitorId}/template`,
+			{
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ template_id: templateId })
+			}
+		);
+		if (!res.ok) throw new Error('Failed to update monitor template');
 		return res.json();
 	}
 };

@@ -36,6 +36,7 @@ type Monitor struct {
 	LastDomainCheckedAt       *time.Time `gorm:"default:null"`
 	LastSSLSentReminderDay    *int       `gorm:"default:null"`
 	LastDomainSentReminderDay *int       `gorm:"default:null"`
+	AlertTemplateID           *uuid.UUID `gorm:"type:uuid;index" json:"alert_template_id"`
 
 	Organization       Organization        `gorm:"foreignKey:OrganizationID"`
 	Checks             []Check             `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
@@ -44,6 +45,7 @@ type Monitor struct {
 	MonitorPICs        []MonitorPIC        `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
 	NotificationLogs   []NotificationLog   `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
 	AlertRules         []AlertRule         `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
+	AlertTemplate      *AlertRuleTemplate  `gorm:"foreignKey:AlertTemplateID;constraint:OnDelete:SET NULL;" json:"alert_template,omitempty"`
 
 	RecentChecks        []Check  `gorm:"-" json:"recent_checks"`
 	CalculatedUptime30D *float64 `gorm:"-" json:"calculated_uptime_30d"`

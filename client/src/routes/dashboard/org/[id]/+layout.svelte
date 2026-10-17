@@ -22,6 +22,7 @@
 		if (headerStore.title) return headerStore.title;
 		const path = $page.url.pathname;
 		if (path.includes('/monitors')) return 'Monitors';
+		if (path.includes('/alert-templates')) return 'Alert Templates';
 		if (path.includes('/members')) return 'Members';
 		if (path.includes('/incidents')) return 'Incidents';
 		if (path.includes('/statuspage')) return 'Status Pages';
@@ -88,7 +89,7 @@
 				<div
 					class="flex items-center gap-2 text-xs font-medium text-muted-foreground truncate select-none"
 				>
-					<span class="truncate max-w-[140px] md:max-w-[200px]">{orgName}</span>
+					<span class="truncate max-w-35 md:max-w-50">{orgName}</span>
 					<span class="text-muted-foreground/40">/</span>
 					<span class="text-foreground font-semibold">{pageTitle}</span>
 				</div>

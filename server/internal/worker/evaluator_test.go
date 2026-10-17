@@ -27,10 +27,16 @@ func TestEvaluateRules_DefaultFallback(t *testing.T) {
 		t.Errorf("Expected critical breach for 500 mismatch, got: %+v", res)
 	}
 
-	// 3. Network error / Timeout
+	// 3. Network error / Timeout -> warning (amber)
 	res = EvaluateRules(mon, nil, 0, 10*time.Second, errors.New("context deadline exceeded"))
-	if !res.IsBreached || res.Severity != "critical" {
-		t.Errorf("Expected critical breach for timeout error, got: %+v", res)
+	if !res.IsBreached || res.Severity != "warning" || res.RuleName != "Request Timeout" {
+		t.Errorf("Expected warning breach for timeout error, got: %+v", res)
+	}
+
+	// 4. Fatal Connection Error -> critical (red)
+	res = EvaluateRules(mon, nil, 0, 100*time.Millisecond, errors.New("dial tcp 127.0.0.1:8080: connect: connection refused"))
+	if !res.IsBreached || res.Severity != "critical" || res.RuleName != "Connection Failure" {
+		t.Errorf("Expected critical breach for connection refused, got: %+v", res)
 	}
 }
 

@@ -2,6 +2,7 @@ package router
 
 import (
 	"netra-uptime/internal/alertrule"
+	"netra-uptime/internal/alerttemplate"
 	"netra-uptime/internal/apikey"
 	"netra-uptime/internal/audit"
 	"netra-uptime/internal/auth"
@@ -23,18 +24,19 @@ import (
 )
 
 type Handlers struct {
-	AuthHandler         auth.AuthHandler
-	OrganizationHandler organization.OrganizationHandler
-	MonitorHandler      monitor.MonitorHandler
-	IncidentHandler     incident.Incidenthandler
-	StatusPageHandler   statuspage.StatusPageHandler
-	AuditHandler        audit.AuditHandler
-	APIKeyHandler       *apikey.APIKeyHandler
-	PublicAPIHandler    *publicapi.PublicAPIHandler
-	APIKeyService       apikey.APIKeyService
-	NotificationHandler *notification.ChannelHandler
-	AlertRuleHandler    *alertrule.Handler
-	HealthHandler       *health.HealthHandler
+	AuthHandler          auth.AuthHandler
+	OrganizationHandler  organization.OrganizationHandler
+	MonitorHandler       monitor.MonitorHandler
+	IncidentHandler      incident.Incidenthandler
+	StatusPageHandler    statuspage.StatusPageHandler
+	AuditHandler         audit.AuditHandler
+	APIKeyHandler        *apikey.APIKeyHandler
+	PublicAPIHandler     *publicapi.PublicAPIHandler
+	APIKeyService        apikey.APIKeyService
+	NotificationHandler  *notification.ChannelHandler
+	AlertRuleHandler     *alertrule.Handler
+	AlertTemplateHandler *alerttemplate.Handler
+	HealthHandler        *health.HealthHandler
 }
 
 func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, wsHandler *websocket.WsHandler) {
@@ -88,13 +90,13 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 	orgRoutes := protected.Group("/organization/:orgId")
 	orgRoutes.Use(middleware.TenantMiddleware(db))
 	orgRoutes.GET("/members", h.OrganizationHandler.GetAllMember)
-	orgRoutes.POST("/invite", middleware.RequireRole("owner"), h.OrganizationHandler.InviteMember)
+	orgRoutes.POST("/invite", middleware.RequireRole("owner", "admin"), h.OrganizationHandler.InviteMember)
 	orgRoutes.DELETE("/kick", middleware.RequireRole("owner"), h.OrganizationHandler.KickMember)
 	orgRoutes.DELETE("/disband", middleware.RequireRole("owner"), h.OrganizationHandler.Disband)
 	orgRoutes.PUT("/update", middleware.RequireRole("owner"), h.OrganizationHandler.UpdateOrganization)
 	orgRoutes.PUT("/transfer", middleware.RequireRole("owner"), h.OrganizationHandler.TransferOwnership)
 	orgRoutes.PUT("/leave", h.OrganizationHandler.LeaveOrganization)
-	orgRoutes.PUT("/promote", middleware.RequireRole("owner", "admin"), h.OrganizationHandler.PromoteToAdmin)
+	orgRoutes.PUT("/promote", middleware.RequireRole("owner"), h.OrganizationHandler.PromoteToAdmin)
 	orgRoutes.PUT("/demote", middleware.RequireRole("owner"), h.OrganizationHandler.DemoteToMember)
 
 	// Monitor
@@ -112,6 +114,19 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 	orgRoutes.GET("/alert-rules/:ruleId", h.AlertRuleHandler.GetByID)
 	orgRoutes.PUT("/alert-rules/:ruleId", middleware.RequireRole("owner", "admin"), h.AlertRuleHandler.Update)
 	orgRoutes.DELETE("/alert-rules/:ruleId", middleware.RequireRole("owner", "admin"), h.AlertRuleHandler.Delete)
+
+	// Alert Rule Templates
+	if h.AlertTemplateHandler != nil {
+		orgRoutes.GET("/alert-templates", h.AlertTemplateHandler.List)
+		orgRoutes.POST("/alert-templates", middleware.RequireRole("owner", "admin"), h.AlertTemplateHandler.Create)
+		orgRoutes.GET("/alert-templates/:templateId", h.AlertTemplateHandler.GetByID)
+		orgRoutes.PUT("/alert-templates/:templateId", middleware.RequireRole("owner", "admin"), h.AlertTemplateHandler.Update)
+		orgRoutes.DELETE("/alert-templates/:templateId", middleware.RequireRole("owner", "admin"), h.AlertTemplateHandler.Delete)
+		orgRoutes.POST("/alert-templates/:templateId/rules", middleware.RequireRole("owner", "admin"), h.AlertTemplateHandler.CreateRule)
+		orgRoutes.PUT("/alert-templates/:templateId/rules/:ruleId", middleware.RequireRole("owner", "admin"), h.AlertTemplateHandler.UpdateRule)
+		orgRoutes.DELETE("/alert-templates/:templateId/rules/:ruleId", middleware.RequireRole("owner", "admin"), h.AlertTemplateHandler.DeleteRule)
+		orgRoutes.POST("/monitors/:monitorId/template", middleware.RequireRole("owner", "admin"), h.AlertTemplateHandler.AssignToMonitor)
+	}
 
 	protected.GET("/monitors", h.MonitorHandler.GetAllMonitorByUserId)
 

@@ -11,6 +11,7 @@ type CreateMonitorRequest struct {
 	MonitorPICs          []string `json:"MonitorPICs" binding:"omitempty,max=5,dive,uuid"`
 	Assignees            []string `json:"assignees" binding:"omitempty,max=5,dive,uuid"`
 	EnableSSLDomainCheck *bool    `json:"enable_ssl_domain_check" binding:"omitempty"`
+	AlertTemplateID      *string  `json:"alert_template_id" binding:"omitempty"`
 }
 
 type UpdatedMonitorRequest struct {
@@ -24,6 +25,7 @@ type UpdatedMonitorRequest struct {
 	MonitorPICs          *[]string `json:"MonitorPICs" binding:"omitempty,dive,uuid"`
 	Assignees            *[]string `json:"assignees" binding:"omitempty,dive,uuid"`
 	EnableSSLDomainCheck *bool     `json:"enable_ssl_domain_check" binding:"omitempty"`
+	AlertTemplateID      *string   `json:"alert_template_id" binding:"omitempty"`
 }
 
 type MonitorResponse struct {
@@ -38,6 +40,7 @@ type MonitorResponse struct {
 	Criticality          string                `json:"criticality"`
 	IsActive             bool                  `json:"is_active"`
 	EnableSSLDomainCheck bool                  `json:"enable_ssl_domain_check"`
+	AlertTemplateID      *string               `json:"alert_template_id,omitempty"`
 	SSLExpiresAt         *string               `json:"ssl_expires_at,omitempty"`
 	SSLDaysLeft          *int                  `json:"ssl_days_left,omitempty"`
 	SSLStatus            string                `json:"ssl_status,omitempty"`

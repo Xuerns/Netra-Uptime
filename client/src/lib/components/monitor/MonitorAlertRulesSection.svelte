@@ -1,17 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { AlertRuleAPI, type AlertRule, type CreateAlertRuleRequest } from '$lib/api/alertRule';
-	import Button from '$lib/components/ui/button/button.svelte';
+	import { AlertTemplateAPI, type AlertTemplate } from '$lib/api/alertTemplate';
+	import { MonitorAPI } from '$lib/api/monitor';
 	import {
-		Bell,
-		Plus,
-		Trash2,
-		CheckCircle,
-		AlertTriangle,
 		ShieldAlert,
-		Sparkles,
-		X,
-		Power
+		AlertTriangle,
+		Layers,
+		Info,
+		ExternalLink,
+		CheckCircle2,
+		Clock,
+		ArrowRight
 	} from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
@@ -20,474 +19,325 @@
 		orgId: string;
 		monitorId: string;
 		monitorType?: string;
+		alertTemplateId?: string | null;
 	}
 
-	let { orgId, monitorId, monitorType = 'http' }: Props = $props();
+	let { orgId, monitorId, monitorType = 'http', alertTemplateId = null }: Props = $props();
 
 	let isHttp = $derived(monitorType?.toLowerCase() === 'http');
 
-	let rules = $state<AlertRule[]>([]);
+	let availableTemplates = $state<AlertTemplate[]>([]);
+	let currentTemplateId = $state<string | null>(alertTemplateId);
+	let isApplyingTemplate = $state(false);
 	let isLoading = $state(true);
-	let isSaving = $state(false);
-	let errorMsg = $state('');
-	let showAddModal = $state(false);
 
-	// Form state
-	let ruleName = $state('');
-	let metric = $state<'status_code' | 'response_time_ms' | 'timeout'>('status_code');
-	let operator = $state<'==' | '!=' | '>' | '>=' | '<' | '<=' | 'in' | 'not_in'>('==');
-	let targetValue = $state('5xx');
-	let consecutive = $state(2);
-	let severity = $state<'critical' | 'warning'>('critical');
+	let activeTemplate = $derived(availableTemplates.find((t) => t.id === currentTemplateId) || null);
 
-	$effect(() => {
-		if (!isHttp && metric === 'status_code') {
-			metric = 'response_time_ms';
-			operator = '>';
-			targetValue = '1000';
-			ruleName = 'High Latency Warning';
-			severity = 'warning';
-		}
-	});
-
-	async function loadRules() {
+	async function loadTemplates() {
 		isLoading = true;
-		errorMsg = '';
 		try {
-			const res = await AlertRuleAPI.getByMonitor(orgId, monitorId);
-			rules = res.data || [];
-		} catch (err: any) {
-			errorMsg = parseApiError(err, 'Failed to load alert rules');
-			rules = [];
+			const res = await AlertTemplateAPI.list(orgId);
+			availableTemplates = res.data || [];
+			// If no template is linked yet, check if there is an organization default template
+			if (!currentTemplateId) {
+				const defaultTmpl = availableTemplates.find((t) => t.is_default);
+				if (defaultTmpl) {
+					currentTemplateId = defaultTmpl.id;
+					// Save to monitor in background
+					MonitorAPI.applyTemplate(orgId, monitorId, defaultTmpl.id).catch(() => {});
+				}
+			}
+		} catch (err: unknown) {
+			console.error('Failed to load alert templates', err);
 		} finally {
 			isLoading = false;
 		}
 	}
 
+	async function handleTemplateChange(e: Event) {
+		const target = e.target as HTMLSelectElement;
+		const newTmplId = target.value ? target.value : null;
+
+		isApplyingTemplate = true;
+		try {
+			await MonitorAPI.applyTemplate(orgId, monitorId, newTmplId);
+			currentTemplateId = newTmplId;
+			toast.success(
+				newTmplId ? 'Alert template linked to monitor' : 'Switched to System Default Checks'
+			);
+		} catch (err: unknown) {
+			toast.error(parseApiError(err, 'Failed to update monitor template'));
+		} finally {
+			isApplyingTemplate = false;
+		}
+	}
+
 	onMount(() => {
 		if (orgId && monitorId) {
-			loadRules();
+			loadTemplates();
 		}
 	});
-
-	function applyPreset(preset: '5xx' | 'latency' | 'not200' | 'timeout') {
-		if (preset === '5xx') {
-			ruleName = '5xx Server Error Alert';
-			metric = 'status_code';
-			operator = '==';
-			targetValue = '5xx';
-			consecutive = 2;
-			severity = 'critical';
-		} else if (preset === 'latency') {
-			ruleName = 'High Latency Warning';
-			metric = 'response_time_ms';
-			operator = '>';
-			targetValue = isHttp ? '2000' : '1000';
-			consecutive = 3;
-			severity = 'warning';
-		} else if (preset === 'not200') {
-			ruleName = 'Unexpected Status Code';
-			metric = 'status_code';
-			operator = '!=';
-			targetValue = '200';
-			consecutive = 2;
-			severity = 'critical';
-		} else if (preset === 'timeout') {
-			ruleName =
-				monitorType?.toLowerCase() === 'ping' ? 'Packet Loss / Timeout' : 'Connection Timeout';
-			metric = 'timeout';
-			operator = '>';
-			targetValue = '5000';
-			consecutive = 3;
-			severity = 'critical';
-		}
-	}
-
-	async function handleCreateRule(e: Event) {
-		e.preventDefault();
-		if (!ruleName.trim() || !targetValue.trim()) return;
-
-		isSaving = true;
-		errorMsg = '';
-		try {
-			const payload: CreateAlertRuleRequest = {
-				name: ruleName.trim(),
-				metric,
-				operator,
-				target_value: targetValue.trim(),
-				consecutive: Number(consecutive) || 2,
-				severity,
-				is_active: true
-			};
-			await AlertRuleAPI.create(orgId, monitorId, payload);
-			showAddModal = false;
-			ruleName = '';
-			await loadRules();
-		} catch (err: any) {
-			errorMsg = parseApiError(err, 'Failed to create alert rule');
-		} finally {
-			isSaving = false;
-		}
-	}
-
-	async function handleToggleRule(rule: AlertRule) {
-		try {
-			const updated = !rule.is_active;
-			await AlertRuleAPI.update(orgId, rule.id, { is_active: updated });
-			rule.is_active = updated;
-			toast.success(updated ? 'Alert rule enabled' : 'Alert rule disabled');
-		} catch (err: any) {
-			toast.error(parseApiError(err, 'Failed to update rule'));
-		}
-	}
-
-	async function handleDeleteRule(ruleId: string) {
-		if (!confirm('Are you sure you want to delete this alert rule?')) return;
-		try {
-			await AlertRuleAPI.delete(orgId, ruleId);
-			rules = rules.filter((r) => r.id !== ruleId);
-			toast.success('Alert rule deleted successfully');
-		} catch (err: any) {
-			toast.error(parseApiError(err, 'Failed to delete alert rule'));
-		}
-	}
 </script>
 
-<div class="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-xl space-y-5">
-	<div class="flex items-center justify-between flex-wrap gap-3">
+<div class="bg-card border border-border rounded-lg p-5 md:p-6 space-y-5">
+	<!-- Section Header -->
+	<div class="flex items-center justify-between gap-4 flex-wrap">
 		<div class="space-y-1">
-			<h3 class="text-sm font-semibold text-foreground tracking-tight flex items-center gap-2">
-				<span>Alert Rules & Policies</span>
-			</h3>
-			<p class="text-xs text-muted-foreground">
-				Configure conditions that trigger critical down incidents or degraded performance warnings.
+			<div class="flex items-center gap-2">
+				<h3 class="text-sm font-semibold text-foreground tracking-tight">
+					Alert Policy & Template
+				</h3>
+				<span
+					class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary border border-primary/20"
+				>
+					Template-First
+				</span>
+			</div>
+			<p class="text-xs text-muted-foreground leading-relaxed">
+				All incident thresholds and warning rules are inherited centrally from your selected Alert
+				Template.
 			</p>
 		</div>
 
-		<Button
-			class="bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-3 text-xs gap-1.5 font-medium rounded-lg"
-			onclick={() => {
-				applyPreset(isHttp ? '5xx' : 'latency');
-				showAddModal = true;
-			}}
+		<a
+			href={`/dashboard/org/${orgId}/alert-templates`}
+			class="inline-flex items-center gap-1.5 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-8 px-3 rounded-lg font-medium text-xs cursor-pointer shrink-0"
 		>
-			<Plus class="size-3.5" />
-			<span>Add Alert Rule</span>
-		</Button>
+			<span>Manage Templates</span>
+			<ExternalLink class="size-3" />
+		</a>
 	</div>
 
-	{#if isLoading}
-		<div class="h-24 flex items-center justify-center text-xs text-muted-foreground font-mono">
-			Loading alert rules...
-		</div>
-	{:else if rules.length === 0}
-		<!-- Default fallback notice -->
-		<div class="bg-white/3 border border-border/80 rounded-xl p-5 text-center space-y-3">
-			<ShieldAlert class="size-8 text-muted-foreground/60 mx-auto" />
-			<div class="space-y-1">
-				<p class="text-sm font-medium text-foreground">Using Default Fallback Rule</p>
-				<p class="text-xs text-muted-foreground max-w-[560px] mx-auto leading-relaxed">
-					{#if isHttp}
-						No custom rules configured. Currently alerting if connection times out or status code
-						doesn't match expected after 3 consecutive failures.
-					{:else}
-						No custom rules configured. Currently alerting if connection times out or target
-						host/port is unreachable after 3 consecutive failures.
+	<!-- Template Selector Bar -->
+	<div
+		class="flex items-center justify-between p-4 rounded-xl border border-border/70 bg-muted/20 gap-3 flex-wrap sm:flex-nowrap"
+	>
+		<div class="flex items-center gap-3 min-w-0">
+			<div
+				class="size-9 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center shrink-0"
+			>
+				<Layers class="size-4.5" />
+			</div>
+			<div class="min-w-0">
+				<div class="text-xs font-semibold text-foreground flex items-center gap-1.5">
+					<span>Assigned Template</span>
+					{#if activeTemplate?.is_default}
+						<span
+							class="text-[10px] text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20 font-medium"
+						>
+							Default
+						</span>
 					{/if}
-				</p>
+				</div>
+				<div class="text-[11px] text-muted-foreground truncate">
+					{#if activeTemplate}
+						{activeTemplate.name} &bull; {activeTemplate.rules?.length || 0} active rules
+					{:else}
+						No template attached &bull; Using Netra Uptime System Defaults
+					{/if}
+				</div>
 			</div>
 		</div>
-	{:else}
-		<div class="space-y-2.5">
-			{#each rules as rule}
-				<div
-					class="flex items-center justify-between bg-white/3 border border-border/80 hover:border-border rounded-xl p-4 transition-all gap-3 flex-wrap sm:flex-nowrap {rule.is_active
-						? ''
-						: 'opacity-60'}"
+
+		<div class="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+			<select
+				value={currentTemplateId || ''}
+				onchange={handleTemplateChange}
+				disabled={isApplyingTemplate || isLoading}
+				class="h-9 px-3 rounded-lg border border-border bg-background text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer w-full sm:w-auto min-w-55"
+			>
+				<option value="">System Default Checks</option>
+				{#each availableTemplates as tmpl (tmpl.id)}
+					<option value={tmpl.id}>
+						{tmpl.name} ({tmpl.rules?.length || 0} rules) {tmpl.is_default ? '★' : ''}
+					</option>
+				{/each}
+			</select>
+		</div>
+	</div>
+
+	<!-- Rules Content Area -->
+	{#if isLoading}
+		<div class="h-28 flex items-center justify-center text-xs text-muted-foreground font-mono">
+			Loading alert rules & policies...
+		</div>
+	{:else if activeTemplate}
+		<!-- Template Active & Rules Display -->
+		<div class="space-y-3">
+			<div
+				class="flex items-center justify-between text-xs text-muted-foreground font-medium px-0.5"
+			>
+				<span class="flex items-center gap-1.5">
+					<Info class="size-3.5 text-primary" />
+					Rules defined in <b>{activeTemplate.name}</b>:
+				</span>
+				<a
+					href={`/dashboard/org/${orgId}/alert-templates`}
+					class="text-primary hover:underline text-[11px] flex items-center gap-1"
 				>
-					<div class="space-y-1.5">
-						<div class="flex items-center gap-2 flex-wrap">
-							<span
-								class="size-2 rounded-full {rule.is_active
-									? rule.severity === 'critical'
-										? 'bg-rose-500'
-										: 'bg-amber-400'
-									: 'bg-muted-foreground'}"
-							></span>
-							<span class="text-sm font-semibold text-foreground">{rule.name}</span>
-							<span
-								class="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase {rule.severity ===
-								'critical'
-									? 'text-rose-400 bg-rose-500/10 border border-rose-500/20'
-									: 'text-amber-400 bg-amber-500/10 border border-amber-500/20'}"
-							>
-								{rule.severity}
-							</span>
-							{#if !rule.is_active}
+					Edit rules in Templates <ExternalLink class="size-3" />
+				</a>
+			</div>
+
+			{#if !activeTemplate.rules || activeTemplate.rules.length === 0}
+				<div
+					class="rounded-xl border border-dashed border-border/80 bg-muted/10 p-5 text-center text-xs text-muted-foreground space-y-1.5"
+				>
+					<p class="font-medium text-foreground">No rules defined in this template yet.</p>
+					<p class="text-[11px] max-w-100 mx-auto">
+						This monitor will safely use system default checks until you add rules to this template
+						in the Alert Templates manager.
+					</p>
+				</div>
+			{:else}
+				<div class="grid grid-cols-1 gap-2.5">
+					{#each activeTemplate.rules as r (r.id)}
+						<div
+							class="flex items-center justify-between bg-white/3 border border-border/80 hover:border-border rounded-xl p-3.5 text-xs gap-3 transition-colors flex-wrap sm:flex-nowrap"
+						>
+							<div class="flex items-center gap-3 min-w-0">
+								{#if r.severity === 'critical'}
+									<div
+										class="size-8 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0"
+									>
+										<ShieldAlert class="size-4" />
+									</div>
+								{:else}
+									<div
+										class="size-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0"
+									>
+										<AlertTriangle class="size-4" />
+									</div>
+								{/if}
+								<div class="truncate">
+									<div class="font-medium text-foreground text-xs truncate flex items-center gap-2">
+										<span>{r.name}</span>
+										{#if !r.is_active}
+											<span
+												class="text-[10px] px-1.5 py-0.2 rounded bg-muted text-muted-foreground font-mono"
+											>
+												Disabled
+											</span>
+										{/if}
+									</div>
+									<div
+										class="text-[11px] text-muted-foreground font-mono flex items-center gap-1.5 mt-0.5"
+									>
+										<span class="text-foreground/90 font-medium">Condition:</span>
+										<span>{r.metric} {r.operator} {r.target_value}</span>
+										<span class="text-muted-foreground/50">&bull;</span>
+										<span class="text-muted-foreground">{r.consecutive}x consecutive</span>
+									</div>
+								</div>
+							</div>
+
+							<div class="flex items-center gap-2 shrink-0">
 								<span
-									class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground border border-border"
+									class="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20"
 								>
-									Disabled
+									Template Rule
 								</span>
-							{/if}
+								<span
+									class={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
+										r.severity === 'critical'
+											? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+											: 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+									}`}
+								>
+									{r.severity === 'critical' ? 'Critical (Down)' : 'Warning (Degraded)'}
+								</span>
+							</div>
 						</div>
+					{/each}
+				</div>
 
-						<div class="flex items-center gap-2 text-xs text-muted-foreground font-mono">
-							<span>When:</span>
-							<span
-								class="px-1.5 py-0.5 rounded bg-white/5 border border-white/5 text-foreground font-medium"
-							>
-								{rule.metric}
-								{rule.operator}
-								{rule.target_value}
-							</span>
-							<span>•</span>
-							<span>{rule.consecutive} check{rule.consecutive > 1 ? 's' : ''} in a row</span>
-						</div>
+				<!-- Centralized Governance Callout -->
+				<div
+					class="flex items-center justify-between p-3 rounded-xl bg-primary/5 border border-primary/15 text-xs text-muted-foreground"
+				>
+					<div class="flex items-center gap-2">
+						<CheckCircle2 class="size-4 text-primary shrink-0" />
+						<span>
+							Centralized policy active: any update to <b>{activeTemplate.name}</b> applies immediately
+							to this monitor.
+						</span>
 					</div>
-
-					<div class="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
-						<button
-							type="button"
-							class="size-8 rounded-lg flex items-center justify-center border transition-colors {rule.is_active
-								? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
-								: 'bg-white/5 border-border text-muted-foreground hover:text-foreground'}"
-							title={rule.is_active ? 'Disable rule' : 'Enable rule'}
-							onclick={() => handleToggleRule(rule)}
+					<a
+						href={`/dashboard/org/${orgId}/alert-templates`}
+						class="text-primary hover:underline font-medium text-xs flex items-center gap-1 shrink-0"
+					>
+						Configure Template <ArrowRight class="size-3" />
+					</a>
+				</div>
+			{/if}
+		</div>
+	{:else}
+		<!-- Fallback: System Default Checks -->
+		<div class="bg-white/2 border border-border/80 rounded-xl p-5 md:p-6 space-y-4">
+			<div class="flex items-start gap-3.5">
+				<div
+					class="size-10 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center shrink-0"
+				>
+					<ShieldAlert class="size-5" />
+				</div>
+				<div class="space-y-1.5 flex-1">
+					<div class="flex items-center gap-2">
+						<h4 class="text-sm font-semibold text-foreground">System Default Checks Active</h4>
+						<span
+							class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-secondary text-muted-foreground border border-border"
 						>
-							<Power class="size-3.5" />
-						</button>
+							Safe Defaults
+						</span>
+					</div>
+					<p class="text-xs text-muted-foreground leading-relaxed">
+						No custom alert template is attached. Checks run on standard Netra Uptime failover
+						policies:
+					</p>
 
-						<button
-							type="button"
-							class="size-8 rounded-lg flex items-center justify-center bg-white/5 border border-border text-muted-foreground hover:text-rose-400 hover:border-rose-500/30 hover:bg-rose-500/10 transition-colors"
-							title="Delete rule"
-							onclick={() => handleDeleteRule(rule.id)}
-						>
-							<Trash2 class="size-3.5" />
-						</button>
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-2">
+						<div class="p-3 rounded-lg bg-amber-500/5 border border-amber-500/15 space-y-1">
+							<div class="flex items-center gap-1.5 text-xs font-medium text-amber-400">
+								<Clock class="size-3.5" />
+								<span>Unresponsive Warning (Amber)</span>
+							</div>
+							<p class="text-[11px] text-muted-foreground leading-relaxed">
+								Triggered if pings or HTTP requests time out after <b>3 consecutive checks</b>.
+								Creates a medium urgency incident with calm warning notices.
+							</p>
+						</div>
+
+						<div class="p-3 rounded-lg bg-rose-500/5 border border-rose-500/15 space-y-1">
+							<div class="flex items-center gap-1.5 text-xs font-medium text-rose-400">
+								<ShieldAlert class="size-3.5" />
+								<span>Hard Down Incident (Red)</span>
+							</div>
+							<p class="text-[11px] text-muted-foreground leading-relaxed">
+								{#if isHttp}
+									Triggered if connection is refused, DNS fails, or status code mismatches after <b
+										>3 consecutive attempts</b
+									>. Creates a critical incident.
+								{:else}
+									Triggered if port is closed or target is unreachable after <b
+										>3 consecutive attempts</b
+									>. Creates a critical incident.
+								{/if}
+							</p>
+						</div>
 					</div>
 				</div>
-			{/each}
+			</div>
+
+			<div class="flex items-center justify-between pt-2 border-t border-border/60 text-xs">
+				<span class="text-muted-foreground">
+					Need custom thresholds like 5xx errors only or latency alerts?
+				</span>
+				<a
+					href={`/dashboard/org/${orgId}/alert-templates`}
+					class="text-primary hover:underline font-medium flex items-center gap-1"
+				>
+					Create an Alert Template <ArrowRight class="size-3" />
+				</a>
+			</div>
 		</div>
 	{/if}
 </div>
-
-<!-- Modal Add Alert Rule -->
-{#if showAddModal}
-	<div
-		class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in duration-200"
-	>
-		<div
-			class="bg-card border border-border rounded-2xl w-full sm:max-w-[560px] shadow-2xl p-6 space-y-5 text-foreground my-auto animate-in zoom-in-95 duration-200"
-		>
-			<div class="flex items-center justify-between border-b border-border pb-3">
-				<h3 class="text-base font-bold flex items-center gap-2">
-					<Sparkles class="size-4 text-primary" />
-					<span>Add Alert Rule</span>
-				</h3>
-				<button
-					type="button"
-					class="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
-					onclick={() => (showAddModal = false)}
-				>
-					<X class="size-4" />
-				</button>
-			</div>
-
-			<!-- Quick Presets -->
-			<div class="space-y-1.5">
-				<div class="text-xs text-muted-foreground font-medium">Quick Presets</div>
-				{#if isHttp}
-					<div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-						<button
-							type="button"
-							class="text-xs p-2 rounded-lg border border-border bg-white/3 hover:bg-white/8 text-left transition-colors"
-							onclick={() => applyPreset('5xx')}
-						>
-							<span class="block font-bold text-rose-400">5xx Error</span>
-							<span class="text-[10px] text-muted-foreground">HTTP 500/502/503</span>
-						</button>
-						<button
-							type="button"
-							class="text-xs p-2 rounded-lg border border-border bg-white/3 hover:bg-white/8 text-left transition-colors"
-							onclick={() => applyPreset('latency')}
-						>
-							<span class="block font-bold text-amber-400">High Latency</span>
-							<span class="text-[10px] text-muted-foreground">> 2000ms warning</span>
-						</button>
-						<button
-							type="button"
-							class="text-xs p-2 rounded-lg border border-border bg-white/3 hover:bg-white/8 text-left transition-colors"
-							onclick={() => applyPreset('not200')}
-						>
-							<span class="block font-bold text-blue-400">Not 200 OK</span>
-							<span class="text-[10px] text-muted-foreground">Status != 200</span>
-						</button>
-					</div>
-				{:else}
-					<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-						<button
-							type="button"
-							class="text-xs p-2 rounded-lg border border-border bg-white/3 hover:bg-white/8 text-left transition-colors"
-							onclick={() => applyPreset('latency')}
-						>
-							<span class="block font-bold text-amber-400">High Latency</span>
-							<span class="text-[10px] text-muted-foreground">> 1000ms warning</span>
-						</button>
-						<button
-							type="button"
-							class="text-xs p-2 rounded-lg border border-border bg-white/3 hover:bg-white/8 text-left transition-colors"
-							onclick={() => applyPreset('timeout')}
-						>
-							<span class="block font-bold text-rose-400">Connection Timeout</span>
-							<span class="text-[10px] text-muted-foreground">> 5000ms / Unreachable</span>
-						</button>
-					</div>
-				{/if}
-			</div>
-
-			<form onsubmit={handleCreateRule} class="space-y-4">
-				{#if errorMsg}
-					<div
-						class="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg p-3"
-					>
-						{errorMsg}
-					</div>
-				{/if}
-
-				<!-- Rule Name -->
-				<div class="space-y-1">
-					<label for="rule-name-input" class="text-xs font-medium text-foreground">Rule Name</label>
-					<input
-						id="rule-name-input"
-						type="text"
-						required
-						bind:value={ruleName}
-						placeholder={isHttp ? 'e.g. 5xx Server Error Alert' : 'e.g. High Latency Warning'}
-						class="w-full h-9 rounded-lg bg-secondary border border-border px-3 text-xs text-foreground focus:outline-none focus:border-primary"
-					/>
-				</div>
-
-				<!-- Metric & Operator & Value -->
-				<div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-					<div class="space-y-1">
-						<label for="metric-select" class="text-xs font-medium text-foreground">Metric</label>
-						<select
-							id="metric-select"
-							bind:value={metric}
-							onchange={() => {
-								if (metric === 'status_code') {
-									targetValue = '5xx';
-									operator = '==';
-									ruleName = '5xx Server Error Alert';
-								} else if (metric === 'response_time_ms') {
-									targetValue = isHttp ? '2000' : '1000';
-									operator = '>';
-									ruleName = 'High Latency Warning';
-								} else if (metric === 'timeout') {
-									targetValue = '5000';
-									operator = '>';
-									ruleName = 'Connection Timeout';
-								}
-							}}
-							class="w-full h-9 rounded-lg bg-secondary border border-border px-2 text-xs text-foreground focus:outline-none focus:border-primary"
-						>
-							{#if isHttp}
-								<option value="status_code">Status Code</option>
-							{/if}
-							<option value="response_time_ms">Latency (ms)</option>
-							<option value="timeout">Connection Timeout</option>
-						</select>
-					</div>
-
-					<div class="space-y-1">
-						<label for="operator-select" class="text-xs font-medium text-foreground">Operator</label
-						>
-						<select
-							id="operator-select"
-							bind:value={operator}
-							class="w-full h-9 rounded-lg bg-secondary border border-border px-2 text-xs text-foreground focus:outline-none focus:border-primary"
-						>
-							<option value="==">== (Equals)</option>
-							<option value="!=">!= (Not equals)</option>
-							<option value=">">&gt; (Greater than)</option>
-							<option value=">=">&gt;= (Greater or equal)</option>
-							<option value="<">&lt; (Less than)</option>
-							<option value="in">in (Matches list/range)</option>
-						</select>
-					</div>
-
-					<div class="space-y-1">
-						<label for="target-value-input" class="text-xs font-medium text-foreground"
-							>Target Value</label
-						>
-						<input
-							id="target-value-input"
-							type="text"
-							required
-							bind:value={targetValue}
-							placeholder={metric === 'status_code'
-								? 'e.g. 5xx, 200'
-								: metric === 'response_time_ms'
-									? 'e.g. 1000 (ms)'
-									: 'e.g. 5000 (ms)'}
-							class="w-full h-9 rounded-lg bg-secondary border border-border px-3 text-xs text-foreground focus:outline-none focus:border-primary"
-						/>
-					</div>
-				</div>
-
-				<!-- Consecutive & Severity -->
-				<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-					<div class="space-y-1">
-						<label for="consecutive-input" class="text-xs font-medium text-foreground"
-							>Consecutive Breaches</label
-						>
-						<input
-							id="consecutive-input"
-							type="number"
-							min="1"
-							max="10"
-							bind:value={consecutive}
-							class="w-full h-9 rounded-lg bg-secondary border border-border px-3 text-xs text-foreground focus:outline-none focus:border-primary"
-						/>
-						<span class="text-[10px] text-muted-foreground">Times in a row before alert</span>
-					</div>
-
-					<div class="space-y-1">
-						<label for="severity-select" class="text-xs font-medium text-foreground"
-							>Severity Level</label
-						>
-						<select
-							id="severity-select"
-							bind:value={severity}
-							class="w-full h-9 rounded-lg bg-secondary border border-border px-2 text-xs text-foreground focus:outline-none focus:border-primary"
-						>
-							<option value="critical">Critical (Down)</option>
-							<option value="warning">Warning (Degraded)</option>
-						</select>
-						<span class="text-[10px] text-muted-foreground">Sets incident urgency</span>
-					</div>
-				</div>
-
-				<div class="flex items-center justify-end gap-2 pt-3 border-t border-border">
-					<Button
-						type="button"
-						variant="outline"
-						class="h-9 px-4 text-xs"
-						onclick={() => (showAddModal = false)}
-					>
-						Cancel
-					</Button>
-					<Button
-						type="submit"
-						disabled={isSaving}
-						class="bg-primary text-primary-foreground h-9 px-4 text-xs font-medium"
-					>
-						{isSaving ? 'Saving...' : 'Create Alert Rule'}
-					</Button>
-				</div>
-			</form>
-		</div>
-	</div>
-{/if}
