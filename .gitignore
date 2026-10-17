@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Root .gitignore for PulseWatch Monorepo
+# Root .gitignore for Netra Uptime Monorepo
 # -----------------------------------------------------------------------------
 
 # Sensitive Environment Files (NEVER COMMIT)
@@ -18,6 +18,8 @@ node_modules/
 # Build Outputs & Binary Files
 build/
 **/build/
+!server/internal/static/build/
+!server/internal/static/build/**
 dist/
 **/dist/
 .svelte-kit/

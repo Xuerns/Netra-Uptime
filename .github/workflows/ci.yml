@@ -18,28 +18,31 @@ jobs:
       run: 
         working-directory: server  
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v6
-    
-    - name: Set Up Go
-      uses: actions/setup-go@v6
-      with:
-        go-version: "stable"
-        cache-dependency-path: "server/go.sum"
-    
-    - name: Verify dependencies
-      run: |
-        go mod verify
-        go mod tidy
-    
-    - name: Run go Vet
-      run: go vet ./...
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set Up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+          cache-dependency-path: "server/go.sum"
 
-    - name: Run Unit & Integration Tests
-      run: go test -v -race -timeout 3m ./...
+      - name: Ensure static build directory exists
+        run: mkdir -p internal/static/build && touch internal/static/build/index.html
 
-    - name: Build
-      run: go build -v -o /dev/null ./cmd/netra-uptime
+      - name: Verify dependencies
+        run: |
+          go mod verify
+          go mod tidy
+
+      - name: Run go Vet
+        run: go vet ./...
+
+      - name: Run Unit & Integration Tests
+        run: go test -v -race -timeout 3m ./...
+
+      - name: Build
+        run: go build -v -o /dev/null ./cmd/netra-uptime
 
   frontend:
     name: Frontend
@@ -49,7 +52,12 @@ jobs:
         working-directory: client
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
 
       - name: Set Up node
         uses: actions/setup-node@v4
@@ -75,7 +83,7 @@ jobs:
         working-directory: cli
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Set Up Node.js
         uses: actions/setup-node@v4
