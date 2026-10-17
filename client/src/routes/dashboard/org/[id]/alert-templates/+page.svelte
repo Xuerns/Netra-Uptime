@@ -152,10 +152,10 @@
 		</div>
 	{:else}
 		<!-- ── List / Table View ───────────────────────────────────────────────── -->
-		<div class="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-			<!-- Table Header -->
+		<div class="border border-border rounded-xl overflow-hidden shadow-sm">
+			<!-- Table Header (Darker background than list rows) -->
 			<div
-				class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-border bg-white/2 text-[11px] font-semibold tracking-wider uppercase text-muted-foreground/70"
+				class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-border bg-[#0a0a0b] text-[11px] font-semibold tracking-wider uppercase text-muted-foreground/80"
 			>
 				<div class="col-span-5">Template</div>
 				<div class="col-span-2">Rules</div>
@@ -165,7 +165,7 @@
 			</div>
 
 			<!-- Rows -->
-			<div class="divide-y divide-border/60">
+			<div class="divide-y divide-border/60 bg-card">
 				{#each filteredTemplates as tmpl (tmpl.id)}
 					<AlertTemplateRow template={tmpl} {orgId} />
 				{/each}

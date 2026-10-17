@@ -301,26 +301,31 @@
 
 			<!-- ── List view ─────────────────────────────────────────────────────── -->
 		{:else}
-			<div class="flex flex-col divide-y divide-border border border-border rounded-lg bg-white/2">
-				<div class="list-row list-row--header" aria-hidden="true">
-					<span>Status Page</span>
-					<span>Subdomain</span>
-					<span>Visibility</span>
-					<span>Monitors</span>
-					<span>Actions</span>
+			<div class="border border-border rounded-xl overflow-hidden shadow-sm">
+				<div
+					class="hidden md:grid md:grid-cols-[minmax(200px,2fr)_1.5fr_100px_110px_80px] gap-4 px-5 py-3 border-b border-border bg-[#0a0a0b] text-[11px] font-semibold tracking-wider uppercase text-muted-foreground/80 items-center"
+					aria-hidden="true"
+				>
+					<div>Status Page</div>
+					<div>Subdomain</div>
+					<div>Visibility</div>
+					<div>Monitors</div>
+					<div class="text-right">Actions</div>
 				</div>
 
-				{#each filtered as sp (sp.ID)}
-					<StatusPageItem
-						{sp}
-						viewMode="list"
-						onEdit={openEditModal}
-						onDelete={openDeleteConfirm}
-						onMaintenance={openMaintenanceModal}
-						onGroups={openGroupModal}
-						onEmbedBadge={openEmbedModal}
-					/>
-				{/each}
+				<div class="divide-y divide-border/60 bg-card">
+					{#each filtered as sp (sp.ID)}
+						<StatusPageItem
+							{sp}
+							viewMode="list"
+							onEdit={openEditModal}
+							onDelete={openDeleteConfirm}
+							onMaintenance={openMaintenanceModal}
+							onGroups={openGroupModal}
+							onEmbedBadge={openEmbedModal}
+						/>
+					{/each}
+				</div>
 			</div>
 		{/if}
 	{/if}
@@ -406,39 +411,4 @@
 	</div>
 {/if}
 
-<style>
-	/* ── List view ────────────────────────────────────────────────────────── */
-	.list-row {
-		display: grid;
-		grid-template-columns: 1fr 1fr 100px 100px 74px;
-		align-items: center;
-		gap: 16px;
-		padding: 12px 20px;
-		transition: background 140ms ease;
-	}
 
-	.list-row:hover {
-		background: var(--color-accent);
-	}
-
-	.list-row--header {
-		padding: 10px 20px;
-		font-size: 11px;
-		font-weight: 500;
-		color: var(--color-muted-foreground);
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-		background: var(--color-muted);
-		opacity: 0.65;
-	}
-
-	.list-row--header:hover {
-		background: var(--color-muted);
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.list-row {
-			transition: none;
-		}
-	}
-</style>

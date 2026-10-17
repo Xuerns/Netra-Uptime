@@ -336,7 +336,7 @@
 								</DropdownMenu.Trigger>
 								<DropdownMenu.Content
 									align="end"
-									class="bg-card border-border text-foreground min-w-[150px] p-1 rounded-lg"
+									class="bg-card border-border text-foreground min-w-37.5 p-1 rounded-lg"
 								>
 									{#if m.Role === 'member' && isOwner}
 										<DropdownMenu.Item

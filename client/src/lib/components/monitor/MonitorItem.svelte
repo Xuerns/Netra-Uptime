@@ -13,6 +13,7 @@
 	} from 'lucide-svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import Sparkline from '$lib/components/Sparkline.svelte';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import type { Monitor } from '$lib/api/monitor';
 	import {
 		typeIcon,
@@ -78,10 +79,6 @@
 					? [45, 52, 98, 100, 100, 100]
 					: [45, 50, 48, 48, 48, 48]
 	);
-
-	const dropdownId = $derived(
-		viewMode === 'grid' ? 'monitor-' + monitor.ID : 'monitor-list-' + monitor.ID
-	);
 </script>
 
 {#if viewMode === 'grid'}
@@ -119,74 +116,54 @@
 						{statusLabel(monitor.Status)}
 					</span>
 
-					{#if toggleDropdown}
-						<div class="relative">
-							<button
-								class="flex items-center justify-center size-7 rounded-md text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 cursor-pointer"
-								aria-label="Monitor options"
-								onclick={(e) => {
-									e.preventDefault();
-									e.stopPropagation();
-									toggleDropdown('monitor-' + monitor.ID);
-								}}
-							>
-								<MoreVertical class="size-4" />
-							</button>
-
-							{#if openDropdownId === 'monitor-' + monitor.ID}
-								<div
-									class="absolute top-full right-0 mt-1 min-w-[140px] bg-glass-card-bg backdrop-blur-xl border border-border rounded-lg p-1.5 z-20 shadow-xl"
-									role="presentation"
-									onclick={(e) => e.stopPropagation()}
+					<DropdownMenu.Root>
+						<DropdownMenu.Trigger
+							class="flex items-center justify-center size-7 rounded-md text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 cursor-pointer focus:outline-none"
+							aria-label="Monitor options"
+						>
+							<MoreVertical class="size-4" />
+						</DropdownMenu.Trigger>
+						<DropdownMenu.Content
+							align="end"
+							class="w-40 bg-card border-border text-foreground rounded-lg p-1 shadow-xl z-50"
+						>
+							{#if handleTogglePause}
+								<DropdownMenu.Item
+									class="cursor-pointer flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-white/10 transition-colors"
+									onclick={() => handleTogglePause(monitor)}
 								>
-									{#if handleTogglePause}
-										<button
-											class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[13px] text-foreground hover:bg-white/10 transition-colors text-left w-full cursor-pointer"
-											onclick={() => {
-												toggleDropdown('');
-												handleTogglePause(monitor);
-											}}
-										>
-											{#if monitor.Status === 'paused'}
-												<Play class="size-3.5 text-emerald-400" />
-												Resume check
-											{:else}
-												<Pause class="size-3.5 text-amber-400" />
-												Pause check
-											{/if}
-										</button>
+									{#if monitor.Status === 'paused'}
+										<Play class="size-3.5 text-emerald-400" />
+										<span>Resume check</span>
+									{:else}
+										<Pause class="size-3.5 text-amber-400" />
+										<span>Pause check</span>
 									{/if}
-									{#if handleEditMonitor}
-										<button
-											class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[13px] text-foreground hover:bg-white/10 transition-colors text-left w-full cursor-pointer"
-											onclick={() => {
-												toggleDropdown('');
-												handleEditMonitor(monitor);
-											}}
-										>
-											<Edit2 class="size-3.5" />
-											Edit monitor
-										</button>
-									{/if}
-									{#if handleDeleteMonitor}
-										<button
-											class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[13px] text-destructive hover:bg-white/10 transition-colors text-left w-full mt-0.5 cursor-pointer"
-											onclick={(e) => {
-												e.preventDefault();
-												toggleDropdown('');
-												setTimeout(() => {
-													isConfirmDeleteOpen = true;
-												}, 0);
-											}}
-										>
-											<Trash2 class="size-3.5" />
-											Delete monitor
-										</button>
-									{/if}
-								</div>
+								</DropdownMenu.Item>
 							{/if}
-						</div>
-					{/if}
+							{#if handleEditMonitor}
+								<DropdownMenu.Item
+									class="cursor-pointer flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-white/10 transition-colors"
+									onclick={() => handleEditMonitor(monitor)}
+								>
+									<Edit2 class="size-3.5" />
+									<span>Edit monitor</span>
+								</DropdownMenu.Item>
+							{/if}
+							{#if handleDeleteMonitor}
+								<DropdownMenu.Separator class="bg-white/10 my-1" />
+								<DropdownMenu.Item
+									class="cursor-pointer flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-destructive hover:bg-destructive/10 transition-colors"
+									onclick={() => {
+										isConfirmDeleteOpen = true;
+									}}
+								>
+									<Trash2 class="size-3.5" />
+									<span>Delete monitor</span>
+								</DropdownMenu.Item>
+							{/if}
+						</DropdownMenu.Content>
+					</DropdownMenu.Root>
 				</div>
 			</div>
 
@@ -268,7 +245,7 @@
 {:else}
 	<!-- List / Row View Mode -->
 	<div
-		class="list-row group relative {openDropdownId === 'monitor-list-' + monitor.ID ? 'z-30' : ''}"
+		class="grid grid-cols-[minmax(220px,1.6fr)_minmax(130px,1fr)_90px_85px_85px_75px_100px_70px] gap-3 px-5 py-3 items-center hover:bg-white/3 transition-colors group relative"
 		data-status={monitor.Status}
 	>
 		<!-- 1. Name + target -->
@@ -302,7 +279,17 @@
 			</div>
 		</div>
 
-		<!-- 2. Status Badge -->
+		<!-- 2. Activity / Latency Sparkline Graph -->
+		<div class="flex items-center min-w-0 pr-2">
+			<div
+				class="w-full max-w-[160px] h-6 flex items-center opacity-70 group-hover:opacity-100 transition-opacity"
+				title="Recent latency trend"
+			>
+				<Sparkline data={sparkData} color={sparkColor} height={22} width="100%" />
+			</div>
+		</div>
+
+		<!-- 3. Status Badge -->
 		<div>
 			<span
 				class="status-badge status-badge--{monitor.Status}"
@@ -314,28 +301,28 @@
 			</span>
 		</div>
 
-		<!-- 3. Response Time -->
+		<!-- 4. Response Time -->
 		<div class="font-mono text-[13px] text-foreground">
 			{formatResponseTime(monitor.ResponseTimeMs)}
 		</div>
 
-		<!-- 4. Uptime 30d -->
+		<!-- 5. Uptime 30d -->
 		<div class="font-mono text-[13px] {uptimeColor(monitor.UptimePercent)}">
 			{monitor.UptimePercent != null ? monitor.UptimePercent.toFixed(2) + '%' : '—'}
 		</div>
 
-		<!-- 5. Interval -->
+		<!-- 6. Interval -->
 		<div class="font-mono text-[13px] text-muted-foreground">
 			{formatInterval(monitor.IntervalSeconds)}
 		</div>
 
-		<!-- 6. Last Checked -->
-		<div class="text-[12px] text-muted-foreground/60 flex items-center gap-1">
+		<!-- 7. Last Checked -->
+		<div class="text-[12px] text-muted-foreground/60 flex items-center gap-1.5 whitespace-nowrap">
 			<Clock class="size-3 shrink-0" aria-hidden="true" />
 			{formatLastChecked(monitor.LastCheckedAt)}
 		</div>
 
-		<!-- 7. Actions Dropdown & View Link -->
+		<!-- 8. Actions Dropdown & View Link -->
 		<div class="flex items-center justify-end gap-1 shrink-0">
 			<a
 				href="/dashboard/org/{monitor.OrganizationID}/monitors/{monitor.ID}"
@@ -346,74 +333,54 @@
 				<ArrowUpRight class="size-4" />
 			</a>
 
-			{#if toggleDropdown}
-				<div class="relative">
-					<button
-						class="flex items-center justify-center size-7 rounded-md text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors opacity-80 hover:opacity-100 focus-visible:opacity-100 cursor-pointer"
-						aria-label="Monitor options"
-						onclick={(e) => {
-							e.preventDefault();
-							e.stopPropagation();
-							toggleDropdown('monitor-list-' + monitor.ID);
-						}}
-					>
-						<MoreVertical class="size-4" />
-					</button>
-
-					{#if openDropdownId === 'monitor-list-' + monitor.ID}
-						<div
-							class="absolute top-full right-0 mt-1 min-w-[140px] bg-glass-card-bg backdrop-blur-xl border border-border rounded-lg p-1.5 z-50 shadow-xl"
-							role="presentation"
-							onclick={(e) => e.stopPropagation()}
+			<DropdownMenu.Root>
+				<DropdownMenu.Trigger
+					class="flex items-center justify-center size-7 rounded-md text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors cursor-pointer focus:outline-none"
+					aria-label="Monitor options"
+				>
+					<MoreVertical class="size-4" />
+				</DropdownMenu.Trigger>
+				<DropdownMenu.Content
+					align="end"
+					class="w-40 bg-card border-border text-foreground rounded-lg p-1 shadow-xl z-50"
+				>
+					{#if handleTogglePause}
+						<DropdownMenu.Item
+							class="cursor-pointer flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-white/10 transition-colors"
+							onclick={() => handleTogglePause(monitor)}
 						>
-							{#if handleTogglePause}
-								<button
-									class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[13px] text-foreground hover:bg-white/10 transition-colors text-left w-full cursor-pointer"
-									onclick={() => {
-										toggleDropdown('');
-										handleTogglePause(monitor);
-									}}
-								>
-									{#if monitor.Status === 'paused'}
-										<Play class="size-3.5 text-emerald-400" />
-										Resume check
-									{:else}
-										<Pause class="size-3.5 text-amber-400" />
-										Pause check
-									{/if}
-								</button>
+							{#if monitor.Status === 'paused'}
+								<Play class="size-3.5 text-emerald-400" />
+								<span>Resume check</span>
+							{:else}
+								<Pause class="size-3.5 text-amber-400" />
+								<span>Pause check</span>
 							{/if}
-							{#if handleEditMonitor}
-								<button
-									class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[13px] text-foreground hover:bg-white/10 transition-colors text-left w-full cursor-pointer"
-									onclick={() => {
-										toggleDropdown('');
-										handleEditMonitor(monitor);
-									}}
-								>
-									<Edit2 class="size-3.5" />
-									Edit monitor
-								</button>
-							{/if}
-							{#if handleDeleteMonitor}
-								<button
-									class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[13px] text-destructive hover:bg-white/10 transition-colors text-left w-full mt-0.5 cursor-pointer"
-									onclick={(e) => {
-										e.preventDefault();
-										toggleDropdown('');
-										setTimeout(() => {
-											isConfirmDeleteOpen = true;
-										}, 0);
-									}}
-								>
-									<Trash2 class="size-3.5" />
-									Delete monitor
-								</button>
-							{/if}
-						</div>
+						</DropdownMenu.Item>
 					{/if}
-				</div>
-			{/if}
+					{#if handleEditMonitor}
+						<DropdownMenu.Item
+							class="cursor-pointer flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-white/10 transition-colors"
+							onclick={() => handleEditMonitor(monitor)}
+						>
+							<Edit2 class="size-3.5" />
+							<span>Edit monitor</span>
+						</DropdownMenu.Item>
+					{/if}
+					{#if handleDeleteMonitor}
+						<DropdownMenu.Separator class="bg-white/10 my-1" />
+						<DropdownMenu.Item
+							class="cursor-pointer flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-destructive hover:bg-destructive/10 transition-colors"
+							onclick={() => {
+								isConfirmDeleteOpen = true;
+							}}
+						>
+							<Trash2 class="size-3.5" />
+							<span>Delete monitor</span>
+						</DropdownMenu.Item>
+					{/if}
+				</DropdownMenu.Content>
+			</DropdownMenu.Root>
 		</div>
 	</div>
 {/if}
@@ -508,37 +475,5 @@
 		font-weight: 600;
 		font-family: var(--font-mono, monospace);
 		color: var(--color-foreground);
-	}
-
-	/* ── Shared List Row Styles ────────────────────────────────────────── */
-	.list-row {
-		display: grid;
-		grid-template-columns: minmax(200px, 1fr) 90px 110px 100px 90px 120px 80px;
-		align-items: center;
-		padding: 10px 16px;
-		background: var(--color-glass-card-bg);
-		backdrop-filter: blur(12px);
-		border: 1px solid var(--color-border);
-		border-radius: 10px;
-		gap: 12px;
-		transition:
-			border-color 0.15s ease,
-			background-color 0.15s ease;
-	}
-
-	.list-row:hover {
-		border-color: var(--color-card-hover-border);
-		background: rgba(255, 255, 255, 0.03);
-	}
-
-	@media (max-width: 900px) {
-		.list-row {
-			grid-template-columns: 1fr 100px 90px 80px;
-		}
-		.list-row > :nth-child(4),
-		.list-row > :nth-child(5),
-		.list-row > :nth-child(6) {
-			display: none;
-		}
 	}
 </style>

@@ -214,42 +214,59 @@
 {:else}
 	<!-- List / Row View Mode -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="list-row relative {menuOpen ? 'z-30' : ''}" onclick={closeMenu}>
+	<div
+		class="grid grid-cols-1 md:grid-cols-[minmax(200px,2fr)_1.5fr_100px_110px_80px] gap-4 px-5 py-3.5 items-center hover:bg-white/3 transition-colors relative {menuOpen
+			? 'z-30'
+			: ''}"
+		onclick={closeMenu}
+	>
+		<!-- 1. Status Page Title & Org -->
 		<div class="flex flex-col min-w-0">
-			<div class="flex items-center gap-3 min-w-0">
-				<Globe class="size-4 text-muted-foreground shrink-0" />
+			<div class="flex items-center gap-2.5 min-w-0">
+				<div
+					class="size-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0"
+				>
+					<Globe class="size-3.5" />
+				</div>
 				<span class="text-sm font-medium text-foreground truncate">{sp.Title}</span>
 			</div>
 			{#if sp.Organization}
-				<div class="flex items-center gap-1 text-[11px] text-muted-foreground/60 mt-1 pl-7">
+				<div class="flex items-center gap-1 text-[11px] text-muted-foreground/60 mt-1 pl-9.5">
 					<Building2 class="size-3" />
-					<span class="truncate max-w-37.5">{sp.Organization.Name}</span>
+					<span class="truncate max-w-50">{sp.Organization.Name}</span>
 				</div>
 			{/if}
 		</div>
 
-		<span class="text-[13px] text-muted-foreground truncate">{sp.Subdomain}</span>
+		<!-- 2. Subdomain -->
+		<div class="min-w-0">
+			<span class="text-xs font-mono text-muted-foreground truncate block">
+				{sp.Subdomain}
+			</span>
+		</div>
 
+		<!-- 3. Visibility -->
 		<div>
 			{#if sp.IsPublic}
 				<span
-					class="text-[10px] font-mono px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-full uppercase tracking-wider"
+					class="text-[10px] font-mono px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full uppercase tracking-wider"
 					>Public</span
 				>
 			{:else}
 				<span
-					class="text-[10px] font-mono px-2 py-0.5 bg-white/10 text-muted-foreground border border-border rounded-full uppercase tracking-wider"
+					class="text-[10px] font-mono px-2 py-0.5 bg-white/5 text-muted-foreground border border-border rounded-full uppercase tracking-wider"
 					>Private</span
 				>
 			{/if}
 		</div>
 
-		<span class="text-[13px] text-muted-foreground">
+		<!-- 4. Monitors -->
+		<div class="text-xs text-muted-foreground font-mono">
 			{sp.StatusPageMonitors?.length || 0} monitors
-		</span>
+		</div>
 
-		<!-- Actions: View + 3-dot menu -->
-		<div class="flex items-center gap-1.5">
+		<!-- 5. Actions: View + 3-dot menu -->
+		<div class="flex items-center justify-end gap-1.5">
 			<a
 				href={`/status/${sp.Subdomain}`}
 				target="_blank"
@@ -328,22 +345,6 @@
 {/if}
 
 <style>
-	.list-row {
-		display: grid;
-		grid-template-columns: minmax(200px, 2fr) 1.5fr 1fr 1fr auto;
-		align-items: center;
-		gap: 16px;
-		padding: 12px 16px;
-		border-radius: 8px;
-		background: rgba(255, 255, 255, 0.02);
-		border: 1px solid var(--border);
-		transition: all 0.2s ease;
-	}
-
-	.list-row:hover {
-		background: rgba(255, 255, 255, 0.04);
-		border-color: rgba(255, 255, 255, 0.15);
-	}
 
 	.menu-item {
 		background: none;

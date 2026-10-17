@@ -1,6 +1,8 @@
 package audit
 
 import (
+	"strings"
+
 	"netra-uptime/internal/model"
 
 	"github.com/google/uuid"
@@ -39,7 +41,20 @@ func (r *AuditRepositoryImpl) GetByOrganization(orgId string, query GetAuditLogs
 	}
 
 	if query.EntityType != "" {
-		dbQuery = dbQuery.Where("entity_type = ?", query.EntityType)
+		if strings.Contains(query.EntityType, ",") {
+			rawTypes := strings.Split(query.EntityType, ",")
+			var types []string
+			for _, t := range rawTypes {
+				if trimmed := strings.TrimSpace(t); trimmed != "" {
+					types = append(types, trimmed)
+				}
+			}
+			if len(types) > 0 {
+				dbQuery = dbQuery.Where("entity_type IN ?", types)
+			}
+		} else {
+			dbQuery = dbQuery.Where("entity_type = ?", query.EntityType)
+		}
 	}
 
 	if query.Search != "" {

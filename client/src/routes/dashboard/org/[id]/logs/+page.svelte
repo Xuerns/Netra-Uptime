@@ -5,18 +5,23 @@
 	import {
 		ScrollText,
 		Search,
-		ChevronLeft,
-		ChevronRight,
+		ChevronDown,
 		Activity,
 		Users,
 		Globe,
+		Building2,
+		Wrench,
+		FolderTree,
+		KeyRound,
+		Bell,
+		Send,
+		AlertTriangle,
 		CheckCircle2,
 		AlertCircle,
 		ListFilter,
+		RotateCcw,
 		X
 	} from 'lucide-svelte';
-	import { Button } from '$lib/components/ui/button/index.js';
-	import { Input } from '$lib/components/ui/input/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { AuditAPI, type AuditLogItem } from '$lib/api/audit';
 	import { debounce } from '$lib/helper/utils';
@@ -36,75 +41,177 @@
 	let totalCount = $state(0);
 
 	let searchQuery = $state('');
-	let selectedCategory = $state<'ALL' | 'MONITOR' | 'MEMBER' | 'STATUSPAGE'>('ALL');
+	let selectedCategory = $state<string>('ALL');
 	let selectedAction = $state('');
 
 	// ── Category Filters Definition ────────────────────────────────────────────
 	const categories = [
-		{ id: 'ALL', label: 'All Actions', icon: ScrollText },
-		{ id: 'MONITOR', label: 'Monitors', icon: Activity },
-		{ id: 'MEMBER', label: 'Members', icon: Users },
-		{ id: 'STATUSPAGE', label: 'Status Pages', icon: Globe }
+		{ id: 'ALL', label: 'All Categories', icon: ScrollText, entityTypes: '' },
+		{ id: 'MONITOR', label: 'Monitors', icon: Activity, entityTypes: 'monitor' },
+		{ id: 'ORGANIZATION', label: 'Organization', icon: Building2, entityTypes: 'organization' },
+		{
+			id: 'MEMBER',
+			label: 'Members & Invites',
+			icon: Users,
+			entityTypes: 'organization_member,organization_invitation'
+		},
+		{ id: 'STATUSPAGE', label: 'Status Pages', icon: Globe, entityTypes: 'status_page' },
+		{
+			id: 'MAINTENANCE',
+			label: 'Maintenance',
+			icon: Wrench,
+			entityTypes: 'scheduled_maintenance'
+		},
+		{
+			id: 'COMPONENT_GROUP',
+			label: 'Component Groups',
+			icon: FolderTree,
+			entityTypes: 'component_group'
+		},
+		{ id: 'API_KEY', label: 'API Keys', icon: KeyRound, entityTypes: 'api_key' },
+		{
+			id: 'ALERT_TEMPLATE',
+			label: 'Alert Templates & Rules',
+			icon: Bell,
+			entityTypes: 'alert_template,alert_rule'
+		},
+		{
+			id: 'NOTIFICATION',
+			label: 'Notifications',
+			icon: Send,
+			entityTypes: 'notification_channel'
+		},
+		{ id: 'INCIDENT', label: 'Incidents', icon: AlertTriangle, entityTypes: 'incident' }
 	];
 
 	// ── Action Filter Definitions (grouped by category) ────────────────────────
 	const actionFilterGroups = [
 		{
-			label: 'Monitor',
+			categoryId: 'MONITOR',
+			label: 'Monitors',
+			icon: Activity,
 			actions: [
-				{ value: 'MONITOR_CREATE', label: 'Monitor Create' },
-				{ value: 'MONITOR_UPDATE', label: 'Monitor Update' },
-				{ value: 'MONITOR_DELETE', label: 'Monitor Delete' }
+				{ value: 'MONITOR_CREATE', label: 'Monitor Created' },
+				{ value: 'MONITOR_UPDATE', label: 'Monitor Updated' },
+				{ value: 'MONITOR_DELETE', label: 'Monitor Deleted' }
 			]
 		},
 		{
+			categoryId: 'ORGANIZATION',
 			label: 'Organization',
+			icon: Building2,
 			actions: [
-				{ value: 'ORG_UPDATE', label: 'Org Update' },
-				{ value: 'ORG_DISBAND', label: 'Org Disband' },
-				{ value: 'ORG_TRANSFER_OWNERSHIP', label: 'Org Transfer' }
+				{ value: 'ORG_UPDATE', label: 'Organization Updated' },
+				{ value: 'ORG_DISBAND', label: 'Organization Disbanded' },
+				{ value: 'ORG_TRANSFER_OWNERSHIP', label: 'Ownership Transferred' }
 			]
 		},
 		{
-			label: 'Members',
+			categoryId: 'MEMBER',
+			label: 'Members & Invites',
+			icon: Users,
 			actions: [
-				{ value: 'ORG_MEMBER_JOIN', label: 'Member Join' },
-				{ value: 'ORG_MEMBER_INVITE', label: 'Member Invite' },
-				{ value: 'ORG_MEMBER_PROMOTE', label: 'Member Promote' },
-				{ value: 'ORG_MEMBER_DEMOTE', label: 'Member Demote' },
-				{ value: 'ORG_MEMBER_KICK', label: 'Member Kick' },
-				{ value: 'ORG_MEMBER_LEAVE', label: 'Member Leave' },
-				{ value: 'ORG_INVITE_REJECT', label: 'Invite Reject' }
+				{ value: 'ORG_MEMBER_INVITE', label: 'Member Invited' },
+				{ value: 'ORG_MEMBER_JOIN', label: 'Member Joined' },
+				{ value: 'ORG_INVITE_REJECT', label: 'Invite Rejected' },
+				{ value: 'ORG_MEMBER_PROMOTE', label: 'Member Promoted' },
+				{ value: 'ORG_MEMBER_DEMOTE', label: 'Member Demoted' },
+				{ value: 'ORG_MEMBER_KICK', label: 'Member Kicked' },
+				{ value: 'ORG_MEMBER_LEAVE', label: 'Member Left' }
 			]
 		},
 		{
-			label: 'Status Page',
+			categoryId: 'STATUSPAGE',
+			label: 'Status Pages',
+			icon: Globe,
 			actions: [
-				{ value: 'STATUSPAGE_CREATE', label: 'Page Create' },
-				{ value: 'STATUSPAGE_UPDATE', label: 'Page Update' },
-				{ value: 'STATUSPAGE_DELETE', label: 'Page Delete' }
+				{ value: 'STATUSPAGE_CREATE', label: 'Status Page Created' },
+				{ value: 'STATUSPAGE_UPDATE', label: 'Status Page Updated' },
+				{ value: 'STATUSPAGE_DELETE', label: 'Status Page Deleted' }
 			]
 		},
 		{
-			label: 'API Key',
+			categoryId: 'MAINTENANCE',
+			label: 'Scheduled Maintenance',
+			icon: Wrench,
 			actions: [
-				{ value: 'API_KEY_CREATE', label: 'Key Create' },
-				{ value: 'API_KEY_REVOKE', label: 'Key Revoke' }
+				{ value: 'MAINTENANCE_CREATE', label: 'Maintenance Created' },
+				{ value: 'MAINTENANCE_UPDATE', label: 'Maintenance Updated' },
+				{ value: 'MAINTENANCE_DELETE', label: 'Maintenance Deleted' }
+			]
+		},
+		{
+			categoryId: 'COMPONENT_GROUP',
+			label: 'Component Groups',
+			icon: FolderTree,
+			actions: [
+				{ value: 'COMPONENT_GROUP_CREATE', label: 'Component Group Created' },
+				{ value: 'COMPONENT_GROUP_UPDATE', label: 'Component Group Updated' },
+				{ value: 'COMPONENT_GROUP_DELETE', label: 'Component Group Deleted' }
+			]
+		},
+		{
+			categoryId: 'API_KEY',
+			label: 'API Keys',
+			icon: KeyRound,
+			actions: [
+				{ value: 'API_KEY_CREATE', label: 'API Key Created' },
+				{ value: 'API_KEY_REVOKE', label: 'API Key Revoked' }
+			]
+		},
+		{
+			categoryId: 'ALERT_TEMPLATE',
+			label: 'Alert Templates & Rules',
+			icon: Bell,
+			actions: [
+				{ value: 'ALERT_TEMPLATE_CREATE', label: 'Template Created' },
+				{ value: 'ALERT_TEMPLATE_UPDATE', label: 'Template Updated' },
+				{ value: 'ALERT_TEMPLATE_DELETE', label: 'Template Deleted' },
+				{ value: 'ALERT_RULE_CREATE', label: 'Alert Rule Created' },
+				{ value: 'ALERT_RULE_UPDATE', label: 'Alert Rule Updated' },
+				{ value: 'ALERT_RULE_DELETE', label: 'Alert Rule Deleted' }
+			]
+		},
+		{
+			categoryId: 'NOTIFICATION',
+			label: 'Notification Channels',
+			icon: Send,
+			actions: [
+				{ value: 'NOTIFICATION_CHANNEL_CREATE', label: 'Channel Created' },
+				{ value: 'NOTIFICATION_CHANNEL_UPDATE', label: 'Channel Updated' },
+				{ value: 'NOTIFICATION_CHANNEL_DELETE', label: 'Channel Deleted' }
+			]
+		},
+		{
+			categoryId: 'INCIDENT',
+			label: 'Incidents',
+			icon: AlertTriangle,
+			actions: [
+				{ value: 'INCIDENT_UPDATE', label: 'Incident Updated' },
+				{ value: 'INCIDENT_ASSIGNEE_JOIN', label: 'Assignee Joined' }
 			]
 		}
 	];
 
-	const categoryToGroupLabels: Record<string, string[]> = {
-		ALL: ['Monitor', 'Organization', 'Members', 'Status Page', 'API Key'],
-		MONITOR: ['Monitor'],
-		MEMBER: ['Organization', 'Members'],
-		STATUSPAGE: ['Status Page']
-	};
+	let activeCategory = $derived(categories.find((c) => c.id === selectedCategory) || categories[0]);
+
+	let selectedActionLabel = $derived.by(() => {
+		if (!selectedAction) return '';
+		for (const group of actionFilterGroups) {
+			const found = group.actions.find((a) => a.value === selectedAction);
+			if (found) return found.label;
+		}
+		return selectedAction;
+	});
 
 	let visibleActionGroups = $derived(
-		actionFilterGroups.filter((g) =>
-			(categoryToGroupLabels[selectedCategory] ?? []).includes(g.label)
-		)
+		selectedCategory === 'ALL'
+			? actionFilterGroups
+			: actionFilterGroups.filter((g) => g.categoryId === selectedCategory)
+	);
+
+	let hasActiveFilters = $derived(
+		selectedCategory !== 'ALL' || selectedAction !== '' || searchQuery.trim() !== ''
 	);
 
 	function getActionStyle(action: string) {
@@ -131,7 +238,8 @@
 			act.includes('DISBAND') ||
 			act.includes('TRANSFER') ||
 			act.includes('REJECT') ||
-			act.includes('LEAVE')
+			act.includes('LEAVE') ||
+			act.includes('REVOKE')
 		) {
 			return 'text-rose-400';
 		}
@@ -159,20 +267,8 @@
 		errorMsg = '';
 
 		try {
-			let entityTypeFilter = '';
-			if (selectedCategory !== 'ALL') {
-				switch (selectedCategory) {
-					case 'MONITOR':
-						entityTypeFilter = 'monitor';
-						break;
-					case 'MEMBER':
-						entityTypeFilter = 'organization_member';
-						break;
-					case 'STATUSPAGE':
-						entityTypeFilter = 'status_page';
-						break;
-				}
-			}
+			const cat = categories.find((c) => c.id === selectedCategory);
+			const entityTypeFilter = cat && cat.id !== 'ALL' ? cat.entityTypes : undefined;
 
 			const res = await AuditAPI.getLogs(orgId, {
 				page: currentPage,
@@ -199,35 +295,53 @@
 		fetchAuditLogs(false);
 	}, 350);
 
-	function handleCategoryChange(cat: 'ALL' | 'MONITOR' | 'MEMBER' | 'STATUSPAGE') {
-		selectedCategory = cat;
+	function handleCategoryChange(catId: string) {
+		selectedCategory = catId;
 		currentPage = 1;
 
 		if (selectedAction) {
-			const allowedLabels = categoryToGroupLabels[cat] ?? [];
-			const allowedGroups = actionFilterGroups.filter((g) => allowedLabels.includes(g.label));
-			const allAllowedActions = allowedGroups.flatMap((g) => g.actions.map((a) => a.value));
-			if (!allAllowedActions.includes(selectedAction)) {
-				selectedAction = '';
+			if (catId !== 'ALL') {
+				const group = actionFilterGroups.find((g) => g.categoryId === catId);
+				if (!group || !group.actions.some((a) => a.value === selectedAction)) {
+					selectedAction = '';
+				}
 			}
 		}
 
 		fetchAuditLogs(false);
 	}
 
-	function handleSearchInput() {
-		debouncedFetchLogs();
-	}
-
-	function handleActionFilterChange(action: string) {
-		selectedAction = action;
+	function handleActionFilterChange(actionVal: string) {
+		selectedAction = actionVal;
+		if (actionVal) {
+			const parentGroup = actionFilterGroups.find((g) =>
+				g.actions.some((a) => a.value === actionVal)
+			);
+			if (
+				parentGroup &&
+				selectedCategory !== 'ALL' &&
+				selectedCategory !== parentGroup.categoryId
+			) {
+				selectedCategory = parentGroup.categoryId;
+			}
+		}
 		currentPage = 1;
 		fetchAuditLogs(false);
 	}
 
-	function goToPage(p: number) {
-		if (p < 1 || p > totalPages || p === currentPage) return;
-		currentPage = p;
+	function resetFilters() {
+		selectedCategory = 'ALL';
+		selectedAction = '';
+		headerStore.searchQuery = '';
+		searchQuery = '';
+		currentPage = 1;
+		fetchAuditLogs(false);
+	}
+
+	function clearSearch() {
+		headerStore.searchQuery = '';
+		searchQuery = '';
+		currentPage = 1;
 		fetchAuditLogs(false);
 	}
 
@@ -249,7 +363,6 @@
 	$effect(() => {
 		const current = headerStore.searchQuery;
 		if (prevSearch === null) {
-			// First run on mount: initialize tracking without triggering duplicate fetch
 			prevSearch = current;
 			searchQuery = current;
 			return;
@@ -271,28 +384,146 @@
 </svelte:head>
 
 <div class="text-foreground antialiased mx-auto w-full flex-1 flex flex-col min-h-full">
-	<!-- Controls: Search & Category Chips -->
-	<div class="flex flex-col gap-4 mb-6">
+	<!-- Filter Controls Toolbar -->
+	<div class="flex flex-col gap-2.5 mb-6">
 		<div
-			class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 bg-card border border-border rounded-lg"
+			class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-2.5 bg-card border border-border rounded-lg"
 		>
-			<!-- Category Filter Buttons -->
-			<div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
-				{#each categories as cat (cat.id)}
-					{@const isSelected = selectedCategory === cat.id}
+			<!-- Left: Category & Action Selectors -->
+			<div class="flex items-center gap-2 flex-wrap">
+				<!-- Category Dropdown Trigger -->
+				<DropdownMenu.Root>
+					<DropdownMenu.Trigger class="focus:outline-none">
+						<button
+							type="button"
+							class="flex items-center gap-2 h-9 px-3 rounded-lg text-xs font-medium border transition-colors cursor-pointer {selectedCategory !==
+							'ALL'
+								? 'bg-primary/10 border-primary/30 text-primary'
+								: 'bg-surface-sidebar border-border text-foreground hover:bg-white/5'}"
+						>
+							<activeCategory.icon
+								class="size-3.5 {selectedCategory !== 'ALL'
+									? 'text-primary'
+									: 'text-muted-foreground'}"
+							/>
+							<span>{activeCategory.label}</span>
+							<ChevronDown class="size-3 opacity-60 ml-0.5" />
+						</button>
+					</DropdownMenu.Trigger>
+					<DropdownMenu.Content
+						data-lenis-prevent
+						class="w-64 max-h-95 overflow-y-auto bg-card border-border text-foreground rounded-lg p-1.5 shadow-xl z-50"
+						align="start"
+						sideOffset={6}
+					>
+						<DropdownMenu.Label
+							class="text-[10px] text-muted-foreground font-medium px-2 py-1 uppercase tracking-wider"
+						>
+							Filter by Category
+						</DropdownMenu.Label>
+						{#each categories as cat (cat.id)}
+							{@const isSelected = selectedCategory === cat.id}
+							<DropdownMenu.Item
+								class="cursor-pointer flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md hover:bg-white/8 text-xs transition-colors {isSelected
+									? 'text-primary bg-white/5 font-semibold'
+									: 'text-foreground'}"
+								onclick={() => handleCategoryChange(cat.id)}
+							>
+								<div class="flex items-center gap-2">
+									<cat.icon
+										class="size-3.5 {isSelected ? 'text-primary' : 'text-muted-foreground'}"
+									/>
+									<span>{cat.label}</span>
+								</div>
+								{#if isSelected}
+									<CheckCircle2 class="size-3 text-primary shrink-0" />
+								{/if}
+							</DropdownMenu.Item>
+						{/each}
+					</DropdownMenu.Content>
+				</DropdownMenu.Root>
+
+
+				<!-- Reset Filters button -->
+				{#if hasActiveFilters}
 					<button
 						type="button"
-						class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all whitespace-nowrap border cursor-pointer {isSelected
-							? 'font-bold text-foreground bg-white/10 border-border'
-							: 'font-medium text-foreground/40 border-transparent bg-transparent hover:text-foreground/70 hover:bg-white/5'}"
-						onclick={() => handleCategoryChange(cat.id as any)}
+						class="flex items-center gap-1.5 h-9 px-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
+						onclick={resetFilters}
 					>
-						<cat.icon class="size-3.5 {isSelected ? 'text-primary' : 'text-foreground/40'}" />
-						{cat.label}
+						<RotateCcw class="size-3" />
+						<span>Reset</span>
 					</button>
-				{/each}
+				{/if}
+			</div>
+
+			<!-- Right: Total Event Counter -->
+			<div class="flex items-center gap-2 self-end sm:self-auto">
+				<span
+					class="text-xs font-mono text-muted-foreground px-2.5 py-1 bg-surface-sidebar border border-border rounded-md"
+				>
+					{totalCount} event{totalCount !== 1 ? 's' : ''}
+				</span>
 			</div>
 		</div>
+
+		<!-- Active Filter Badges Bar (shown only when a filter is applied) -->
+		{#if hasActiveFilters}
+			<div class="flex items-center gap-2 flex-wrap text-xs px-1">
+				<span class="text-[11px] text-muted-foreground font-medium">Active:</span>
+
+				{#if selectedCategory !== 'ALL'}
+					<span
+						class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 border border-primary/20 text-primary text-[11px] font-medium"
+					>
+						<activeCategory.icon class="size-3" />
+						<span>Category: {activeCategory.label}</span>
+						<button
+							type="button"
+							class="hover:text-foreground transition-colors cursor-pointer ml-0.5"
+							onclick={() => handleCategoryChange('ALL')}
+							aria-label="Clear category filter"
+						>
+							<X class="size-3" />
+						</button>
+					</span>
+				{/if}
+
+				{#if selectedAction}
+					<span
+						class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 border border-primary/20 text-primary text-[11px] font-medium"
+					>
+						<ListFilter class="size-3" />
+						<span>Action: {selectedActionLabel}</span>
+						<button
+							type="button"
+							class="hover:text-foreground transition-colors cursor-pointer ml-0.5"
+							onclick={() => handleActionFilterChange('')}
+							aria-label="Clear action filter"
+						>
+							<X class="size-3" />
+						</button>
+					</span>
+				{/if}
+
+				{#if searchQuery}
+					<span
+						class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-border text-foreground text-[11px] font-medium"
+					>
+						<Search class="size-3 text-muted-foreground" />
+						<span>"{searchQuery}"</span>
+						<button
+							type="button"
+							class="text-muted-foreground hover:text-foreground transition-colors cursor-pointer ml-0.5"
+							onclick={clearSearch}
+							aria-label="Clear search"
+						>
+							<X class="size-3" />
+						</button>
+					</span>
+				{/if}
+			</div>
+		{/if}
 	</div>
 
 	<!-- Error alert -->
@@ -318,12 +549,12 @@
 		/>
 	{:else}
 		<div
-			class="border border-border rounded-lg bg-white/3 backdrop-blur-md overflow-hidden flex flex-col max-h-[calc(100vh-16rem)] transition-opacity duration-200 {isFetching
+			class="border border-border rounded-lg bg-card overflow-hidden flex flex-col max-h-[calc(100vh-16rem)] transition-opacity duration-200 {isFetching
 				? 'opacity-50 pointer-events-none'
 				: 'opacity-100'}"
 		>
 			<!-- Table Column Headers -->
-			<div class="log-table-header sticky top-0 bg-card z-10">
+			<div class="log-table-header sticky top-0 bg-[#0a0a0b] z-10">
 				<div class="log-col-actor">Actor</div>
 				<div class="log-col-action">
 					<DropdownMenu.Root>
@@ -333,13 +564,13 @@
 									? 'text-primary'
 									: 'text-inherit hover:text-foreground'}"
 							>
-								<span>{selectedAction || 'Action'}</span>
+								<span class="truncate">{selectedActionLabel || 'Action'}</span>
 								{#if selectedAction}
 									<!-- svelte-ignore a11y_no_static_element_interactions -->
 									<span
 										role="button"
 										tabindex="-1"
-										class="size-3.5 rounded-full bg-primary/20 hover:bg-primary/40 flex items-center justify-center transition-colors"
+										class="size-3.5 rounded-full bg-primary/20 hover:bg-primary/40 flex items-center justify-center transition-colors shrink-0"
 										onclick={(e) => {
 											e.stopPropagation();
 											handleActionFilterChange('');
@@ -354,48 +585,49 @@
 										<X class="size-2.5 text-primary" />
 									</span>
 								{:else}
-									<ListFilter class="size-3 opacity-50" />
+									<ListFilter class="size-3 opacity-50 shrink-0" />
 								{/if}
 							</span>
 						</DropdownMenu.Trigger>
 						<DropdownMenu.Content
 							data-lenis-prevent
-							class="w-56 max-h-[360px] overflow-y-auto bg-secondary border-border text-foreground rounded-lg p-1"
+							class="w-72 max-h-90 overflow-y-auto bg-card border-border text-foreground rounded-lg p-1.5 shadow-xl z-50"
 							align="start"
 							sideOffset={6}
 						>
 							<!-- All Actions option -->
 							<DropdownMenu.Item
-								class="cursor-pointer flex items-center justify-between px-2.5 py-2 rounded-md hover:bg-white/8 text-sm font-medium {selectedAction ===
+								class="cursor-pointer flex items-center justify-between px-2.5 py-2 rounded-md hover:bg-white/8 text-xs font-medium {selectedAction ===
 								''
-									? 'text-primary bg-white/5'
-									: 'text-slate-200'}"
+									? 'text-primary bg-white/5 font-semibold'
+									: 'text-foreground'}"
 								onclick={() => handleActionFilterChange('')}
 							>
 								<span>All Actions</span>
 								{#if selectedAction === ''}
-									<CheckCircle2 class="size-3.5 text-primary shrink-0" />
+									<CheckCircle2 class="size-3 text-primary shrink-0" />
 								{/if}
 							</DropdownMenu.Item>
 
-							{#each visibleActionGroups as group (group.label)}
+							{#each visibleActionGroups as group (group.categoryId)}
 								<DropdownMenu.Separator class="bg-white/8 my-1" />
 								<DropdownMenu.Label
-									class="text-[10px] text-muted-foreground font-medium px-2.5 py-1 uppercase tracking-wider"
+									class="text-[10px] text-muted-foreground font-medium px-2.5 py-1 uppercase tracking-wider flex items-center gap-1.5"
 								>
-									{group.label}
+									<group.icon class="size-3 opacity-70" />
+									<span>{group.label}</span>
 								</DropdownMenu.Label>
-								{#each group.actions as action (action.label)}
+								{#each group.actions as action (action.value)}
+									{@const isSelected = selectedAction === action.value}
 									{@const style = getActionStyle(action.value)}
 									<DropdownMenu.Item
-										class="cursor-pointer flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md hover:bg-white/8 text-xs {selectedAction ===
-										action.value
-											? 'text-primary bg-white/5'
-											: 'text-slate-300'}"
+										class="cursor-pointer flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md hover:bg-white/8 text-xs {isSelected
+											? 'text-primary bg-white/5 font-semibold'
+											: 'text-foreground'}"
 										onclick={() => handleActionFilterChange(action.value)}
 									>
-										<span class="font-mono {style}">{action.label}</span>
-										{#if selectedAction === action.value}
+										<span class="font-mono text-[11px] {style}">{action.label}</span>
+										{#if isSelected}
 											<CheckCircle2 class="size-3 text-primary shrink-0" />
 										{/if}
 									</DropdownMenu.Item>

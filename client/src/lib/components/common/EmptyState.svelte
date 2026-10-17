@@ -3,16 +3,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { cn } from '$lib/helper/utils';
 
-	let {
-		icon: Icon,
-		title,
-		description = '',
-		actionText = '',
-		onAction,
-		actionVariant = 'default',
-		class: className = '',
-		children
-	} = $props<{
+	interface Props {
 		icon?: Component | any;
 		title: string;
 		description?: string;
@@ -21,7 +12,18 @@
 		actionVariant?: 'default' | 'primary' | 'secondary' | 'outline' | 'ghost';
 		class?: string;
 		children?: Snippet;
-	}>();
+	}
+
+	let {
+		icon: Icon,
+		title,
+		description = '',
+		actionText = '',
+		onAction = undefined,
+		actionVariant = 'default',
+		class: className = '',
+		children = undefined
+	}: Props = $props();
 </script>
 
 <div

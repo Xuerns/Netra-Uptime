@@ -26,7 +26,7 @@
 	import { parseApiError } from '$lib/utils/parseApiError';
 
 	// ── Types ─────────────────────────────────────────────────────────────────
-	type StatusFilter = 'all' | 'up' | 'flagged' | 'paused';
+	type StatusFilter = 'all' | 'up' | 'down' | 'flagged' | 'paused';
 	type ViewMode = 'grid' | 'list';
 
 	// ── Route param & Organization ─────────────────────────────────────────────
@@ -39,7 +39,6 @@
 	let fetchError = $state('');
 	let viewMode = $state<ViewMode>('grid');
 	let statusFilter = $state<StatusFilter>('all');
-	let timeWindow = $state<'30d' | '24h'>('30d');
 	let openDropdownId = $state<string | null>(null);
 
 	// Add & Edit Modals
@@ -62,15 +61,16 @@
 	let counts = $derived({
 		total: monitors.length,
 		up: monitors.filter((m) => m.Status === 'up').length,
-		down: monitors.filter((m) => m.Status === 'down').length,
+		down: monitors.filter((m) => m.Status === 'down' || m.Status === 'degraded').length,
 		paused: monitors.filter((m) => m.Status === 'paused').length,
 		flagged: monitors.filter(
 			(m) =>
-				m.Status === 'down' ||
-				m.DomainStatus === 'warning' ||
-				m.DomainStatus === 'expired' ||
-				m.SSLStatus === 'warning' ||
-				m.SSLStatus === 'expired'
+				m.Status !== 'down' &&
+				m.Status !== 'degraded' &&
+				(m.DomainStatus === 'warning' ||
+					m.DomainStatus === 'expired' ||
+					m.SSLStatus === 'warning' ||
+					m.SSLStatus === 'expired')
 		).length
 	});
 
@@ -103,15 +103,18 @@
 			let matchesStatus = true;
 			if (statusFilter === 'up') {
 				matchesStatus = m.Status === 'up';
+			} else if (statusFilter === 'down') {
+				matchesStatus = m.Status === 'down' || m.Status === 'degraded';
 			} else if (statusFilter === 'paused') {
 				matchesStatus = m.Status === 'paused';
 			} else if (statusFilter === 'flagged') {
 				matchesStatus =
-					m.Status === 'down' ||
-					m.DomainStatus === 'warning' ||
-					m.DomainStatus === 'expired' ||
-					m.SSLStatus === 'warning' ||
-					m.SSLStatus === 'expired';
+					m.Status !== 'down' &&
+					m.Status !== 'degraded' &&
+					(m.DomainStatus === 'warning' ||
+						m.DomainStatus === 'expired' ||
+						m.SSLStatus === 'warning' ||
+						m.SSLStatus === 'expired');
 			}
 			const q = headerStore.searchQuery.toLowerCase().trim();
 			const matchesSearch =
@@ -279,7 +282,7 @@
 			>
 				<!-- Status Filter Pills -->
 				<div
-					class="flex items-center gap-1 bg-surface-sidebar p-1 rounded-lg border border-border text-xs"
+					class="flex items-center gap-1 bg-surface-sidebar p-1 rounded-lg border border-border text-xs flex-wrap"
 					role="group"
 					aria-label="Filter by status"
 				>
@@ -302,12 +305,21 @@
 					</button>
 
 					<button
+						class="px-3 py-1 font-medium rounded-md transition-colors {statusFilter === 'down'
+							? 'bg-muted text-foreground'
+							: 'text-muted-foreground hover:text-foreground'}"
+						onclick={() => (statusFilter = 'down')}
+					>
+						Down <span class="ml-1 text-rose-400 font-mono text-[11px]">{counts.down}</span>
+					</button>
+
+					<button
 						class="px-3 py-1 font-medium rounded-md transition-colors {statusFilter === 'flagged'
 							? 'bg-muted text-foreground'
 							: 'text-muted-foreground hover:text-foreground'}"
 						onclick={() => (statusFilter = 'flagged')}
 					>
-						DNS Flagged <span class="ml-1 text-amber-400 font-mono text-[11px]"
+						DNS / SSL Flagged <span class="ml-1 text-amber-400 font-mono text-[11px]"
 							>{counts.flagged}</span
 						>
 					</button>
@@ -324,30 +336,8 @@
 					</button>
 				</div>
 
-				<!-- View Controls & Time Range -->
+				<!-- View Controls -->
 				<div class="flex items-center gap-2 self-stretch sm:self-auto justify-end">
-					<div
-						class="flex items-center bg-surface-sidebar border border-border rounded-lg p-0.5 text-xs"
-					>
-						<span class="px-2.5 py-1 text-muted-foreground font-medium">Window:</span>
-						<button
-							class="px-2 py-1 rounded font-mono text-[11px] transition-colors {timeWindow === '30d'
-								? 'bg-muted text-foreground'
-								: 'text-muted-foreground hover:text-foreground'}"
-							onclick={() => (timeWindow = '30d')}
-						>
-							30d
-						</button>
-						<button
-							class="px-2 py-1 rounded font-mono text-[11px] transition-colors {timeWindow === '24h'
-								? 'bg-muted text-foreground'
-								: 'text-muted-foreground hover:text-foreground'}"
-							onclick={() => (timeWindow = '24h')}
-						>
-							24h
-						</button>
-					</div>
-
 					<!-- View Mode Toggle -->
 					<div class="flex items-center bg-surface-sidebar border border-border rounded-lg p-0.5">
 						<button
@@ -424,32 +414,39 @@
 				<!-- ── List view ──────────────────────────────────────────────────────── -->
 			{:else}
 				<div class="monitors-scroll-area">
-					<div
-						data-lenis-prevent
-						class="flex flex-col divide-y divide-border border border-border rounded-lg bg-card"
-					>
-						<!-- Header row -->
-						<div class="list-row list-row--header" aria-hidden="true">
-							<span>Monitor</span>
-							<span>Status</span>
-							<span>Response</span>
-							<span>Uptime 30d</span>
-							<span>Interval</span>
-							<span>Last check</span>
-							<span class="text-right">Actions</span>
-						</div>
+					<div class="border border-border rounded-xl overflow-hidden shadow-sm bg-card">
+						<div class="overflow-x-auto">
+							<div class="min-w-[960px]">
+								<!-- Header row -->
+								<div
+									class="grid grid-cols-[minmax(220px,1.6fr)_minmax(130px,1fr)_90px_85px_85px_75px_100px_70px] gap-3 px-5 py-3 border-b border-border bg-[#0a0a0b] text-[11px] font-semibold tracking-wider uppercase text-muted-foreground/80 items-center"
+									aria-hidden="true"
+								>
+									<div>Monitor</div>
+									<div>Activity</div>
+									<div>Status</div>
+									<div>Response</div>
+									<div>Uptime 30d</div>
+									<div>Interval</div>
+									<div>Last check</div>
+									<div class="text-right">Actions</div>
+								</div>
 
-						{#each filtered as monitor (monitor.ID)}
-							<MonitorItem
-								{monitor}
-								viewMode="list"
-								{openDropdownId}
-								{toggleDropdown}
-								{handleDeleteMonitor}
-								{handleEditMonitor}
-								{handleTogglePause}
-							/>
-						{/each}
+								<div data-lenis-prevent class="divide-y divide-border/60">
+									{#each filtered as monitor (monitor.ID)}
+										<MonitorItem
+											{monitor}
+											viewMode="list"
+											{openDropdownId}
+											{toggleDropdown}
+											{handleDeleteMonitor}
+											{handleEditMonitor}
+											{handleTogglePause}
+										/>
+									{/each}
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 			{/if}
@@ -475,51 +472,5 @@
 	/* ── Layout & Grids ───────────────────────────────────────────────────── */
 	.monitors-scroll-area {
 		width: 100%;
-	}
-
-	/* ── List view ────────────────────────────────────────────────────────── */
-	.list-row {
-		display: grid;
-		grid-template-columns: 1fr 100px 90px 90px 80px 110px 80px;
-		align-items: center;
-		gap: 16px;
-		padding: 12px 20px;
-		transition: background 140ms ease;
-	}
-
-	.list-row:hover {
-		background: var(--color-accent);
-	}
-
-	.list-row--header {
-		padding: 10px 20px;
-		font-size: 11px;
-		font-weight: 500;
-		color: var(--color-muted-foreground);
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-		background: var(--color-muted);
-		opacity: 0.65;
-	}
-
-	.list-row--header:hover {
-		background: var(--color-muted);
-	}
-
-	@media (max-width: 900px) {
-		.list-row {
-			grid-template-columns: 1fr 100px 90px 80px;
-		}
-		.list-row > :nth-child(4),
-		.list-row > :nth-child(5),
-		.list-row > :nth-child(6) {
-			display: none;
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.list-row {
-			transition: none;
-		}
 	}
 </style>

@@ -14,7 +14,7 @@
 </script>
 
 <div
-	class="group flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-4 px-5 py-4 items-start md:items-center hover:bg-white/3 transition-colors"
+	class="group flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-4 px-5 py-4 items-start md:items-center bg-card hover:bg-white/4 transition-colors"
 >
 	<!-- Column 1: Template Name & Description -->
 	<div class="col-span-5 min-w-0 w-full space-y-1">
