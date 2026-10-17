@@ -172,10 +172,10 @@
 					Rules defined in <b>{activeTemplate.name}</b>:
 				</span>
 				<a
-					href={`/dashboard/org/${orgId}/alert-templates`}
+					href={`/dashboard/org/${orgId}/alert-templates/${activeTemplate.id}`}
 					class="text-primary hover:underline text-[11px] flex items-center gap-1"
 				>
-					Edit rules in Templates <ExternalLink class="size-3" />
+					Edit rules in Template <ExternalLink class="size-3" />
 				</a>
 			</div>
 

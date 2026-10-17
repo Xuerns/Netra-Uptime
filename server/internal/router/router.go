@@ -52,13 +52,14 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 	}
 
 	authLimiter := middleware.RateLimiter(redis, 5, 1*time.Minute)
+	refreshLimiter := middleware.RateLimiter(redis, 30, 1*time.Minute)
 	resetLimiter := middleware.RateLimiter(redis, 3, 15*time.Minute)
 
 	// Public API
 	api.POST("/auth/register", authLimiter, h.AuthHandler.Register)
 	api.POST("/auth/login", authLimiter, h.AuthHandler.Login)
 	api.POST("/auth/logout", authLimiter, h.AuthHandler.Logout)
-	api.POST("/auth/refresh", authLimiter, h.AuthHandler.RefreshAccessToken)
+	api.POST("/auth/refresh", refreshLimiter, h.AuthHandler.RefreshAccessToken)
 	api.POST("/auth/forgotpassword", resetLimiter, h.AuthHandler.ForgotPassword)
 	api.PATCH("/auth/resetpassword", resetLimiter, h.AuthHandler.ResetPassword)
 	api.GET("/auth/oauth/state", authLimiter, h.AuthHandler.GetOAuthState)
