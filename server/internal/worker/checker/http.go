@@ -24,7 +24,9 @@ func CheckHTTP(target string, timeout time.Duration, expectedStatus int) (status
 		return 0, duration, err
 	}
 
-	defer response.Body.Close()
+	defer func() {
+		_ = response.Body.Close()
+	}()
 
 	return response.StatusCode, duration, nil
 }

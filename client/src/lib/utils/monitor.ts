@@ -1,5 +1,6 @@
 import { Globe, Server, Wifi } from 'lucide-svelte';
 import type { Monitor } from '$lib/api/monitor';
+import { formatTimeAgo } from './datetime';
 
 export function typeIcon(type: Monitor['Type']) {
 	switch (type) {
@@ -36,13 +37,7 @@ export function formatInterval(s: number): string {
 
 export function formatLastChecked(dateStr?: string): string {
 	if (!dateStr) return 'Never';
-	const diff = Date.now() - new Date(dateStr).getTime();
-	const secs = Math.floor(diff / 1000);
-	if (secs < 60) return `${secs}s ago`;
-	const mins = Math.floor(secs / 60);
-	if (mins < 60) return `${mins}m ago`;
-	const hrs = Math.floor(mins / 60);
-	return `${hrs}h ago`;
+	return formatTimeAgo(dateStr);
 }
 
 export function formatResponseTime(ms?: number): string {

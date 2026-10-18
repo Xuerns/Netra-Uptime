@@ -13,6 +13,6 @@ func CheckTCP(target string, timeout time.Duration) (duration time.Duration, err
 	if err != nil {
 		return duration, err
 	}
-	conn.Close()
+	_ = conn.Close()
 	return duration, nil
 }

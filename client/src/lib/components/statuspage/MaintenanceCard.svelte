@@ -101,7 +101,7 @@
 	{#if maintenance.affected_monitors && maintenance.affected_monitors.length > 0}
 		<div class="pt-2 border-t border-border/40 flex flex-wrap items-center gap-2">
 			<span class="text-[11px] text-muted-foreground font-medium">Affected Services:</span>
-			{#each maintenance.affected_monitors as monitorName}
+			{#each maintenance.affected_monitors as monitorName (monitorName)}
 				<span
 					class="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 border border-border/80 text-foreground/80"
 				>

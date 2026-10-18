@@ -1,3 +1,4 @@
+export { default as AlertTemplateModal } from './AlertTemplateModal.svelte';
 export { default as CreateAlertTemplateModal } from './CreateAlertTemplateModal.svelte';
 export { default as EditAlertTemplateModal } from './EditAlertTemplateModal.svelte';
 export { default as AlertRuleModal } from './AlertRuleModal.svelte';

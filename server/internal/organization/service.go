@@ -33,10 +33,22 @@ type OrganizationService interface {
 type OrganizationServiceImpl struct {
 	repo         OrganizationRepository
 	auditService audit.AuditService
+	cfg          *config.Config
 }
 
-func NewOrganizationService(repo OrganizationRepository, auditService audit.AuditService) OrganizationService {
-	return &OrganizationServiceImpl{repo: repo, auditService: auditService}
+func NewOrganizationService(repo OrganizationRepository, auditService audit.AuditService, cfg ...*config.Config) OrganizationService {
+	var c *config.Config
+	if len(cfg) > 0 && cfg[0] != nil {
+		c = cfg[0]
+	}
+	return &OrganizationServiceImpl{repo: repo, auditService: auditService, cfg: c}
+}
+
+func (s *OrganizationServiceImpl) getConfig() *config.Config {
+	if s.cfg != nil {
+		return s.cfg
+	}
+	return config.Load()
 }
 
 func (s *OrganizationServiceImpl) GetAllOrganization(userId string) (*[]GetAllOrganizationResponse, error) {
@@ -58,7 +70,7 @@ func (s *OrganizationServiceImpl) GetAllOrganization(userId string) (*[]GetAllOr
 			ID:             organization.ID.String(),
 			Name:           organization.Name,
 			Slug:           organization.Slug,
-			CreaAt:         organization.CreatedAt,
+			CreatedAt:      organization.CreatedAt,
 			TotalMonitors:  int64(len(organization.Monitors)),
 			ActiveMonitors: activeMonitor,
 			TotalMember:    int64(len(organization.OrganizationMembers)),
@@ -105,7 +117,7 @@ func (s *OrganizationServiceImpl) CreateOrganization(req *CreateOrganizationRequ
 
 	maxOrgs := 7
 	maxMembers := 20
-	cfg := config.Load()
+	cfg := s.getConfig()
 	if cfg.AppMode == "selfhosted" {
 		if cfg.SelfHostedMaxOrgs > 0 {
 			maxOrgs = cfg.SelfHostedMaxOrgs
@@ -270,7 +282,7 @@ func (s *OrganizationServiceImpl) InvitationAction(req *InvitationActionRequest,
 		}
 		maxOrgs := 7
 		maxMembers := 20
-		cfg := config.Load()
+		cfg := s.getConfig()
 		if cfg.AppMode == "selfhosted" {
 			if cfg.SelfHostedMaxOrgs > 0 {
 				maxOrgs = cfg.SelfHostedMaxOrgs
@@ -357,7 +369,7 @@ func (s *OrganizationServiceImpl) InviteMember(orgId, ownerId, ipAddress string,
 	}
 
 	maxMembers := 20
-	cfg := config.Load()
+	cfg := s.getConfig()
 	if cfg.AppMode == "selfhosted" {
 		if cfg.SelfHostedMaxMembers > 0 {
 			maxMembers = cfg.SelfHostedMaxMembers

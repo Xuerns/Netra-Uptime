@@ -149,16 +149,6 @@ function mapMonitor(m: any): Monitor {
 }
 
 export const MonitorAPI = {
-	getAllByUser: async () => {
-		const res = await apiFetch(`${API_Route}/monitors`, { method: 'GET' });
-		if (!res.ok) throw new Error('Failed to fetch monitors');
-		const json = await res.json();
-		return {
-			...json,
-			data: (json.data || []).map(mapMonitor)
-		};
-	},
-
 	getAll: async (orgId: string) => {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/monitors`, { method: 'GET' });
 		if (!res.ok) throw new Error('Failed to fetch monitors');

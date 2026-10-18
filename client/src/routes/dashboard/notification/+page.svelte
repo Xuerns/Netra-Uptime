@@ -6,6 +6,7 @@
 	import { DataSkeleton } from '$lib/components/common';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
+	import { getInitials as initials, getAvatarColor as avatarColor } from '$lib/utils/string';
 
 	interface User {
 		id: string;
@@ -83,32 +84,6 @@
 			errorMsg = parseApiError(err, `Failed to ${action} invitation`);
 			toast.error(errorMsg);
 		}
-	}
-
-	function avatarColor(name: string): string {
-		const colors = [
-			'bg-red-500/20 text-red-500',
-			'bg-blue-500/20 text-blue-500',
-			'bg-green-500/20 text-green-500',
-			'bg-yellow-500/20 text-yellow-500',
-			'bg-purple-500/20 text-purple-500',
-			'bg-pink-500/20 text-pink-500',
-			'bg-indigo-500/20 text-indigo-500'
-		];
-		let hash = 0;
-		for (let i = 0; i < name.length; i++) {
-			hash = name.charCodeAt(i) + ((hash << 5) - hash);
-		}
-		return colors[Math.abs(hash) % colors.length];
-	}
-
-	function initials(name: string): string {
-		if (!name) return 'U';
-		const parts = name.trim().split(/\s+/);
-		if (parts.length >= 2) {
-			return (parts[0][0] + parts[1][0]).toUpperCase();
-		}
-		return name.substring(0, 2).toUpperCase();
 	}
 </script>
 
@@ -191,7 +166,7 @@
 								aria-label="Reject"
 								title="Reject invitation"
 							>
-								<X class="size-[18px]" />
+								<X class="size-4.5" />
 							</button>
 							<button
 								class="flex items-center gap-2 h-9 px-4 rounded-lg bg-primary text-primary-foreground font-medium text-[13.5px] hover:bg-[#12c98d] transition-colors"

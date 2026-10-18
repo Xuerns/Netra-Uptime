@@ -31,7 +31,6 @@
 
 	// ── Route param & Organization ─────────────────────────────────────────────
 	const orgId = $derived(($page.params.id as string) || '');
-	const orgName = $derived($page.data?.org?.Name || $page.data?.org?.name || 'Workspace');
 
 	// ── State ─────────────────────────────────────────────────────────────────
 	let monitors = $state<Monitor[]>([]);
@@ -39,7 +38,6 @@
 	let fetchError = $state('');
 	let viewMode = $state<ViewMode>('grid');
 	let statusFilter = $state<StatusFilter>('all');
-	let openDropdownId = $state<string | null>(null);
 
 	// Add & Edit Modals
 	let isAddMonitorOpen = $state(false);
@@ -122,11 +120,6 @@
 			return matchesStatus && matchesSearch;
 		})
 	);
-
-	// ── Actions ───────────────────────────────────────────────────────────────
-	function toggleDropdown(id: string) {
-		openDropdownId = openDropdownId === id ? null : id;
-	}
 
 	async function handleTogglePause(m: Monitor) {
 		if (!orgId) return;
@@ -400,8 +393,6 @@
 								<MonitorItem
 									{monitor}
 									viewMode="grid"
-									{openDropdownId}
-									{toggleDropdown}
 									{handleDeleteMonitor}
 									{handleEditMonitor}
 									{handleTogglePause}
@@ -416,7 +407,7 @@
 				<div class="monitors-scroll-area">
 					<div class="border border-border rounded-xl overflow-hidden shadow-sm bg-card">
 						<div class="overflow-x-auto">
-							<div class="min-w-[960px]">
+							<div class="min-w-240">
 								<!-- Header row -->
 								<div
 									class="grid grid-cols-[minmax(220px,1.6fr)_minmax(130px,1fr)_90px_85px_85px_75px_100px_70px] gap-3 px-5 py-3 border-b border-border bg-[#0a0a0b] text-[11px] font-semibold tracking-wider uppercase text-muted-foreground/80 items-center"
@@ -437,8 +428,6 @@
 										<MonitorItem
 											{monitor}
 											viewMode="list"
-											{openDropdownId}
-											{toggleDropdown}
 											{handleDeleteMonitor}
 											{handleEditMonitor}
 											{handleTogglePause}

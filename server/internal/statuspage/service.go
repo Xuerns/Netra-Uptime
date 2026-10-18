@@ -1,8 +1,6 @@
 package statuspage
 
 import (
-	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"netra-uptime/config"
@@ -22,7 +20,6 @@ type StatusPageService interface {
 	GetById(statusPageID, orgID, userID string) (*StatusPageResponse, error)
 	GetBySubdomain(subdomain string) (*PublicStatusPageResponse, error)
 	GetStatusPageMonitor(statusPageID, orgID string) ([]model.StatusPageMonitor, error)
-	GetStatusPageByUserId(userId string) ([]StatusPageResponse, error)
 	CreateMaintenance(orgID, statusPageID, userID, ipAddress string, req *CreateMaintenanceRequest) (*model.ScheduledMaintenance, error)
 	GetMaintenances(orgID, statusPageID, userID string) ([]MaintenanceResponse, error)
 	UpdateMaintenance(orgID, statusPageID, maintenanceID, userID, ipAddress string, req *UpdateMaintenanceRequest) (*model.ScheduledMaintenance, error)
@@ -44,10 +41,22 @@ type StatusPageServiceImpl struct {
 	Subchecker   SubscriptionChecker
 	rdb          *redis.Client
 	auditService audit.AuditService
+	cfg          *config.Config
 }
 
-func NewStatusPageService(repo StatusPageRepository, checker SubscriptionChecker, rdb *redis.Client, auditService audit.AuditService) StatusPageService {
-	return &StatusPageServiceImpl{repo: repo, Subchecker: checker, rdb: rdb, auditService: auditService}
+func NewStatusPageService(repo StatusPageRepository, checker SubscriptionChecker, rdb *redis.Client, auditService audit.AuditService, cfg ...*config.Config) StatusPageService {
+	var c *config.Config
+	if len(cfg) > 0 && cfg[0] != nil {
+		c = cfg[0]
+	}
+	return &StatusPageServiceImpl{repo: repo, Subchecker: checker, rdb: rdb, auditService: auditService, cfg: c}
+}
+
+func (s *StatusPageServiceImpl) getConfig() *config.Config {
+	if s.cfg != nil {
+		return s.cfg
+	}
+	return config.Load()
 }
 
 func (s *StatusPageServiceImpl) Create(orgID, userID, ipAddress string, req *CreateStatusPageRequest) (*model.StatusPage, error) {
@@ -62,7 +71,7 @@ func (s *StatusPageServiceImpl) Create(orgID, userID, ipAddress string, req *Cre
 	}
 
 	maxStatusPage := 1
-	cfg := config.Load()
+	cfg := s.getConfig()
 	if cfg.AppMode == "selfhosted" {
 		maxStatusPage = 999999 // no limit in selfhosted
 	} else {
@@ -80,7 +89,7 @@ func (s *StatusPageServiceImpl) Create(orgID, userID, ipAddress string, req *Cre
 
 	member, err := s.Subchecker.GetMemberById(orgID, userID)
 
-	if err == nil && member == nil {
+	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
 	}
 
@@ -213,7 +222,7 @@ func toStatusPageResponse(sp model.StatusPage) StatusPageResponse {
 func (s *StatusPageServiceImpl) GetAllByOrganizationID(orgID, userID string) ([]StatusPageResponse, error) {
 	member, err := s.Subchecker.GetMemberById(orgID, userID)
 
-	if err == nil && member == nil {
+	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
 	}
 
@@ -233,7 +242,7 @@ func (s *StatusPageServiceImpl) GetAllByOrganizationID(orgID, userID string) ([]
 func (s *StatusPageServiceImpl) Delete(statusPageID, orgID, userID, ipAddress string) error {
 	member, err := s.Subchecker.GetMemberById(orgID, userID)
 
-	if err == nil && member == nil {
+	if err != nil || member == nil {
 		return errors.New("You're not member of this organization")
 	}
 
@@ -259,7 +268,7 @@ func (s *StatusPageServiceImpl) Delete(statusPageID, orgID, userID, ipAddress st
 func (s *StatusPageServiceImpl) Update(statuspageID, orgID, userID, ipAddress string, req *UpdateStatusPageRequest) (*model.StatusPage, error) {
 	member, err := s.Subchecker.GetMemberById(orgID, userID)
 
-	if err == nil && member == nil {
+	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
 	}
 
@@ -349,7 +358,7 @@ func (s *StatusPageServiceImpl) GetStatusPageMonitor(statusPageID, orgID string)
 func (s *StatusPageServiceImpl) GetById(statusPageID, orgID, userID string) (*StatusPageResponse, error) {
 	member, err := s.Subchecker.GetMemberById(orgID, userID)
 
-	if err == nil && member == nil {
+	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
 	}
 
@@ -548,36 +557,6 @@ func mapIncidentsToResponse(incidents []model.Incident) []PublicIncidentResponse
 	return resp
 }
 
-func (s *StatusPageServiceImpl) GetStatusPageByUserId(userId string) ([]StatusPageResponse, error) {
-	ctx := context.Background()
-	cacheKey := "statuspages:user:" + userId
-
-	cacheData, err := s.rdb.Get(ctx, cacheKey).Result()
-	if err == nil && cacheData != "" {
-		var statuspages []StatusPageResponse
-
-		if err := json.Unmarshal([]byte(cacheData), &statuspages); err == nil {
-			return statuspages, nil
-		}
-	}
-
-	statusPages, err := s.repo.GetStatusPageByUserId(userId)
-	if err != nil {
-		return nil, errors.New("Failed to get user status pages")
-	}
-
-	var response []StatusPageResponse
-	for _, sp := range statusPages {
-		response = append(response, toStatusPageResponse(sp))
-	}
-
-	if jsonData, err := json.Marshal(response); err == nil {
-		s.rdb.Set(ctx, cacheKey, jsonData, 24*time.Hour)
-	}
-
-	return response, nil
-}
-
 func generate90DayStats(stats []model.MonitorDailyStat) []PublicUptimeDayResponse {
 	statMap := make(map[string]model.MonitorDailyStat)
 	for _, s := range stats {
@@ -635,7 +614,7 @@ func mapMaintenancesToPublicResponse(maintenances []model.ScheduledMaintenance) 
 
 func (s *StatusPageServiceImpl) CreateMaintenance(orgID, statusPageID, userID, ipAddress string, req *CreateMaintenanceRequest) (*model.ScheduledMaintenance, error) {
 	member, err := s.Subchecker.GetMemberById(orgID, userID)
-	if err == nil && member == nil {
+	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
 	}
 
@@ -682,7 +661,7 @@ func (s *StatusPageServiceImpl) CreateMaintenance(orgID, statusPageID, userID, i
 
 func (s *StatusPageServiceImpl) GetMaintenances(orgID, statusPageID, userID string) ([]MaintenanceResponse, error) {
 	member, err := s.Subchecker.GetMemberById(orgID, userID)
-	if err == nil && member == nil {
+	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
 	}
 
@@ -722,7 +701,7 @@ func (s *StatusPageServiceImpl) GetMaintenances(orgID, statusPageID, userID stri
 
 func (s *StatusPageServiceImpl) UpdateMaintenance(orgID, statusPageID, maintenanceID, userID, ipAddress string, req *UpdateMaintenanceRequest) (*model.ScheduledMaintenance, error) {
 	member, err := s.Subchecker.GetMemberById(orgID, userID)
-	if err == nil && member == nil {
+	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
 	}
 
@@ -777,7 +756,7 @@ func (s *StatusPageServiceImpl) UpdateMaintenance(orgID, statusPageID, maintenan
 
 func (s *StatusPageServiceImpl) DeleteMaintenance(orgID, statusPageID, maintenanceID, userID, ipAddress string) error {
 	member, err := s.Subchecker.GetMemberById(orgID, userID)
-	if err == nil && member == nil {
+	if err != nil || member == nil {
 		return errors.New("You're not member of this organization")
 	}
 
@@ -842,7 +821,7 @@ func groupIncidentsByDay(incidents []model.Incident, continuousDays int) []Publi
 
 func (s *StatusPageServiceImpl) CreateComponentGroup(orgID, statusPageID, userID, ipAddress string, req *CreateComponentGroupRequest) (*model.ComponentGroup, error) {
 	member, err := s.Subchecker.GetMemberById(orgID, userID)
-	if err == nil && member == nil {
+	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
 	}
 
@@ -886,7 +865,7 @@ func (s *StatusPageServiceImpl) CreateComponentGroup(orgID, statusPageID, userID
 
 func (s *StatusPageServiceImpl) GetComponentGroups(orgID, statusPageID, userID string) ([]ComponentGroupResponse, error) {
 	member, err := s.Subchecker.GetMemberById(orgID, userID)
-	if err == nil && member == nil {
+	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
 	}
 
@@ -923,7 +902,7 @@ func (s *StatusPageServiceImpl) GetComponentGroups(orgID, statusPageID, userID s
 
 func (s *StatusPageServiceImpl) UpdateComponentGroup(orgID, statusPageID, groupID, userID, ipAddress string, req *UpdateComponentGroupRequest) (*model.ComponentGroup, error) {
 	member, err := s.Subchecker.GetMemberById(orgID, userID)
-	if err == nil && member == nil {
+	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
 	}
 
@@ -965,7 +944,7 @@ func (s *StatusPageServiceImpl) UpdateComponentGroup(orgID, statusPageID, groupI
 
 func (s *StatusPageServiceImpl) DeleteComponentGroup(orgID, statusPageID, groupID, userID, ipAddress string) error {
 	member, err := s.Subchecker.GetMemberById(orgID, userID)
-	if err == nil && member == nil {
+	if err != nil || member == nil {
 		return errors.New("You're not member of this organization")
 	}
 
@@ -996,7 +975,7 @@ func (s *StatusPageServiceImpl) DeleteComponentGroup(orgID, statusPageID, groupI
 
 func (s *StatusPageServiceImpl) AssignMonitorToGroup(orgID, statusPageID, monitorID, userID, ipAddress string, req *AssignMonitorGroupRequest) error {
 	member, err := s.Subchecker.GetMemberById(orgID, userID)
-	if err == nil && member == nil {
+	if err != nil || member == nil {
 		return errors.New("You're not member of this organization")
 	}
 

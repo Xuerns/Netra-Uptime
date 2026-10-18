@@ -105,9 +105,7 @@ func cleanRawError(raw string) string {
 		"dial tcp ",
 	}
 	for _, p := range prefixes {
-		if strings.HasPrefix(cleaned, p) {
-			// keep reasonably clean
-		}
+		cleaned = strings.TrimPrefix(cleaned, p)
 	}
 	if len(cleaned) > 250 {
 		cleaned = cleaned[:247] + "..."

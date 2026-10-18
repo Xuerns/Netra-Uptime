@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { flip } from 'svelte/animate';
-	import { Globe, Plus, TriangleAlert, Search, LayoutGrid, List, Trash2 } from 'lucide-svelte';
+	import { Globe, Plus, TriangleAlert, Search, LayoutGrid, List } from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { StatusPageAPI, type StatusPage } from '$lib/api/statuspage';
 	import { MonitorAPI, type Monitor } from '$lib/api/monitor';
@@ -104,7 +104,7 @@
 		try {
 			const res = await MonitorAPI.getAll(orgId);
 			monitors = res.data ?? [];
-		} catch (e) {
+		} catch {
 			monitors = [];
 		}
 	}
@@ -410,5 +410,3 @@
 		</div>
 	</div>
 {/if}
-
-

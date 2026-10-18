@@ -7,18 +7,18 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { toast } from 'svelte-sonner';
-	import { Loader2, AlertTriangle, ArrowLeft, ChevronDown, Check } from 'lucide-svelte';
+	import { Loader2, AlertTriangle, ChevronDown, Check } from 'lucide-svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import { DataSkeleton } from '$lib/components/common';
 	import { OrgAPI } from '$lib/api/organization';
 	import { parseApiError } from '$lib/utils/parseApiError';
+	import { getInitials, getAvatarColor } from '$lib/utils/string';
 
 	const orgId = $page.params.id as string;
 	const currentUserId = $page.data.user?.id;
 
 	let isLoading = $state(true);
 	let isUpdating = $state(false);
-	let isDisbanding = $state(false);
 	let isDeleteDialogOpen = $state(false);
 	let hasAccess = $state(false);
 	let confirmOrgName = $state('');
@@ -32,31 +32,6 @@
 	let selectedMember = $derived(eligibleMembers.find((m) => m.UserID === selectedNewOwnerId));
 
 	let isLeaveModalOpen = $state(false);
-
-	function getAvatarColor(name: string) {
-		const colors = [
-			'bg-blue-500/10 text-blue-500',
-			'bg-emerald-500/10 text-emerald-500',
-			'bg-purple-500/10 text-purple-500',
-			'bg-amber-500/10 text-amber-500',
-			'bg-rose-500/10 text-rose-500',
-			'bg-cyan-500/10 text-cyan-500'
-		];
-		let hash = 0;
-		for (let i = 0; i < name.length; i++) {
-			hash = name.charCodeAt(i) + ((hash << 5) - hash);
-		}
-		return colors[Math.abs(hash) % colors.length];
-	}
-
-	function getInitials(name: string) {
-		return name
-			.split(' ')
-			.map((n) => n[0])
-			.join('')
-			.toUpperCase()
-			.slice(0, 2);
-	}
 
 	let formData = $state({
 		name: '',
@@ -137,7 +112,6 @@
 			return;
 		}
 
-		isDisbanding = true;
 		try {
 			await OrgAPI.disband(orgId);
 			if (typeof window !== 'undefined') {
@@ -147,7 +121,6 @@
 			goto('/dashboard/org');
 		} catch (error: any) {
 			toast.error(parseApiError(error, 'Failed to disband organization'));
-			isDisbanding = false;
 		}
 	}
 
@@ -438,7 +411,7 @@
 				<div
 					class="absolute z-50 w-full mt-1 bg-secondary border border-border rounded-md max-h-60 overflow-auto"
 				>
-					{#each eligibleMembers as member}
+					{#each eligibleMembers as member (member.UserID)}
 						<button
 							type="button"
 							class="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/5 transition-colors text-left"

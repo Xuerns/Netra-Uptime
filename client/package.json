@@ -16,7 +16,6 @@
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
 		"@fontsource-variable/geist": "^5.2.9",
-		"@lucide/svelte": "^1.25.0",
 		"@sveltejs/adapter-static": "^3.0.10",
 		"@sveltejs/kit": "^2.63.0",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",

@@ -19,7 +19,6 @@ type StatusPageRepository interface {
 	GetById(statuspageID, orgID string) (*model.StatusPage, error)
 	GetBySubdomain(subdomain string) (*model.StatusPage, error)
 	GetStatusPageMonitor(statusPageID, orgID string) ([]model.StatusPageMonitor, error)
-	GetStatusPageByUserId(userId string) ([]model.StatusPage, error)
 	TotalOrganizationStatusPage(orgId string) (int64, error)
 	GetActiveIncidentsByMonitorIDs(monitorIDs []string) ([]model.Incident, error)
 	GetRecentResolvedIncidentsByMonitorIDs(monitorIDs []string, days int) ([]model.Incident, error)
@@ -41,11 +40,23 @@ type StatusPageRepository interface {
 }
 
 type StatusPageRepositoryImpl struct {
-	db *gorm.DB
+	db  *gorm.DB
+	cfg *config.Config
 }
 
-func NewStatusPageRepository(db *gorm.DB) StatusPageRepository {
-	return &StatusPageRepositoryImpl{db: db}
+func NewStatusPageRepository(db *gorm.DB, cfg ...*config.Config) StatusPageRepository {
+	var c *config.Config
+	if len(cfg) > 0 && cfg[0] != nil {
+		c = cfg[0]
+	}
+	return &StatusPageRepositoryImpl{db: db, cfg: c}
+}
+
+func (r *StatusPageRepositoryImpl) getRecentChecksLimit() int {
+	if r.cfg != nil && r.cfg.RecentChecksLimit > 0 {
+		return r.cfg.RecentChecksLimit
+	}
+	return config.Load().RecentChecksLimit
 }
 
 func (r *StatusPageRepositoryImpl) Create(statuspage *model.StatusPage) (*model.StatusPage, error) {
@@ -163,7 +174,7 @@ func (r *StatusPageRepositoryImpl) GetBySubdomain(subdomain string) (*model.Stat
 	}
 
 	if len(monitorIDs) > 0 {
-		limit := config.Load().RecentChecksLimit
+		limit := r.getRecentChecksLimit()
 		var recentChecks []model.Check
 		r.db.Raw(`
 			SELECT * FROM (
@@ -186,21 +197,6 @@ func (r *StatusPageRepositoryImpl) GetBySubdomain(subdomain string) (*model.Stat
 	}
 
 	return &statuspage, nil
-}
-
-func (r *StatusPageRepositoryImpl) GetStatusPageByUserId(userId string) ([]model.StatusPage, error) {
-	var statuspages []model.StatusPage
-	err := r.db.Preload("Organization").
-		Preload("StatusPageMonitors").
-		Joins("JOIN organization_members ON status_pages.organization_id = organization_members.organization_id").
-		Where("organization_members.user_id = ?", userId).
-		Find(&statuspages).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	return statuspages, nil
 }
 
 func (r *StatusPageRepositoryImpl) TotalOrganizationStatusPage(orgId string) (int64, error) {

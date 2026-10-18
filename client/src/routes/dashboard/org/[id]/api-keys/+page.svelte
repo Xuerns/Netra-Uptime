@@ -24,6 +24,12 @@
 	import { formatDateOnly } from '$lib/utils/datetime';
 	import { parseApiError } from '$lib/utils/parseApiError';
 	import { EmptyState, DataSkeleton } from '$lib/components/common';
+	import {
+		getCurrentUserId,
+		findMemberByUserId,
+		getMemberRole,
+		canManageOrg
+	} from '$lib/utils/role';
 
 	const orgId = $derived($page.params.id as string);
 
@@ -49,14 +55,10 @@
 	let isRevokeOpen = $state(false);
 	let isRevoking = $state(false);
 
-	const currentUserId = $derived($page.data?.user?.id || $page.data?.user?.ID);
-	const currentMember = $derived(
-		($page.data?.members ?? []).find(
-			(m: any) => (m.user_id ?? m.UserID ?? m.id ?? m.ID) === currentUserId
-		)
-	);
-	const userRole = $derived(currentMember?.Role ?? currentMember?.role ?? 'admin');
-	const canManage = $derived(userRole === 'owner' || userRole === 'admin');
+	const currentUserId = $derived(getCurrentUserId($page.data?.user));
+	const currentMember = $derived(findMemberByUserId($page.data?.members, currentUserId));
+	const userRole = $derived(getMemberRole(currentMember, 'admin'));
+	const canManage = $derived(canManageOrg(userRole));
 
 	async function loadAPIKeys() {
 		if (!orgId) return;

@@ -28,7 +28,7 @@
 		</div>
 	{:else}
 		<div class="space-y-2">
-			{#each assignees as assignee}
+			{#each assignees as assignee (assignee.UserID || assignee.ID)}
 				<div class="bg-foreground/15 border border-border rounded-lg p-3 flex items-center gap-3">
 					<div
 						class="size-8 rounded-lg bg-primary/20 border border-primary/30 text-primary font-bold text-xs flex items-center justify-center shrink-0 font-mono"

@@ -112,7 +112,9 @@ func checkRDAP(domain string, timeout time.Duration) *DomainCheckResult {
 	if err != nil {
 		return nil
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode == http.StatusTooManyRequests {
 		return &DomainCheckResult{
@@ -171,7 +173,9 @@ func checkWHOIS(domain string, timeout time.Duration) *DomainCheckResult {
 			ErrorMsg: "WHOIS Server Connection Timeout",
 		}
 	}
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 
 	_ = conn.SetDeadline(time.Now().Add(timeout))
 	_, _ = fmt.Fprintf(conn, "%s\r\n", domain)

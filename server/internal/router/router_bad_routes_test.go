@@ -73,7 +73,9 @@ func newMockRedisClient(t *testing.T) (*redis.Client, func()) {
 				return
 			}
 			go func(c net.Conn) {
-				defer c.Close()
+				defer func() {
+					_ = c.Close()
+				}()
 				r := bufio.NewReader(c)
 				for {
 					line, err := r.ReadString('\n')
@@ -156,8 +158,8 @@ func newMockRedisClient(t *testing.T) (*redis.Client, func()) {
 	})
 
 	cleanup := func() {
-		client.Close()
-		l.Close()
+		_ = client.Close()
+		_ = l.Close()
 	}
 
 	return client, cleanup
@@ -464,9 +466,6 @@ func (m *mockMonService) UpdateMonitor(orgId, userId, ipAddress, monitorId strin
 func (m *mockMonService) DeleteMonitor(orgId, userId, ipAddress, monitorId string) error {
 	return nil
 }
-func (m *mockMonService) GetAllMonitorByUserId(userId string) ([]monitor.MonitorResponse, error) {
-	return []monitor.MonitorResponse{}, nil
-}
 func (m *mockMonService) GetDailyStats(orgId, monitorId string, days int) ([]model.MonitorDailyStat, error) {
 	return []model.MonitorDailyStat{}, nil
 }
@@ -479,7 +478,7 @@ type mockIncService struct{}
 func (m *mockIncService) GetIncidentDetail(orgId, incidentId string) (*incident.IncidentResponse, error) {
 	return &incident.IncidentResponse{ID: incidentId}, nil
 }
-func (m *mockIncService) GetAllIncident(orgId string) ([]incident.IncidentResponse, error) {
+func (m *mockIncService) GetAllIncident(orgId string, monitorId ...string) ([]incident.IncidentResponse, error) {
 	return []incident.IncidentResponse{}, nil
 }
 func (m *mockIncService) AddIncidentUpdate(orgid, incidentId, userId, message string) (*model.IncidentUpdate, error) {
@@ -510,9 +509,6 @@ func (m *mockStatService) GetBySubdomain(subdomain string) (*statuspage.PublicSt
 }
 func (m *mockStatService) GetStatusPageMonitor(statusPageID, orgID string) ([]model.StatusPageMonitor, error) {
 	return []model.StatusPageMonitor{}, nil
-}
-func (m *mockStatService) GetStatusPageByUserId(userId string) ([]statuspage.StatusPageResponse, error) {
-	return []statuspage.StatusPageResponse{}, nil
 }
 func (m *mockStatService) CreateMaintenance(orgID, statusPageID, userID, ipAddress string, req *statuspage.CreateMaintenanceRequest) (*model.ScheduledMaintenance, error) {
 	return &model.ScheduledMaintenance{Title: req.Title}, nil

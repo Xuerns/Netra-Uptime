@@ -33,6 +33,7 @@ type Dispatcher struct {
 	db          *gorm.DB
 	emailSender email.EmailSender
 	httpClient  *http.Client
+	sem         chan struct{}
 }
 
 // NewDispatcher creates a Dispatcher. The shared http.Client uses a 20s timeout
@@ -42,6 +43,7 @@ func NewDispatcher(db *gorm.DB, emailSender email.EmailSender) *Dispatcher {
 		db:          db,
 		emailSender: emailSender,
 		httpClient:  utils.NewSafeHTTPClient(20 * time.Second),
+		sem:         make(chan struct{}, 50), // max 50 concurrent outgoing notification deliveries
 	}
 }
 
@@ -72,7 +74,9 @@ func (d *Dispatcher) Dispatch(monitor *model.Monitor, incidentID *string, event,
 
 	for _, ch := range channels {
 		ch := ch // capture loop variable for goroutine
+		d.sem <- struct{}{}
 		go func() {
+			defer func() { <-d.sem }()
 			config, err := unmarshalConfig(ch.Config)
 			if err != nil {
 				log.Printf("[Dispatcher] Invalid config for channel %s: %v\n", ch.ID, err)
@@ -261,7 +265,9 @@ func (d *Dispatcher) postJSON(targetURL string, v interface{}) error {
 	if err != nil {
 		return fmt.Errorf("HTTP request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("non-2xx response from webhook: %d", resp.StatusCode)

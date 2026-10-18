@@ -129,8 +129,6 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 		orgRoutes.POST("/monitors/:monitorId/template", middleware.RequireRole("owner", "admin"), h.AlertTemplateHandler.AssignToMonitor)
 	}
 
-	protected.GET("/monitors", h.MonitorHandler.GetAllMonitorByUserId)
-
 	// Incident
 	orgRoutes.GET("/incident/:incidentId", h.IncidentHandler.GetIncidentDetail)
 	orgRoutes.GET("/incident", h.IncidentHandler.GetAllIncident)
@@ -141,7 +139,6 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 	// StatusPage
 	orgRoutes.POST("/statuspage", h.StatusPageHandler.CreateStatusPage)
 	orgRoutes.GET("/statuspage", h.StatusPageHandler.GetAllStatusPage)
-	protected.GET("/statuspages", h.StatusPageHandler.GetAllStatusPageByUserId)
 	orgRoutes.GET("/statuspage/:statusPageId", h.StatusPageHandler.GetById)
 	orgRoutes.GET("/statuspage/:statusPageId/monitors", h.StatusPageHandler.GetStatusPageMonitor)
 	orgRoutes.DELETE("/statuspage/:statusPageId", h.StatusPageHandler.DeleteStatusPage)

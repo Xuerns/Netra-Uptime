@@ -6,6 +6,7 @@ const API_Route = `${env.PUBLIC_API_URL}`;
 export interface CreateOrgRequest {
 	name: string;
 	slug: string;
+	invitations?: Array<{ invitee_id: string; role?: string }>;
 }
 
 export interface UpdateOrgRequest {

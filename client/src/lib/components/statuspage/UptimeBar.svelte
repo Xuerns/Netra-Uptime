@@ -138,7 +138,7 @@
 			class="flex items-center gap-[2px] sm:gap-[3px] w-full h-8 sm:h-9 py-1"
 			onmouseleave={handleMouseLeave}
 		>
-			{#each paddedStats as day, i}
+			{#each paddedStats as day, i (day.date || i)}
 				<button
 					type="button"
 					aria-label={`Uptime for ${day.date}`}

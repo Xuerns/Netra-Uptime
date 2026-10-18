@@ -3,14 +3,12 @@
 	import { page } from '$app/stores';
 	import {
 		Users,
-		UserPlus,
 		MoreVertical,
 		ShieldCheck,
 		Shield,
 		Trash2,
 		ShieldAlert,
 		ShieldX,
-		Search,
 		TriangleAlert
 	} from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -22,6 +20,13 @@
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
 	import { DataSkeleton } from '$lib/components/common';
+	import { getInitials as initials, getAvatarColor as avatarColor } from '$lib/utils/string';
+	import {
+		getCurrentUserId,
+		findMemberByUserId,
+		getMemberRole,
+		canManageOrg
+	} from '$lib/utils/role';
 
 	interface MemberUser {
 		ID: string;
@@ -40,7 +45,7 @@
 	type RoleFilter = 'all' | 'owner' | 'admin' | 'member';
 
 	const orgId = $derived(($page.params.id as string) || '');
-	const currentUserId = $derived($page.data?.user?.id || $page.data?.user?.ID || '');
+	const currentUserId = $derived(getCurrentUserId($page.data?.user));
 
 	let members = $state<Member[]>([]);
 	let isLoading = $state(true);
@@ -51,17 +56,16 @@
 	let isInviteOpen = $state(false);
 	let isKickConfirmOpen = $state(false);
 	let memberToKick = $state<Member | null>(null);
-	let isKicking = $state(false);
 
 	let owners = $derived(members.filter((m) => m.Role === 'owner'));
 	let admins = $derived(members.filter((m) => m.Role === 'admin'));
 	let regularMembers = $derived(members.filter((m) => m.Role === 'member'));
 
-	const currentMember = $derived(members.find((m) => m.UserID === currentUserId));
-	const currentUserRole = $derived(currentMember?.Role || 'member');
+	const currentMember = $derived(findMemberByUserId(members, currentUserId));
+	const currentUserRole = $derived(getMemberRole(currentMember, 'member'));
 	const isOwner = $derived(currentUserRole === 'owner');
 	const isAdmin = $derived(currentUserRole === 'admin');
-	const canManage = $derived(isOwner || isAdmin);
+	const canManage = $derived(canManageOrg(currentUserRole));
 
 	// Sync with layout header bar
 	$effect(() => {
@@ -90,29 +94,6 @@
 			return name.includes(q);
 		})
 	);
-
-	function initials(name: string): string {
-		const parts = (name || '').trim().split(/\s+/).filter(Boolean);
-		if (parts.length === 0) return 'U';
-		if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-		return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-	}
-
-	function avatarColor(name: string): string {
-		const colors = [
-			'bg-emerald-500/20 text-emerald-400',
-			'bg-blue-500/20 text-blue-400',
-			'bg-violet-500/20 text-violet-400',
-			'bg-amber-500/20 text-amber-400',
-			'bg-rose-500/20 text-rose-400',
-			'bg-cyan-500/20 text-cyan-400'
-		];
-		let hash = 0;
-		for (let i = 0; i < (name || '').length; i++) {
-			hash = name.charCodeAt(i) + ((hash << 5) - hash);
-		}
-		return colors[Math.abs(hash) % colors.length];
-	}
 
 	async function loadMembers(silent = false) {
 		if (!orgId) return;
@@ -157,7 +138,6 @@
 
 	async function confirmKick() {
 		if (!memberToKick || !orgId) return;
-		isKicking = true;
 		try {
 			await OrgAPI.kickMember(orgId, memberToKick.UserID);
 			toast.success(`${memberToKick.User?.Name || 'Member'} removed from organization`);
@@ -166,8 +146,6 @@
 			await loadMembers(true);
 		} catch (err: any) {
 			toast.error(parseApiError(err, 'Failed to remove member'));
-		} finally {
-			isKicking = false;
 		}
 	}
 

@@ -17,6 +17,7 @@
 	import AssigneeGuide from '$lib/components/monitor/AssigneeGuide.svelte';
 	import { parseApiError } from '$lib/utils/parseApiError';
 	import { toast } from 'svelte-sonner';
+	import { getAvatarColor } from '$lib/utils/string';
 
 	interface Props {
 		isOpen?: boolean;
@@ -255,19 +256,14 @@
 						: 'Add Monitor'
 	);
 
-	function avatarColor(nameStr: string) {
-		const colors = [
-			'bg-red-500/10 text-red-500 border-red-500/20',
-			'bg-blue-500/10 text-blue-500 border-blue-500/20',
-			'bg-green-500/10 text-green-500 border-green-500/20',
-			'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-			'bg-purple-500/10 text-purple-500 border-purple-500/20'
-		];
-		let hash = 0;
-		if (!nameStr) return colors[0];
-		for (let i = 0; i < nameStr.length; i++) hash = nameStr.charCodeAt(i) + ((hash << 5) - hash);
-		return colors[Math.abs(hash) % colors.length];
-	}
+	const MONITOR_AVATAR_PALETTE = [
+		'bg-red-500/10 text-red-500 border-red-500/20',
+		'bg-blue-500/10 text-blue-500 border-blue-500/20',
+		'bg-green-500/10 text-green-500 border-green-500/20',
+		'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
+		'bg-purple-500/10 text-purple-500 border-purple-500/20'
+	];
+	const avatarColor = (nameStr: string) => getAvatarColor(nameStr, MONITOR_AVATAR_PALETTE);
 </script>
 
 <Dialog.Root bind:open={isOpen}>
@@ -550,7 +546,7 @@
 							class="w-full bg-background border border-border text-foreground rounded-lg h-10 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer"
 						>
 							<option value="">None (Use System Defaults)</option>
-							{#each alertTemplates as tmpl}
+							{#each alertTemplates as tmpl (tmpl.id)}
 								<option value={tmpl.id}>
 									{tmpl.name} ({tmpl.rules?.length || 0} rules) {tmpl.is_default ? '★ Default' : ''}
 								</option>
@@ -575,7 +571,7 @@
 						data-lenis-prevent
 						class="flex-1 min-h-62.5 overflow-y-auto bg-background border border-border rounded-lg p-2 space-y-1"
 					>
-						{#each members as member}
+						{#each members as member (member.User.ID || member.ID)}
 							{@const isSelected = selectedAssignees.includes(member.User.ID)}
 							{@const isDisabled = !isSelected && selectedAssignees.length >= 5}
 

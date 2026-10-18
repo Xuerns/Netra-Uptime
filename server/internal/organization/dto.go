@@ -36,7 +36,7 @@ type GetAllOrganizationResponse struct {
 	ID             string    `json:"id"`
 	Name           string    `json:"name"`
 	Slug           string    `json:"slug"`
-	CreaAt         time.Time `json:"created_at"`
+	CreatedAt      time.Time `json:"created_at"`
 	TotalMonitors  int64     `json:"total_monitors"`
 	ActiveMonitors int64     `json:"active_monitors"`
 	TotalMember    int64     `json:"total_member"`

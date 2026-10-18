@@ -52,7 +52,9 @@ func newMockRedisClient(t *testing.T) (*redis.Client, func()) {
 				return
 			}
 			go func(c net.Conn) {
-				defer c.Close()
+				defer func() {
+					_ = c.Close()
+				}()
 				r := bufio.NewReader(c)
 				for {
 					line, err := r.ReadString('\n')
@@ -126,8 +128,8 @@ func newMockRedisClient(t *testing.T) (*redis.Client, func()) {
 	})
 
 	cleanup := func() {
-		client.Close()
-		l.Close()
+		_ = client.Close()
+		_ = l.Close()
 	}
 
 	return client, cleanup
@@ -141,7 +143,6 @@ type mockMonitorRepo struct {
 	updateFunc                   func(monitor *model.Monitor) error
 	deleteFunc                   func(orgId, monitorId string) error
 	getActiveMonitorFunc         func() ([]model.Monitor, error)
-	getAllMonitorByUserIdFunc    func(userId string) ([]model.Monitor, error)
 	validateUsersInOrgFunc       func(orgId string, userIds []string) bool
 	createMonitorPICFunc         func(monitorPIC *model.MonitorPIC) error
 	replaceMonitorPICsFunc       func(monitor *model.Monitor, newPICs []model.MonitorPIC) error
@@ -185,12 +186,6 @@ func (m *mockMonitorRepo) Delete(orgId, monitorId string) error {
 func (m *mockMonitorRepo) GetActiveMonitor() ([]model.Monitor, error) {
 	if m.getActiveMonitorFunc != nil {
 		return m.getActiveMonitorFunc()
-	}
-	return nil, nil
-}
-func (m *mockMonitorRepo) GetAllMonitorByUserId(userId string) ([]model.Monitor, error) {
-	if m.getAllMonitorByUserIdFunc != nil {
-		return m.getAllMonitorByUserIdFunc(userId)
 	}
 	return nil, nil
 }

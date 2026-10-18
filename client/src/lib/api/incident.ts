@@ -109,8 +109,11 @@ export function mapIncident(inc: any): Incident {
 }
 
 export const IncidentAPI = {
-	getAll: async (orgId: string): Promise<{ data: Incident[] }> => {
-		const res = await apiFetch(`${API_Route}/organization/${orgId}/incident`, { method: 'GET' });
+	getAll: async (orgId: string, monitorId?: string): Promise<{ data: Incident[] }> => {
+		const url = monitorId
+			? `${API_Route}/organization/${orgId}/incident?monitor_id=${encodeURIComponent(monitorId)}`
+			: `${API_Route}/organization/${orgId}/incident`;
+		const res = await apiFetch(url, { method: 'GET' });
 		if (!res.ok) throw new Error('Failed to fetch incidents');
 
 		const data = await res.json();

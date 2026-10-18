@@ -10,7 +10,7 @@ import (
 
 type IncidentService interface {
 	GetIncidentDetail(orgId, incidentId string) (*IncidentResponse, error)
-	GetAllIncident(orgId string) ([]IncidentResponse, error)
+	GetAllIncident(orgId string, monitorId ...string) ([]IncidentResponse, error)
 	AddIncidentUpdate(orgid, incidentId, userId, message string) (*model.IncidentUpdate, error)
 	JoinAssignee(orgId, incidentId, userId string) error
 	GetIncidentUpdate(orgId, incidentId string) ([]GetIncidentUpdateResponse, error)
@@ -75,8 +75,8 @@ func (s *IncidentServiceImpl) GetIncidentDetail(orgId, incidentId string) (*Inci
 	return &resp, nil
 }
 
-func (s *IncidentServiceImpl) GetAllIncident(orgId string) ([]IncidentResponse, error) {
-	incidents, err := s.repo.GetAllByOrg(orgId)
+func (s *IncidentServiceImpl) GetAllIncident(orgId string, monitorId ...string) ([]IncidentResponse, error) {
+	incidents, err := s.repo.GetAllByOrg(orgId, monitorId...)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func (s *IncidentServiceImpl) JoinAssignee(orgId, incidentId, userId string) err
 		return errors.New("Incident not found or you don't have access")
 	}
 
-	assignee, err := s.repo.GetAssignee(userId, incidentId)
+	assignee, _ := s.repo.GetAssignee(userId, incidentId)
 
 	if assignee != nil {
 		return errors.New("You already joined this incident")

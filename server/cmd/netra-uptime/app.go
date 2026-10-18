@@ -31,19 +31,19 @@ func BuildHandler(db *gorm.DB, rdb *redis.Client, wp *worker.WorkerPool, cfg *co
 	auditHandler := audit.NewAuditHandler(auditService)
 
 	organizationRepo := organization.NewOrganizationRepository(db)
-	organizationService := organization.NewOrganizationService(organizationRepo, auditService)
+	organizationService := organization.NewOrganizationService(organizationRepo, auditService, cfg)
 	organizationHandler := organization.NewOrganizationHandler(organizationService)
 
-	monitorRepo := monitor.NewMonitorRepository(db)
-	monitorServise := monitor.NewMonitorService(monitorRepo, rdb, organizationService, auditService, wp)
+	monitorRepo := monitor.NewMonitorRepository(db, cfg)
+	monitorServise := monitor.NewMonitorService(monitorRepo, rdb, organizationService, auditService, wp, cfg)
 	monitorHandler := monitor.NewMonitorHandler(monitorServise)
 
 	incidentRepo := incident.NewMonitorRepository(db)
 	incidentService := incident.NewIncidentService(incidentRepo)
 	incidentHandler := incident.NewIncidentHandler(incidentService)
 
-	statuspageRepo := statuspage.NewStatusPageRepository(db)
-	statuspageService := statuspage.NewStatusPageService(statuspageRepo, organizationRepo, rdb, auditService)
+	statuspageRepo := statuspage.NewStatusPageRepository(db, cfg)
+	statuspageService := statuspage.NewStatusPageService(statuspageRepo, organizationRepo, rdb, auditService, cfg)
 	statuspageHandler := statuspage.NewStatusPageHandler(statuspageService)
 
 	apiKeyRepo := apikey.NewAPIKeyRepository(db)

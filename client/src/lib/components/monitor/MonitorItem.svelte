@@ -30,16 +30,12 @@
 	let {
 		monitor,
 		viewMode = 'grid',
-		openDropdownId,
-		toggleDropdown,
 		handleDeleteMonitor,
 		handleEditMonitor,
 		handleTogglePause
 	} = $props<{
 		monitor: Monitor;
 		viewMode?: 'grid' | 'list';
-		openDropdownId?: string | null;
-		toggleDropdown?: (id: string) => void;
 		handleDeleteMonitor?: (id: string) => Promise<void>;
 		handleEditMonitor?: (monitor: Monitor) => void;
 		handleTogglePause?: (monitor: Monitor) => Promise<void>;

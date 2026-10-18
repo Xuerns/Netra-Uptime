@@ -36,7 +36,6 @@ type mockStatusPageRepo struct {
 	getByIdFunc                                func(statuspageID, orgID string) (*model.StatusPage, error)
 	getBySubdomainFunc                         func(subdomain string) (*model.StatusPage, error)
 	getStatusPageMonitorFunc                   func(statusPageID, orgID string) ([]model.StatusPageMonitor, error)
-	getStatusPageByUserIdFunc                  func(userId string) ([]model.StatusPage, error)
 	totalOrganizationStatusPageFunc            func(orgId string) (int64, error)
 	getActiveIncidentsByMonitorIDsFunc         func(monitorIDs []string) ([]model.Incident, error)
 	getRecentResolvedIncidentsByMonitorIDsFunc func(monitorIDs []string, days int) ([]model.Incident, error)
@@ -91,12 +90,6 @@ func (m *mockStatusPageRepo) GetBySubdomain(subdomain string) (*model.StatusPage
 func (m *mockStatusPageRepo) GetStatusPageMonitor(statusPageID, orgID string) ([]model.StatusPageMonitor, error) {
 	if m.getStatusPageMonitorFunc != nil {
 		return m.getStatusPageMonitorFunc(statusPageID, orgID)
-	}
-	return nil, nil
-}
-func (m *mockStatusPageRepo) GetStatusPageByUserId(userId string) ([]model.StatusPage, error) {
-	if m.getStatusPageByUserIdFunc != nil {
-		return m.getStatusPageByUserIdFunc(userId)
 	}
 	return nil, nil
 }

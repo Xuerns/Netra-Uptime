@@ -8,7 +8,7 @@ import (
 
 type IncidentRepository interface {
 	GetById(orgId, incidentId string) (*model.Incident, error)
-	GetAllByOrg(orgId string) ([]model.Incident, error)
+	GetAllByOrg(orgId string, monitorId ...string) ([]model.Incident, error)
 	CreateUpdate(update *model.IncidentUpdate) error
 	GetIncidentOnly(incidentId string) (*model.Incident, error)
 	AddAssignee(assignee *model.IncidentAssignee) error
@@ -34,13 +34,19 @@ func (r *IncidentRepositoryImpl) GetById(orgId, incidentId string) (*model.Incid
 	return &incident, nil
 }
 
-func (r *IncidentRepositoryImpl) GetAllByOrg(orgid string) ([]model.Incident, error) {
-	var incidents []model.Incident
-	if err := r.db.Preload("Monitor").
+func (r *IncidentRepositoryImpl) GetAllByOrg(orgid string, monitorId ...string) ([]model.Incident, error) {
+	query := r.db.Preload("Monitor").
 		Preload("Assignees.User").
 		Preload("IncidentUpdates.User").
 		Joins("JOIN monitors ON monitors.id = incidents.monitor_id").
-		Where("monitors.organization_id = ?", orgid).Find(&incidents).Error; err != nil {
+		Where("monitors.organization_id = ?", orgid)
+
+	if len(monitorId) > 0 && monitorId[0] != "" {
+		query = query.Where("incidents.monitor_id = ?", monitorId[0])
+	}
+
+	var incidents []model.Incident
+	if err := query.Order("incidents.started_at DESC").Find(&incidents).Error; err != nil {
 		return nil, err
 	}
 	return incidents, nil

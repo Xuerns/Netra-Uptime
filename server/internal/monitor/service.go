@@ -21,7 +21,6 @@ type MonitorService interface {
 	GetAllMonitor(orgId string) ([]MonitorResponse, error)
 	UpdateMonitor(orgId, userId, ipAddress, monitorId string, req UpdatedMonitorRequest) (*model.Monitor, error)
 	DeleteMonitor(orgId, userId, ipAddress, monitorId string) error
-	GetAllMonitorByUserId(userId string) ([]MonitorResponse, error)
 	GetDailyStats(orgId, monitorId string, days int) ([]model.MonitorDailyStat, error)
 	TriggerCheck(orgId, monitorId string) (*RecentCheck, error)
 }
@@ -40,12 +39,19 @@ type MonitorServiceImpl struct {
 	subsChecker      SubscriptionChecker
 	auditService     audit.AuditService
 	immediateChecker ImmediateChecker
+	cfg              *config.Config
 }
 
-func NewMonitorService(repo MonitorRepository, rdb *redis.Client, checker SubscriptionChecker, auditService audit.AuditService, immediateChecker ...ImmediateChecker) MonitorService {
+func NewMonitorService(repo MonitorRepository, rdb *redis.Client, checker SubscriptionChecker, auditService audit.AuditService, opts ...interface{}) MonitorService {
 	var ic ImmediateChecker
-	if len(immediateChecker) > 0 {
-		ic = immediateChecker[0]
+	var cfg *config.Config
+	for _, opt := range opts {
+		switch v := opt.(type) {
+		case ImmediateChecker:
+			ic = v
+		case *config.Config:
+			cfg = v
+		}
 	}
 	return &MonitorServiceImpl{
 		repo:             repo,
@@ -53,7 +59,15 @@ func NewMonitorService(repo MonitorRepository, rdb *redis.Client, checker Subscr
 		subsChecker:      checker,
 		auditService:     auditService,
 		immediateChecker: ic,
+		cfg:              cfg,
 	}
+}
+
+func (s *MonitorServiceImpl) getConfig() *config.Config {
+	if s.cfg != nil {
+		return s.cfg
+	}
+	return config.Load()
 }
 
 func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *CreateMonitorRequest) (*model.Monitor, error) {
@@ -77,7 +91,7 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 	maxInterval := 300
 	maxTimeout := 10
 
-	cfg := config.Load()
+	cfg := s.getConfig()
 	if cfg.AppMode == "selfhosted" {
 		if cfg.SelfHostedMaxMonitors > 0 {
 			maxMonitors = cfg.SelfHostedMaxMonitors
@@ -360,7 +374,7 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 	maxInterval := 300
 	maxTimeout := 10
 
-	cfg := config.Load()
+	cfg := s.getConfig()
 	if cfg.AppMode == "selfhosted" {
 		if cfg.SelfHostedMaxPIC > 0 {
 			maxAssignees = cfg.SelfHostedMaxPIC
@@ -510,36 +524,6 @@ func (s *MonitorServiceImpl) DeleteMonitor(orgId, userId, ipAddress, monitorId s
 	}
 
 	return nil
-}
-
-func (s *MonitorServiceImpl) GetAllMonitorByUserId(userId string) ([]MonitorResponse, error) {
-	ctx := context.Background()
-	cacheKey := "monitors:user:" + userId
-
-	cacheData, err := s.rdb.Get(ctx, cacheKey).Result()
-	if err == nil && cacheData != "" {
-		var monitorsResponse []MonitorResponse
-
-		if err := json.Unmarshal([]byte(cacheData), &monitorsResponse); err == nil {
-			return monitorsResponse, nil
-		}
-	}
-
-	monitors, err := s.repo.GetAllMonitorByUserId(userId)
-	if err != nil {
-		return nil, errors.New("Failed to get user monitors")
-	}
-
-	var response []MonitorResponse
-	for _, m := range monitors {
-		response = append(response, mapMonitorToResponse(m))
-	}
-
-	if jsonData, err := json.Marshal(response); err == nil {
-		s.rdb.Set(ctx, cacheKey, jsonData, 60*time.Second)
-	}
-
-	return response, nil
 }
 
 func (s *MonitorServiceImpl) GetDailyStats(orgId, monitorId string, days int) ([]model.MonitorDailyStat, error) {

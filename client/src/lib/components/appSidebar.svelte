@@ -12,10 +12,9 @@
 	import BookOpen from 'lucide-svelte/icons/book-open';
 	import ExternalLink from 'lucide-svelte/icons/external-link';
 	import Settings2 from 'lucide-svelte/icons/settings-2';
-	import { env } from '$env/dynamic/public';
-
 	import Logo from '$lib/assets/Logo.svg';
-	import { apiFetch } from '$lib/helper/api';
+	import { goto } from '$app/navigation';
+	import { AuthAPI } from '$lib/api/auth';
 	import UserSettingsModal from '$lib/components/UserSettingsModal.svelte';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
@@ -46,18 +45,14 @@
 		}
 	} = $props();
 
-	const API_Route = `${env.PUBLIC_API_URL}`;
-
 	const sidebar = Sidebar.useSidebar();
 
 	async function handleLogout(event: Event) {
+		event.preventDefault();
 		try {
-			const res = await apiFetch(`${API_Route}/auth/logout`, { method: 'POST' });
-
-			if (res.ok) {
-				window.location.href = '/auth/login';
-			}
-		} catch (err: any) {
+			await AuthAPI.logout();
+			goto('/auth/login');
+		} catch (err: unknown) {
 			toast.error(parseApiError(err, 'Failed to log out. Please try again.'));
 		}
 	}
@@ -92,7 +87,7 @@
 		<Sidebar.Group class="py-1">
 			<Sidebar.GroupContent>
 				<Sidebar.Menu class="space-y-1">
-					{#each navWorkspace as item}
+					{#each navWorkspace as item (item.title)}
 						{@const isActive =
 							$page.url.pathname === item.url || $page.url.pathname.startsWith(item.url + '/')}
 						<Sidebar.MenuItem
@@ -134,7 +129,7 @@
 		<Sidebar.Group class="py-1">
 			<Sidebar.GroupContent>
 				<Sidebar.Menu class="space-y-1">
-					{#each navResources as item}
+					{#each navResources as item (item.title)}
 						<Sidebar.MenuItem
 							class="group/item relative flex items-center justify-between rounded-lg border border-transparent hover:border-sidebar-border transition-all duration-300 hover:bg-sidebar-accent/60"
 						>

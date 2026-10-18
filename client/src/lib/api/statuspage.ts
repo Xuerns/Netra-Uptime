@@ -238,16 +238,6 @@ export const StatusPageAPI = {
 		};
 	},
 
-	getAllByUser: async () => {
-		const res = await apiFetch(`${API_Route}/statuspages`, { method: 'GET' });
-		if (!res.ok) throw new Error('Failed to fetch user status pages');
-		const json = await res.json();
-		return {
-			...json,
-			data: (json.data || []).map(mapStatusPage)
-		};
-	},
-
 	getMonitors: async (orgId: string, statusPageId: string) => {
 		const res = await apiFetch(
 			`${API_Route}/organization/${orgId}/statuspage/${statusPageId}/monitors`,

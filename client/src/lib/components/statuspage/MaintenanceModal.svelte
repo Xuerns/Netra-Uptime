@@ -345,7 +345,7 @@
 							<Label class="text-xs font-medium text-foreground">Affected Monitors (optional)</Label
 							>
 							<div class="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
-								{#each monitors as mon}
+								{#each monitors as mon (mon.ID)}
 									{@const selected = selectedMonitors.includes(mon.ID)}
 									<button
 										type="button"
@@ -405,7 +405,7 @@
 				</div>
 			{:else}
 				<div class="space-y-3">
-					{#each maintenances as m}
+					{#each maintenances as m (m.id)}
 						<div
 							class="rounded-xl border border-border/70 bg-white/3 p-4 space-y-2.5 transition-colors"
 						>
@@ -499,7 +499,7 @@
 							{#if m.affected_monitors && m.affected_monitors.length > 0}
 								<div class="pt-2 border-t border-border/40 flex flex-wrap gap-1.5 items-center">
 									<span class="text-[10px] text-muted-foreground">Affected:</span>
-									{#each m.affected_monitors as monName}
+									{#each m.affected_monitors as monName (monName)}
 										<span
 											class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 border border-border/60 text-foreground/80"
 										>

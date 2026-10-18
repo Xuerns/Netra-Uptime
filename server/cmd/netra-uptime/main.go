@@ -48,7 +48,7 @@ func main() {
 	wp := worker.NewWorkerPool(db, 10, sender, wsHandler)
 	wp.Start()
 
-	monitorRepo := monitor.NewMonitorRepository(db)
+	monitorRepo := monitor.NewMonitorRepository(db, config)
 	sched := worker.NewScheduler(monitorRepo, wp)
 	sched.Start()
 
@@ -80,5 +80,11 @@ func main() {
 	handlers := BuildHandler(db, rdb, wp, config)
 	router.SetupRouter(r, db, rdb, handlers, wsHandler)
 
-	r.Run()
+	addr := ":8080"
+	if config.Port != "" {
+		addr = ":" + config.Port
+	}
+	if err := r.Run(addr); err != nil {
+		log.Fatalf("Server failed to run on %s: %v", addr, err)
+	}
 }

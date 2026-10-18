@@ -261,7 +261,9 @@ func (s *AuthServiceImpl) OauthLoginAndRegister(req OAuthRequest) (*LoginRespons
 	if err != nil {
 		return nil, errors.New("Failed to get user info")
 	}
-	defer response.Body.Close()
+	defer func() {
+		_ = response.Body.Close()
+	}()
 
 	userData, err := io.ReadAll(response.Body)
 	if err != nil {

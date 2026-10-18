@@ -11,9 +11,13 @@
 	} from '$lib/components/monitor/MonitorLatencyChart.svelte';
 	import MonitorStatusCodeChart from '$lib/components/monitor/MonitorStatusCodeChart.svelte';
 	import MonitorAlertRulesSection from '$lib/components/monitor/MonitorAlertRulesSection.svelte';
+	import MonitorPeriodSelector, {
+		type Period
+	} from '$lib/components/monitor/MonitorPeriodSelector.svelte';
+	import MonitorIncidentHistory from '$lib/components/monitor/MonitorIncidentHistory.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { DataSkeleton } from '$lib/components/common';
-	import { AlertTriangle, CheckCircle2, Clock, Calendar, Activity, ArrowLeft } from 'lucide-svelte';
+	import { AlertTriangle, ArrowLeft } from 'lucide-svelte';
 	import { formatDateOnly, formatDateTime } from '$lib/utils/datetime';
 	import { userTimezone } from '$lib/stores/timezone';
 	import { toast } from 'svelte-sonner';
@@ -27,7 +31,7 @@
 	let monitor = $state<Monitor | null>(null);
 	let stats = $state<MonitorDailyStat[]>([]);
 	let incidents = $state<Incident[]>([]);
-	let activePeriod = $state<'24h' | '7d' | '30d' | '90d' | '1y'>('30d');
+	let activePeriod = $state<Period>('30d');
 	let isLoading = $state(true);
 	let fetchError = $state('');
 
@@ -294,8 +298,8 @@
 
 				// Fetch incidents for this monitor
 				try {
-					const incRes = await IncidentAPI.getAll(orgId);
-					incidents = (incRes.data || []).filter((inc: any) => inc.MonitorID === monitorId);
+					const incRes = await IncidentAPI.getAll(orgId, monitorId);
+					incidents = incRes.data || [];
 				} catch (err) {
 					toast.error(parseApiError(err, 'Failed to load incidents'));
 					incidents = [];
@@ -416,28 +420,11 @@
 		/>
 
 		<!-- 2. Time Range Selector Control Bar -->
-		<div
-			class="flex items-center justify-between bg-card border border-border rounded-lg p-1.5 flex-wrap gap-2"
-		>
-			<div class="flex items-center gap-1.5">
-				{#each ['24h', '7d', '30d', '90d', '1y'] as period}
-					<button
-						type="button"
-						class="px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all {activePeriod ===
-						period
-							? 'bg-primary text-primary-foreground'
-							: 'text-muted-foreground hover:text-foreground hover:bg-white/5'}"
-						onclick={() => (activePeriod = period as any)}
-					>
-						{period.toUpperCase()}
-					</button>
-				{/each}
-			</div>
-
-			<div class="text-xs text-muted-foreground font-mono px-3 hidden sm:block">
-				Showing analytics for last {effectiveDays} day{effectiveDays > 1 ? 's' : ''}
-			</div>
-		</div>
+		<MonitorPeriodSelector
+			{activePeriod}
+			{effectiveDays}
+			onSelectPeriod={(p) => (activePeriod = p)}
+		/>
 
 		<!-- 3. Key Metrics Summary Grid Cards -->
 		<MonitorStatsGrid
@@ -479,62 +466,6 @@
 		/>
 
 		<!-- 7. Recent Incident Logs History -->
-		<div class="bg-card border border-border rounded-lg p-5 md:p-6 space-y-4">
-			<div class="flex items-center justify-between">
-				<h3 class="text-sm font-semibold text-foreground tracking-tight flex items-center gap-2">
-					<span>Recent Outages & Incidents</span>
-				</h3>
-
-				<span class="text-xs text-muted-foreground font-mono">
-					{incidents.length} incident{incidents.length === 1 ? '' : 's'} recorded
-				</span>
-			</div>
-
-			{#if incidents.length === 0}
-				<div class="bg-white/5 rounded-lg p-6 text-center space-y-2">
-					<CheckCircle2 class="size-8 text-emerald-400 mx-auto" />
-					<p class="text-sm font-medium text-foreground">All Systems Operational</p>
-					<p class="text-xs text-muted-foreground">
-						No downtime incidents recorded during this timeframe.
-					</p>
-				</div>
-			{:else}
-				<div class="space-y-2">
-					{#each incidents as inc}
-						<a
-							href="/dashboard/org/{orgId}/incidents/{inc.ID}"
-							class="flex items-center justify-between bg-white/5 border border-border rounded-lg p-4 transition-colors hover:bg-white/8 hover:border-primary/30 group"
-						>
-							<div class="space-y-1">
-								<div class="flex items-center gap-2">
-									<span
-										class="size-2 rounded-full {inc.Status === 'resolved'
-											? 'bg-emerald-400'
-											: 'bg-rose-500'}"
-									></span>
-									<span
-										class="text-sm font-semibold text-foreground group-hover:text-primary transition-colors"
-									>
-										{inc.Summary || 'Service Disruption'}
-									</span>
-									<span
-										class="uppercase text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 border border-border text-muted-foreground"
-									>
-										{inc.Status}
-									</span>
-								</div>
-							</div>
-
-							<div class="text-right text-xs text-muted-foreground font-mono shrink-0">
-								<div>Started: {formatDateTime(inc.StartedAt, tz)}</div>
-								{#if inc.ResolvedAt}
-									<div class="text-emerald-400">Resolved: {formatDateTime(inc.ResolvedAt, tz)}</div>
-								{/if}
-							</div>
-						</a>
-					{/each}
-				</div>
-			{/if}
-		</div>
+		<MonitorIncidentHistory {orgId} {incidents} {tz} />
 	{/if}
 </div>

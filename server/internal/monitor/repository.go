@@ -17,7 +17,6 @@ type MonitorRepository interface {
 	Update(monitor *model.Monitor) error
 	Delete(orgId, monitorId string) error
 	GetActiveMonitor() ([]model.Monitor, error)
-	GetAllMonitorByUserId(userId string) ([]model.Monitor, error)
 	ValidateUsersInOrg(orgId string, userIds []string) bool
 	CreateMonitorPIC(monitorPIC *model.MonitorPIC) error
 	ReplaceMonitorPICs(monitor *model.Monitor, newPICs []model.MonitorPIC) error
@@ -28,11 +27,23 @@ type MonitorRepository interface {
 }
 
 type MonitorRepositoryImpl struct {
-	db *gorm.DB
+	db  *gorm.DB
+	cfg *config.Config
 }
 
-func NewMonitorRepository(db *gorm.DB) MonitorRepository {
-	return &MonitorRepositoryImpl{db: db}
+func NewMonitorRepository(db *gorm.DB, cfg ...*config.Config) MonitorRepository {
+	var c *config.Config
+	if len(cfg) > 0 && cfg[0] != nil {
+		c = cfg[0]
+	}
+	return &MonitorRepositoryImpl{db: db, cfg: c}
+}
+
+func (r *MonitorRepositoryImpl) getRecentChecksLimit() int {
+	if r.cfg != nil && r.cfg.RecentChecksLimit > 0 {
+		return r.cfg.RecentChecksLimit
+	}
+	return config.Load().RecentChecksLimit
 }
 
 func (r *MonitorRepositoryImpl) Create(monitor *model.Monitor) error {
@@ -49,7 +60,7 @@ func (r *MonitorRepositoryImpl) GetById(orgId, monitorId string) (*model.Monitor
 		return nil, err
 	}
 
-	limit := config.Load().RecentChecksLimit
+	limit := r.getRecentChecksLimit()
 	var recentChecks []model.Check
 	if err := r.db.Where("monitor_id = ?", monitor.ID).
 		Order("checked_at DESC").
@@ -80,7 +91,7 @@ func (r *MonitorRepositoryImpl) GetAllByOrg(orgId string) ([]model.Monitor, erro
 	}
 
 	if len(monitorIds) > 0 {
-		limit := config.Load().RecentChecksLimit
+		limit := r.getRecentChecksLimit()
 		var recentCheck []model.Check
 		r.db.Raw(`
 			SELECT * FROM (
@@ -123,53 +134,6 @@ func (r *MonitorRepositoryImpl) GetActiveMonitor() ([]model.Monitor, error) {
 	if err := r.db.Where("is_active = true").Find(&monitors).Error; err != nil {
 		return nil, err
 	}
-	return monitors, nil
-}
-
-func (r *MonitorRepositoryImpl) GetAllMonitorByUserId(userId string) ([]model.Monitor, error) {
-	var monitors []model.Monitor
-	err := r.db.Preload("Organization").
-		Joins("JOIN organization_members ON monitors.organization_id = organization_members.organization_id").
-		Where("organization_members.user_id = ?", userId).
-		Find(&monitors).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	var MonitorIDs []string
-	for _, monitor := range monitors {
-		MonitorIDs = append(MonitorIDs, monitor.ID.String())
-	}
-
-	if len(MonitorIDs) > 0 {
-		limit := config.Load().RecentChecksLimit
-		var recentChecks []model.Check
-		r.db.Raw(`
-			Select * FROM (
-				SELECT *, ROW_NUMBER() OVER(PARTITION BY monitor_id ORDER BY checked_at DESC) as rn
-				FROM checks
-				WHERE monitor_id IN ?
-			) as subquery
-			WHERE rn <= ? ORDER BY checked_at DESC
-		`, MonitorIDs, limit).Scan(&recentChecks)
-
-		checkMap := make(map[string][]model.Check)
-		for _, check := range recentChecks {
-			monitorIDStr := check.MonitorID.String()
-			checkMap[monitorIDStr] = append(checkMap[monitorIDStr], check)
-		}
-
-		uptimeMap, _ := r.Get30DayUptimeMap(MonitorIDs)
-		for i, Monitor := range monitors {
-			monitors[i].RecentChecks = checkMap[Monitor.ID.String()]
-			if pct, ok := uptimeMap[Monitor.ID.String()]; ok {
-				val := pct
-				monitors[i].CalculatedUptime30D = &val
-			}
-		}
-	}
-
 	return monitors, nil
 }
 

@@ -232,8 +232,8 @@ func (h *StatusPageHandler) GetStatusBadge(c *gin.Context) {
 
 	statusPage, err := h.service.GetBySubdomain(subdomain)
 
-	statusText := "operational"
-	bgColor := "#10b981"
+	var statusText string
+	var bgColor string
 	if err != nil {
 		statusText = "unknown"
 		bgColor = "#6b7280"
@@ -311,23 +311,6 @@ func generateShieldBadgeSVG(label, status, color string) string {
 		statusCenter, status,
 		statusCenter, status,
 	)
-}
-
-func (h *StatusPageHandler) GetAllStatusPageByUserId(c *gin.Context) {
-	userId, exist := c.Get("userID")
-
-	if !exist {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
-		return
-	}
-
-	statusPages, err := h.service.GetStatusPageByUserId(userId.(string))
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": apierror.SanitizeServiceError(err)})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"status": "success", "data": statusPages})
 }
 
 func (h *StatusPageHandler) CreateMaintenance(c *gin.Context) {

@@ -345,7 +345,6 @@
 {/if}
 
 <style>
-
 	.menu-item {
 		background: none;
 		border: none;

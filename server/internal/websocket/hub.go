@@ -57,13 +57,13 @@ func (h *Hub) Run() {
 			}
 			h.mu.Unlock()
 		case message := <-h.Broadcast:
+			msgBytes, err := json.Marshal(message)
+			if err != nil {
+				continue
+			}
 			h.mu.Lock()
 			roomClients := h.Rooms[message.Room]
 			for client := range roomClients {
-				msgBytes, err := json.Marshal(message)
-				if err != nil {
-					continue
-				}
 				select {
 				case client.Send <- msgBytes:
 				default:

@@ -1,7 +1,8 @@
 <script lang="ts">
 	import Logo from '$lib/assets/Logo.svg';
 	import { ArrowLeft, Eye, EyeOff } from 'lucide-svelte';
-	import { env } from '$env/dynamic/public';
+	import { goto } from '$app/navigation';
+	import { AuthAPI } from '$lib/api/auth';
 	import { validateEmail, validatePassword } from '$lib/utils/validation';
 	import { debounce } from '$lib/helper/utils';
 	import { isSelfHosted } from '$lib/utils/appMode';
@@ -40,8 +41,6 @@
 		}
 	}, 500);
 
-	const API_Route = `${env.PUBLIC_API_URL}`;
-
 	async function handleLogin(event: Event) {
 		event.preventDefault();
 
@@ -56,27 +55,8 @@
 		error = '';
 
 		try {
-			const response = await fetch(`${API_Route}/auth/login`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ email, password }),
-				credentials: 'include'
-			});
-
-			const data = await response.json();
-
-			// Handle rate limit
-			if (response.status === 429) {
-				throw new Error('Too many attempts. Please wait a moment and try again.');
-			}
-
-			if (!response.ok) {
-				throw new Error(data.error || data.message || 'Login failed');
-			}
-
-			window.location.href = '/dashboard/org';
+			await AuthAPI.login({ email, password });
+			goto('/dashboard/org');
 		} catch (err: any) {
 			error = parseApiError(err, 'Login failed');
 		} finally {
@@ -85,27 +65,11 @@
 	}
 
 	async function loginWithGoogle() {
-		const clientId = env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
-		const redirectUri = env.PUBLIC_GOOGLE_REDIRECT_URL ?? '';
-		let state = crypto.randomUUID();
 		try {
-			const res = await fetch(`${env.PUBLIC_API_URL}/auth/oauth/state`);
-			if (res.ok) {
-				const data = await res.json();
-				if (data.state) state = data.state;
-			}
-		} catch (e) {
-			// fallback to local UUID
+			await AuthAPI.startGoogleOAuth();
+		} catch (err: any) {
+			error = parseApiError(err, 'Failed to start Google login');
 		}
-		sessionStorage.setItem('oauth_state', state);
-		const params = new URLSearchParams({
-			client_id: clientId,
-			redirect_uri: redirectUri,
-			response_type: 'code',
-			scope: 'email profile',
-			state: state
-		});
-		window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 	}
 </script>
 
@@ -117,7 +81,7 @@
 	class="min-h-screen flex items-center justify-center p-sm md:p-md text-foreground antialiased w-full relative auth-bg"
 >
 	<div
-		class="w-full max-w-[448px] bg-card rounded-xl border border-border p-lg shadow-sm animate-fade-in"
+		class="w-full max-w-112 bg-card rounded-xl border border-border p-lg shadow-sm animate-fade-in"
 	>
 		<form class="space-y-md" onsubmit={handleLogin}>
 			<div class="flex flex-col items-center mb-lg">

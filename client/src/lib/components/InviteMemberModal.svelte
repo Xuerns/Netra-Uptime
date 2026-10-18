@@ -6,6 +6,7 @@
 	import { toast } from 'svelte-sonner';
 	import { Search, UserPlus, X, TriangleAlert, Loader2 } from 'lucide-svelte';
 	import { parseApiError } from '$lib/utils/parseApiError';
+	import { getInitials as initials } from '$lib/utils/string';
 
 	interface UserResult {
 		id: string;
@@ -38,13 +39,6 @@
 	let errorMsg = $state('');
 	let searchPage = $state(1);
 	let hasMoreResults = $state(true);
-
-	function initials(name: string): string {
-		const parts = name.trim().split(/\s+/).filter(Boolean);
-		if (parts.length === 0) return 'U';
-		if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-		return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-	}
 
 	async function searchUsers(query: string, pageNum: number = 1) {
 		if (!query.trim()) {

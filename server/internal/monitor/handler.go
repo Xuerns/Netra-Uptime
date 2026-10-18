@@ -157,24 +157,6 @@ func (h *MonitorHandler) DeleteMonitor(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Monitor deleted successfully"})
 }
 
-func (h *MonitorHandler) GetAllMonitorByUserId(c *gin.Context) {
-	userId, exist := c.Get("userID")
-
-	if !exist {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
-		return
-	}
-
-	monitors, err := h.service.GetAllMonitorByUserId(userId.(string))
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"status": "success", "data": monitors})
-}
-
 func (h *MonitorHandler) GetDailyStats(c *gin.Context) {
 	orgId, exist := c.Get("organizationID")
 	if !exist {

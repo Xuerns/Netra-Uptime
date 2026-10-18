@@ -77,11 +77,13 @@
 	});
 
 	// Reset page when filters change
+	let prevFilterKey = $state('');
 	$effect(() => {
-		activeFilter;
-		headerStore.searchQuery;
-		severityFilter;
-		currentPage = 1;
+		const currentKey = `${activeFilter}|${headerStore.searchQuery}|${severityFilter}`;
+		if (prevFilterKey && prevFilterKey !== currentKey) {
+			currentPage = 1;
+		}
+		prevFilterKey = currentKey;
 	});
 
 	// Sync with layout top bar
@@ -319,7 +321,7 @@
 
 		<!-- Incident Rows Container -->
 		<div class="divide-y divide-white/5">
-			{#each paginatedIncidents as incident}
+			{#each paginatedIncidents as incident (incident.ID)}
 				{@const isOngoing = incident.Status === 'ongoing'}
 
 				<div class="transition-colors hover:bg-white/5">

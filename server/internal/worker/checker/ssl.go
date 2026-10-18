@@ -78,7 +78,9 @@ func CheckSSLExpiry(target string, timeout time.Duration) *SSLCheckResult {
 			ErrorMsg: errMsg,
 		}
 	}
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 
 	state := conn.ConnectionState()
 	if len(state.PeerCertificates) == 0 {

@@ -8,6 +8,12 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
+	"sync"
+)
+
+var (
+	cfgInstance *Config
+	cfgOnce     sync.Once
 )
 
 type Config struct {
@@ -47,6 +53,13 @@ func parseIntEnv(key string, defaultVal int) int {
 }
 
 func Load() *Config {
+	cfgOnce.Do(func() {
+		cfgInstance = loadConfig()
+	})
+	return cfgInstance
+}
+
+func loadConfig() *Config {
 	if err := godotenv.Load(); err != nil {
 		if err := godotenv.Load("../.env"); err != nil {
 			if os.Getenv("DB_HOST") == "" && os.Getenv("APP_ENV") == "" {

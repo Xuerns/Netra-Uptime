@@ -27,12 +27,12 @@
 	import ExternalLink from 'lucide-svelte/icons/external-link';
 	import Settings2 from 'lucide-svelte/icons/settings-2';
 
-	import { env } from '$env/dynamic/public';
 	import Logo from '$lib/assets/Logo.svg';
-	import { apiFetch } from '$lib/helper/api';
+	import { AuthAPI } from '$lib/api/auth';
 	import UserSettingsModal from '$lib/components/UserSettingsModal.svelte';
 	import { isSelfHosted } from '$lib/utils/appMode';
 	import { activeOrgId } from '$lib/stores/organization';
+	import { getInitials as initials } from '$lib/utils/string';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
 
@@ -101,22 +101,13 @@
 		goto('/dashboard/org');
 	}
 
-	function initials(name: string): string {
-		const parts = name.trim().split(/\s+/).filter(Boolean);
-		if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-		return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-	}
-
-	const API_Route = `${env.PUBLIC_API_URL}`;
 	const sidebar = Sidebar.useSidebar();
 
 	async function handleLogout(event: Event) {
+		event.preventDefault();
 		try {
-			const res = await apiFetch(`${API_Route}/auth/logout`, { method: 'POST' });
-
-			if (res.ok) {
-				window.location.href = '/auth/login';
-			}
+			await AuthAPI.logout();
+			goto('/auth/login');
 		} catch (err: any) {
 			toast.error(parseApiError(err, 'Failed to log out. Please try again.'));
 		}
@@ -168,7 +159,7 @@
 					Switch Organization
 				</DropdownMenu.Label>
 				<DropdownMenu.Separator class="bg-border" />
-				{#each allOrgs as orgItem}
+				{#each allOrgs as orgItem (orgItem.ID)}
 					<DropdownMenu.Item
 						class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg hover:bg-accent! hover:text-accent-foreground!"
 						onSelect={() => switchOrg(orgItem.ID)}
@@ -207,7 +198,7 @@
 		<Sidebar.Group class="py-1">
 			<Sidebar.GroupContent>
 				<Sidebar.Menu class="space-y-1">
-					{#each navMonitoring as item}
+					{#each navMonitoring as item (item.title)}
 						{@const active = isActive(item.segment)}
 						<Sidebar.MenuItem
 							class="group/nav relative flex items-center justify-between rounded-lg border border-transparent hover:border-sidebar-border transition-all duration-300 {active
@@ -248,7 +239,7 @@
 		<Sidebar.Group class="py-1">
 			<Sidebar.GroupContent>
 				<Sidebar.Menu class="space-y-1">
-					{#each navOrganization as item}
+					{#each navOrganization as item (item.title)}
 						{@const active = isActive(item.segment)}
 						<Sidebar.MenuItem
 							class="group/item relative flex items-center justify-between rounded-lg border border-transparent hover:border-sidebar-border transition-all duration-300 {active

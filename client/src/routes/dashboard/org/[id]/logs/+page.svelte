@@ -4,8 +4,6 @@
 	import { headerStore } from '$lib/stores/headerStore.svelte';
 	import {
 		ScrollText,
-		Search,
-		ChevronDown,
 		Activity,
 		Users,
 		Globe,
@@ -16,18 +14,20 @@
 		Bell,
 		Send,
 		AlertTriangle,
-		CheckCircle2,
-		AlertCircle,
-		ListFilter,
-		RotateCcw,
-		X
+		AlertCircle
 	} from 'lucide-svelte';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { AuditAPI, type AuditLogItem } from '$lib/api/audit';
 	import { debounce } from '$lib/helper/utils';
 	import { EmptyState, Pagination, DataSkeleton } from '$lib/components/common';
 	import { userTimezone } from '$lib/stores/timezone';
 	import { formatTimeAgo, formatDateTime } from '$lib/utils/datetime';
+	import { getInitials } from '$lib/utils/string';
+	import AuditLogToolbar, {
+		type AuditCategory
+	} from '$lib/components/audit/AuditLogToolbar.svelte';
+	import AuditLogTable, {
+		type ActionFilterGroup
+	} from '$lib/components/audit/AuditLogTable.svelte';
 
 	const orgId = $derived($page.params.id);
 
@@ -45,7 +45,7 @@
 	let selectedAction = $state('');
 
 	// ── Category Filters Definition ────────────────────────────────────────────
-	const categories = [
+	const categories: AuditCategory[] = [
 		{ id: 'ALL', label: 'All Categories', icon: ScrollText, entityTypes: '' },
 		{ id: 'MONITOR', label: 'Monitors', icon: Activity, entityTypes: 'monitor' },
 		{ id: 'ORGANIZATION', label: 'Organization', icon: Building2, entityTypes: 'organization' },
@@ -85,7 +85,7 @@
 	];
 
 	// ── Action Filter Definitions (grouped by category) ────────────────────────
-	const actionFilterGroups = [
+	const actionFilterGroups: ActionFilterGroup[] = [
 		{
 			categoryId: 'MONITOR',
 			label: 'Monitors',
@@ -113,6 +113,7 @@
 			actions: [
 				{ value: 'ORG_MEMBER_INVITE', label: 'Member Invited' },
 				{ value: 'ORG_MEMBER_JOIN', label: 'Member Joined' },
+				{ value: 'ORG_MEMBER_ACCEPT', label: 'Invite Accepted' },
 				{ value: 'ORG_INVITE_REJECT', label: 'Invite Rejected' },
 				{ value: 'ORG_MEMBER_PROMOTE', label: 'Member Promoted' },
 				{ value: 'ORG_MEMBER_DEMOTE', label: 'Member Demoted' },
@@ -246,12 +247,7 @@
 		return 'text-muted-foreground';
 	}
 
-	function initials(name?: string): string {
-		if (!name) return 'US';
-		const parts = name.trim().split(/\s+/).filter(Boolean);
-		if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-		return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-	}
+	const initials = (name?: string) => getInitials(name);
 
 	let tz = $derived($userTimezone);
 	const fmtTimeAgo = formatTimeAgo;
@@ -281,8 +277,8 @@
 			logs = res.logs ?? [];
 			totalCount = res.total_count ?? 0;
 			totalPages = res.total_pages ?? 1;
-		} catch (err: any) {
-			errorMsg = err.message || 'Failed to load audit logs.';
+		} catch (err: unknown) {
+			errorMsg = err instanceof Error ? err.message : 'Failed to load audit logs.';
 			logs = [];
 		} finally {
 			isInitialLoading = false;
@@ -385,146 +381,20 @@
 
 <div class="text-foreground antialiased mx-auto w-full flex-1 flex flex-col min-h-full">
 	<!-- Filter Controls Toolbar -->
-	<div class="flex flex-col gap-2.5 mb-6">
-		<div
-			class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-2.5 bg-card border border-border rounded-lg"
-		>
-			<!-- Left: Category & Action Selectors -->
-			<div class="flex items-center gap-2 flex-wrap">
-				<!-- Category Dropdown Trigger -->
-				<DropdownMenu.Root>
-					<DropdownMenu.Trigger class="focus:outline-none">
-						<button
-							type="button"
-							class="flex items-center gap-2 h-9 px-3 rounded-lg text-xs font-medium border transition-colors cursor-pointer {selectedCategory !==
-							'ALL'
-								? 'bg-primary/10 border-primary/30 text-primary'
-								: 'bg-surface-sidebar border-border text-foreground hover:bg-white/5'}"
-						>
-							<activeCategory.icon
-								class="size-3.5 {selectedCategory !== 'ALL'
-									? 'text-primary'
-									: 'text-muted-foreground'}"
-							/>
-							<span>{activeCategory.label}</span>
-							<ChevronDown class="size-3 opacity-60 ml-0.5" />
-						</button>
-					</DropdownMenu.Trigger>
-					<DropdownMenu.Content
-						data-lenis-prevent
-						class="w-64 max-h-95 overflow-y-auto bg-card border-border text-foreground rounded-lg p-1.5 shadow-xl z-50"
-						align="start"
-						sideOffset={6}
-					>
-						<DropdownMenu.Label
-							class="text-[10px] text-muted-foreground font-medium px-2 py-1 uppercase tracking-wider"
-						>
-							Filter by Category
-						</DropdownMenu.Label>
-						{#each categories as cat (cat.id)}
-							{@const isSelected = selectedCategory === cat.id}
-							<DropdownMenu.Item
-								class="cursor-pointer flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md hover:bg-white/8 text-xs transition-colors {isSelected
-									? 'text-primary bg-white/5 font-semibold'
-									: 'text-foreground'}"
-								onclick={() => handleCategoryChange(cat.id)}
-							>
-								<div class="flex items-center gap-2">
-									<cat.icon
-										class="size-3.5 {isSelected ? 'text-primary' : 'text-muted-foreground'}"
-									/>
-									<span>{cat.label}</span>
-								</div>
-								{#if isSelected}
-									<CheckCircle2 class="size-3 text-primary shrink-0" />
-								{/if}
-							</DropdownMenu.Item>
-						{/each}
-					</DropdownMenu.Content>
-				</DropdownMenu.Root>
-
-
-				<!-- Reset Filters button -->
-				{#if hasActiveFilters}
-					<button
-						type="button"
-						class="flex items-center gap-1.5 h-9 px-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
-						onclick={resetFilters}
-					>
-						<RotateCcw class="size-3" />
-						<span>Reset</span>
-					</button>
-				{/if}
-			</div>
-
-			<!-- Right: Total Event Counter -->
-			<div class="flex items-center gap-2 self-end sm:self-auto">
-				<span
-					class="text-xs font-mono text-muted-foreground px-2.5 py-1 bg-surface-sidebar border border-border rounded-md"
-				>
-					{totalCount} event{totalCount !== 1 ? 's' : ''}
-				</span>
-			</div>
-		</div>
-
-		<!-- Active Filter Badges Bar (shown only when a filter is applied) -->
-		{#if hasActiveFilters}
-			<div class="flex items-center gap-2 flex-wrap text-xs px-1">
-				<span class="text-[11px] text-muted-foreground font-medium">Active:</span>
-
-				{#if selectedCategory !== 'ALL'}
-					<span
-						class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 border border-primary/20 text-primary text-[11px] font-medium"
-					>
-						<activeCategory.icon class="size-3" />
-						<span>Category: {activeCategory.label}</span>
-						<button
-							type="button"
-							class="hover:text-foreground transition-colors cursor-pointer ml-0.5"
-							onclick={() => handleCategoryChange('ALL')}
-							aria-label="Clear category filter"
-						>
-							<X class="size-3" />
-						</button>
-					</span>
-				{/if}
-
-				{#if selectedAction}
-					<span
-						class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 border border-primary/20 text-primary text-[11px] font-medium"
-					>
-						<ListFilter class="size-3" />
-						<span>Action: {selectedActionLabel}</span>
-						<button
-							type="button"
-							class="hover:text-foreground transition-colors cursor-pointer ml-0.5"
-							onclick={() => handleActionFilterChange('')}
-							aria-label="Clear action filter"
-						>
-							<X class="size-3" />
-						</button>
-					</span>
-				{/if}
-
-				{#if searchQuery}
-					<span
-						class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-border text-foreground text-[11px] font-medium"
-					>
-						<Search class="size-3 text-muted-foreground" />
-						<span>"{searchQuery}"</span>
-						<button
-							type="button"
-							class="text-muted-foreground hover:text-foreground transition-colors cursor-pointer ml-0.5"
-							onclick={clearSearch}
-							aria-label="Clear search"
-						>
-							<X class="size-3" />
-						</button>
-					</span>
-				{/if}
-			</div>
-		{/if}
-	</div>
+	<AuditLogToolbar
+		{categories}
+		{selectedCategory}
+		{activeCategory}
+		{selectedAction}
+		{selectedActionLabel}
+		{searchQuery}
+		{hasActiveFilters}
+		{totalCount}
+		onCategoryChange={handleCategoryChange}
+		onActionClear={() => handleActionFilterChange('')}
+		onResetFilters={resetFilters}
+		onClearSearch={clearSearch}
+	/>
 
 	<!-- Error alert -->
 	{#if errorMsg}
@@ -548,167 +418,18 @@
 				: 'No recorded activity events for this organization yet.'}
 		/>
 	{:else}
-		<div
-			class="border border-border rounded-lg bg-card overflow-hidden flex flex-col max-h-[calc(100vh-16rem)] transition-opacity duration-200 {isFetching
-				? 'opacity-50 pointer-events-none'
-				: 'opacity-100'}"
-		>
-			<!-- Table Column Headers -->
-			<div class="log-table-header sticky top-0 bg-[#0a0a0b] z-10">
-				<div class="log-col-actor">Actor</div>
-				<div class="log-col-action">
-					<DropdownMenu.Root>
-						<DropdownMenu.Trigger class="focus:outline-none w-full">
-							<span
-								class="flex items-center gap-1.5 transition-colors {selectedAction
-									? 'text-primary'
-									: 'text-inherit hover:text-foreground'}"
-							>
-								<span class="truncate">{selectedActionLabel || 'Action'}</span>
-								{#if selectedAction}
-									<!-- svelte-ignore a11y_no_static_element_interactions -->
-									<span
-										role="button"
-										tabindex="-1"
-										class="size-3.5 rounded-full bg-primary/20 hover:bg-primary/40 flex items-center justify-center transition-colors shrink-0"
-										onclick={(e) => {
-											e.stopPropagation();
-											handleActionFilterChange('');
-										}}
-										onkeydown={(e) => {
-											if (e.key === 'Enter') {
-												e.stopPropagation();
-												handleActionFilterChange('');
-											}
-										}}
-									>
-										<X class="size-2.5 text-primary" />
-									</span>
-								{:else}
-									<ListFilter class="size-3 opacity-50 shrink-0" />
-								{/if}
-							</span>
-						</DropdownMenu.Trigger>
-						<DropdownMenu.Content
-							data-lenis-prevent
-							class="w-72 max-h-90 overflow-y-auto bg-card border-border text-foreground rounded-lg p-1.5 shadow-xl z-50"
-							align="start"
-							sideOffset={6}
-						>
-							<!-- All Actions option -->
-							<DropdownMenu.Item
-								class="cursor-pointer flex items-center justify-between px-2.5 py-2 rounded-md hover:bg-white/8 text-xs font-medium {selectedAction ===
-								''
-									? 'text-primary bg-white/5 font-semibold'
-									: 'text-foreground'}"
-								onclick={() => handleActionFilterChange('')}
-							>
-								<span>All Actions</span>
-								{#if selectedAction === ''}
-									<CheckCircle2 class="size-3 text-primary shrink-0" />
-								{/if}
-							</DropdownMenu.Item>
-
-							{#each visibleActionGroups as group (group.categoryId)}
-								<DropdownMenu.Separator class="bg-white/8 my-1" />
-								<DropdownMenu.Label
-									class="text-[10px] text-muted-foreground font-medium px-2.5 py-1 uppercase tracking-wider flex items-center gap-1.5"
-								>
-									<group.icon class="size-3 opacity-70" />
-									<span>{group.label}</span>
-								</DropdownMenu.Label>
-								{#each group.actions as action (action.value)}
-									{@const isSelected = selectedAction === action.value}
-									{@const style = getActionStyle(action.value)}
-									<DropdownMenu.Item
-										class="cursor-pointer flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md hover:bg-white/8 text-xs {isSelected
-											? 'text-primary bg-white/5 font-semibold'
-											: 'text-foreground'}"
-										onclick={() => handleActionFilterChange(action.value)}
-									>
-										<span class="font-mono text-[11px] {style}">{action.label}</span>
-										{#if isSelected}
-											<CheckCircle2 class="size-3 text-primary shrink-0" />
-										{/if}
-									</DropdownMenu.Item>
-								{/each}
-							{/each}
-						</DropdownMenu.Content>
-					</DropdownMenu.Root>
-				</div>
-				<div class="log-col-desc">Event / Details</div>
-				<div class="log-col-ip">IP Address</div>
-				<div class="log-col-date text-right">Time</div>
-			</div>
-
-			<!-- Log Rows (Scrollable) -->
-			<div data-lenis-prevent class="overflow-y-auto flex-1 divide-y divide-white/5">
-				{#each logs as log (log.id)}
-					{@const actionStyle = getActionStyle(log.action)}
-					<div
-						class="log-table-row hover:bg-white/3 transition-colors text-xs py-3 px-4 flex flex-col md:grid md:grid-cols-[200px_160px_1fr_130px_140px] items-start md:items-center gap-2 md:gap-4"
-					>
-						<!-- Col 1: Actor -->
-						<div class="flex items-center gap-2.5 min-w-0 w-full md:w-auto">
-							<div
-								class="size-7 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-[11px] shrink-0"
-							>
-								{#if log.user_avatar_url}
-									<img
-										src={log.user_avatar_url}
-										alt={log.user_name || 'User'}
-										class="size-full object-cover rounded-lg"
-									/>
-								{:else}
-									{initials(log.user_name)}
-								{/if}
-							</div>
-							<div class="min-w-0 flex-1">
-								<p class="text-foreground font-medium truncate text-xs">
-									{log.user_name || 'Unknown'}
-								</p>
-								<p class="text-[10px] text-muted-foreground font-mono truncate">
-									{log.user_email || 'System'}
-								</p>
-							</div>
-						</div>
-
-						<!-- Col 2: Action -->
-						<div class="w-full md:w-auto">
-							<span
-								class="inline-flex items-center px-2 py-0.5 rounded-md font-mono text-[11px] font-semibold {actionStyle} bg-white/5 border border-white/5"
-							>
-								{log.action}
-							</span>
-						</div>
-
-						<!-- Col 3: Description -->
-						<div class="min-w-0 w-full md:w-auto">
-							<p class="text-foreground/90 font-normal truncate leading-relaxed">
-								{log.description}
-							</p>
-							{#if log.details}
-								<p class="text-[11px] text-muted-foreground/60 font-mono truncate mt-0.5">
-									{log.details}
-								</p>
-							{/if}
-						</div>
-
-						<!-- Col 4: IP Address -->
-						<div class="text-[11px] font-mono text-muted-foreground/60 w-full md:w-auto">
-							{log.ip_address || '—'}
-						</div>
-
-						<!-- Col 5: Timestamp -->
-						<div class="text-right w-full md:w-auto" title={fmtFullDate(log.created_at)}>
-							<span class="text-xs text-muted-foreground/80 font-medium">
-								{fmtTimeAgo(log.created_at)}
-							</span>
-						</div>
-					</div>
-				{/each}
-			</div>
-		</div>
+		<AuditLogTable
+			{logs}
+			{isFetching}
+			{selectedAction}
+			{selectedActionLabel}
+			{visibleActionGroups}
+			{getActionStyle}
+			onActionFilterChange={handleActionFilterChange}
+			{fmtTimeAgo}
+			{fmtFullDate}
+			{initials}
+		/>
 
 		<!-- Pagination Footer -->
 		<Pagination
@@ -721,25 +442,3 @@
 		/>
 	{/if}
 </div>
-
-<style>
-	.log-table-header {
-		display: none;
-		padding: 0.625rem 1rem;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-		font-size: 0.6875rem;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: rgba(255, 255, 255, 0.4);
-	}
-
-	@media (min-width: 768px) {
-		.log-table-header {
-			display: grid;
-			grid-template-columns: 200px 160px 1fr 130px 140px;
-			gap: 1rem;
-			align-items: center;
-		}
-	}
-</style>

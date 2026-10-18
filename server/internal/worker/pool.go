@@ -28,6 +28,7 @@ type WorkerPool struct {
 	emailSender email.EmailSender
 	hub         *websocket.WsHandler
 	dispatcher  *notification.Dispatcher
+	notifySem   chan struct{}
 }
 
 func NewWorkerPool(db *gorm.DB, numWorkers int, sender email.EmailSender, hub *websocket.WsHandler) *WorkerPool {
@@ -38,7 +39,16 @@ func NewWorkerPool(db *gorm.DB, numWorkers int, sender email.EmailSender, hub *w
 		emailSender: sender,
 		hub:         hub,
 		dispatcher:  notification.NewDispatcher(db, sender),
+		notifySem:   make(chan struct{}, 50), // max 50 concurrent notification goroutines
 	}
+}
+
+func (wp *WorkerPool) safeGoNotify(fn func()) {
+	go func() {
+		wp.notifySem <- struct{}{}
+		defer func() { <-wp.notifySem }()
+		fn()
+	}()
 }
 
 func (wp *WorkerPool) Start() {
@@ -185,8 +195,12 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 			subject := fmt.Sprintf("[Netra Uptime] Resolved: %s is back UP", monitor.Name)
 			message := fmt.Sprintf("<h3>Service Restored</h3><p>Your monitor <b>%s</b> (%s) has returned to healthy state (previously %s).</p>", dbMonitor.Name, dbMonitor.Target, prevStatus)
 
-			go wp.sendNotification(&dbMonitor, subject, message)
-			go wp.dispatcher.Dispatch(&dbMonitor, nil, "monitor.up", subject, message)
+			wp.safeGoNotify(func() {
+				wp.sendNotification(&dbMonitor, subject, message)
+			})
+			wp.safeGoNotify(func() {
+				wp.dispatcher.Dispatch(&dbMonitor, nil, "monitor.up", subject, message)
+			})
 
 			now := time.Now()
 			err := wp.db.Model(&model.Incident{}).Where("monitor_id = ? AND status = ?", monitor.ID, "ongoing").Updates(map[string]interface{}{
@@ -262,7 +276,9 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 					message = fmt.Sprintf("<h3>Service Degraded Warning</h3><p>Your monitor <b>%s</b> (%s) is experiencing degraded performance.<br>Rule: <b>%s</b><br>Reason: <i>%s</i> (breached %d consecutive times)</p>", dbMonitor.Name, dbMonitor.Target, eval.RuleName, eval.Reason, eval.RequiredBreaches)
 				}
 
-				go wp.sendNotification(&dbMonitor, subject, message)
+				wp.safeGoNotify(func() {
+					wp.sendNotification(&dbMonitor, subject, message)
+				})
 
 				var alertRuleUUID *uuid.UUID
 				if eval.RuleID != nil {
@@ -285,7 +301,9 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 					log.Printf("[Incident] Failed to create incident for monitor %s: %v\n", monitor.Name, err)
 				} else {
 					incidentIDStr := newIncident.ID.String()
-					go wp.dispatcher.Dispatch(&dbMonitor, &incidentIDStr, "monitor.degraded", subject, message)
+					wp.safeGoNotify(func() {
+						wp.dispatcher.Dispatch(&dbMonitor, &incidentIDStr, "monitor.degraded", subject, message)
+					})
 					log.Printf("[Incident] MONITOR UNRESPONSIVE / DEGRADED: %s (%s). %s\n", monitor.Name, eval.RuleName, eval.Reason)
 				}
 			} else {

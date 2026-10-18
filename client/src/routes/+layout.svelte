@@ -1,6 +1,5 @@
 <script lang="ts">
 	import './layout.css';
-	import NetraUptimeLogo from '$lib/assets/Logo.svg';
 	import { onMount } from 'svelte';
 	import Lenis from 'lenis';
 	import 'lenis/dist/lenis.css';

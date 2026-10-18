@@ -396,7 +396,7 @@
 								class="bg-background border-border text-foreground h-10 rounded-lg text-sm font-mono uppercase max-w-[140px]"
 							/>
 							<div class="flex items-center gap-1.5 flex-wrap">
-								{#each colorPresets as preset}
+								{#each colorPresets as preset (preset.hex)}
 									<button
 										type="button"
 										onclick={() => (themeColor = preset.hex)}

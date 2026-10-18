@@ -305,7 +305,7 @@
 					<div class="space-y-2">
 						<Label class="text-xs text-muted-foreground font-medium">Existing Groups</Label>
 						<div class="space-y-2">
-							{#each groups as g}
+							{#each groups as g (g.id)}
 								<div
 									class="flex items-center justify-between p-3 rounded-lg border border-border/70 bg-white/3 transition-colors hover:border-border"
 								>
@@ -364,7 +364,7 @@
 						</div>
 					{:else}
 						<div class="space-y-2">
-							{#each pageMonitors as mon}
+							{#each pageMonitors as mon (mon.ID)}
 								<div
 									class="flex items-center justify-between p-3 rounded-lg border border-border/70 bg-white/3 gap-3"
 								>
@@ -383,7 +383,7 @@
 											onchange={(e) => handleAssignMonitor(mon.ID, e.currentTarget.value)}
 										>
 											<option value="">Ungrouped (Default)</option>
-											{#each groups as g}
+											{#each groups as g (g.id)}
 												<option value={g.id}>{g.name}</option>
 											{/each}
 										</select>

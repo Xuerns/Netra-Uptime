@@ -61,7 +61,7 @@
 	role="img"
 	aria-label="Daily uptime chart"
 >
-	{#each bars as bar, i}
+	{#each bars as bar, i (i)}
 		<rect
 			x={bar.x}
 			y={bar.y}

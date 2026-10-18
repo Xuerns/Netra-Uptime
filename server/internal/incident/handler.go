@@ -50,7 +50,8 @@ func (h *Incidenthandler) GetAllIncident(c *gin.Context) {
 		return
 	}
 
-	incidents, err := h.service.GetAllIncident(orgId.(uuid.UUID).String())
+	monitorId := c.Query("monitor_id")
+	incidents, err := h.service.GetAllIncident(orgId.(uuid.UUID).String(), monitorId)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get incident"})

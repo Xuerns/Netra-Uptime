@@ -26,7 +26,7 @@ func init() {
 // Mock Repository
 type mockIncidentRepo struct {
 	getByIdFunc          func(orgId, incidentId string) (*model.Incident, error)
-	getAllByOrgFunc      func(orgId string) ([]model.Incident, error)
+	getAllByOrgFunc      func(orgId string, monitorId ...string) ([]model.Incident, error)
 	createUpdateFunc     func(update *model.IncidentUpdate) error
 	getIncidentOnlyFunc  func(incidentId string) (*model.Incident, error)
 	addAssigneeFunc      func(assignee *model.IncidentAssignee) error
@@ -41,9 +41,9 @@ func (m *mockIncidentRepo) GetById(orgId, incidentId string) (*model.Incident, e
 	return nil, errors.New("incident not found")
 }
 
-func (m *mockIncidentRepo) GetAllByOrg(orgId string) ([]model.Incident, error) {
+func (m *mockIncidentRepo) GetAllByOrg(orgId string, monitorId ...string) ([]model.Incident, error) {
 	if m.getAllByOrgFunc != nil {
-		return m.getAllByOrgFunc(orgId)
+		return m.getAllByOrgFunc(orgId, monitorId...)
 	}
 	return nil, nil
 }
@@ -99,7 +99,7 @@ func (m *mockIncidentService) GetIncidentDetail(orgId, incidentId string) (*Inci
 	return &IncidentResponse{ID: incidentId}, nil
 }
 
-func (m *mockIncidentService) GetAllIncident(orgId string) ([]IncidentResponse, error) {
+func (m *mockIncidentService) GetAllIncident(orgId string, monitorId ...string) ([]IncidentResponse, error) {
 	if m.getAllIncidentFunc != nil {
 		return m.getAllIncidentFunc(orgId)
 	}
@@ -164,7 +164,7 @@ func TestIncidentService_GetIncidentDetail_Success(t *testing.T) {
 
 func TestIncidentService_GetAllIncident_Success(t *testing.T) {
 	repo := &mockIncidentRepo{
-		getAllByOrgFunc: func(orgId string) ([]model.Incident, error) {
+		getAllByOrgFunc: func(orgId string, monitorId ...string) ([]model.Incident, error) {
 			return []model.Incident{
 				{ID: uuid.New(), Status: "resolved", StartedAt: time.Now()},
 				{ID: uuid.New(), Status: "investigating", StartedAt: time.Now()},

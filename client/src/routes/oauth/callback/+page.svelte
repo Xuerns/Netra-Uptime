@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { env } from '$env/dynamic/public';
+	import { goto } from '$app/navigation';
+	import { AuthAPI } from '$lib/api/auth';
 	import { parseApiError } from '$lib/utils/parseApiError';
 
 	let error = $state('');
@@ -29,32 +30,15 @@
 		const timeout = setTimeout(() => controller.abort(), 15000);
 
 		try {
-			const API_Route = `${env.PUBLIC_API_URL}`;
-			const response = await fetch(`${API_Route}/auth`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ provider, code, state }),
-				credentials: 'include',
-				signal: controller.signal
-			});
-
+			await AuthAPI.authenticateOAuth({ provider, code, state }, controller.signal);
 			clearTimeout(timeout);
-			const data = await response.json();
-
-			if (!response.ok) {
-				throw new Error(data.error || data.message || 'Failed to authenticate with provider');
-			}
-
-			// Redirect to dashboard on success
-			window.location.href = '/dashboard/org';
+			goto('/dashboard/org');
 		} catch (err: any) {
 			clearTimeout(timeout);
 			if (import.meta.env.DEV) {
 				console.error(err);
 			}
-			if (err.name === 'AbortError') {
+			if (err?.name === 'AbortError') {
 				error = 'Authentication timed out. Please try again.';
 			} else {
 				error = parseApiError(err, 'An error occurred during authentication');
@@ -70,9 +54,7 @@
 <main
 	class="min-h-screen flex items-center justify-center p-sm md:p-md text-foreground antialiased w-full auth-bg"
 >
-	<div
-		class="w-full max-w-[448px] bg-card rounded-xl border border-border p-lg shadow-sm text-center"
-	>
+	<div class="w-full max-w-112 bg-card rounded-xl border border-border p-lg shadow-sm text-center">
 		{#if error}
 			<div class="flex flex-col items-center gap-4">
 				<div
