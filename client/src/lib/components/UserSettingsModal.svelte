@@ -3,9 +3,10 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
+	import * as Popover from '$lib/components/ui/popover/index.js';
+	import * as Command from '$lib/components/ui/command/index.js';
 	import { userTimezone, POPULAR_TIMEZONES } from '$lib/stores/timezone';
-	import { Search, Clock, ChevronDown } from 'lucide-svelte';
-	import { tick } from 'svelte';
+	import { Clock, Check, ChevronsUpDown } from 'lucide-svelte';
 	import { setMode, mode } from 'mode-watcher';
 
 	let { open = $bindable(false) } = $props();
@@ -14,51 +15,16 @@
 	let language = $state('en');
 	let timezone = $state($userTimezone);
 
-	// ── Timezone dropdown state ───────────────────────────────────────────────
+	// ── Timezone Combobox state ───────────────────────────────────────────────
 	let tzDropdownOpen = $state(false);
-	let tzSearch = $state('');
-	let tzDropdownEl = $state<HTMLDivElement | null>(null);
 
-	// Filter timezone berdasarkan search query
-	const filteredTimezones = $derived(
-		tzSearch.trim() === ''
-			? POPULAR_TIMEZONES
-			: POPULAR_TIMEZONES.filter(
-					(tz) =>
-						tz.label.toLowerCase().includes(tzSearch.toLowerCase()) ||
-						tz.value.toLowerCase().includes(tzSearch.toLowerCase()) ||
-						tz.region.toLowerCase().includes(tzSearch.toLowerCase())
-				)
-	);
-
-	// Kelompokkan per region, hanya tampilkan region yang ada hasilnya
-	const filteredRegions = $derived([...new Set(filteredTimezones.map((tz) => tz.region))]);
-	const byRegionFiltered = (region: string) =>
-		filteredTimezones.filter((tz) => tz.region === region);
+	const regions = [...new Set(POPULAR_TIMEZONES.map((tz) => tz.region))];
+	const byRegion = (region: string) => POPULAR_TIMEZONES.filter((tz) => tz.region === region);
 
 	// Label trigger button
 	const selectedLabel = $derived(
 		POPULAR_TIMEZONES.find((tz) => tz.value === timezone)?.label ?? timezone
 	);
-
-	async function openTzDropdown() {
-		tzDropdownOpen = true;
-		tzSearch = '';
-		await tick();
-		const input = tzDropdownEl?.querySelector('input');
-		input?.focus();
-	}
-
-	function selectTimezone(value: string) {
-		timezone = value;
-		tzDropdownOpen = false;
-		tzSearch = '';
-	}
-
-	function closeTzDropdown() {
-		tzDropdownOpen = false;
-		tzSearch = '';
-	}
 
 	function saveSettings() {
 		userTimezone.set(timezone);
@@ -130,105 +96,50 @@
 				</Select.Root>
 			</div>
 
-			<!-- Timezone — Custom dropdown dengan search + scrollbar -->
+			<!-- Timezone — Combobox (Popover + Command) -->
 			<div class="space-y-3">
 				<Label class="text-muted-foreground font-medium">Timezone</Label>
-				<div class="relative" bind:this={tzDropdownEl}>
-					<!-- Trigger button -->
-					<button
-						type="button"
-						id="tz-trigger"
-						onclick={openTzDropdown}
-						class="w-full flex items-center justify-between gap-2 h-11 px-3 rounded-md border border-border bg-secondary text-foreground text-sm text-left transition-colors hover:border-ring/40 focus:outline-none focus:ring-1 focus:ring-primary/60 {tzDropdownOpen
-							? 'border-ring/40 ring-1 ring-primary/40'
-							: ''}"
+				<Popover.Root bind:open={tzDropdownOpen}>
+					<Popover.Trigger
+						class="w-full flex items-center justify-between gap-2 h-11 px-3 rounded-md border border-border bg-secondary text-foreground text-sm text-left transition-colors hover:border-ring/40 focus:outline-none focus:ring-1 focus:ring-primary/60 cursor-pointer"
 					>
 						<span class="flex items-center gap-2 min-w-0">
 							<Clock class="size-3.5 text-muted-foreground shrink-0" />
 							<span class="truncate font-mono text-xs">{selectedLabel}</span>
 						</span>
-						<ChevronDown
-							class="size-4 text-muted-foreground shrink-0 transition-transform duration-200 {tzDropdownOpen
-								? 'rotate-180'
-								: ''}"
-						/>
-					</button>
-
-					<!-- Dropdown panel -->
-					{#if tzDropdownOpen}
-						<!-- Backdrop untuk close on outside click -->
-						<button
-							type="button"
-							class="fixed inset-0 z-40 cursor-default bg-transparent"
-							onclick={closeTzDropdown}
-							tabindex="-1"
-							aria-hidden="true"
-						></button>
-
-						<div
-							class="tz-dropdown absolute left-0 right-0 top-[calc(100%+4px)] z-50 rounded-lg border border-border bg-popover shadow-2xl overflow-hidden"
-						>
-							<!-- Search bar -->
-							<div class="p-2 border-b border-border">
-								<div
-									class="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-secondary border border-border focus-within:border-ring/40 transition-colors"
-								>
-									<Search class="size-3.5 text-muted-foreground shrink-0" />
-									<input
-										type="text"
-										bind:value={tzSearch}
-										placeholder="Search timezone…"
-										class="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
-									/>
-									{#if tzSearch}
-										<button
-											type="button"
-											onclick={() => (tzSearch = '')}
-											class="text-muted-foreground hover:text-foreground transition-colors leading-none"
-											aria-label="Clear search">✕</button
-										>
-									{/if}
-								</div>
-							</div>
-
-							<!-- Scrollable list -->
-							<div data-lenis-prevent class="tz-scroll-list max-h-52 overflow-y-auto py-1">
-								{#if filteredTimezones.length === 0}
-									<div class="px-4 py-6 text-center text-sm text-muted-foreground">
-										No timezone found for "<span class="text-foreground">{tzSearch}</span>"
-									</div>
-								{:else}
-									{#each filteredRegions as region}
-										<div class="px-3 pt-2 pb-0.5">
-											<span
-												class="text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground/60"
+						<ChevronsUpDown class="size-4 text-muted-foreground shrink-0 opacity-50" />
+					</Popover.Trigger>
+					<Popover.Content
+						class="w-[var(--bits-popover-anchor-width)] min-w-[320px] p-0"
+						align="start"
+					>
+						<Command.Root>
+							<Command.Input placeholder="Search timezone..." />
+							<Command.List class="max-h-56 overflow-y-auto">
+								<Command.Empty>No timezone found.</Command.Empty>
+								{#each regions as region}
+									<Command.Group heading={region}>
+										{#each byRegion(region) as tz}
+											<Command.Item
+												value="{tz.label} {tz.value} {region}"
+												onSelect={() => {
+													timezone = tz.value;
+													tzDropdownOpen = false;
+												}}
+												class="font-mono text-xs cursor-pointer flex items-center justify-between"
 											>
-												{region}
-											</span>
-										</div>
-										{#each byRegionFiltered(region) as tz}
-											<button
-												type="button"
-												onclick={() => selectTimezone(tz.value)}
-												class="tz-item w-full text-left px-3 py-1.5 text-xs font-mono rounded-md transition-colors
-												{timezone === tz.value
-													? 'bg-primary/15 text-primary'
-													: 'text-muted-foreground hover:bg-accent hover:text-foreground'}"
-											>
-												<span class="flex items-center justify-between">
-													<span>{tz.label}</span>
-													{#if timezone === tz.value}
-														<span class="text-primary text-[10px] shrink-0 ml-2">✓</span>
-													{/if}
-												</span>
-											</button>
+												<span>{tz.label}</span>
+												{#if timezone === tz.value}
+													<Check class="size-3.5 text-primary shrink-0 ml-2" />
+												{/if}
+											</Command.Item>
 										{/each}
-									{/each}
-								{/if}
-							</div>
-						</div>
-					{/if}
-				</div>
+									</Command.Group>
+								{/each}
+							</Command.List>
+						</Command.Root>
+					</Popover.Content>
+				</Popover.Root>
 				<p class="text-xs text-muted-foreground">
 					Semua waktu di dashboard akan ditampilkan dalam timezone ini.
 				</p>
@@ -252,47 +163,3 @@
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>
-
-<style>
-	/* Custom scrollbar */
-	.tz-scroll-list {
-		scrollbar-width: thin;
-		scrollbar-color: var(--border) transparent;
-	}
-	.tz-scroll-list::-webkit-scrollbar {
-		width: 5px;
-	}
-	.tz-scroll-list::-webkit-scrollbar-track {
-		background: transparent;
-	}
-	.tz-scroll-list::-webkit-scrollbar-thumb {
-		background-color: var(--border);
-		border-radius: 999px;
-	}
-	.tz-scroll-list::-webkit-scrollbar-thumb:hover {
-		background-color: var(--muted-foreground);
-	}
-
-	/* Timezone item full width inside container */
-	.tz-item {
-		display: block;
-		width: calc(100% - 8px);
-		margin-left: 4px;
-		margin-right: 4px;
-	}
-
-	/* Dropdown slide-in animation */
-	.tz-dropdown {
-		animation: tz-slide-in 120ms cubic-bezier(0.16, 1, 0.3, 1);
-	}
-	@keyframes tz-slide-in {
-		from {
-			opacity: 0;
-			transform: translateY(-6px) scale(0.98);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0) scale(1);
-		}
-	}
-</style>

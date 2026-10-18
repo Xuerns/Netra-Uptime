@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Send, Loader2 } from 'lucide-svelte';
+	import { Textarea } from '$lib/components/ui/textarea/index.js';
 
 	interface Props {
 		isPosting: boolean;
@@ -22,11 +23,12 @@
 	<h2 class="text-sm font-semibold text-foreground tracking-tight">Post Incident Status Update</h2>
 
 	<div class="space-y-3">
-		<textarea
+		<Textarea
 			bind:value={message}
 			placeholder="Describe current status, root cause findings, or mitigation steps..."
-			class="w-full bg-foreground/20 border border-border rounded-lg p-3 text-xs text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary transition-colors resize-none"
-			rows="3"></textarea>
+			class="min-h-24 resize-none text-xs"
+			rows={3}
+		/>
 
 		<div class="flex justify-end">
 			<button

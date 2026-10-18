@@ -3,6 +3,7 @@
 	import { formatDateTime } from '$lib/utils/datetime';
 	import { userTimezone } from '$lib/stores/timezone';
 	import { Sparkles, ShieldAlert, Monitor, Clock, ChevronRight } from 'lucide-svelte';
+	import { Badge } from '$lib/components/ui/badge/index.js';
 
 	interface Props {
 		template: AlertTemplate;
@@ -26,12 +27,13 @@
 				{template.name}
 			</a>
 			{#if template.is_default}
-				<span
-					class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-medium bg-primary/10 border border-primary/20 text-primary"
+				<Badge
+					variant="outline"
+					class="gap-1 px-2 py-0.5 text-[10.5px] font-medium bg-primary/10 border-primary/20 text-primary"
 				>
 					<Sparkles class="size-2.5" />
 					Default
-				</span>
+				</Badge>
 			{/if}
 		</div>
 		{#if template.description}

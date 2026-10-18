@@ -1,4 +1,6 @@
 <script lang="ts">
+	import * as Tabs from '$lib/components/ui/tabs/index.js';
+
 	export type Period = '24h' | '7d' | '30d' | '90d' | '1y';
 
 	interface Props {
@@ -15,20 +17,20 @@
 <div
 	class="flex items-center justify-between bg-card border border-border rounded-lg p-1.5 flex-wrap gap-2"
 >
-	<div class="flex items-center gap-1.5">
-		{#each periods as period (period)}
-			<button
-				type="button"
-				class="px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer {activePeriod ===
-				period
-					? 'bg-primary text-primary-foreground'
-					: 'text-muted-foreground hover:text-foreground hover:bg-white/5'}"
-				onclick={() => onSelectPeriod(period)}
-			>
-				{period.toUpperCase()}
-			</button>
-		{/each}
-	</div>
+	<Tabs.Root
+		value={activePeriod}
+		onValueChange={(val) => {
+			if (val) onSelectPeriod(val as Period);
+		}}
+	>
+		<Tabs.List class="h-8">
+			{#each periods as period (period)}
+				<Tabs.Trigger value={period} class="px-3 py-1 text-xs font-semibold">
+					{period.toUpperCase()}
+				</Tabs.Trigger>
+			{/each}
+		</Tabs.List>
+	</Tabs.Root>
 
 	<div class="text-xs text-muted-foreground font-mono px-3 hidden sm:block">
 		Showing analytics for last {effectiveDays} day{effectiveDays > 1 ? 's' : ''}

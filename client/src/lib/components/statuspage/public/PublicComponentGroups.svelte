@@ -2,6 +2,7 @@
 	import { Radio, ChevronDown, FolderTree } from 'lucide-svelte';
 	import type { PublicStatusPage, PublicMonitor } from '$lib/api/statuspage';
 	import PublicMonitorRow from '$lib/components/statuspage/PublicMonitorRow.svelte';
+	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
 
 	interface Props {
 		statusPage: PublicStatusPage;
@@ -55,12 +56,14 @@
 					{@const isCollapsed = collapsedGroups[gInfo.group.id] ?? false}
 					{@const gBadge = getGroupStatusBadge(gInfo.status)}
 
-					<div class="rounded-xl border border-border/80 bg-white/3 overflow-hidden shadow-sm">
-						<!-- Group Header (Collapsible Accordion Trigger) -->
-						<button
-							type="button"
-							class="w-full px-5 py-4 flex items-center justify-between gap-3 bg-white/2 hover:bg-white/5 transition-colors border-b border-border/50 text-left cursor-pointer"
-							onclick={() => onToggleGroup(gInfo.group.id)}
+					<Collapsible.Root
+						open={!isCollapsed}
+						onOpenChange={() => onToggleGroup(gInfo.group.id)}
+						class="rounded-xl border border-border/80 bg-white/3 overflow-hidden shadow-sm"
+					>
+						<!-- Group Header (Collapsible Trigger) -->
+						<Collapsible.Trigger
+							class="w-full px-5 py-4 flex items-center justify-between gap-3 bg-white/2 hover:bg-white/5 transition-colors text-left cursor-pointer data-[state=open]:border-b data-[state=open]:border-border/50"
 						>
 							<div class="flex items-center gap-3 min-w-0">
 								<ChevronDown
@@ -86,10 +89,12 @@
 								<span style={gBadge.dotStyle} class="size-2 rounded-full {gBadge.dotClass}"></span>
 								<span style={gBadge.textStyle} class={gBadge.textClass}>{gBadge.label}</span>
 							</div>
-						</button>
+						</Collapsible.Trigger>
 
 						<!-- Group Monitor Rows -->
-						{#if !isCollapsed}
+						<Collapsible.Content
+							class="overflow-hidden transition-all data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down"
+						>
 							<div class="p-4 sm:p-5 space-y-4">
 								{#if gInfo.monitors.length === 0}
 									<div class="text-xs text-muted-foreground py-3 text-center italic">
@@ -101,8 +106,8 @@
 									{/each}
 								{/if}
 							</div>
-						{/if}
-					</div>
+						</Collapsible.Content>
+					</Collapsible.Root>
 				{/each}
 
 				<!-- Ungrouped Monitors (if any) -->

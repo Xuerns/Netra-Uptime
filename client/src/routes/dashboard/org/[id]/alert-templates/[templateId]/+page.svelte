@@ -21,6 +21,7 @@
 		Layers
 	} from 'lucide-svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
+	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { DataSkeleton } from '$lib/components/common';
 	import {
 		EditAlertTemplateModal,
@@ -145,12 +146,13 @@
 						{template.name}
 					</h1>
 					{#if template.is_default}
-						<span
-							class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 border border-primary/20 text-primary"
+						<Badge
+							variant="outline"
+							class="gap-1 px-2.5 py-0.5 text-xs font-medium bg-primary/10 border-primary/20 text-primary"
 						>
 							<Sparkles class="size-3" />
 							Default Policy
-						</span>
+						</Badge>
 					{/if}
 				</div>
 				<p class="text-sm text-muted-foreground leading-relaxed">

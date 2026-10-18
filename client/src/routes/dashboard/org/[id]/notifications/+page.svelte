@@ -4,6 +4,7 @@
 	import { headerStore } from '$lib/stores/headerStore.svelte';
 	import { Bell, Plus, TriangleAlert } from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import * as Tabs from '$lib/components/ui/tabs/index.js';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import {
 		NotificationAPI,
@@ -28,7 +29,7 @@
 	const orgId = $derived($page.params.id as string);
 
 	type SubTab = 'channels' | 'history';
-	let activeSubTab = $state<SubTab>('channels');
+	let activeSubTab = $state<string>('channels');
 
 	// Channels state
 	let channels = $state<NotificationChannel[]>([]);
@@ -162,121 +163,113 @@
 	</header>
 
 	<!-- Sub-nav Tabs -->
-	<div class="flex items-center justify-between border-b border-border pb-3 mb-6">
-		<div class="flex items-center gap-2">
-			<button
-				type="button"
-				class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer {activeSubTab ===
-				'channels'
-					? 'bg-border text-foreground font-semibold'
-					: 'text-muted-foreground hover:text-foreground hover:bg-white/5'}"
-				onclick={() => (activeSubTab = 'channels')}
-			>
-				Channels ({channels.length})
-			</button>
-			<button
-				type="button"
-				class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer {activeSubTab ===
-				'history'
-					? 'bg-border text-foreground font-semibold'
-					: 'text-muted-foreground hover:text-foreground hover:bg-white/5'}"
-				onclick={() => (activeSubTab = 'history')}
-			>
-				History Logs
-			</button>
+	<Tabs.Root bind:value={activeSubTab} class="w-full">
+		<div class="flex items-center justify-between border-b border-border pb-3 mb-6">
+			<Tabs.List class="h-9">
+				<Tabs.Trigger value="channels" class="px-3.5 py-1.5 text-xs font-medium cursor-pointer">
+					Channels ({channels.length})
+				</Tabs.Trigger>
+				<Tabs.Trigger value="history" class="px-3.5 py-1.5 text-xs font-medium cursor-pointer">
+					History Logs
+				</Tabs.Trigger>
+			</Tabs.List>
 		</div>
-	</div>
 
-	<!-- TAB 1: CHANNELS -->
-	{#if activeSubTab === 'channels'}
-		{#if isLoadingChannels}
-			<DataSkeleton variant="channel" count={4} />
-		{:else if channelsError}
-			<div
-				class="flex flex-col items-center justify-center gap-3 py-16 border border-border rounded-lg bg-white/3"
-			>
-				<TriangleAlert class="size-8 text-destructive" />
-				<p class="text-sm text-muted-foreground">{channelsError}</p>
-				<Button
-					class="bg-secondary border border-border text-muted-foreground hover:text-foreground hover:bg-accent h-9 px-4 text-xs font-medium cursor-pointer"
-					onclick={loadChannels}
+		<!-- TAB 1: CHANNELS -->
+		<Tabs.Content value="channels">
+			{#if isLoadingChannels}
+				<DataSkeleton variant="channel" count={4} />
+			{:else if channelsError}
+				<div
+					class="flex flex-col items-center justify-center gap-3 py-16 border border-border rounded-lg bg-white/3"
 				>
-					Try again
-				</Button>
-			</div>
-		{:else if channels.length === 0}
-			<div
-				class="flex flex-col items-center justify-center text-center py-20 px-6 gap-3.5 bg-white/3 border border-border rounded-lg backdrop-blur-md"
-			>
-				<div class="flex items-center justify-center size-14 rounded-lg bg-primary/8 text-primary">
-					<Bell class="size-6" />
-				</div>
-				<h2 class="text-[18px] font-semibold text-foreground m-0">No notification channels yet</h2>
-				<p class="text-sm leading-relaxed text-muted-foreground max-w-95 m-0">
-					{#if canManage}
-						Add Email, Slack Incoming Webhooks, Discord, or Custom Webhooks to send monitor downtime
-						alerts to your team.
-					{:else}
-						No notification channels configured for this organization.
-					{/if}
-				</p>
-				{#if canManage}
+					<TriangleAlert class="size-8 text-destructive" />
+					<p class="text-sm text-muted-foreground">{channelsError}</p>
 					<Button
-						class="mt-2 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground h-10 px-5 text-xs font-medium cursor-pointer"
-						onclick={() => {
-							isAddModalOpen = true;
-						}}
+						class="bg-secondary border border-border text-muted-foreground hover:text-foreground hover:bg-accent h-9 px-4 text-xs font-medium cursor-pointer"
+						onclick={loadChannels}
 					>
-						<Plus class="size-4 mr-1.5" />
-						Add Channel
+						Try again
 					</Button>
-				{/if}
-			</div>
-		{:else}
-			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-				{#each channels as ch (ch.id)}
-					<ChannelCard
-						channel={ch}
-						{canManage}
-						isToggling={togglingId === ch.id}
-						onToggle={handleToggleChannel}
-						onDelete={openDeleteConfirm}
-					/>
-				{/each}
-			</div>
-		{/if}
-	{/if}
-
-	<!-- TAB 2: HISTORY LOGS -->
-	{#if activeSubTab === 'history'}
-		{#if isLoadingLogs && logs.length === 0}
-			<DataSkeleton variant="list" count={4} />
-		{:else if logsError}
-			<div
-				class="flex flex-col items-center justify-center gap-3 py-16 border border-border rounded-lg bg-white/3"
-			>
-				<TriangleAlert class="size-8 text-destructive" />
-				<p class="text-sm text-muted-foreground">{logsError}</p>
-				<Button
-					class="bg-secondary border border-border text-muted-foreground hover:text-foreground h-9 px-4 text-xs cursor-pointer"
-					onclick={() => loadLogs()}
+				</div>
+			{:else if channels.length === 0}
+				<div
+					class="flex flex-col items-center justify-center text-center py-20 px-6 gap-3.5 bg-white/3 border border-border rounded-lg backdrop-blur-md"
 				>
-					Try again
-				</Button>
-			</div>
-		{:else}
-			<NotificationHistoryList
-				{logs}
-				{logsTotal}
-				{isLoadingLogs}
-				{formatDate}
-				onLoadMore={async () => {
-					logsOffset += logsLimit;
-					await loadLogs(false);
-				}}
-			/>
-		{/if}
-	{/if}
+					<div
+						class="flex items-center justify-center size-14 rounded-lg bg-primary/8 text-primary"
+					>
+						<Bell class="size-6" />
+					</div>
+					<h2 class="text-[18px] font-semibold text-foreground m-0">
+						No notification channels yet
+					</h2>
+					<p class="text-sm leading-relaxed text-muted-foreground max-w-95 m-0">
+						{#if canManage}
+							Add Email, Slack Incoming Webhooks, Discord, or Custom Webhooks to send monitor
+							downtime alerts to your team.
+						{:else}
+							No notification channels configured for this organization.
+						{/if}
+					</p>
+					{#if canManage}
+						<Button
+							class="mt-2 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground h-10 px-5 text-xs font-medium cursor-pointer"
+							onclick={() => {
+								isAddModalOpen = true;
+							}}
+						>
+							<Plus class="size-4 mr-1.5" />
+							Add Channel
+						</Button>
+					{/if}
+				</div>
+			{:else}
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+					{#each channels as ch (ch.id)}
+						<ChannelCard
+							channel={ch}
+							{canManage}
+							isToggling={togglingId === ch.id}
+							onToggle={handleToggleChannel}
+							onDelete={openDeleteConfirm}
+						/>
+					{/each}
+				</div>
+			{/if}
+		</Tabs.Content>
+
+		<!-- TAB 2: HISTORY LOGS -->
+		<Tabs.Content value="history">
+			{#if isLoadingLogs && logs.length === 0}
+				<DataSkeleton variant="list" count={4} />
+			{:else if logsError}
+				<div
+					class="flex flex-col items-center justify-center gap-3 py-16 border border-border rounded-lg bg-white/3"
+				>
+					<TriangleAlert class="size-8 text-destructive" />
+					<p class="text-sm text-muted-foreground">{logsError}</p>
+					<Button
+						class="bg-secondary border border-border text-muted-foreground hover:text-foreground h-9 px-4 text-xs cursor-pointer"
+						onclick={() => loadLogs()}
+					>
+						Try again
+					</Button>
+				</div>
+			{:else}
+				<NotificationHistoryList
+					{logs}
+					{logsTotal}
+					{isLoadingLogs}
+					{formatDate}
+					onLoadMore={async () => {
+						logsOffset += logsLimit;
+						await loadLogs(false);
+					}}
+				/>
+			{/if}
+		</Tabs.Content>
+	</Tabs.Root>
 </div>
 
 <!-- ADD CHANNEL DIALOG -->

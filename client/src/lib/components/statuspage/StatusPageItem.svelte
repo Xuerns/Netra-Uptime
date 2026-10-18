@@ -2,7 +2,6 @@
 	import {
 		Globe,
 		ExternalLink,
-		Building2,
 		Pencil,
 		Trash2,
 		MoreVertical,
@@ -11,6 +10,7 @@
 		Shield
 	} from 'lucide-svelte';
 	import type { StatusPage } from '$lib/api/statuspage';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 
 	let {
 		sp,
@@ -30,62 +30,31 @@
 		onEmbedBadge?: (sp: StatusPage) => void;
 	} = $props();
 
-	let menuOpen = $state(false);
-
-	function toggleMenu(e: MouseEvent) {
-		e.stopPropagation();
-		menuOpen = !menuOpen;
-	}
-
-	function closeMenu() {
-		menuOpen = false;
-	}
-
-	function handleEdit(e: MouseEvent) {
-		e.stopPropagation();
-		closeMenu();
+	function handleEdit() {
 		onEdit?.(sp);
 	}
 
-	function handleDelete(e: MouseEvent) {
-		e.stopPropagation();
-		closeMenu();
+	function handleDelete() {
 		onDelete?.(sp);
 	}
 
-	function handleMaintenance(e: MouseEvent) {
-		e.stopPropagation();
-		closeMenu();
+	function handleMaintenance() {
 		onMaintenance?.(sp);
 	}
 
-	function handleGroups(e: MouseEvent) {
-		e.stopPropagation();
-		closeMenu();
+	function handleGroups() {
 		onGroups?.(sp);
 	}
 
-	function handleEmbedBadge(e: MouseEvent) {
-		e.stopPropagation();
-		closeMenu();
+	function handleEmbedBadge() {
 		onEmbedBadge?.(sp);
 	}
 </script>
 
-<svelte:window
-	onclick={() => {
-		if (menuOpen) closeMenu();
-	}}
-/>
-
 {#if viewMode === 'grid'}
 	<!-- Card / Grid View Mode -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
-		class="card-wrapper flex flex-col bg-card border border-border rounded-xl p-5 hover:border-border/80 hover:bg-card/80 transition-colors shadow-sm h-full w-full relative {menuOpen
-			? 'z-30'
-			: ''}"
-		onclick={closeMenu}
+		class="card-wrapper flex flex-col bg-card border border-border rounded-xl p-5 hover:border-border/80 hover:bg-card/80 transition-colors shadow-sm h-full w-full relative"
 	>
 		<!-- Top row: icon + title + badge + 3-dot menu -->
 		<div class="flex items-start justify-between gap-3 mb-3">
@@ -117,83 +86,69 @@
 				{/if}
 
 				{#if onEdit || onDelete || onMaintenance || onGroups || onEmbedBadge}
-					<div class="relative">
-						<button
-							onclick={toggleMenu}
+					<DropdownMenu.Root>
+						<DropdownMenu.Trigger
 							class="flex items-center justify-center size-8 rounded-lg bg-white/5 border border-border hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
 							aria-label="More options"
 						>
 							<MoreVertical class="size-4" />
-						</button>
+						</DropdownMenu.Trigger>
 
-						{#if menuOpen}
-							<div
-								class="dropdown-menu absolute right-0 top-full mt-1.5 w-44 z-50 bg-card border border-border rounded-xl shadow-xl overflow-hidden"
-							>
-								{#if onEmbedBadge}
-									<button
-										onclick={handleEmbedBadge}
-										class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-foreground hover:bg-white/8 transition-colors text-left cursor-pointer"
-									>
-										<Shield class="size-3.5 text-emerald-400" />
-										Embed Badge
-									</button>
-								{/if}
-								{#if onGroups}
-									<button
-										onclick={handleGroups}
-										class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-foreground hover:bg-white/8 transition-colors text-left cursor-pointer"
-									>
-										<FolderTree class="size-3.5 text-emerald-400" />
-										Groups
-									</button>
-								{/if}
-								{#if onMaintenance}
-									<button
-										onclick={handleMaintenance}
-										class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-foreground hover:bg-white/8 transition-colors text-left cursor-pointer"
-									>
-										<Wrench class="size-3.5 text-emerald-400" />
-										Maintenance
-									</button>
-								{/if}
-								{#if onEdit}
-									<button
-										onclick={handleEdit}
-										class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-foreground hover:bg-white/8 transition-colors text-left cursor-pointer"
-									>
-										<Pencil class="size-3.5 text-emerald-400" />
-										Edit
-									</button>
-								{/if}
-								{#if onDelete}
-									<button
-										onclick={handleDelete}
-										class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-destructive hover:bg-destructive/10 transition-colors text-left cursor-pointer"
-									>
-										<Trash2 class="size-3.5" />
-										Delete
-									</button>
-								{/if}
-							</div>
-						{/if}
-					</div>
+						<DropdownMenu.Content align="end" class="w-44 bg-card border-border shadow-xl z-50">
+							{#if onEmbedBadge}
+								<DropdownMenu.Item
+									onclick={handleEmbedBadge}
+									class="flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-white/10 cursor-pointer"
+								>
+									<Shield class="size-3.5 text-emerald-400" />
+									Embed Badge
+								</DropdownMenu.Item>
+							{/if}
+							{#if onGroups}
+								<DropdownMenu.Item
+									onclick={handleGroups}
+									class="flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-white/10 cursor-pointer"
+								>
+									<FolderTree class="size-3.5 text-emerald-400" />
+									Groups
+								</DropdownMenu.Item>
+							{/if}
+							{#if onMaintenance}
+								<DropdownMenu.Item
+									onclick={handleMaintenance}
+									class="flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-white/10 cursor-pointer"
+								>
+									<Wrench class="size-3.5 text-emerald-400" />
+									Maintenance
+								</DropdownMenu.Item>
+							{/if}
+							{#if onEdit}
+								<DropdownMenu.Item
+									onclick={handleEdit}
+									class="flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-white/10 cursor-pointer"
+								>
+									<Pencil class="size-3.5 text-emerald-400" />
+									Edit
+								</DropdownMenu.Item>
+							{/if}
+							{#if onDelete}
+								<DropdownMenu.Separator />
+								<DropdownMenu.Item
+									onclick={handleDelete}
+									class="flex items-center gap-2.5 px-3 py-2 text-xs text-destructive hover:bg-destructive/10 cursor-pointer"
+								>
+									<Trash2 class="size-3.5" />
+									Delete
+								</DropdownMenu.Item>
+							{/if}
+						</DropdownMenu.Content>
+					</DropdownMenu.Root>
 				{/if}
 			</div>
 		</div>
 
-		<!-- Organization Name Display -->
-		{#if sp.Organization}
-			<div
-				class="flex items-center gap-1.5 text-[12px] text-muted-foreground/80 mb-3 bg-white/5 w-fit px-2 py-1 rounded-md"
-			>
-				<Building2 class="size-3" />
-				<span class="font-medium truncate max-w-50">{sp.Organization.Name}</span>
-			</div>
-		{/if}
-
 		<p class="text-[13px] text-muted-foreground/80 line-clamp-2 flex-1 mb-4">
-			{sp.Description || 'No description provided.'}
+			{sp.Description?.trim() ? sp.Description : '-'}
 		</p>
 
 		<div class="flex items-center justify-between mt-auto pt-4 border-t border-border">
@@ -213,59 +168,49 @@
 	</div>
 {:else}
 	<!-- List / Row View Mode -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
-		class="grid grid-cols-1 md:grid-cols-[minmax(200px,2fr)_1.5fr_100px_110px_80px] gap-4 px-5 py-3.5 items-center hover:bg-white/3 transition-colors relative {menuOpen
-			? 'z-30'
-			: ''}"
-		onclick={closeMenu}
+		class="grid grid-cols-1 md:grid-cols-[minmax(160px,1.5fr)_minmax(180px,2fr)_1.2fr_90px_100px_80px] gap-4 px-5 py-2.5 items-center hover:bg-white/3 transition-colors"
 	>
-		<!-- 1. Status Page Title & Org -->
-		<div class="flex flex-col min-w-0">
-			<div class="flex items-center gap-2.5 min-w-0">
-				<div
-					class="size-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0"
-				>
-					<Globe class="size-3.5" />
-				</div>
-				<span class="text-sm font-medium text-foreground truncate">{sp.Title}</span>
-			</div>
-			{#if sp.Organization}
-				<div class="flex items-center gap-1 text-[11px] text-muted-foreground/60 mt-1 pl-9.5">
-					<Building2 class="size-3" />
-					<span class="truncate max-w-50">{sp.Organization.Name}</span>
-				</div>
-			{/if}
+		<!-- 1. Status Page Title -->
+		<div class="flex items-center min-w-0">
+			<span class="text-sm font-medium text-foreground truncate">{sp.Title}</span>
 		</div>
 
-		<!-- 2. Subdomain -->
+		<!-- 2. Description -->
+		<div class="min-w-0">
+			<span class="text-xs text-muted-foreground truncate block" title={sp.Description || ''}>
+				{sp.Description?.trim() ? sp.Description : '-'}
+			</span>
+		</div>
+
+		<!-- 3. Subdomain -->
 		<div class="min-w-0">
 			<span class="text-xs font-mono text-muted-foreground truncate block">
 				{sp.Subdomain}
 			</span>
 		</div>
 
-		<!-- 3. Visibility -->
+		<!-- 4. Visibility -->
 		<div>
 			{#if sp.IsPublic}
 				<span
-					class="text-[10px] font-mono px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full uppercase tracking-wider"
+					class="text-[10px] font-mono px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full uppercase tracking-wider font-medium"
 					>Public</span
 				>
 			{:else}
 				<span
-					class="text-[10px] font-mono px-2 py-0.5 bg-white/5 text-muted-foreground border border-border rounded-full uppercase tracking-wider"
+					class="text-[10px] font-mono px-2 py-0.5 bg-white/5 text-muted-foreground border border-border rounded-full uppercase tracking-wider font-medium"
 					>Private</span
 				>
 			{/if}
 		</div>
 
-		<!-- 4. Monitors -->
+		<!-- 5. Monitors -->
 		<div class="text-xs text-muted-foreground font-mono">
 			{sp.StatusPageMonitors?.length || 0} monitors
 		</div>
 
-		<!-- 5. Actions: View + 3-dot menu -->
+		<!-- 6. Actions: View + 3-dot DropdownMenu -->
 		<div class="flex items-center justify-end gap-1.5">
 			<a
 				href={`/status/${sp.Subdomain}`}
@@ -278,91 +223,64 @@
 			</a>
 
 			{#if onEdit || onDelete || onMaintenance || onGroups || onEmbedBadge}
-				<div class="relative">
-					<button
-						onclick={toggleMenu}
+				<DropdownMenu.Root>
+					<DropdownMenu.Trigger
 						class="flex items-center justify-center size-7 rounded bg-white/5 border border-border hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
 						aria-label="More options"
 					>
 						<MoreVertical class="size-3.5" />
-					</button>
+					</DropdownMenu.Trigger>
 
-					{#if menuOpen}
-						<div
-							class="dropdown-menu absolute right-0 top-full mt-1.5 w-44 z-50 bg-card border border-border rounded-xl shadow-xl overflow-hidden"
-						>
-							{#if onEmbedBadge}
-								<button
-									onclick={handleEmbedBadge}
-									class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-foreground hover:bg-white/8 transition-colors text-left cursor-pointer"
-								>
-									<Shield class="size-3.5 text-emerald-400" />
-									Embed Badge
-								</button>
-							{/if}
-							{#if onGroups}
-								<button
-									onclick={handleGroups}
-									class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-foreground hover:bg-white/8 transition-colors text-left cursor-pointer"
-								>
-									<FolderTree class="size-3.5 text-emerald-400" />
-									Groups
-								</button>
-							{/if}
-							{#if onMaintenance}
-								<button
-									onclick={handleMaintenance}
-									class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-foreground hover:bg-white/8 transition-colors text-left cursor-pointer"
-								>
-									<Wrench class="size-3.5 text-emerald-400" />
-									Maintenance
-								</button>
-							{/if}
-							{#if onEdit}
-								<button
-									onclick={handleEdit}
-									class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-foreground hover:bg-white/8 transition-colors text-left cursor-pointer"
-								>
-									<Pencil class="size-3.5 text-emerald-400" />
-									Edit
-								</button>
-							{/if}
-							{#if onDelete}
-								<button
-									onclick={handleDelete}
-									class="menu-item flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] text-destructive hover:bg-destructive/10 transition-colors text-left cursor-pointer"
-								>
-									<Trash2 class="size-3.5" />
-									Delete
-								</button>
-							{/if}
-						</div>
-					{/if}
-				</div>
+					<DropdownMenu.Content align="end" class="w-44 bg-card border-border shadow-xl z-50">
+						{#if onEmbedBadge}
+							<DropdownMenu.Item
+								onclick={handleEmbedBadge}
+								class="flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-white/10 cursor-pointer"
+							>
+								<Shield class="size-3.5 text-emerald-400" />
+								Embed Badge
+							</DropdownMenu.Item>
+						{/if}
+						{#if onGroups}
+							<DropdownMenu.Item
+								onclick={handleGroups}
+								class="flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-white/10 cursor-pointer"
+							>
+								<FolderTree class="size-3.5 text-emerald-400" />
+								Groups
+							</DropdownMenu.Item>
+						{/if}
+						{#if onMaintenance}
+							<DropdownMenu.Item
+								onclick={handleMaintenance}
+								class="flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-white/10 cursor-pointer"
+							>
+								<Wrench class="size-3.5 text-emerald-400" />
+								Maintenance
+							</DropdownMenu.Item>
+						{/if}
+						{#if onEdit}
+							<DropdownMenu.Item
+								onclick={handleEdit}
+								class="flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-white/10 cursor-pointer"
+							>
+								<Pencil class="size-3.5 text-emerald-400" />
+								Edit
+							</DropdownMenu.Item>
+						{/if}
+						{#if onDelete}
+							<DropdownMenu.Separator />
+							<DropdownMenu.Item
+								onclick={handleDelete}
+								class="flex items-center gap-2.5 px-3 py-2 text-xs text-destructive hover:bg-destructive/10 cursor-pointer"
+							>
+								<Trash2 class="size-3.5" />
+								Delete
+							</DropdownMenu.Item>
+						{/if}
+					</DropdownMenu.Content>
+				</DropdownMenu.Root>
 			{/if}
 		</div>
 	</div>
 {/if}
-
-<style>
-	.menu-item {
-		background: none;
-		border: none;
-		outline: none;
-	}
-
-	.dropdown-menu {
-		animation: fadeIn 0.15s ease-out;
-	}
-
-	@keyframes fadeIn {
-		from {
-			opacity: 0;
-			transform: scale(0.95);
-		}
-		to {
-			opacity: 1;
-			transform: scale(1);
-		}
-	}
-</style>

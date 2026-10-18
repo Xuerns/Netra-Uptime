@@ -13,6 +13,7 @@
 		Clock
 	} from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
@@ -200,14 +201,14 @@
 							<span class="text-sm font-semibold text-foreground truncate">{key.name}</span>
 
 							<!-- Scope Badge -->
-							<span
-								class="text-[10.5px] font-mono px-2 py-0.5 rounded-md border font-medium {key.permissions ===
-								'write'
+							<Badge
+								variant="outline"
+								class="text-[11px] font-mono px-2 py-0.5 font-medium {key.permissions === 'write'
 									? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
 									: 'bg-blue-500/10 border-blue-500/20 text-blue-400'}"
 							>
 								{key.permissions === 'write' ? 'Full Access (Read & Write)' : 'Read Only'}
-							</span>
+							</Badge>
 						</div>
 
 						<div

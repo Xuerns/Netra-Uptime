@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { AlertTemplateAPI } from '$lib/api/alertTemplate';
 	import type {
@@ -232,12 +233,7 @@
 			<div
 				class="flex items-start gap-2.5 p-3 rounded-lg border border-border bg-white/2 cursor-pointer"
 			>
-				<input
-					type="checkbox"
-					id="rule-is-active"
-					bind:checked={isRuleActive}
-					class="rounded border-border bg-background text-primary focus:ring-primary size-4 mt-0.5 cursor-pointer"
-				/>
+				<Checkbox id="rule-is-active" bind:checked={isRuleActive} class="mt-0.5" />
 				<Label for="rule-is-active" class="text-xs cursor-pointer flex-1">
 					<span class="font-medium text-foreground">Rule is active</span>
 					<span class="block text-muted-foreground text-[11px] mt-0.5 leading-relaxed">

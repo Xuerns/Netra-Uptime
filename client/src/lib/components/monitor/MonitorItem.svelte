@@ -393,21 +393,19 @@
 <style>
 	/* ── Shared Card Styles ────────────────────────────────────────────── */
 	.monitor-card {
-		background: var(--color-glass-card-bg);
-		backdrop-filter: blur(12px);
-		-webkit-backdrop-filter: blur(12px);
+		background: var(--card);
 		border: 1px solid var(--color-border);
 		border-radius: 12px;
 		transition:
-			border-color 0.15s ease,
-			box-shadow 0.15s ease,
+			border-color 0.2s ease,
+			box-shadow 0.2s ease,
 			transform 0.15s ease;
 		box-shadow: var(--shadow-sm);
 	}
 
 	.monitor-card:hover {
-		border-color: var(--color-card-hover-border);
-		box-shadow: var(--shadow-card-hover);
+		border-color: color-mix(in srgb, var(--color-border) 100%, white 20%);
+		box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-border) 50%, transparent);
 		transform: translateY(-1px);
 	}
 

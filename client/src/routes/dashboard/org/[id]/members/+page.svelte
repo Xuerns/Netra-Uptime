@@ -12,6 +12,8 @@
 		TriangleAlert
 	} from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { Badge } from '$lib/components/ui/badge/index.js';
+	import * as Tabs from '$lib/components/ui/tabs/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import InviteMemberModal from '$lib/components/InviteMemberModal.svelte';
@@ -50,7 +52,7 @@
 	let members = $state<Member[]>([]);
 	let isLoading = $state(true);
 	let fetchError = $state('');
-	let roleFilter = $state<RoleFilter>('all');
+	let roleFilter = $state<string>('all');
 
 	// Modals
 	let isInviteOpen = $state(false);
@@ -161,52 +163,30 @@
 <div class="members-page text-foreground antialiased space-y-6">
 	<!-- ── Subheader & Filter Tabs ─────────────────────────────────────────── -->
 	<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
-		<div
-			class="flex items-center gap-1.5 p-1 bg-card border border-border rounded-lg text-xs font-medium"
-		>
-			<button
-				type="button"
-				class="px-3 py-1.5 rounded-md transition-colors {roleFilter === 'all'
-					? 'bg-secondary text-foreground font-semibold'
-					: 'text-muted-foreground hover:text-foreground'}"
-				onclick={() => (roleFilter = 'all')}
-			>
-				All <span class="ml-1 text-[11px] font-mono text-muted-foreground">({members.length})</span>
-			</button>
-			<button
-				type="button"
-				class="px-3 py-1.5 rounded-md transition-colors {roleFilter === 'owner'
-					? 'bg-secondary text-foreground font-semibold'
-					: 'text-muted-foreground hover:text-foreground'}"
-				onclick={() => (roleFilter = 'owner')}
-			>
-				Owners <span class="ml-1 text-[11px] font-mono text-muted-foreground"
-					>({owners.length})</span
-				>
-			</button>
-			<button
-				type="button"
-				class="px-3 py-1.5 rounded-md transition-colors {roleFilter === 'admin'
-					? 'bg-secondary text-foreground font-semibold'
-					: 'text-muted-foreground hover:text-foreground'}"
-				onclick={() => (roleFilter = 'admin')}
-			>
-				Admins <span class="ml-1 text-[11px] font-mono text-muted-foreground"
-					>({admins.length})</span
-				>
-			</button>
-			<button
-				type="button"
-				class="px-3 py-1.5 rounded-md transition-colors {roleFilter === 'member'
-					? 'bg-secondary text-foreground font-semibold'
-					: 'text-muted-foreground hover:text-foreground'}"
-				onclick={() => (roleFilter = 'member')}
-			>
-				Members <span class="ml-1 text-[11px] font-mono text-muted-foreground"
-					>({regularMembers.length})</span
-				>
-			</button>
-		</div>
+		<Tabs.Root bind:value={roleFilter}>
+			<Tabs.List class="h-9">
+				<Tabs.Trigger value="all" class="text-xs font-medium cursor-pointer">
+					All <span class="ml-1 text-[11px] font-mono text-muted-foreground"
+						>({members.length})</span
+					>
+				</Tabs.Trigger>
+				<Tabs.Trigger value="owner" class="text-xs font-medium cursor-pointer">
+					Owners <span class="ml-1 text-[11px] font-mono text-muted-foreground"
+						>({owners.length})</span
+					>
+				</Tabs.Trigger>
+				<Tabs.Trigger value="admin" class="text-xs font-medium cursor-pointer">
+					Admins <span class="ml-1 text-[11px] font-mono text-muted-foreground"
+						>({admins.length})</span
+					>
+				</Tabs.Trigger>
+				<Tabs.Trigger value="member" class="text-xs font-medium cursor-pointer">
+					Members <span class="ml-1 text-[11px] font-mono text-muted-foreground"
+						>({regularMembers.length})</span
+					>
+				</Tabs.Trigger>
+			</Tabs.List>
+		</Tabs.Root>
 	</div>
 
 	<!-- ── Content Area ──────────────────────────────────────────────────────── -->
@@ -266,11 +246,12 @@
 									{m.User?.Name || 'Unknown User'}
 								</span>
 								{#if m.UserID === currentUserId}
-									<span
-										class="px-1.5 py-0.5 rounded text-[10px] bg-secondary text-muted-foreground font-mono"
+									<Badge
+										variant="secondary"
+										class="h-4.5 px-1.5 py-0 text-[10px] font-mono text-muted-foreground"
 									>
 										You
-									</span>
+									</Badge>
 								{/if}
 							</div>
 							<div class="flex items-center gap-1.5 mt-0.5">
@@ -283,25 +264,28 @@
 					<div class="flex items-center gap-3 shrink-0">
 						<!-- Role Indicator -->
 						{#if m.Role === 'owner'}
-							<div
-								class="flex items-center gap-1 text-amber-400 text-xs font-medium px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20"
+							<Badge
+								variant="outline"
+								class="gap-1.5 px-2.5 py-1 text-xs font-medium text-amber-400 bg-amber-500/10 border-amber-500/20"
 							>
 								<ShieldCheck class="size-3.5" />
 								<span>Owner</span>
-							</div>
+							</Badge>
 						{:else if m.Role === 'admin'}
-							<div
-								class="flex items-center gap-1 text-emerald-400 text-xs font-medium px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20"
+							<Badge
+								variant="outline"
+								class="gap-1.5 px-2.5 py-1 text-xs font-medium text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
 							>
 								<Shield class="size-3.5" />
 								<span>Admin</span>
-							</div>
+							</Badge>
 						{:else}
-							<div
-								class="flex items-center gap-1 text-muted-foreground text-xs font-medium px-2.5 py-1 rounded-md bg-secondary border border-border"
+							<Badge
+								variant="secondary"
+								class="gap-1.5 px-2.5 py-1 text-xs font-medium text-muted-foreground border-border"
 							>
 								<span>Member</span>
-							</div>
+							</Badge>
 						{/if}
 
 						<!-- Member Action Menu -->

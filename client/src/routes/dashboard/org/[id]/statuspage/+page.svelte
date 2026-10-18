@@ -303,10 +303,11 @@
 		{:else}
 			<div class="border border-border rounded-xl overflow-hidden shadow-sm">
 				<div
-					class="hidden md:grid md:grid-cols-[minmax(200px,2fr)_1.5fr_100px_110px_80px] gap-4 px-5 py-3 border-b border-border bg-[#0a0a0b] text-[11px] font-semibold tracking-wider uppercase text-muted-foreground/80 items-center"
+					class="hidden md:grid md:grid-cols-[minmax(160px,1.5fr)_minmax(180px,2fr)_1.2fr_90px_100px_80px] gap-4 px-5 py-2.5 border-b border-border bg-[#0a0a0b] text-[11px] font-semibold tracking-wider uppercase text-muted-foreground/80 items-center"
 					aria-hidden="true"
 				>
 					<div>Status Page</div>
+					<div>Description</div>
 					<div>Subdomain</div>
 					<div>Visibility</div>
 					<div>Monitors</div>

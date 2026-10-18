@@ -3,9 +3,12 @@
 	import type { Monitor } from '$lib/api/monitor';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Switch } from '$lib/components/ui/switch/index.js';
+	import * as Alert from '$lib/components/ui/alert/index.js';
+	import * as Tabs from '$lib/components/ui/tabs/index.js';
 	import { toast } from 'svelte-sonner';
 	import {
 		TriangleAlert,
@@ -36,7 +39,7 @@
 	const isEdit = $derived(!!statusPage);
 
 	// Active tab: 'general' | 'branding'
-	let activeTab = $state<'general' | 'branding'>('general');
+	let activeTab = $state<string>('general');
 
 	// General form states
 	let title = $state('');
@@ -192,42 +195,38 @@
 			</Dialog.Header>
 
 			<!-- Tabs Navigation -->
-			<div class="flex gap-2 mt-5 border-b border-border/50">
-				<button
-					type="button"
-					onclick={() => (activeTab = 'general')}
-					class="flex items-center gap-2 pb-2.5 px-3 text-xs font-semibold tracking-wide uppercase transition-colors relative cursor-pointer {activeTab ===
-					'general'
-						? 'text-primary border-b-2 border-primary'
-						: 'text-muted-foreground hover:text-foreground'}"
+			<Tabs.Root bind:value={activeTab} class="mt-5">
+				<Tabs.List
+					variant="line"
+					class="border-b border-border/50 w-full justify-start rounded-none h-auto p-0 gap-4"
 				>
-					<Settings class="size-3.5" />
-					General & Monitors
-				</button>
-
-				<button
-					type="button"
-					onclick={() => (activeTab = 'branding')}
-					class="flex items-center gap-2 pb-2.5 px-3 text-xs font-semibold tracking-wide uppercase transition-colors relative cursor-pointer {activeTab ===
-					'branding'
-						? 'text-primary border-b-2 border-primary'
-						: 'text-muted-foreground hover:text-foreground'}"
-				>
-					<Palette class="size-3.5" />
-					Branding & Styling
-				</button>
-			</div>
+					<Tabs.Trigger
+						value="general"
+						class="flex items-center gap-2 pb-2.5 px-3 text-xs font-semibold tracking-wide uppercase cursor-pointer"
+					>
+						<Settings class="size-3.5" />
+						General & Monitors
+					</Tabs.Trigger>
+					<Tabs.Trigger
+						value="branding"
+						class="flex items-center gap-2 pb-2.5 px-3 text-xs font-semibold tracking-wide uppercase cursor-pointer"
+					>
+						<Palette class="size-3.5" />
+						Branding & Styling
+					</Tabs.Trigger>
+				</Tabs.List>
+			</Tabs.Root>
 		</div>
 
 		<!-- Form Body (Scrollable) -->
 		<div class="p-6 flex-1 overflow-y-auto space-y-6">
 			{#if error}
-				<div
-					class="flex items-center gap-3 p-3.5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium"
-				>
+				<Alert.Root variant="destructive" class="border-destructive/30 bg-destructive/10">
 					<TriangleAlert class="size-4 shrink-0" />
-					<span>{error}</span>
-				</div>
+					<Alert.Description class="text-xs font-medium">
+						{error}
+					</Alert.Description>
+				</Alert.Root>
 			{/if}
 
 			{#if activeTab === 'general'}
@@ -273,13 +272,13 @@
 					<!-- Description -->
 					<div class="space-y-1.5">
 						<Label for="sp-desc" class="text-xs font-medium text-foreground">Description</Label>
-						<textarea
+						<Textarea
 							id="sp-desc"
 							bind:value={description}
-							rows="2"
+							rows={2}
 							placeholder="Optional short description about this status page or team..."
-							class="w-full bg-background border border-border rounded-lg p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary resize-none transition-all"
-						></textarea>
+							class="bg-background border-border text-foreground resize-none"
+						/>
 					</div>
 
 					<!-- Public Switch -->
@@ -422,13 +421,13 @@
 							<Code2 class="size-3.5 text-muted-foreground" />
 							Custom CSS Injection
 						</Label>
-						<textarea
+						<Textarea
 							id="sp-css"
 							bind:value={customCss}
-							rows="4"
+							rows={4}
 							placeholder="/* Add custom styles for the status page body, header, fonts */"
-							class="w-full bg-background border border-border rounded-lg p-3 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary resize-y transition-all"
-						></textarea>
+							class="bg-background border-border text-foreground font-mono text-xs resize-y min-h-24"
+						/>
 					</div>
 				</div>
 			{/if}

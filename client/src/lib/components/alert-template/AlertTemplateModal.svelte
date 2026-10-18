@@ -1,6 +1,8 @@
 <script lang="ts">
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import { Textarea } from '$lib/components/ui/textarea/index.js';
+	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import {
 		AlertTemplateAPI,
@@ -128,26 +130,21 @@
 					Description {#if !isEdit}<span class="text-muted-foreground font-normal">(optional)</span
 						>{/if}
 				</Label>
-				<textarea
+				<Textarea
 					id="template-desc"
 					bind:value={templateDesc}
 					placeholder={isEdit
 						? 'Summary of services this template is intended for...'
 						: 'Briefly describe what services or endpoints this template is intended for...'}
 					rows={3}
-					class="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-				></textarea>
+					class="bg-background border-border text-foreground"
+				/>
 			</div>
 
 			<div
 				class="flex items-start gap-2.5 p-3 rounded-lg border border-border bg-white/2 cursor-pointer"
 			>
-				<input
-					type="checkbox"
-					id="template-is-default"
-					bind:checked={isDefault}
-					class="rounded border-border bg-background text-primary focus:ring-primary size-4 mt-0.5 cursor-pointer"
-				/>
+				<Checkbox id="template-is-default" bind:checked={isDefault} class="mt-0.5" />
 				<Label for="template-is-default" class="text-xs cursor-pointer flex-1">
 					<span class="font-medium text-foreground">Set as organization default</span>
 					<span class="block text-muted-foreground text-[11px] mt-0.5 leading-relaxed">

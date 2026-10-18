@@ -3,6 +3,8 @@
 	import OrgSidebar from '$lib/components/orgSidebar.svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
+	import { Separator } from '$lib/components/ui/separator/index.js';
 	import { headerStore } from '$lib/stores/headerStore.svelte';
 	import { Search, Plus, Globe, Radio, Cpu, UserPlus } from 'lucide-svelte';
 	import { fade } from 'svelte/transition';
@@ -83,16 +85,27 @@
 			<!-- Left: Sidebar Trigger, Divider, Breadcrumb & Status Badge -->
 			<div class="flex items-center gap-3 min-w-0">
 				<Sidebar.Trigger class="-ml-1" />
-				<div class="h-4 w-px bg-border shrink-0"></div>
+				<Separator orientation="vertical" class="h-4" />
 
 				<!-- Breadcrumb -->
-				<div
-					class="flex items-center gap-2 text-xs font-medium text-muted-foreground truncate select-none"
-				>
-					<span class="truncate max-w-35 md:max-w-50">{orgName}</span>
-					<span class="text-muted-foreground/40">/</span>
-					<span class="text-foreground font-semibold">{pageTitle}</span>
-				</div>
+				<Breadcrumb.Root>
+					<Breadcrumb.List class="text-xs">
+						<Breadcrumb.Item>
+							<Breadcrumb.Link
+								href="/dashboard/org/{$page.params.id}"
+								class="truncate max-w-[180px] sm:max-w-[280px]"
+							>
+								{orgName}
+							</Breadcrumb.Link>
+						</Breadcrumb.Item>
+						<Breadcrumb.Separator />
+						<Breadcrumb.Item>
+							<Breadcrumb.Page class="font-semibold text-foreground">
+								{pageTitle}
+							</Breadcrumb.Page>
+						</Breadcrumb.Item>
+					</Breadcrumb.List>
+				</Breadcrumb.Root>
 			</div>
 
 			<!-- Right: Search Input & Action CTA -->

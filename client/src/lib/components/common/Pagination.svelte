@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { ChevronLeft, ChevronRight } from 'lucide-svelte';
-	import { cn } from '$lib/helper/utils';
+	import * as Pagination from '$lib/components/ui/pagination/index.js';
+	import { cn } from '$lib/helper/utils.js';
 
 	let {
 		currentPage = $bindable(1),
@@ -18,7 +18,7 @@
 		onPageChange?: (page: number) => void;
 	}>();
 
-	function goToPage(p: number) {
+	function handlePageChange(p: number) {
 		const target = Math.max(1, Math.min(totalPages, p));
 		if (target === currentPage) return;
 		currentPage = target;
@@ -29,7 +29,7 @@
 {#if totalPages > 1}
 	<div
 		class={cn(
-			'flex items-center justify-between pt-4 border-t border-border/50 text-xs text-muted-foreground',
+			'flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-border/50 text-xs text-muted-foreground w-full',
 			className
 		)}
 	>
@@ -41,30 +41,43 @@
 			{/if}
 		</div>
 
-		<div class="flex items-center gap-2">
-			<button
-				type="button"
-				class="p-1.5 rounded-lg border border-border bg-white/5 hover:bg-white/10 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all active:scale-95"
-				disabled={currentPage <= 1}
-				onclick={() => goToPage(currentPage - 1)}
-				aria-label="Previous page"
-			>
-				<ChevronLeft class="size-4" />
-			</button>
-
-			<span class="font-mono text-xs text-foreground px-2 select-none">
-				Page {currentPage} of {totalPages}
-			</span>
-
-			<button
-				type="button"
-				class="p-1.5 rounded-lg border border-border bg-white/5 hover:bg-white/10 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all active:scale-95"
-				disabled={currentPage >= totalPages}
-				onclick={() => goToPage(currentPage + 1)}
-				aria-label="Next page"
-			>
-				<ChevronRight class="size-4" />
-			</button>
-		</div>
+		<Pagination.Root
+			count={totalPages}
+			perPage={1}
+			bind:page={currentPage}
+			onPageChange={handlePageChange}
+			siblingCount={1}
+			class="mx-0 w-auto justify-end"
+		>
+			{#snippet children({ pages, currentPage: current })}
+				<Pagination.Content class="gap-1">
+					<Pagination.Item>
+						<Pagination.Previous
+							class="h-8 px-2 text-xs cursor-pointer disabled:cursor-not-allowed"
+						/>
+					</Pagination.Item>
+					{#each pages as page (page.key)}
+						{#if page.type === 'ellipsis'}
+							<Pagination.Item>
+								<Pagination.Ellipsis class="size-8" />
+							</Pagination.Item>
+						{:else}
+							<Pagination.Item>
+								<Pagination.Link
+									{page}
+									isActive={current === page.value}
+									class="size-8 text-xs cursor-pointer font-mono"
+								>
+									{page.value}
+								</Pagination.Link>
+							</Pagination.Item>
+						{/if}
+					{/each}
+					<Pagination.Item>
+						<Pagination.Next class="h-8 px-2 text-xs cursor-pointer disabled:cursor-not-allowed" />
+					</Pagination.Item>
+				</Pagination.Content>
+			{/snippet}
+		</Pagination.Root>
 	</div>
 {/if}

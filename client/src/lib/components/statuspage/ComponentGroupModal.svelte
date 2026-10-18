@@ -3,6 +3,7 @@
 	import { StatusPageAPI, type ComponentGroup, type StatusPage } from '$lib/api/statuspage';
 	import type { Monitor } from '$lib/api/monitor';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import * as Tabs from '$lib/components/ui/tabs';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -36,7 +37,7 @@
 	let groups = $state<ComponentGroup[]>([]);
 	let isLoading = $state(false);
 	let isSubmitting = $state(false);
-	let activeTab = $state<'groups' | 'assignment'>('groups');
+	let activeTab = $state<string>('groups');
 
 	// Create/Edit Group form
 	let isEditingGroup = $state<ComponentGroup | null>(null);
@@ -199,29 +200,25 @@
 		</div>
 
 		<!-- Tab Navigation -->
-		<div class="px-6 pt-3 pb-0 border-b border-border/40 flex gap-4">
-			<button
-				type="button"
-				class="text-xs font-semibold pb-2.5 border-b-2 transition-colors flex items-center gap-1.5 {activeTab ===
-				'groups'
-					? 'border-primary text-primary'
-					: 'border-transparent text-muted-foreground hover:text-foreground'}"
-				onclick={() => (activeTab = 'groups')}
-			>
-				<Layers class="size-3.5" />
-				Manage Groups ({groups.length})
-			</button>
-			<button
-				type="button"
-				class="text-xs font-semibold pb-2.5 border-b-2 transition-colors flex items-center gap-1.5 {activeTab ===
-				'assignment'
-					? 'border-primary text-primary'
-					: 'border-transparent text-muted-foreground hover:text-foreground'}"
-				onclick={() => (activeTab = 'assignment')}
-			>
-				<Radio class="size-3.5" />
-				Assign Monitors ({pageMonitors.length})
-			</button>
+		<div class="px-6 pt-3 pb-0 border-b border-border/40">
+			<Tabs.Root bind:value={activeTab}>
+				<Tabs.List variant="line" class="w-full justify-start rounded-none h-auto p-0 gap-4">
+					<Tabs.Trigger
+						value="groups"
+						class="text-xs font-semibold pb-2.5 flex items-center gap-1.5 cursor-pointer"
+					>
+						<Layers class="size-3.5" />
+						Manage Groups ({groups.length})
+					</Tabs.Trigger>
+					<Tabs.Trigger
+						value="assignment"
+						class="text-xs font-semibold pb-2.5 flex items-center gap-1.5 cursor-pointer"
+					>
+						<Radio class="size-3.5" />
+						Assign Monitors ({pageMonitors.length})
+					</Tabs.Trigger>
+				</Tabs.List>
+			</Tabs.Root>
 		</div>
 
 		<!-- Body -->

@@ -5,6 +5,7 @@
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import {
 		validateMonitorName,
@@ -451,11 +452,7 @@
 										: 'Paused: Automated checks & alert notifications are paused'}
 								</span>
 							</div>
-							<input
-								type="checkbox"
-								bind:checked={isActive}
-								class="size-4 accent-primary rounded cursor-pointer"
-							/>
+							<Checkbox bind:checked={isActive} />
 						</div>
 					{/if}
 
@@ -470,11 +467,7 @@
 									>Monitors SSL cert & WHOIS expiration daily</span
 								>
 							</div>
-							<input
-								type="checkbox"
-								bind:checked={enableSSLDomainCheck}
-								class="size-4 accent-primary rounded cursor-pointer"
-							/>
+							<Checkbox bind:checked={enableSSLDomainCheck} />
 						</div>
 					{/if}
 

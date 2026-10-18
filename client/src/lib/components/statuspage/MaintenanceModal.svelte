@@ -4,8 +4,10 @@
 	import type { Monitor } from '$lib/api/monitor';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Input } from '$lib/components/ui/input';
+	import { Textarea } from '$lib/components/ui/textarea';
 	import { Label } from '$lib/components/ui/label';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import * as Alert from '$lib/components/ui/alert';
 	import { toast } from 'svelte-sonner';
 	import {
 		Wrench,
@@ -272,12 +274,12 @@
 					</div>
 
 					{#if formError}
-						<div
-							class="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-2"
-						>
+						<Alert.Root variant="destructive" class="border-destructive/30 bg-destructive/10">
 							<AlertCircle class="size-4 shrink-0" />
-							<span>{formError}</span>
-						</div>
+							<Alert.Description class="text-xs font-medium">
+								{formError}
+							</Alert.Description>
+						</Alert.Root>
 					{/if}
 
 					<div class="space-y-1.5">
@@ -292,13 +294,13 @@
 
 					<div class="space-y-1.5">
 						<Label for="m-desc" class="text-xs font-medium text-foreground">Description</Label>
-						<textarea
+						<Textarea
 							id="m-desc"
-							rows="3"
+							rows={3}
 							placeholder="Brief explanation of what is being maintained and expected impact..."
 							bind:value={description}
-							class="w-full text-xs rounded-md bg-background/50 border border-border p-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-						></textarea>
+							class="text-xs bg-background/50 border-border text-foreground"
+						/>
 					</div>
 
 					{#if editingMaintenance}
