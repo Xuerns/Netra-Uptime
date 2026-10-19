@@ -2,11 +2,11 @@ package notification
 
 import (
 	"net/http"
+	"netra-uptime/internal/middleware"
 	"netra-uptime/pkg/apierror"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 type ChannelHandler struct {
@@ -153,10 +153,10 @@ func (h *ChannelHandler) GetLogs(c *gin.Context) {
 
 // getOrgID extracts the organization UUID set by TenantMiddleware.
 func getOrgID(c *gin.Context) (string, bool) {
-	orgID, exists := c.Get("organizationID")
-	if !exists {
+	orgID, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "organization context missing"})
 		return "", false
 	}
-	return orgID.(uuid.UUID).String(), true
+	return orgID, true
 }

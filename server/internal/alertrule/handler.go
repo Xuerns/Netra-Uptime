@@ -2,6 +2,7 @@ package alertrule
 
 import (
 	"net/http"
+	"netra-uptime/internal/middleware"
 	"netra-uptime/pkg/apierror"
 
 	"github.com/gin-gonic/gin"
@@ -17,14 +18,9 @@ func NewHandler(service Service) *Handler {
 }
 
 func (h *Handler) Create(c *gin.Context) {
-	orgIDVal, exists := c.Get("organizationID")
-	if !exists {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
-		return
-	}
-	orgID, ok := orgIDVal.(uuid.UUID)
+	orgID, ok := middleware.GetOrganizationID(c)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid organization ID"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
@@ -51,14 +47,9 @@ func (h *Handler) Create(c *gin.Context) {
 }
 
 func (h *Handler) GetByMonitor(c *gin.Context) {
-	orgIDVal, exists := c.Get("organizationID")
-	if !exists {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
-		return
-	}
-	orgID, ok := orgIDVal.(uuid.UUID)
+	orgID, ok := middleware.GetOrganizationID(c)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid organization ID"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
@@ -79,14 +70,9 @@ func (h *Handler) GetByMonitor(c *gin.Context) {
 }
 
 func (h *Handler) GetByID(c *gin.Context) {
-	orgIDVal, exists := c.Get("organizationID")
-	if !exists {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
-		return
-	}
-	orgID, ok := orgIDVal.(uuid.UUID)
+	orgID, ok := middleware.GetOrganizationID(c)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid organization ID"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
@@ -107,14 +93,9 @@ func (h *Handler) GetByID(c *gin.Context) {
 }
 
 func (h *Handler) Update(c *gin.Context) {
-	orgIDVal, exists := c.Get("organizationID")
-	if !exists {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
-		return
-	}
-	orgID, ok := orgIDVal.(uuid.UUID)
+	orgID, ok := middleware.GetOrganizationID(c)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid organization ID"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
@@ -141,14 +122,9 @@ func (h *Handler) Update(c *gin.Context) {
 }
 
 func (h *Handler) Delete(c *gin.Context) {
-	orgIDVal, exists := c.Get("organizationID")
-	if !exists {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
-		return
-	}
-	orgID, ok := orgIDVal.(uuid.UUID)
+	orgID, ok := middleware.GetOrganizationID(c)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid organization ID"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 

@@ -3,11 +3,11 @@ package statuspage
 import (
 	"fmt"
 	"net/http"
+	"netra-uptime/internal/middleware"
 	"netra-uptime/pkg/apierror"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 type StatusPageHandler struct {
@@ -25,21 +25,19 @@ func (h *StatusPageHandler) CreateStatusPage(c *gin.Context) {
 		return
 	}
 
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgID, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	userId, exist := c.Get("userID")
-
-	if !exist {
+	userID, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
-	res, err := h.service.Create(orgId.(uuid.UUID).String(), userId.(string), c.ClientIP(), &req)
+	res, err := h.service.Create(orgID, userID, c.ClientIP(), &req)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
@@ -50,21 +48,19 @@ func (h *StatusPageHandler) CreateStatusPage(c *gin.Context) {
 }
 
 func (h *StatusPageHandler) GetAllStatusPage(c *gin.Context) {
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgID, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	userId, exist := c.Get("userID")
-
-	if !exist {
+	userID, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
-	statusPages, err := h.service.GetAllByOrganizationID(orgId.(uuid.UUID).String(), userId.(string))
+	statusPages, err := h.service.GetAllByOrganizationID(orgID, userID)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
@@ -75,23 +71,21 @@ func (h *StatusPageHandler) GetAllStatusPage(c *gin.Context) {
 }
 
 func (h *StatusPageHandler) DeleteStatusPage(c *gin.Context) {
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgID, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	userId, exist := c.Get("userID")
-
-	if !exist {
+	userID, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
 	statusPageID := c.Param("statusPageId")
 
-	err := h.service.Delete(statusPageID, orgId.(uuid.UUID).String(), userId.(string), c.ClientIP())
+	err := h.service.Delete(statusPageID, orgID, userID, c.ClientIP())
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
@@ -108,23 +102,21 @@ func (h *StatusPageHandler) UpdateStatusPage(c *gin.Context) {
 		return
 	}
 
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgID, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	userId, exist := c.Get("userID")
-
-	if !exist {
+	userID, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
 	statusPageID := c.Param("statusPageId")
 
-	res, err := h.service.Update(statusPageID, orgId.(uuid.UUID).String(), userId.(string), c.ClientIP(), &req)
+	res, err := h.service.Update(statusPageID, orgID, userID, c.ClientIP(), &req)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
@@ -135,14 +127,14 @@ func (h *StatusPageHandler) UpdateStatusPage(c *gin.Context) {
 }
 
 func (h *StatusPageHandler) GetStatusPageMonitor(c *gin.Context) {
-	orgId, exist := c.Get("organizationID")
-	if !exist {
+	orgID, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 	statusPageID := c.Param("statusPageId")
 
-	statusPageMonitors, err := h.service.GetStatusPageMonitor(statusPageID, orgId.(string))
+	statusPageMonitors, err := h.service.GetStatusPageMonitor(statusPageID, orgID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
@@ -152,21 +144,21 @@ func (h *StatusPageHandler) GetStatusPageMonitor(c *gin.Context) {
 }
 
 func (h *StatusPageHandler) GetById(c *gin.Context) {
-	orgId, exist := c.Get("organizationID")
-	if !exist {
+	orgID, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	userId, exist := c.Get("userID")
-	if !exist {
+	userID, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
 	statusPageID := c.Param("statusPageId")
 
-	statusPage, err := h.service.GetById(statusPageID, orgId.(uuid.UUID).String(), userId.(string))
+	statusPage, err := h.service.GetById(statusPageID, orgID, userID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
@@ -320,21 +312,21 @@ func (h *StatusPageHandler) CreateMaintenance(c *gin.Context) {
 		return
 	}
 
-	orgId, exist := c.Get("organizationID")
-	if !exist {
+	orgID, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	userId, exist := c.Get("userID")
-	if !exist {
+	userID, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
 	statusPageID := c.Param("statusPageId")
 
-	maintenance, err := h.service.CreateMaintenance(orgId.(uuid.UUID).String(), statusPageID, userId.(string), c.ClientIP(), &req)
+	maintenance, err := h.service.CreateMaintenance(orgID, statusPageID, userID, c.ClientIP(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
@@ -344,21 +336,21 @@ func (h *StatusPageHandler) CreateMaintenance(c *gin.Context) {
 }
 
 func (h *StatusPageHandler) GetMaintenances(c *gin.Context) {
-	orgId, exist := c.Get("organizationID")
-	if !exist {
+	orgID, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	userId, exist := c.Get("userID")
-	if !exist {
+	userID, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
 	statusPageID := c.Param("statusPageId")
 
-	maintenances, err := h.service.GetMaintenances(orgId.(uuid.UUID).String(), statusPageID, userId.(string))
+	maintenances, err := h.service.GetMaintenances(orgID, statusPageID, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
@@ -374,14 +366,14 @@ func (h *StatusPageHandler) UpdateMaintenance(c *gin.Context) {
 		return
 	}
 
-	orgId, exist := c.Get("organizationID")
-	if !exist {
+	orgID, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	userId, exist := c.Get("userID")
-	if !exist {
+	userID, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
@@ -389,7 +381,7 @@ func (h *StatusPageHandler) UpdateMaintenance(c *gin.Context) {
 	statusPageID := c.Param("statusPageId")
 	maintenanceID := c.Param("maintenanceId")
 
-	maintenance, err := h.service.UpdateMaintenance(orgId.(uuid.UUID).String(), statusPageID, maintenanceID, userId.(string), c.ClientIP(), &req)
+	maintenance, err := h.service.UpdateMaintenance(orgID, statusPageID, maintenanceID, userID, c.ClientIP(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
@@ -399,14 +391,14 @@ func (h *StatusPageHandler) UpdateMaintenance(c *gin.Context) {
 }
 
 func (h *StatusPageHandler) DeleteMaintenance(c *gin.Context) {
-	orgId, exist := c.Get("organizationID")
-	if !exist {
+	orgID, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	userId, exist := c.Get("userID")
-	if !exist {
+	userID, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
@@ -414,7 +406,7 @@ func (h *StatusPageHandler) DeleteMaintenance(c *gin.Context) {
 	statusPageID := c.Param("statusPageId")
 	maintenanceID := c.Param("maintenanceId")
 
-	err := h.service.DeleteMaintenance(orgId.(uuid.UUID).String(), statusPageID, maintenanceID, userId.(string), c.ClientIP())
+	err := h.service.DeleteMaintenance(orgID, statusPageID, maintenanceID, userID, c.ClientIP())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
@@ -430,21 +422,21 @@ func (h *StatusPageHandler) CreateComponentGroup(c *gin.Context) {
 		return
 	}
 
-	orgId, exist := c.Get("organizationID")
-	if !exist {
+	orgID, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	userId, exist := c.Get("userID")
-	if !exist {
+	userID, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
 	statusPageID := c.Param("statusPageId")
 
-	group, err := h.service.CreateComponentGroup(orgId.(uuid.UUID).String(), statusPageID, userId.(string), c.ClientIP(), &req)
+	group, err := h.service.CreateComponentGroup(orgID, statusPageID, userID, c.ClientIP(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
@@ -454,21 +446,21 @@ func (h *StatusPageHandler) CreateComponentGroup(c *gin.Context) {
 }
 
 func (h *StatusPageHandler) GetComponentGroups(c *gin.Context) {
-	orgId, exist := c.Get("organizationID")
-	if !exist {
+	orgID, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	userId, exist := c.Get("userID")
-	if !exist {
+	userID, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
 	statusPageID := c.Param("statusPageId")
 
-	groups, err := h.service.GetComponentGroups(orgId.(uuid.UUID).String(), statusPageID, userId.(string))
+	groups, err := h.service.GetComponentGroups(orgID, statusPageID, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
@@ -484,14 +476,14 @@ func (h *StatusPageHandler) UpdateComponentGroup(c *gin.Context) {
 		return
 	}
 
-	orgId, exist := c.Get("organizationID")
-	if !exist {
+	orgID, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	userId, exist := c.Get("userID")
-	if !exist {
+	userID, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
@@ -499,7 +491,7 @@ func (h *StatusPageHandler) UpdateComponentGroup(c *gin.Context) {
 	statusPageID := c.Param("statusPageId")
 	groupID := c.Param("groupId")
 
-	group, err := h.service.UpdateComponentGroup(orgId.(uuid.UUID).String(), statusPageID, groupID, userId.(string), c.ClientIP(), &req)
+	group, err := h.service.UpdateComponentGroup(orgID, statusPageID, groupID, userID, c.ClientIP(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
@@ -509,14 +501,14 @@ func (h *StatusPageHandler) UpdateComponentGroup(c *gin.Context) {
 }
 
 func (h *StatusPageHandler) DeleteComponentGroup(c *gin.Context) {
-	orgId, exist := c.Get("organizationID")
-	if !exist {
+	orgID, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	userId, exist := c.Get("userID")
-	if !exist {
+	userID, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
@@ -524,7 +516,7 @@ func (h *StatusPageHandler) DeleteComponentGroup(c *gin.Context) {
 	statusPageID := c.Param("statusPageId")
 	groupID := c.Param("groupId")
 
-	err := h.service.DeleteComponentGroup(orgId.(uuid.UUID).String(), statusPageID, groupID, userId.(string), c.ClientIP())
+	err := h.service.DeleteComponentGroup(orgID, statusPageID, groupID, userID, c.ClientIP())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
@@ -540,14 +532,14 @@ func (h *StatusPageHandler) AssignMonitorGroup(c *gin.Context) {
 		return
 	}
 
-	orgId, exist := c.Get("organizationID")
-	if !exist {
+	orgID, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	userId, exist := c.Get("userID")
-	if !exist {
+	userID, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
@@ -555,7 +547,7 @@ func (h *StatusPageHandler) AssignMonitorGroup(c *gin.Context) {
 	statusPageID := c.Param("statusPageId")
 	monitorID := c.Param("monitorId")
 
-	err := h.service.AssignMonitorToGroup(orgId.(uuid.UUID).String(), statusPageID, monitorID, userId.(string), c.ClientIP(), &req)
+	err := h.service.AssignMonitorToGroup(orgID, statusPageID, monitorID, userID, c.ClientIP(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return

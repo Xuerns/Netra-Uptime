@@ -3,6 +3,7 @@ package alerttemplate
 import (
 	"net/http"
 	"netra-uptime/internal/alertrule"
+	"netra-uptime/internal/middleware"
 	"netra-uptime/pkg/apierror"
 
 	"github.com/gin-gonic/gin"
@@ -234,14 +235,9 @@ func (h *Handler) AssignToMonitor(c *gin.Context) {
 }
 
 func getOrgID(c *gin.Context) (uuid.UUID, bool) {
-	orgIDVal, exists := c.Get("organizationID")
-	if !exists {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
-		return uuid.Nil, false
-	}
-	orgID, ok := orgIDVal.(uuid.UUID)
+	orgID, ok := middleware.GetOrganizationID(c)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid organization ID"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return uuid.Nil, false
 	}
 	return orgID, true

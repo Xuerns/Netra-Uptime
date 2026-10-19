@@ -2,11 +2,11 @@ package incident
 
 import (
 	"net/http"
+	"netra-uptime/internal/middleware"
 	"netra-uptime/pkg/apierror"
 	"netra-uptime/pkg/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 type Incidenthandler struct {
@@ -18,9 +18,8 @@ func NewIncidentHandler(service IncidentService) Incidenthandler {
 }
 
 func (h *Incidenthandler) GetIncidentDetail(c *gin.Context) {
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
@@ -32,7 +31,7 @@ func (h *Incidenthandler) GetIncidentDetail(c *gin.Context) {
 		return
 	}
 
-	incident, err := h.service.GetIncidentDetail(orgId.(uuid.UUID).String(), incidentId)
+	incident, err := h.service.GetIncidentDetail(orgId, incidentId)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get incident"})
@@ -43,15 +42,14 @@ func (h *Incidenthandler) GetIncidentDetail(c *gin.Context) {
 }
 
 func (h *Incidenthandler) GetAllIncident(c *gin.Context) {
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
 	monitorId := c.Query("monitor_id")
-	incidents, err := h.service.GetAllIncident(orgId.(uuid.UUID).String(), monitorId)
+	incidents, err := h.service.GetAllIncident(orgId, monitorId)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get incident"})
@@ -62,16 +60,14 @@ func (h *Incidenthandler) GetAllIncident(c *gin.Context) {
 }
 
 func (h *Incidenthandler) AddIncidentUpdate(c *gin.Context) {
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	userId, exist := c.Get("userID")
-
-	if !exist {
+	userId, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
@@ -91,7 +87,7 @@ func (h *Incidenthandler) AddIncidentUpdate(c *gin.Context) {
 
 	req.Message = utils.SanitizeString(req.Message)
 
-	updatedIncident, err := h.service.AddIncidentUpdate(orgId.(uuid.UUID).String(), incidentId, userId.(string), req.Message)
+	updatedIncident, err := h.service.AddIncidentUpdate(orgId, incidentId, userId, req.Message)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
@@ -102,16 +98,14 @@ func (h *Incidenthandler) AddIncidentUpdate(c *gin.Context) {
 }
 
 func (h *Incidenthandler) JoinAssignee(c *gin.Context) {
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	userId, exist := c.Get("userID")
-
-	if !exist {
+	userId, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
@@ -123,7 +117,7 @@ func (h *Incidenthandler) JoinAssignee(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.JoinAssignee(orgId.(uuid.UUID).String(), incidentId, userId.(string)); err != nil {
+	if err := h.service.JoinAssignee(orgId, incidentId, userId); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
@@ -132,9 +126,8 @@ func (h *Incidenthandler) JoinAssignee(c *gin.Context) {
 }
 
 func (h *Incidenthandler) GetMessageAndUser(c *gin.Context) {
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
@@ -146,7 +139,7 @@ func (h *Incidenthandler) GetMessageAndUser(c *gin.Context) {
 		return
 	}
 
-	IncidentUpdates, err := h.service.GetIncidentUpdate(orgId.(uuid.UUID).String(), incidentId)
+	IncidentUpdates, err := h.service.GetIncidentUpdate(orgId, incidentId)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})

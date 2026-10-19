@@ -2,11 +2,11 @@ package monitor
 
 import (
 	"net/http"
+	"netra-uptime/internal/middleware"
 	"netra-uptime/pkg/apierror"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 type MonitorHandler struct {
@@ -18,16 +18,14 @@ func NewMonitorHandler(service MonitorService) MonitorHandler {
 }
 
 func (h *MonitorHandler) CreateMonitor(c *gin.Context) {
-	userId, exist := c.Get("userID")
-
-	if !exist {
+	userId, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
@@ -39,7 +37,7 @@ func (h *MonitorHandler) CreateMonitor(c *gin.Context) {
 		return
 	}
 
-	monitor, err := h.service.Create(orgId.(uuid.UUID).String(), userId.(string), c.ClientIP(), &req)
+	monitor, err := h.service.Create(orgId, userId, c.ClientIP(), &req)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
@@ -50,9 +48,8 @@ func (h *MonitorHandler) CreateMonitor(c *gin.Context) {
 }
 
 func (h *MonitorHandler) GetById(c *gin.Context) {
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
@@ -64,7 +61,7 @@ func (h *MonitorHandler) GetById(c *gin.Context) {
 		return
 	}
 
-	monitor, err := h.service.GetById(orgId.(uuid.UUID).String(), monitorId)
+	monitor, err := h.service.GetById(orgId, monitorId)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
@@ -75,14 +72,13 @@ func (h *MonitorHandler) GetById(c *gin.Context) {
 }
 
 func (h *MonitorHandler) GetAllMonitor(c *gin.Context) {
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	monitors, err := h.service.GetAllMonitor(orgId.(uuid.UUID).String())
+	monitors, err := h.service.GetAllMonitor(orgId)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
@@ -93,15 +89,14 @@ func (h *MonitorHandler) GetAllMonitor(c *gin.Context) {
 }
 
 func (h *MonitorHandler) UpdateMonitor(c *gin.Context) {
-	userId, exist := c.Get("userID")
-	if !exist {
+	userId, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
@@ -119,7 +114,7 @@ func (h *MonitorHandler) UpdateMonitor(c *gin.Context) {
 		return
 	}
 
-	monitor, err := h.service.UpdateMonitor(orgId.(uuid.UUID).String(), userId.(string), c.ClientIP(), monitorId, req)
+	monitor, err := h.service.UpdateMonitor(orgId, userId, c.ClientIP(), monitorId, req)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
@@ -129,15 +124,14 @@ func (h *MonitorHandler) UpdateMonitor(c *gin.Context) {
 }
 
 func (h *MonitorHandler) DeleteMonitor(c *gin.Context) {
-	userId, exist := c.Get("userID")
-	if !exist {
+	userId, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
@@ -149,7 +143,7 @@ func (h *MonitorHandler) DeleteMonitor(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.DeleteMonitor(orgId.(uuid.UUID).String(), userId.(string), c.ClientIP(), monitorId); err != nil {
+	if err := h.service.DeleteMonitor(orgId, userId, c.ClientIP(), monitorId); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
 	}
@@ -158,8 +152,8 @@ func (h *MonitorHandler) DeleteMonitor(c *gin.Context) {
 }
 
 func (h *MonitorHandler) GetDailyStats(c *gin.Context) {
-	orgId, exist := c.Get("organizationID")
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
@@ -176,7 +170,7 @@ func (h *MonitorHandler) GetDailyStats(c *gin.Context) {
 		days = 30
 	}
 
-	stats, err := h.service.GetDailyStats(orgId.(uuid.UUID).String(), monitorId, days)
+	stats, err := h.service.GetDailyStats(orgId, monitorId, days)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return
@@ -186,8 +180,8 @@ func (h *MonitorHandler) GetDailyStats(c *gin.Context) {
 }
 
 func (h *MonitorHandler) TriggerCheck(c *gin.Context) {
-	orgId, exist := c.Get("organizationID")
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
@@ -198,7 +192,7 @@ func (h *MonitorHandler) TriggerCheck(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.TriggerCheck(orgId.(uuid.UUID).String(), monitorId)
+	result, err := h.service.TriggerCheck(orgId, monitorId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		return

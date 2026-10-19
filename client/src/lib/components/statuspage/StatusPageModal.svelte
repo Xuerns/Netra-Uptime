@@ -79,7 +79,7 @@
 		try {
 			const res = await StatusPageAPI.getMonitors(orgId, spId);
 			const spMonitors = res.data ?? [];
-			selectedMonitors = spMonitors.map((spm: any) => spm.MonitorID);
+			selectedMonitors = spMonitors.map((spm: any) => spm.MonitorID ?? spm.monitor_id);
 		} catch (err: any) {
 			error = parseApiError(err, 'Failed to load assigned monitors.');
 		}
@@ -99,6 +99,13 @@
 				faviconUrl = statusPage.FaviconURL || '';
 				themeColor = statusPage.ThemeColor || '#4edea3';
 				customCss = statusPage.CustomCSS || '';
+				if (statusPage.StatusPageMonitors && statusPage.StatusPageMonitors.length > 0) {
+					selectedMonitors = statusPage.StatusPageMonitors.map(
+						(spm: any) => spm.MonitorID ?? spm.monitor_id
+					);
+				} else {
+					selectedMonitors = [];
+				}
 				loadCurrentMonitors(statusPage.ID);
 			} else {
 				title = '';

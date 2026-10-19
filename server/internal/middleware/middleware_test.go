@@ -408,3 +408,67 @@ func TestRequireAPIKeyPermission_ReadRequired_HasWrite(t *testing.T) {
 		t.Errorf("expected 200, got %d", w.Code)
 	}
 }
+
+func TestContextHelpers(t *testing.T) {
+	orgUUID := uuid.New()
+	userUUID := uuid.New()
+
+	// Test missing
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	if _, ok := GetOrganizationID(c); ok {
+		t.Error("expected false for missing orgID")
+	}
+	if _, ok := GetOrganizationIDString(c); ok {
+		t.Error("expected false for missing orgID string")
+	}
+	if _, ok := GetUserID(c); ok {
+		t.Error("expected false for missing userID")
+	}
+
+	// Test with uuid.UUID
+	c.Set("organizationID", orgUUID)
+	c.Set("userID", userUUID)
+	gotOrgUUID, ok := GetOrganizationID(c)
+	if !ok || gotOrgUUID != orgUUID {
+		t.Errorf("expected %v, got %v", orgUUID, gotOrgUUID)
+	}
+	gotOrgStr, ok := GetOrganizationIDString(c)
+	if !ok || gotOrgStr != orgUUID.String() {
+		t.Errorf("expected %s, got %s", orgUUID.String(), gotOrgStr)
+	}
+	gotUserStr, ok := GetUserID(c)
+	if !ok || gotUserStr != userUUID.String() {
+		t.Errorf("expected %s, got %s", userUUID.String(), gotUserStr)
+	}
+
+	// Test with string values
+	c2, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c2.Set("organizationID", orgUUID.String())
+	c2.Set("userID", "user-12345")
+	gotOrgUUID2, ok := GetOrganizationID(c2)
+	if !ok || gotOrgUUID2 != orgUUID {
+		t.Errorf("expected %v, got %v", orgUUID, gotOrgUUID2)
+	}
+	gotOrgStr2, ok := GetOrganizationIDString(c2)
+	if !ok || gotOrgStr2 != orgUUID.String() {
+		t.Errorf("expected %s, got %s", orgUUID.String(), gotOrgStr2)
+	}
+	gotUserStr2, ok := GetUserID(c2)
+	if !ok || gotUserStr2 != "user-12345" {
+		t.Errorf("expected user-12345, got %s", gotUserStr2)
+	}
+
+	// Test with invalid values
+	c3, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c3.Set("organizationID", "not-a-uuid")
+	c3.Set("userID", 12345)
+	if _, ok := GetOrganizationID(c3); ok {
+		t.Error("expected false for invalid orgID")
+	}
+	if _, ok := GetOrganizationIDString(c3); ok {
+		t.Error("expected false for invalid orgID string")
+	}
+	if _, ok := GetUserID(c3); ok {
+		t.Error("expected false for non-string/non-uuid userID")
+	}
+}

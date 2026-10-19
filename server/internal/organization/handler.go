@@ -2,11 +2,11 @@ package organization
 
 import (
 	"net/http"
+	"netra-uptime/internal/middleware"
 	"netra-uptime/pkg/apierror"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 type OrganizationHandler struct {
@@ -130,21 +130,19 @@ func (h *OrganizationHandler) InviteMember(c *gin.Context) {
 		return
 	}
 
-	userId, exist := c.Get("userID")
-
-	if !exist {
+	userId, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	res, err := h.service.InviteMember(orgId.(uuid.UUID).String(), userId.(string), c.ClientIP(), req)
+	res, err := h.service.InviteMember(orgId, userId, c.ClientIP(), req)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
@@ -155,8 +153,8 @@ func (h *OrganizationHandler) InviteMember(c *gin.Context) {
 }
 
 func (h *OrganizationHandler) KickMember(c *gin.Context) {
-	userId, exist := c.Get("userID")
-	if !exist {
+	userId, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
@@ -167,14 +165,13 @@ func (h *OrganizationHandler) KickMember(c *gin.Context) {
 		return
 	}
 
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	res, err := h.service.KickMember(orgId.(uuid.UUID).String(), userId.(string), memberId, c.ClientIP())
+	res, err := h.service.KickMember(orgId, userId, memberId, c.ClientIP())
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
@@ -185,21 +182,19 @@ func (h *OrganizationHandler) KickMember(c *gin.Context) {
 }
 
 func (h *OrganizationHandler) Disband(c *gin.Context) {
-	userId, exist := c.Get("userID")
-
-	if !exist {
+	userId, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	res, err := h.service.Disband(orgId.(uuid.UUID).String(), userId.(string), c.ClientIP())
+	res, err := h.service.Disband(orgId, userId, c.ClientIP())
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
@@ -211,16 +206,15 @@ func (h *OrganizationHandler) Disband(c *gin.Context) {
 }
 
 func (h *OrganizationHandler) UpdateOrganization(c *gin.Context) {
-	userId, exist := c.Get("userID")
-	if !exist {
+	userId, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		c.Abort()
 		return
 	}
 
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		c.Abort()
 		return
@@ -233,7 +227,7 @@ func (h *OrganizationHandler) UpdateOrganization(c *gin.Context) {
 		return
 	}
 
-	res, err := h.service.UpdateOrganization(&req, orgId.(uuid.UUID).String(), userId.(string), c.ClientIP())
+	res, err := h.service.UpdateOrganization(&req, orgId, userId, c.ClientIP())
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
@@ -285,16 +279,14 @@ func (h *OrganizationHandler) SearchPersons(c *gin.Context) {
 }
 
 func (h *OrganizationHandler) PromoteToAdmin(c *gin.Context) {
-	userId, exist := c.Get("userID")
-
-	if !exist {
+	userId, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
@@ -305,7 +297,7 @@ func (h *OrganizationHandler) PromoteToAdmin(c *gin.Context) {
 		return
 	}
 
-	res, err := h.service.PromoteToAdmin(req.UserID, orgId.(uuid.UUID).String(), userId.(string), c.ClientIP())
+	res, err := h.service.PromoteToAdmin(req.UserID, orgId, userId, c.ClientIP())
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
@@ -316,16 +308,14 @@ func (h *OrganizationHandler) PromoteToAdmin(c *gin.Context) {
 }
 
 func (h *OrganizationHandler) DemoteToMember(c *gin.Context) {
-	userId, exist := c.Get("userID")
-
-	if !exist {
+	userId, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
@@ -336,7 +326,7 @@ func (h *OrganizationHandler) DemoteToMember(c *gin.Context) {
 		return
 	}
 
-	res, err := h.service.DemotedToMember(req.UserID, orgId.(uuid.UUID).String(), userId.(string), c.ClientIP())
+	res, err := h.service.DemotedToMember(req.UserID, orgId, userId, c.ClientIP())
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
@@ -347,16 +337,14 @@ func (h *OrganizationHandler) DemoteToMember(c *gin.Context) {
 }
 
 func (h *OrganizationHandler) TransferOwnership(c *gin.Context) {
-	owner, exist := c.Get("userID")
-
-	if !exist {
+	owner, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
@@ -367,7 +355,7 @@ func (h *OrganizationHandler) TransferOwnership(c *gin.Context) {
 		return
 	}
 
-	res, err := h.service.TransferOwnership(owner.(string), req.UserID, orgId.(uuid.UUID).String(), c.ClientIP())
+	res, err := h.service.TransferOwnership(owner, req.UserID, orgId, c.ClientIP())
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
@@ -378,21 +366,19 @@ func (h *OrganizationHandler) TransferOwnership(c *gin.Context) {
 }
 
 func (h *OrganizationHandler) LeaveOrganization(c *gin.Context) {
-	userId, exist := c.Get("userID")
-
-	if !exist {
+	userId, ok := middleware.GetUserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User context missing"})
 		return
 	}
 
-	orgId, exist := c.Get("organizationID")
-
-	if !exist {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
 		return
 	}
 
-	res, err := h.service.LeaveOrganization(userId.(string), orgId.(uuid.UUID).String(), c.ClientIP())
+	res, err := h.service.LeaveOrganization(userId, orgId, c.ClientIP())
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})

@@ -523,6 +523,54 @@ func TestStatusPageHandler_Delete(t *testing.T) {
 	}
 }
 
+func TestStatusPageHandler_GetStatusPageMonitor(t *testing.T) {
+	orgID := uuid.New()
+	spID := uuid.New()
+
+	repo := &mockStatusPageRepo{
+		getStatusPageMonitorFunc: func(id, oId string) ([]model.StatusPageMonitor, error) {
+			return []model.StatusPageMonitor{
+				{ID: uuid.New(), StatusPageID: spID},
+			}, nil
+		},
+	}
+	checker := &mockStatusPageChecker{}
+	svc := NewStatusPageService(repo, checker, nil, nil)
+	handler := NewStatusPageHandler(svc)
+
+	// Test with uuid.UUID (as set by TenantMiddleware)
+	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		c.Set("organizationID", orgID)
+		c.Next()
+	})
+	r.GET("/organization/:orgId/statuspage/:statusPageId/monitors", handler.GetStatusPageMonitor)
+
+	req, _ := http.NewRequest(http.MethodGet, "/organization/"+orgID.String()+"/statuspage/"+spID.String()+"/monitors", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+
+	// Test with string orgID
+	rStr := gin.New()
+	rStr.Use(func(c *gin.Context) {
+		c.Set("organizationID", orgID.String())
+		c.Next()
+	})
+	rStr.GET("/organization/:orgId/statuspage/:statusPageId/monitors", handler.GetStatusPageMonitor)
+
+	reqStr, _ := http.NewRequest(http.MethodGet, "/organization/"+orgID.String()+"/statuspage/"+spID.String()+"/monitors", nil)
+	wStr := httptest.NewRecorder()
+	rStr.ServeHTTP(wStr, reqStr)
+
+	if wStr.Code != http.StatusOK {
+		t.Errorf("expected 200 with string orgID, got %d", wStr.Code)
+	}
+}
+
 func TestStatusPageHandler_GetPublicBySubdomain(t *testing.T) {
 	repo := &mockStatusPageRepo{
 		getBySubdomainFunc: func(sub string) (*model.StatusPage, error) {

@@ -5,6 +5,7 @@ import (
 	"netra-uptime/internal/model"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -63,5 +64,50 @@ func RequireRole(allowedRole ...string) gin.HandlerFunc {
 		}
 
 		c.Next()
+	}
+}
+
+// GetOrganizationID extracts the organization UUID from the Gin context safely.
+func GetOrganizationID(c *gin.Context) (uuid.UUID, bool) {
+	val, exists := c.Get("organizationID")
+	if !exists {
+		return uuid.Nil, false
+	}
+	switch v := val.(type) {
+	case uuid.UUID:
+		return v, true
+	case string:
+		parsed, err := uuid.Parse(v)
+		if err != nil {
+			return uuid.Nil, false
+		}
+		return parsed, true
+	default:
+		return uuid.Nil, false
+	}
+}
+
+// GetOrganizationIDString extracts the organization ID as a string safely.
+func GetOrganizationIDString(c *gin.Context) (string, bool) {
+	id, ok := GetOrganizationID(c)
+	if !ok {
+		return "", false
+	}
+	return id.String(), true
+}
+
+// GetUserID extracts the user ID string from Gin context safely.
+func GetUserID(c *gin.Context) (string, bool) {
+	val, exists := c.Get("userID")
+	if !exists {
+		return "", false
+	}
+	switch v := val.(type) {
+	case string:
+		return v, true
+	case uuid.UUID:
+		return v.String(), true
+	default:
+		return "", false
 	}
 }
