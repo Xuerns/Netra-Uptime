@@ -56,13 +56,13 @@
 </script>
 
 <div
-	class="group rounded-xl border border-border/70 hover:border-border/90 bg-white/3 p-5 sm:p-6 backdrop-blur-md transition-all duration-200 space-y-4"
+	class="group rounded-xl border border-border/70 hover:border-border/90 bg-white/3 p-4 sm:p-5 backdrop-blur-md transition-all duration-200 space-y-3"
 >
 	<!-- Monitor Top Info Row -->
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<div class="flex items-center gap-2.5 min-w-0">
 			<p
-				class="text-base sm:text-lg font-semibold text-foreground truncate group-hover:text-primary transition-colors"
+				class="text-sm sm:text-base font-semibold text-foreground truncate group-hover:text-primary transition-colors"
 			>
 				{monitor.name}
 			</p>
@@ -73,10 +73,26 @@
 			</span>
 		</div>
 
-		<div class="flex items-center gap-3 shrink-0">
+		<div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
 			{#if monitor.recent_checks && monitor.recent_checks.length > 0}
+				<div
+					class="hidden sm:inline-flex items-center gap-2.5 px-2.5 py-1 rounded-full bg-white/3 border border-border/50"
+					title="Recent latency trend"
+				>
+					<div class="w-16 md:w-20 h-4 flex items-center">
+						<Sparkline
+							data={monitor.recent_checks.slice().reverse()}
+							color={statusInfo.sparklineColor}
+							height={16}
+						/>
+					</div>
+					<span class="text-xs font-mono text-muted-foreground inline-flex items-center gap-1">
+						<Activity class="size-3 text-muted-foreground" />
+						{monitor.recent_checks[0]}ms
+					</span>
+				</div>
 				<span
-					class="text-xs font-mono text-muted-foreground hidden sm:inline-flex items-center gap-1"
+					class="text-xs font-mono text-muted-foreground inline-flex sm:hidden items-center gap-1"
 				>
 					<Activity class="size-3 text-muted-foreground" />
 					{monitor.recent_checks[0]}ms
@@ -92,27 +108,11 @@
 	</div>
 
 	<!-- 90-Day Uptime Bar Component -->
-	<div class="pt-1">
+	<div>
 		<UptimeBar
 			dailyStats={monitor.daily_stats}
 			overallUptime={monitor.uptime_percent}
 			accentColor={themeColor}
 		/>
 	</div>
-
-	<!-- Latency Sparkline Footer -->
-	{#if monitor.recent_checks && monitor.recent_checks.length > 0}
-		<div
-			class="pt-3 border-t border-border/40 flex items-center justify-between text-xs text-muted-foreground"
-		>
-			<span class="font-mono text-[11px]">Recent Latency</span>
-			<div class="w-36 sm:w-48 h-6">
-				<Sparkline
-					data={monitor.recent_checks.slice().reverse()}
-					color={statusInfo.sparklineColor}
-					height={24}
-				/>
-			</div>
-		</div>
-	{/if}
 </div>

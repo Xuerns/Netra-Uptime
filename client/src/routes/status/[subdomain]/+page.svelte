@@ -98,6 +98,14 @@
 		}
 	});
 
+	function computeMonitorSetStatus(mons: PublicStatusPage['monitors']): string {
+		if (!mons || mons.length === 0) return 'operational';
+		if (mons.some((m) => m.status === 'down')) return 'major_outage';
+		if (mons.some((m) => m.status === 'degraded')) return 'degraded';
+		if (mons.every((m) => m.status === 'paused')) return 'paused';
+		return 'operational';
+	}
+
 	// Group monitors by ComponentGroup
 	let monitorGrouping = $derived.by(() => {
 		const monitors = statusPage.monitors || [];
@@ -107,25 +115,17 @@
 			return {
 				hasGroups: false,
 				groups: [],
-				ungrouped: monitors
+				ungrouped: monitors,
+				ungroupedStatus: computeMonitorSetStatus(monitors)
 			};
 		}
 
 		const grouped = groups.map((g) => {
 			const mons = monitors.filter((m) => m.group_id === g.id);
-			let groupStatus = 'operational';
-			if (mons.some((m) => m.status === 'down')) {
-				groupStatus = 'major_outage';
-			} else if (mons.some((m) => m.status === 'degraded')) {
-				groupStatus = 'degraded';
-			} else if (mons.length > 0 && mons.every((m) => m.status === 'paused')) {
-				groupStatus = 'paused';
-			}
-
 			return {
 				group: g,
 				monitors: mons,
-				status: groupStatus
+				status: computeMonitorSetStatus(mons)
 			};
 		});
 
@@ -135,19 +135,31 @@
 		return {
 			hasGroups: true,
 			groups: grouped,
-			ungrouped
+			ungrouped,
+			ungroupedStatus: computeMonitorSetStatus(ungrouped)
 		};
 	});
 
-	// Filtered incident history by selected date range
+	// Filtered incident history (incidents-only timeline) by selected date range
 	let displayedIncidentHistory = $derived.by(() => {
-		const history = statusPage.incident_history || [];
-		if (historyRange === '7d') {
-			return history.slice(0, 7);
-		} else if (historyRange === '14d') {
-			return history.slice(0, 14);
+		const history = (statusPage.incident_history || []).filter(
+			(day) => day.incidents && day.incidents.length > 0
+		);
+		if (historyRange === 'all') {
+			return history;
 		}
-		return history;
+
+		const days = historyRange === '7d' ? 7 : 14;
+		const cutoff = new Date();
+		cutoff.setHours(0, 0, 0, 0);
+		cutoff.setDate(cutoff.getDate() - (days - 1));
+
+		return history.filter((day) => {
+			const [y, m, d] = day.date.split('-').map(Number);
+			if (!y || !m || !d) return true;
+			const dayDate = new Date(y, m - 1, d);
+			return dayDate >= cutoff;
+		});
 	});
 
 	onMount(() => {
@@ -189,8 +201,9 @@
 		}
 	}
 
-	function toggleGroupCollapse(groupId: string) {
-		collapsedGroups[groupId] = !collapsedGroups[groupId];
+	function toggleGroupCollapse(groupId: string, currentlyCollapsed?: boolean) {
+		const current = currentlyCollapsed ?? collapsedGroups[groupId] ?? false;
+		collapsedGroups[groupId] = !current;
 	}
 
 	function getGroupStatusBadge(status: string) {
@@ -209,6 +222,14 @@
 					dotClass: 'bg-amber-500',
 					dotStyle: '',
 					textClass: 'text-amber-400',
+					textStyle: ''
+				};
+			case 'paused':
+				return {
+					label: 'Paused',
+					dotClass: 'bg-blue-400',
+					dotStyle: '',
+					textClass: 'text-blue-400',
 					textStyle: ''
 				};
 			default:

@@ -10,14 +10,15 @@
 		monitorGrouping: {
 			hasGroups: boolean;
 			groups: Array<{
-				group: { id: string; name: string };
+				group: { id: string; name: string; is_expanded?: boolean };
 				monitors: PublicMonitor[];
 				status: string;
 			}>;
 			ungrouped: PublicMonitor[];
+			ungroupedStatus: string;
 		};
 		collapsedGroups: Record<string, boolean>;
-		onToggleGroup: (groupId: string) => void;
+		onToggleGroup: (groupId: string, currentlyCollapsed?: boolean) => void;
 		getGroupStatusBadge: (status: string) => {
 			label: string;
 			dotClass: string;
@@ -35,6 +36,21 @@
 		onToggleGroup,
 		getGroupStatusBadge
 	}: Props = $props();
+
+	function isGroupCollapsed(
+		groupId: string,
+		isExpandedDefault: boolean | undefined,
+		status: string
+	): boolean {
+		if (collapsedGroups[groupId] !== undefined) {
+			return collapsedGroups[groupId];
+		}
+		// Auto-expand groups with active disruptions so outages are never hidden
+		if (status === 'major_outage' || status === 'degraded') {
+			return false;
+		}
+		return isExpandedDefault === false;
+	}
 </script>
 
 <section class="space-y-4">
@@ -51,19 +67,23 @@
 	{#if statusPage.monitors && statusPage.monitors.length > 0}
 		{#if monitorGrouping.hasGroups}
 			<!-- Grouped Component Sections -->
-			<div class="space-y-6">
+			<div class="space-y-4">
 				{#each monitorGrouping.groups as gInfo (gInfo.group.id)}
-					{@const isCollapsed = collapsedGroups[gInfo.group.id] ?? false}
+					{@const isCollapsed = isGroupCollapsed(
+						gInfo.group.id,
+						gInfo.group.is_expanded,
+						gInfo.status
+					)}
 					{@const gBadge = getGroupStatusBadge(gInfo.status)}
 
 					<Collapsible.Root
 						open={!isCollapsed}
-						onOpenChange={() => onToggleGroup(gInfo.group.id)}
+						onOpenChange={() => onToggleGroup(gInfo.group.id, isCollapsed)}
 						class="rounded-xl border border-border/80 bg-white/3 overflow-hidden shadow-sm"
 					>
 						<!-- Group Header (Collapsible Trigger) -->
 						<Collapsible.Trigger
-							class="w-full px-5 py-4 flex items-center justify-between gap-3 bg-white/2 hover:bg-white/5 transition-colors text-left cursor-pointer data-[state=open]:border-b data-[state=open]:border-border/50"
+							class="w-full px-5 py-3.5 flex items-center justify-between gap-3 bg-white/2 hover:bg-white/5 transition-colors text-left cursor-pointer data-[state=open]:border-b data-[state=open]:border-border/50"
 						>
 							<div class="flex items-center gap-3 min-w-0">
 								<ChevronDown
@@ -95,7 +115,7 @@
 						<Collapsible.Content
 							class="overflow-hidden transition-all data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down"
 						>
-							<div class="p-4 sm:p-5 space-y-4">
+							<div class="p-4 sm:p-5 space-y-3">
 								{#if gInfo.monitors.length === 0}
 									<div class="text-xs text-muted-foreground py-3 text-center italic">
 										No monitors currently in this group.
@@ -110,26 +130,66 @@
 					</Collapsible.Root>
 				{/each}
 
-				<!-- Ungrouped Monitors (if any) -->
+				<!-- Ungrouped Monitors (Collapsible just like groups) -->
 				{#if monitorGrouping.ungrouped.length > 0}
-					<div class="space-y-4 pt-2">
-						<div class="flex items-center gap-2 px-1">
-							<FolderTree class="size-3.5 text-muted-foreground" />
-							<h3 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-								Other Components
-							</h3>
-						</div>
-						<div class="space-y-4">
-							{#each monitorGrouping.ungrouped as monitor (monitor.id)}
-								<PublicMonitorRow {monitor} {themeColor} />
-							{/each}
-						</div>
-					</div>
+					{@const ungroupedId = '__ungrouped__'}
+					{@const isUngroupedCollapsed = isGroupCollapsed(
+						ungroupedId,
+						true,
+						monitorGrouping.ungroupedStatus
+					)}
+					{@const uBadge = getGroupStatusBadge(monitorGrouping.ungroupedStatus)}
+
+					<Collapsible.Root
+						open={!isUngroupedCollapsed}
+						onOpenChange={() => onToggleGroup(ungroupedId, isUngroupedCollapsed)}
+						class="rounded-xl border border-border/80 bg-white/3 overflow-hidden shadow-sm"
+					>
+						<Collapsible.Trigger
+							class="w-full px-5 py-3.5 flex items-center justify-between gap-3 bg-white/2 hover:bg-white/5 transition-colors text-left cursor-pointer data-[state=open]:border-b data-[state=open]:border-border/50"
+						>
+							<div class="flex items-center gap-3 min-w-0">
+								<ChevronDown
+									class="size-4 text-muted-foreground transition-transform duration-200 shrink-0 {isUngroupedCollapsed
+										? '-rotate-90'
+										: ''}"
+								/>
+								<div class="flex items-center gap-2 min-w-0">
+									<FolderTree class="size-4 text-muted-foreground shrink-0" />
+									<h3 class="text-base font-semibold text-foreground truncate">
+										Other Components
+									</h3>
+									<span
+										class="text-[11px] font-mono text-muted-foreground px-2 py-0.5 rounded-full bg-white/5 border border-border/60"
+									>
+										{monitorGrouping.ungrouped.length}
+									</span>
+								</div>
+							</div>
+
+							<div
+								class="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 border border-border/60 shrink-0"
+							>
+								<span style={uBadge.dotStyle} class="size-2 rounded-full {uBadge.dotClass}"></span>
+								<span style={uBadge.textStyle} class={uBadge.textClass}>{uBadge.label}</span>
+							</div>
+						</Collapsible.Trigger>
+
+						<Collapsible.Content
+							class="overflow-hidden transition-all data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down"
+						>
+							<div class="p-4 sm:p-5 space-y-3">
+								{#each monitorGrouping.ungrouped as monitor (monitor.id)}
+									<PublicMonitorRow {monitor} {themeColor} />
+								{/each}
+							</div>
+						</Collapsible.Content>
+					</Collapsible.Root>
 				{/if}
 			</div>
 		{:else}
 			<!-- Flat List Layout (Fallback when no groups exist) -->
-			<div class="space-y-4">
+			<div class="space-y-3">
 				{#each statusPage.monitors as monitor (monitor.id)}
 					<PublicMonitorRow {monitor} {themeColor} />
 				{/each}

@@ -459,7 +459,7 @@ func (s *StatusPageServiceImpl) GetBySubdomain(subdomain string) (*PublicStatusP
 		})
 	}
 
-	incidentHistory := groupIncidentsByDay(historyIncidents, 14)
+	incidentHistory := groupIncidentsByDay(historyIncidents, 0)
 
 	themeColor := statusPage.ThemeColor
 	if themeColor == "" {
