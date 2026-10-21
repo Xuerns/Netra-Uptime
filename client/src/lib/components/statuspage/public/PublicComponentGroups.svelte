@@ -79,7 +79,7 @@
 					<Collapsible.Root
 						open={!isCollapsed}
 						onOpenChange={() => onToggleGroup(gInfo.group.id, isCollapsed)}
-						class="rounded-xl border border-border/80 bg-white/3 overflow-hidden shadow-sm"
+						class="rounded-xl border border-border/80 bg-card overflow-hidden shadow-sm"
 					>
 						<!-- Group Header (Collapsible Trigger) -->
 						<Collapsible.Trigger
@@ -143,7 +143,7 @@
 					<Collapsible.Root
 						open={!isUngroupedCollapsed}
 						onOpenChange={() => onToggleGroup(ungroupedId, isUngroupedCollapsed)}
-						class="rounded-xl border border-border/80 bg-white/3 overflow-hidden shadow-sm"
+						class="rounded-xl border border-border/80 bg-card overflow-hidden shadow-sm"
 					>
 						<Collapsible.Trigger
 							class="w-full px-5 py-3.5 flex items-center justify-between gap-3 bg-white/2 hover:bg-white/5 transition-colors text-left cursor-pointer data-[state=open]:border-b data-[state=open]:border-border/50"

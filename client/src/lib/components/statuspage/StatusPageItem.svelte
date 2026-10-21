@@ -54,7 +54,7 @@
 {#if viewMode === 'grid'}
 	<!-- Card / Grid View Mode -->
 	<div
-		class="card-wrapper flex flex-col bg-card border border-border rounded-xl p-5 hover:border-border/80 hover:bg-card/80 transition-colors shadow-sm h-full w-full relative"
+		class="card-wrapper flex flex-col bg-card border border-border rounded-xl p-5 hover:border-primary/30 transition-colors shadow-sm h-full w-full relative"
 	>
 		<!-- Top row: icon + title + badge + 3-dot menu -->
 		<div class="flex items-start justify-between gap-3 mb-3">

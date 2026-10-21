@@ -5,21 +5,9 @@
 	import { AlertTemplateAPI, type AlertTemplate } from '$lib/api/alertTemplate';
 	import { MonitorAPI, type Monitor } from '$lib/api/monitor';
 	import { headerStore } from '$lib/stores/headerStore.svelte';
-	import { userTimezone } from '$lib/stores/timezone';
-	import { formatDateTime } from '$lib/utils/datetime';
 	import { parseApiError } from '$lib/utils/parseApiError';
 	import { toast } from 'svelte-sonner';
-	import {
-		ArrowLeft,
-		Pencil,
-		Trash2,
-		Sparkles,
-		AlertTriangle,
-		Monitor as MonitorIcon,
-		Clock,
-		Activity,
-		Layers
-	} from 'lucide-svelte';
+	import { ArrowLeft, Pencil, Trash2, AlertTriangle } from 'lucide-svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { DataSkeleton } from '$lib/components/common';
@@ -32,7 +20,6 @@
 	// ── Params ────────────────────────────────────────────────────────────────
 	const orgId = $derived($page.params.id as string);
 	const templateId = $derived($page.params.templateId as string);
-	const tz = $derived($userTimezone);
 
 	// ── State ─────────────────────────────────────────────────────────────────
 	let template = $state<AlertTemplate | null>(null);
@@ -82,9 +69,7 @@
 			title: template?.name || 'Alert Template Detail',
 			showSearch: false,
 			actionType: null,
-			badge: template?.is_default
-				? { text: 'Default Template', variant: 'emerald' }
-				: { text: 'Template Profile', variant: 'slate' }
+			badge: undefined
 		});
 	});
 
@@ -138,7 +123,7 @@
 	{:else if template}
 		<!-- ── Dedicated Header ──────────────────────────────────────────────────── -->
 		<header
-			class="flex flex-col md:flex-row md:items-start justify-between gap-4 pb-6 border-b border-border"
+			class="flex flex-col md:flex-row md:items-start justify-between gap-4 pb-5 border-b border-border"
 		>
 			<div class="space-y-1.5 min-w-0 max-w-[70ch]">
 				<div class="flex items-center gap-2.5 flex-wrap">
@@ -148,16 +133,17 @@
 					{#if template.is_default}
 						<Badge
 							variant="outline"
-							class="gap-1 px-2.5 py-0.5 text-xs font-medium bg-primary/10 border-primary/20 text-primary"
+							class="px-2 py-0.5 text-xs font-medium bg-primary/10 border-primary/20 text-primary"
 						>
-							<Sparkles class="size-3" />
-							Default Policy
+							Default
 						</Badge>
 					{/if}
 				</div>
-				<p class="text-sm text-muted-foreground leading-relaxed">
-					{template.description || 'No description provided for this template.'}
-				</p>
+				{#if template.description}
+					<p class="text-sm text-muted-foreground leading-relaxed">
+						{template.description}
+					</p>
+				{/if}
 			</div>
 
 			<!-- Action Buttons -->
@@ -178,56 +164,6 @@
 				</button>
 			</div>
 		</header>
-
-		<!-- ── Overview Summary Cards ────────────────────────────────────────────── -->
-		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-			<div class="bg-card border border-border rounded-xl p-4.5 flex flex-col justify-between">
-				<div class="flex items-center justify-between text-muted-foreground text-xs mb-1">
-					<span>Configured Rules</span>
-					<Layers class="size-4 text-muted-foreground/60" />
-				</div>
-				<div class="text-2xl font-bold font-mono text-foreground">
-					{template.rules?.length || 0}
-				</div>
-				<div class="text-[11px] text-muted-foreground mt-1">
-					{template.rules?.filter((r) => r.severity === 'critical').length || 0} Critical,
-					{template.rules?.filter((r) => r.severity === 'warning').length || 0} Warning
-				</div>
-			</div>
-
-			<div class="bg-card border border-border rounded-xl p-4.5 flex flex-col justify-between">
-				<div class="flex items-center justify-between text-muted-foreground text-xs mb-1">
-					<span>Linked Monitors</span>
-					<MonitorIcon class="size-4 text-muted-foreground/60" />
-				</div>
-				<div class="text-2xl font-bold font-mono text-foreground">
-					{linkedMonitors.length}
-				</div>
-				<div class="text-[11px] text-muted-foreground mt-1">Monitors using this alert profile</div>
-			</div>
-
-			<div class="bg-card border border-border rounded-xl p-4.5 flex flex-col justify-between">
-				<div class="flex items-center justify-between text-muted-foreground text-xs mb-1">
-					<span>Created At</span>
-					<Clock class="size-4 text-muted-foreground/60" />
-				</div>
-				<div class="text-sm font-semibold font-mono text-foreground truncate">
-					{formatDateTime(template.created_at, tz)}
-				</div>
-				<div class="text-[11px] text-muted-foreground mt-1">Initial template creation</div>
-			</div>
-
-			<div class="bg-card border border-border rounded-xl p-4.5 flex flex-col justify-between">
-				<div class="flex items-center justify-between text-muted-foreground text-xs mb-1">
-					<span>Last Updated</span>
-					<Activity class="size-4 text-muted-foreground/60" />
-				</div>
-				<div class="text-sm font-semibold font-mono text-foreground truncate">
-					{formatDateTime(template.updated_at, tz)}
-				</div>
-				<div class="text-[11px] text-muted-foreground mt-1">Latest rule or metadata change</div>
-			</div>
-		</div>
 
 		<!-- ── Section: Configured Rules (Component) ──────────────────────────────── -->
 		<AlertRulesSection {template} {orgId} onRefresh={loadTemplateData} />

@@ -80,7 +80,7 @@
 	<Sidebar.Inset class="flex flex-col min-h-screen">
 		<!-- ── Top Dark Utility Bar ─────────────────────────────────────────── -->
 		<header
-			class="h-14 border-b border-border bg-card/60 backdrop-blur-md px-4 flex items-center justify-between sticky top-0 z-20 shrink-0 gap-3"
+			class="h-14 border-b border-border bg-card px-4 flex items-center justify-between sticky top-0 z-20 shrink-0 gap-3"
 		>
 			<!-- Left: Sidebar Trigger, Divider, Breadcrumb & Status Badge -->
 			<div class="flex items-center gap-3 min-w-0">

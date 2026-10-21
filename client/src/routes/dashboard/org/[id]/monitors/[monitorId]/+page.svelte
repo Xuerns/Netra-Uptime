@@ -397,7 +397,7 @@
 		<DataSkeleton variant="detail" />
 	{:else if fetchError || !monitor}
 		<div
-			class="border border-border rounded-lg bg-white/3 p-8 text-center space-y-3 max-w-full mx-auto"
+			class="border border-border rounded-lg bg-card p-8 text-center space-y-3 max-w-full mx-auto"
 		>
 			<AlertTriangle class="size-10 text-primary mx-auto" />
 			<h2 class="text-lg font-bold text-foreground">Failed to Load Monitor</h2>

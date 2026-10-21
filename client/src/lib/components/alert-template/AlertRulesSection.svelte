@@ -88,7 +88,7 @@
 
 	{#if !template.rules || template.rules.length === 0}
 		<div
-			class="rounded-xl border border-dashed border-border bg-white/2 py-12 px-4 text-center space-y-3"
+			class="rounded-xl border border-dashed border-border bg-background/40 py-12 px-4 text-center space-y-3"
 		>
 			<div
 				class="size-10 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto"
@@ -111,10 +111,10 @@
 			</button>
 		</div>
 	{:else}
-		<div class="divide-y divide-border/60 border border-border/80 rounded-xl overflow-hidden">
+		<div class="divide-y divide-border/60 border border-border rounded-xl overflow-hidden">
 			{#each template.rules as r (r.id)}
 				<div
-					class="flex items-center justify-between gap-4 p-4 bg-white/2 hover:bg-white/4 transition-colors flex-wrap sm:flex-nowrap"
+					class="flex items-center justify-between gap-4 p-4 bg-background/40 hover:bg-white/4 transition-colors flex-wrap sm:flex-nowrap"
 				>
 					<div class="flex items-center gap-3.5 min-w-0 flex-1">
 						{#if r.severity === 'critical'}
@@ -133,7 +133,7 @@
 							</div>
 						{/if}
 
-						<div class="min-w-0 space-y-1">
+						<div class="min-w-0 space-y-0.5">
 							<div class="flex items-center gap-2 flex-wrap">
 								<span class="font-semibold text-sm text-foreground truncate">{r.name}</span>
 								<span
@@ -146,22 +146,21 @@
 								</span>
 								{#if !r.is_active}
 									<span
-										class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-white/5 border border-border text-muted-foreground"
+										class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-muted border border-border text-muted-foreground"
 									>
 										Paused
 									</span>
 								{/if}
 							</div>
 
-							<div class="text-xs text-muted-foreground font-mono flex items-center gap-2">
-								<span class="text-foreground/90 font-medium">
+							<div class="text-xs text-muted-foreground font-mono flex items-center gap-1.5">
+								<span>
 									{r.metric}
 									{r.operator}
 									{r.target_value}
 								</span>
-								<span class="text-muted-foreground/60">
-									• breaches: {r.consecutive}x consecutive
-								</span>
+								<span class="text-muted-foreground/50">&bull;</span>
+								<span>{r.consecutive}x consecutive</span>
 							</div>
 						</div>
 					</div>

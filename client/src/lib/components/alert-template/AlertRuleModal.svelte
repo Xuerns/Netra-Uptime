@@ -230,17 +230,18 @@
 				</div>
 			</div>
 
-			<div
-				class="flex items-start gap-2.5 p-3 rounded-lg border border-border bg-white/2 cursor-pointer"
+			<label
+				for="rule-is-active"
+				class="flex items-start gap-3 p-3 rounded-lg border border-border bg-background cursor-pointer select-none"
 			>
 				<Checkbox id="rule-is-active" bind:checked={isRuleActive} class="mt-0.5" />
-				<Label for="rule-is-active" class="text-xs cursor-pointer flex-1">
-					<span class="font-medium text-foreground">Rule is active</span>
-					<span class="block text-muted-foreground text-[11px] mt-0.5 leading-relaxed">
+				<div class="space-y-0.5 text-xs">
+					<p class="font-medium text-foreground">Rule is active</p>
+					<p class="text-muted-foreground text-[11px] leading-relaxed">
 						When enabled, monitor checks that breach these thresholds will trigger incident alerts.
-					</span>
-				</Label>
-			</div>
+					</p>
+				</div>
+			</label>
 
 			<Dialog.Footer class="gap-2 sm:gap-0 pt-3">
 				<button

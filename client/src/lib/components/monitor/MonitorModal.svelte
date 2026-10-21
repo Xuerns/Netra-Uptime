@@ -432,34 +432,27 @@
 
 					<!-- Status Toggle (in Edit Mode) -->
 					{#if isEdit}
-						<div
-							class="flex items-center justify-between p-3 rounded-lg bg-white/4 border border-border mt-3"
+						<label
+							for="monitor-is-active"
+							class="flex items-center justify-between p-3 rounded-lg bg-background border border-border mt-3 cursor-pointer select-none"
 						>
 							<div class="flex flex-col gap-0.5">
-								<div class="flex items-center gap-2">
-									<span class="text-xs font-semibold text-foreground">Monitor Status</span>
-									<span
-										class="px-2 py-0.5 text-[10.5px] font-semibold rounded-full uppercase tracking-wider {isActive
-											? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-											: 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}"
-									>
-										{isActive ? 'Active' : 'Paused'}
-									</span>
-								</div>
+								<span class="text-xs font-semibold text-foreground">Monitor is active</span>
 								<span class="text-[11px] text-muted-foreground">
 									{isActive
 										? 'Automated uptime checks and alerts are enabled'
 										: 'Paused: Automated checks & alert notifications are paused'}
 								</span>
 							</div>
-							<Checkbox bind:checked={isActive} />
-						</div>
+							<Checkbox id="monitor-is-active" bind:checked={isActive} />
+						</label>
 					{/if}
 
 					<!-- SSL & Domain Expiry Toggle (HTTP monitors) -->
 					{#if effectiveType === 'http'}
-						<div
-							class="flex items-center justify-between p-3 rounded-lg bg-white/4 border border-border mt-3"
+						<label
+							for="monitor-ssl-check"
+							class="flex items-center justify-between p-3 rounded-lg bg-background border border-border mt-3 cursor-pointer select-none"
 						>
 							<div class="flex flex-col gap-0.5">
 								<span class="text-xs font-semibold text-foreground">SSL & Domain Expiry Check</span>
@@ -467,8 +460,8 @@
 									>Monitors SSL cert & WHOIS expiration daily</span
 								>
 							</div>
-							<Checkbox bind:checked={enableSSLDomainCheck} />
-						</div>
+							<Checkbox id="monitor-ssl-check" bind:checked={enableSSLDomainCheck} />
+						</label>
 					{/if}
 
 					<div class="grid grid-cols-2 gap-4">

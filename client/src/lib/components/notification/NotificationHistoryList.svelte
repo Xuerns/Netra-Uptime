@@ -38,7 +38,7 @@
 
 {#if logs.length === 0}
 	<div
-		class="flex flex-col items-center justify-center text-center py-20 px-6 gap-3.5 bg-white/3 border border-border rounded-lg backdrop-blur-md"
+		class="flex flex-col items-center justify-center text-center py-20 px-6 gap-3.5 bg-card border border-border rounded-lg"
 	>
 		<div
 			class="flex items-center justify-center size-14 rounded-lg bg-white/5 text-muted-foreground/60"
@@ -54,7 +54,7 @@
 	<div class="flex flex-col gap-2.5">
 		{#each logs as log (log.id)}
 			<div
-				class="flex items-start gap-3 p-4 rounded-lg bg-white/3 border border-border hover:border-border transition-colors"
+				class="flex items-start gap-3 p-4 rounded-lg bg-card border border-border hover:border-primary/30 transition-colors"
 			>
 				<div class="mt-0.5 shrink-0">
 					{#if log.status === 'sent'}

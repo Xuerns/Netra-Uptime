@@ -130,7 +130,7 @@
 		<!-- Fetch error state -->
 	{:else if fetchError}
 		<div
-			class="flex flex-col items-center justify-center gap-3 py-24 border border-border rounded-lg bg-white/3"
+			class="flex flex-col items-center justify-center gap-3 py-24 border border-border rounded-lg bg-card"
 		>
 			<TriangleAlert class="size-8 text-destructive" />
 			<p class="text-sm text-muted-foreground">{fetchError}</p>
@@ -145,7 +145,7 @@
 		<!-- Empty state -->
 	{:else if orgs.length === 0}
 		<div
-			class="flex flex-col items-center text-center py-24 px-4 border border-border rounded-lg bg-white/3"
+			class="flex flex-col items-center text-center py-24 px-4 border border-border rounded-lg bg-card"
 		>
 			<div
 				class="flex items-center justify-center size-14 rounded-lg bg-primary/10 border border-primary/20 mb-4 text-primary"

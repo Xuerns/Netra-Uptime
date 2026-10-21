@@ -36,7 +36,7 @@
 		<AppSidebar user={data?.user} />
 		<Sidebar.Inset class="flex flex-col min-h-screen">
 			<header
-				class="flex h-12 shrink-0 items-center justify-between gap-2 border-b px-4 border-border!"
+				class="flex h-12 shrink-0 items-center justify-between gap-2 border-b bg-card px-4 border-border!"
 			>
 				<Sidebar.Trigger class="-ml-1" />
 

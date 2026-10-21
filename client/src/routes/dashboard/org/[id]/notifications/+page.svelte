@@ -181,7 +181,7 @@
 				<DataSkeleton variant="channel" count={4} />
 			{:else if channelsError}
 				<div
-					class="flex flex-col items-center justify-center gap-3 py-16 border border-border rounded-lg bg-white/3"
+					class="flex flex-col items-center justify-center gap-3 py-16 border border-border rounded-lg bg-card"
 				>
 					<TriangleAlert class="size-8 text-destructive" />
 					<p class="text-sm text-muted-foreground">{channelsError}</p>
@@ -194,7 +194,7 @@
 				</div>
 			{:else if channels.length === 0}
 				<div
-					class="flex flex-col items-center justify-center text-center py-20 px-6 gap-3.5 bg-white/3 border border-border rounded-lg backdrop-blur-md"
+					class="flex flex-col items-center justify-center text-center py-20 px-6 gap-3.5 bg-card border border-border rounded-lg"
 				>
 					<div
 						class="flex items-center justify-center size-14 rounded-lg bg-primary/8 text-primary"
@@ -245,7 +245,7 @@
 				<DataSkeleton variant="list" count={4} />
 			{:else if logsError}
 				<div
-					class="flex flex-col items-center justify-center gap-3 py-16 border border-border rounded-lg bg-white/3"
+					class="flex flex-col items-center justify-center gap-3 py-16 border border-border rounded-lg bg-card"
 				>
 					<TriangleAlert class="size-8 text-destructive" />
 					<p class="text-sm text-muted-foreground">{logsError}</p>

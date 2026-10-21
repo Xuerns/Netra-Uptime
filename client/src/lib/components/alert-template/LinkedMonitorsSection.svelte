@@ -21,7 +21,7 @@
 
 	{#if monitors.length === 0}
 		<div
-			class="rounded-xl border border-dashed border-border bg-white/2 p-6 text-center text-xs text-muted-foreground space-y-1.5"
+			class="rounded-xl border border-dashed border-border bg-background/40 p-6 text-center text-xs text-muted-foreground space-y-1.5"
 		>
 			<MonitorIcon class="size-6 mx-auto opacity-50 mb-1" />
 			<p class="font-medium text-foreground">No monitors linked to this template yet.</p>
@@ -31,14 +31,14 @@
 			</p>
 		</div>
 	{:else}
-		<div class="divide-y divide-border/60 border border-border/80 rounded-xl overflow-hidden">
+		<div class="divide-y divide-border/60 border border-border rounded-xl overflow-hidden">
 			{#each monitors as m (m.ID)}
 				{@const MonitorTypeIcon = typeIcon(m.Type)}
 				<div
-					class="flex items-center justify-between gap-4 p-4 bg-white/2 hover:bg-white/4 transition-colors"
+					class="flex items-center justify-between gap-4 p-4 bg-background/40 hover:bg-white/4 transition-colors"
 				>
 					<div class="flex items-center gap-3.5 min-w-0">
-						<div class="p-2 rounded-lg bg-white/5 border border-border text-foreground shrink-0">
+						<div class="p-2 rounded-lg bg-secondary border border-border text-foreground shrink-0">
 							<MonitorTypeIcon class="size-4" />
 						</div>
 						<div class="min-w-0 space-y-0.5">

@@ -56,7 +56,7 @@
 </script>
 
 <div
-	class="group rounded-xl border border-border/70 hover:border-border/90 bg-white/3 p-4 sm:p-5 backdrop-blur-md transition-all duration-200 space-y-3"
+	class="group rounded-xl border border-border/70 hover:border-border/90 bg-card p-4 sm:p-5 transition-all duration-200 space-y-3"
 >
 	<!-- Monitor Top Info Row -->
 	<div class="flex flex-wrap items-center justify-between gap-3">

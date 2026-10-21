@@ -113,7 +113,7 @@
 	{#if isLoading}
 		<DataSkeleton variant="detail" />
 	{:else if error}
-		<div class="border border-border rounded-lg bg-white/3 p-8 text-center space-y-3">
+		<div class="border border-border rounded-lg bg-card p-8 text-center space-y-3">
 			<AlertTriangle class="size-10 text-primary mx-auto" />
 			<h2 class="text-lg font-bold text-foreground">Failed to Load Incident</h2>
 			<p class="text-xs text-muted-foreground">{error || 'Incident not found.'}</p>

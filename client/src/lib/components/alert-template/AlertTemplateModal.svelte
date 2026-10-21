@@ -141,17 +141,18 @@
 				/>
 			</div>
 
-			<div
-				class="flex items-start gap-2.5 p-3 rounded-lg border border-border bg-white/2 cursor-pointer"
+			<label
+				for="template-is-default"
+				class="flex items-start gap-3 p-3 rounded-lg border border-border bg-background cursor-pointer select-none"
 			>
 				<Checkbox id="template-is-default" bind:checked={isDefault} class="mt-0.5" />
-				<Label for="template-is-default" class="text-xs cursor-pointer flex-1">
-					<span class="font-medium text-foreground">Set as organization default</span>
-					<span class="block text-muted-foreground text-[11px] mt-0.5 leading-relaxed">
+				<div class="space-y-0.5 text-xs">
+					<p class="font-medium text-foreground">Set as organization default</p>
+					<p class="text-muted-foreground text-[11px] leading-relaxed">
 						Automatically pre-select this template when creating new monitors.
-					</span>
-				</Label>
-			</div>
+					</p>
+				</div>
+			</label>
 
 			<Dialog.Footer class="gap-2 sm:gap-0 pt-3">
 				<button
