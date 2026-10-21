@@ -155,7 +155,7 @@
 		<div class="border border-border rounded-xl overflow-hidden shadow-sm">
 			<!-- Table Header (Darker background than list rows) -->
 			<div
-				class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-border bg-[#0a0a0b] text-[11px] font-semibold tracking-wider uppercase text-muted-foreground/80"
+				class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-border bg-table-header text-[11px] font-semibold tracking-wider uppercase text-muted-foreground"
 			>
 				<div class="col-span-5">Template</div>
 				<div class="col-span-2">Rules</div>

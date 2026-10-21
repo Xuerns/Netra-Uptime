@@ -28,7 +28,7 @@
 
 <div
 	class={cn(
-		'p-12 text-center flex flex-col items-center justify-center gap-3 bg-white/2 border border-border rounded-xl transition-all',
+		'p-12 text-center flex flex-col items-center justify-center gap-3 bg-card dark:bg-white/2 border border-border shadow-xs rounded-xl transition-all',
 		className
 	)}
 >

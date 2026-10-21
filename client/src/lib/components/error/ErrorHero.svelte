@@ -21,13 +21,13 @@
 		<!-- Giant Architectural 404 Headline -->
 		<div class="relative">
 			<div
-				class="text-[120px] sm:text-[180px] lg:text-[220px] font-mono font-bold leading-none tracking-tighter text-[#1f2024] select-none"
+				class="text-[120px] sm:text-[180px] lg:text-[220px] font-mono font-bold leading-none tracking-tighter text-slate-200 dark:text-[#1f2024] select-none"
 			>
 				{statusCode}
 			</div>
 			<div class="absolute inset-0 flex flex-col justify-center">
 				<h1
-					class="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-tight"
+					class="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-foreground leading-tight"
 				>
 					Route Severed.<br />
 					<span class="text-muted-foreground font-normal">{errorMessage}</span>
@@ -49,7 +49,7 @@
 		<div class="flex flex-wrap items-center gap-5 font-mono text-sm sm:text-base">
 			<Button
 				href="/dashboard"
-				class="rounded bg-primary text-[#0e0e0f] font-semibold px-6 py-3.5 hover:bg-[#12c98d] transition-colors duration-150 inline-flex items-center gap-2"
+				class="rounded bg-primary text-primary-foreground font-semibold px-6 py-3.5 hover:bg-primary/90 transition-colors duration-150 inline-flex items-center gap-2"
 			>
 				<span>←</span>
 				<span>Back to Home</span>
@@ -57,7 +57,7 @@
 
 			<Button
 				variant="outline"
-				class="rounded border border-border bg-card text-white px-6 py-3.5 hover:bg-surface-panel transition-colors duration-150 inline-flex items-center gap-2"
+				class="rounded border border-border bg-card text-foreground px-6 py-3.5 hover:bg-surface-panel transition-colors duration-150 inline-flex items-center gap-2"
 				onclick={handleGoBack}
 			>
 				Previous Page

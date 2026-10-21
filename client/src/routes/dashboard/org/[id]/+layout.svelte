@@ -134,7 +134,7 @@
 				{#if headerStore.actionType === 'monitor'}
 					<DropdownMenu.Root>
 						<DropdownMenu.Trigger
-							class="inline-flex items-center gap-1.5 bg-transparent hover:bg-white/5 text-emerald-400 border border-border px-3 py-1.5 rounded-lg font-semibold text-xs transition-colors active:scale-95 cursor-pointer focus:outline-none"
+							class="inline-flex items-center gap-1.5 bg-primary/10 hover:bg-primary/15 text-primary border border-primary/25 dark:bg-transparent dark:hover:bg-white/5 dark:text-emerald-400 dark:border-border px-3 py-1.5 rounded-lg font-semibold text-xs transition-colors active:scale-95 cursor-pointer focus:outline-none"
 						>
 							<Plus class="size-3.5 stroke-[2.5]" />
 							<span class="hidden sm:inline">Add monitor</span>
@@ -165,7 +165,7 @@
 					</DropdownMenu.Root>
 				{:else if headerStore.actionType === 'member'}
 					<Button
-						class="bg-transparent hover:bg-white/5 text-emerald-400 border border-border h-8 px-3.5 font-semibold rounded-lg text-xs gap-1.5 active:scale-95 transition-all cursor-pointer"
+						class="bg-primary/10 hover:bg-primary/15 text-primary border border-primary/25 dark:bg-transparent dark:hover:bg-white/5 dark:text-emerald-400 dark:border-border h-8 px-3.5 font-semibold rounded-lg text-xs gap-1.5 active:scale-95 transition-all cursor-pointer"
 						onclick={() => headerStore.onAction?.()}
 					>
 						<UserPlus class="size-3.5 stroke-[2.5]" />
@@ -173,7 +173,7 @@
 					</Button>
 				{:else if headerStore.actionType === 'button' && headerStore.actionLabel}
 					<Button
-						class="bg-transparent hover:bg-white/5 text-emerald-400 border border-border h-8 px-3.5 font-semibold rounded-lg text-xs gap-1.5 active:scale-95 transition-all cursor-pointer"
+						class="bg-primary/10 hover:bg-primary/15 text-primary border border-primary/25 dark:bg-transparent dark:hover:bg-white/5 dark:text-emerald-400 dark:border-border h-8 px-3.5 font-semibold rounded-lg text-xs gap-1.5 active:scale-95 transition-all cursor-pointer"
 						onclick={() => headerStore.onAction?.()}
 					>
 						<Plus class="size-3.5 stroke-[2.5]" />

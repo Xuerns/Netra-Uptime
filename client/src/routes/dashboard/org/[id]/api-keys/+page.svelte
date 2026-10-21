@@ -194,7 +194,7 @@
 		<div class="flex flex-col gap-3">
 			{#each apiKeys as key (key.id)}
 				<div
-					class="p-4 rounded-lg bg-white/3 border border-border flex items-center justify-between gap-4 flex-wrap transition-colors hover:border-primary/30"
+					class="p-4 rounded-lg bg-card dark:bg-white/3 border border-border shadow-xs flex items-center justify-between gap-4 flex-wrap transition-colors hover:border-primary/30"
 				>
 					<div class="flex flex-col gap-1 min-w-0">
 						<div class="flex items-center gap-2.5 flex-wrap">

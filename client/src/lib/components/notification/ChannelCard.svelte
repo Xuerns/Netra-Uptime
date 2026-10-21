@@ -29,7 +29,7 @@
 </script>
 
 <div
-	class="bg-white/3 border border-border rounded-lg p-5 flex flex-col justify-between gap-4 hover:border-primary/30 transition-colors"
+	class="bg-card dark:bg-white/3 border border-border rounded-lg shadow-xs p-5 flex flex-col justify-between gap-4 hover:border-primary/30 transition-colors"
 >
 	<div class="flex items-start justify-between gap-3">
 		<div class="flex items-center gap-3 min-w-0">

@@ -86,6 +86,10 @@
 		if (!canvasEl) return;
 
 		const currentData = viewMode === 'percentage' ? percentages : rawCounts;
+		const isDark =
+			typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+		const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.06)';
+		const xTickColor = isDark ? '#94a3b8' : '#475569';
 
 		if (!chartInstance) {
 			chartInstance = new Chart(canvasEl, {
@@ -157,7 +161,7 @@
 								display: false
 							},
 							ticks: {
-								color: '#94a3b8',
+								color: xTickColor,
 								font: {
 									family: 'monospace',
 									size: 11,
@@ -169,7 +173,7 @@
 							min: 0,
 							max: viewMode === 'percentage' ? 100 : undefined,
 							grid: {
-								color: 'rgba(255, 255, 255, 0.05)'
+								color: gridColor
 							},
 							ticks: {
 								color: '#64748b',

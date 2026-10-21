@@ -344,7 +344,7 @@
 			box-shadow 200ms ease;
 	}
 	.kpi-card:hover {
-		border-color: color-mix(in srgb, var(--color-border) 100%, white 20%);
-		box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-border) 50%, transparent);
+		border-color: color-mix(in srgb, var(--primary) 35%, var(--color-border));
+		box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.06);
 	}
 </style>

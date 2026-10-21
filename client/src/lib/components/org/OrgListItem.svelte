@@ -13,7 +13,7 @@
 </script>
 
 <button
-	class="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-5 p-3 lg:py-2 lg:px-5 bg-white/3 border border-border rounded-lg transition-all hover:-translate-y-px hover:border-primary/30 group text-left w-full cursor-pointer"
+	class="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-5 p-3 lg:py-2 lg:px-5 bg-card dark:bg-white/3 border border-border rounded-lg shadow-xs transition-all hover:-translate-y-px hover:border-primary/30 group text-left w-full cursor-pointer"
 	onclick={() => onSelect(org.ID)}
 >
 	<div class="flex items-start lg:items-center gap-3 flex-1 min-w-60">

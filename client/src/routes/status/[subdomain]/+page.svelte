@@ -331,13 +331,13 @@
 
 <style>
 	.pattern-bg {
-		background-color: #0b0c0e;
-		background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+		background-color: #f1f5f9;
+		background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
 		background-size: 24px 24px;
 	}
-	:global(.light) .pattern-bg {
-		background-color: #f8fafc;
-		background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+	:global(.dark) .pattern-bg {
+		background-color: #0b0c0e;
+		background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
 		background-size: 24px 24px;
 	}
 </style>

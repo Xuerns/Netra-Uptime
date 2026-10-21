@@ -51,7 +51,7 @@
 
 	let TypeIcon = $derived(typeIcon(monitor.Type));
 	let sparkColor = $derived(
-		monitor.Status === 'up' ? '#4edea3' : monitor.Status === 'down' ? '#ff6b6b' : '#888899'
+		monitor.Status === 'up' ? '#10b981' : monitor.Status === 'down' ? '#ef4444' : '#64748b'
 	);
 
 	let sslBadge = $derived(
@@ -404,8 +404,8 @@
 	}
 
 	.monitor-card:hover {
-		border-color: color-mix(in srgb, var(--color-border) 100%, white 20%);
-		box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-border) 50%, transparent);
+		border-color: color-mix(in srgb, var(--primary) 35%, var(--color-border));
+		box-shadow: 0 2px 10px -2px rgba(15, 23, 42, 0.08);
 		transform: translateY(-1px);
 	}
 
@@ -416,7 +416,7 @@
 		width: 32px;
 		height: 32px;
 		border-radius: 8px;
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--surface-sidebar);
 		border: 1px solid var(--color-border);
 		color: var(--color-muted-foreground);
 		flex-shrink: 0;
@@ -439,21 +439,33 @@
 	}
 
 	.status-badge--up {
+		background: rgba(5, 150, 105, 0.1);
+		color: #059669;
+		border-color: rgba(5, 150, 105, 0.25);
+	}
+
+	:global(.dark) .status-badge--up {
 		background: rgba(78, 222, 163, 0.1);
 		color: #4edea3;
 		border-color: rgba(78, 222, 163, 0.25);
 	}
 
 	.status-badge--down {
+		background: rgba(225, 29, 72, 0.1);
+		color: #e11d48;
+		border-color: rgba(225, 29, 72, 0.25);
+	}
+
+	:global(.dark) .status-badge--down {
 		background: rgba(255, 107, 107, 0.1);
 		color: #ff6b6b;
 		border-color: rgba(255, 107, 107, 0.25);
 	}
 
 	.status-badge--paused {
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--surface-sidebar);
 		color: var(--color-muted-foreground);
-		border-color: rgba(255, 255, 255, 0.1);
+		border-color: var(--color-border);
 	}
 
 	.metric-label {

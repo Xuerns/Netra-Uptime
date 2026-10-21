@@ -44,7 +44,7 @@
 		: 'opacity-100'}"
 >
 	<!-- Table Column Headers -->
-	<div class="log-table-header sticky top-0 bg-[#0a0a0b] z-10">
+	<div class="log-table-header sticky top-0 bg-table-header z-10">
 		<div class="log-col-actor">Actor</div>
 		<div class="log-col-action">
 			<DropdownMenu.Root>
@@ -204,12 +204,12 @@
 	.log-table-header {
 		display: none;
 		padding: 0.625rem 1rem;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+		border-bottom: 1px solid var(--border);
 		font-size: 0.6875rem;
 		font-weight: 600;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--muted-foreground);
 	}
 
 	@media (min-width: 768px) {

@@ -109,7 +109,7 @@
 			<DataSkeleton variant="list" count={3} />
 		{:else if !invitations || invitations.length === 0}
 			<div
-				class="flex flex-col items-center justify-center py-12 px-4 rounded-xl border border-border border-dashed bg-white/1"
+				class="flex flex-col items-center justify-center py-12 px-4 rounded-xl border border-border border-dashed bg-card dark:bg-white/1 shadow-xs"
 			>
 				<div
 					class="flex items-center justify-center size-12 rounded-full bg-white/5 text-muted-foreground/50 mb-4"
@@ -124,7 +124,7 @@
 		{:else}
 			{#each invitations as invite (invite.ID)}
 				<div
-					class="flex flex-wrap items-center justify-between gap-6 p-5 rounded-xl bg-white/2 border border-border hover:bg-white/4 transition-colors"
+					class="flex flex-wrap items-center justify-between gap-6 p-5 rounded-xl bg-card dark:bg-white/2 border border-border shadow-xs hover:border-primary/30 transition-colors"
 				>
 					<div class="flex items-center gap-4 min-w-0">
 						<!-- Inviter Avatar -->

@@ -47,6 +47,10 @@
 		const labels = data.map((d) => d.label);
 		const values = data.map((d) => d.value);
 		const pointColors = data.map((d) => getPointColor(d.status, d.statusCode));
+		const isDark =
+			typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+		const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.06)';
+		const pointBorder = isDark ? '#0f172a' : '#ffffff';
 
 		const ctx = canvasEl.getContext('2d');
 		let gradient: any = 'rgba(16, 185, 129, 0.15)';
@@ -94,7 +98,9 @@
 							pointBorderColor: (c: any) => {
 								const idx = c.dataIndex;
 								const pt = data[idx];
-								return !pt || pt.status === 'no_data' || pt.value === 0 ? 'transparent' : '#0f172a';
+								return !pt || pt.status === 'no_data' || pt.value === 0
+									? 'transparent'
+									: pointBorder;
 							},
 							pointBorderWidth: 1.5,
 							pointRadius: (c: any) => {
@@ -203,7 +209,7 @@
 						y: {
 							min: 0,
 							grid: {
-								color: 'rgba(255, 255, 255, 0.05)'
+								color: gridColor
 							},
 							ticks: {
 								color: '#64748b',

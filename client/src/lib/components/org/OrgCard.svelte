@@ -19,7 +19,7 @@
 </script>
 
 <button
-	class="relative flex flex-col gap-2 p-4 bg-white/3 border border-border rounded-lg transition-all hover:-translate-y-0.5 hover:border-primary/30 group text-left w-full cursor-pointer"
+	class="relative flex flex-col gap-2 p-4 bg-card dark:bg-white/3 border border-border rounded-lg shadow-xs transition-all hover:-translate-y-0.5 hover:border-primary/30 group text-left w-full cursor-pointer"
 	onclick={() => onSelect(org.ID)}
 >
 	<div class="flex items-start gap-3">
