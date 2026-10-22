@@ -232,9 +232,9 @@
 
 			<label
 				for="rule-is-active"
-				class="flex items-start gap-3 p-3 rounded-lg border border-border bg-background cursor-pointer select-none"
+				class="flex items-center gap-3 p-3 rounded-lg border border-border bg-background cursor-pointer select-none"
 			>
-				<Checkbox id="rule-is-active" bind:checked={isRuleActive} class="mt-0.5" />
+				<Checkbox id="rule-is-active" bind:checked={isRuleActive} />
 				<div class="space-y-0.5 text-xs">
 					<p class="font-medium text-foreground">Rule is active</p>
 					<p class="text-muted-foreground text-[11px] leading-relaxed">

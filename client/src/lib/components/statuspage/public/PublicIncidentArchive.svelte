@@ -28,9 +28,7 @@
 	let showAllDays = $state(false);
 
 	let visibleDays = $derived(
-		showAllDays
-			? displayedIncidentHistory
-			: displayedIncidentHistory.slice(0, INITIAL_VISIBLE_DAYS)
+		showAllDays ? displayedIncidentHistory : displayedIncidentHistory.slice(0, INITIAL_VISIBLE_DAYS)
 	);
 
 	let rangeLabel = $derived(
@@ -132,10 +130,7 @@
 									<div class="flex items-center gap-2 text-xs text-muted-foreground font-mono">
 										{#if incident.started_at && incident.resolved_at}
 											<span
-												>Duration: {formatDuration(
-													incident.started_at,
-													incident.resolved_at
-												)}</span
+												>Duration: {formatDuration(incident.started_at, incident.resolved_at)}</span
 											>
 											<span>•</span>
 										{/if}

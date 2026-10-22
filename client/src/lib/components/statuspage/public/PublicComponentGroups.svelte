@@ -156,9 +156,7 @@
 								/>
 								<div class="flex items-center gap-2 min-w-0">
 									<FolderTree class="size-4 text-muted-foreground shrink-0" />
-									<h3 class="text-base font-semibold text-foreground truncate">
-										Other Components
-									</h3>
+									<h3 class="text-base font-semibold text-foreground truncate">Other Components</h3>
 									<span
 										class="text-[11px] font-mono text-muted-foreground px-2 py-0.5 rounded-full bg-white/5 border border-border/60"
 									>

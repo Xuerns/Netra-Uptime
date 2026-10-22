@@ -203,8 +203,7 @@
 				</div>
 				<p class="text-[11px] text-muted-foreground leading-relaxed">
 					{#if isHttp}
-						Triggered when connection fails or status code mismatches for <b
-							>3 consecutive checks</b
+						Triggered when connection fails or status code mismatches for <b>3 consecutive checks</b
 						>.
 					{:else}
 						Triggered when port is closed or target is unreachable for <b>3 consecutive checks</b>.

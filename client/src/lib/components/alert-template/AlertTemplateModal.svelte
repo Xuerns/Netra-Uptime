@@ -143,9 +143,9 @@
 
 			<label
 				for="template-is-default"
-				class="flex items-start gap-3 p-3 rounded-lg border border-border bg-background cursor-pointer select-none"
+				class="flex items-center gap-3 p-3 rounded-lg border border-border bg-background cursor-pointer select-none"
 			>
-				<Checkbox id="template-is-default" bind:checked={isDefault} class="mt-0.5" />
+				<Checkbox id="template-is-default" bind:checked={isDefault} />
 				<div class="space-y-0.5 text-xs">
 					<p class="font-medium text-foreground">Set as organization default</p>
 					<p class="text-muted-foreground text-[11px] leading-relaxed">
