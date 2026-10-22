@@ -135,6 +135,10 @@
 	--input-bg: #f8fafc;
 	--input-border: #cbd5e1;
 	--chart-grid: rgba(15, 23, 42, 0.07);
+	--scrollbar-track: #f1f5f9;
+	--scrollbar-thumb: #cbd5e1;
+	--scrollbar-thumb-hover: rgba(5, 150, 105, 0.55);
+	--scrollbar-thumb-active: #059669;
 }
 
 /* ── Dark Mode ────────────────────────────────────────────────────── */
@@ -191,6 +195,10 @@
 	--input-bg: rgba(0, 0, 0, 0.25);
 	--input-border: rgba(255, 255, 255, 0.1);
 	--chart-grid: rgba(255, 255, 255, 0.08);
+	--scrollbar-track: #0d0d0f;
+	--scrollbar-thumb: rgba(255, 255, 255, 0.14);
+	--scrollbar-thumb-hover: rgba(78, 222, 163, 0.45);
+	--scrollbar-thumb-active: #4edea3;
 }
 
 @layer base {
@@ -438,5 +446,46 @@
 @media (prefers-reduced-motion: reduce) {
 	.animate-fade-in {
 		animation: none;
+	}
+}
+
+/* ── Custom Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+
+::-webkit-scrollbar-track {
+	background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+	background: var(--scrollbar-thumb);
+	border-radius: 9999px;
+	transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: var(--scrollbar-thumb-hover);
+}
+
+::-webkit-scrollbar-thumb:active {
+	background: var(--scrollbar-thumb-active);
+}
+
+::-webkit-scrollbar-button {
+	display: none;
+	width: 0;
+	height: 0;
+}
+
+::-webkit-scrollbar-corner {
+	background: transparent;
+}
+
+@supports (-moz-appearance: none) {
+	* {
+		scrollbar-width: thin;
+		scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 	}
 }
