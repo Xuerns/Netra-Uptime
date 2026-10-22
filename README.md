@@ -27,6 +27,8 @@
 
 **Netra Uptime** is a high-performance, open-source uptime monitoring and status page platform designed for self-hosting. Built with a concurrent Go backend worker pool and a reactive SvelteKit interface, Netra Uptime provides low-latency telemetry, automated incident lifecycle tracking, and customizable alert rules.
 
+![Netra Uptime Dashboard Overview](assets/dashboard-overview.png)
+
 ## Quick Start
 
 You can launch Netra Uptime in less than a minute using either the official CLI runner or Docker Compose.
