@@ -1,5 +1,5 @@
 # ── STAGE 1: Build Client (SvelteKit) ─────────────
-FROM node:22-alpine AS client-builder
+FROM node:22.23.4-alpine AS client-builder
 ENV CI=true
 WORKDIR /app/client
 

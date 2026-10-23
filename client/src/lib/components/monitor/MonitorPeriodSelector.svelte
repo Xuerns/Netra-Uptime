@@ -14,9 +14,11 @@
 	const periods: Period[] = ['24h', '7d', '30d', '90d', '1y'];
 </script>
 
-<div
-	class="flex items-center justify-between bg-card border border-border rounded-lg p-1.5 flex-wrap gap-2"
->
+<div class="flex flex-col-reverse sm:flex-row sm:items-center gap-2 sm:gap-3">
+	<span class="text-[11px] text-muted-foreground font-mono">
+		Last {effectiveDays} day{effectiveDays > 1 ? 's' : ''}
+	</span>
+
 	<Tabs.Root
 		value={activePeriod}
 		onValueChange={(val) => {
@@ -25,14 +27,10 @@
 	>
 		<Tabs.List class="h-8">
 			{#each periods as period (period)}
-				<Tabs.Trigger value={period} class="px-3 py-1 text-xs font-semibold">
+				<Tabs.Trigger value={period} class="px-2.5 sm:px-3 py-1 text-xs font-semibold">
 					{period.toUpperCase()}
 				</Tabs.Trigger>
 			{/each}
 		</Tabs.List>
 	</Tabs.Root>
-
-	<div class="text-xs text-muted-foreground font-mono px-3 hidden sm:block">
-		Showing analytics for last {effectiveDays} day{effectiveDays > 1 ? 's' : ''}
-	</div>
 </div>

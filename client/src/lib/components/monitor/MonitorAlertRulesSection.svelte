@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { AlertTemplateAPI, type AlertTemplate } from '$lib/api/alertTemplate';
 	import { MonitorAPI } from '$lib/api/monitor';
-	import { ShieldAlert, AlertTriangle, ExternalLink } from 'lucide-svelte';
+	import { ExternalLink } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
 
@@ -70,41 +70,38 @@
 	});
 </script>
 
-<div class="bg-card border border-border rounded-lg p-5 md:p-6 space-y-4">
-	<!-- Section Header & Template Selector -->
-	<div class="flex items-start sm:items-center justify-between gap-4 flex-col sm:flex-row">
-		<div class="space-y-0.5">
-			<h3 class="text-sm font-semibold text-foreground tracking-tight">Alert Policy & Template</h3>
-			<p class="text-xs text-muted-foreground">
-				Incident thresholds and warning rules inherited from the selected template.
-			</p>
-		</div>
+<div class="flex flex-col gap-4 min-w-0">
+	<!-- Section Header -->
+	<div class="space-y-0.5">
+		<h3 class="text-sm font-semibold text-foreground tracking-tight">Alert Policy</h3>
+		<p class="text-xs text-muted-foreground">Rules inherited from the selected template.</p>
+	</div>
 
-		<div class="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-			<select
-				value={currentTemplateId || ''}
-				onchange={handleTemplateChange}
-				disabled={isApplyingTemplate || isLoading}
-				class="h-8.5 px-3 rounded-lg border border-border bg-background text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer flex-1 sm:w-auto sm:min-w-48"
-			>
-				<option value="">System Default Checks</option>
-				{#each availableTemplates as tmpl (tmpl.id)}
-					<option value={tmpl.id}>
-						{tmpl.name} ({tmpl.rules?.length || 0})
-					</option>
-				{/each}
-			</select>
+	<!-- Template Selector -->
+	<div class="flex items-center gap-2 w-full">
+		<select
+			value={currentTemplateId || ''}
+			onchange={handleTemplateChange}
+			disabled={isApplyingTemplate || isLoading}
+			class="h-8.5 px-3 rounded-lg border border-border bg-background text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer flex-1 min-w-0"
+		>
+			<option value="">System Default Checks</option>
+			{#each availableTemplates as tmpl (tmpl.id)}
+				<option value={tmpl.id}>
+					{tmpl.name} ({tmpl.rules?.length || 0})
+				</option>
+			{/each}
+		</select>
 
-			<a
-				href={activeTemplate
-					? `/dashboard/org/${orgId}/alert-templates/${activeTemplate.id}`
-					: `/dashboard/org/${orgId}/alert-templates`}
-				class="inline-flex items-center gap-1.5 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-8.5 px-3 rounded-lg font-medium text-xs cursor-pointer shrink-0"
-			>
-				<span>{activeTemplate ? 'Edit Template' : 'Manage Templates'}</span>
-				<ExternalLink class="size-3" />
-			</a>
-		</div>
+		<a
+			href={activeTemplate
+				? `/dashboard/org/${orgId}/alert-templates/${activeTemplate.id}`
+				: `/dashboard/org/${orgId}/alert-templates`}
+			class="inline-flex items-center gap-1.5 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-8.5 px-3 rounded-lg font-medium text-xs cursor-pointer shrink-0"
+		>
+			<span>{activeTemplate ? 'Edit' : 'Manage'}</span>
+			<ExternalLink class="size-3" />
+		</a>
 	</div>
 
 	<!-- Rules Content Area -->
@@ -114,52 +111,33 @@
 		</div>
 	{:else if activeTemplate}
 		{#if !activeTemplate.rules || activeTemplate.rules.length === 0}
-			<div
-				class="rounded-lg border border-dashed border-border bg-background/50 p-5 text-center text-xs text-muted-foreground space-y-1"
-			>
+			<div class="py-6 text-center text-xs text-muted-foreground space-y-1">
 				<p class="font-medium text-foreground">No rules defined in this template yet.</p>
 				<p class="text-[11px]">
 					System default checks are used until rules are added to this template.
 				</p>
 			</div>
 		{:else}
-			<div class="divide-y divide-border/60 border border-border rounded-lg overflow-hidden">
+			<ul class="divide-y divide-border/60">
 				{#each activeTemplate.rules as r (r.id)}
-					<div
-						class="flex items-center justify-between bg-background/40 hover:bg-white/3 p-3.5 text-xs gap-3 transition-colors"
-					>
-						<div class="flex items-center gap-3 min-w-0">
-							{#if r.severity === 'critical'}
-								<div
-									class="size-8 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0"
-								>
-									<ShieldAlert class="size-4" />
-								</div>
-							{:else}
-								<div
-									class="size-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0"
-								>
-									<AlertTriangle class="size-4" />
-								</div>
-							{/if}
-							<div class="min-w-0">
-								<div class="font-medium text-foreground text-xs truncate flex items-center gap-2">
-									<span class="truncate">{r.name}</span>
-									{#if !r.is_active}
-										<span
-											class="text-[10px] px-1.5 py-0.2 rounded bg-muted text-muted-foreground font-mono"
-										>
-											Paused
-										</span>
-									{/if}
-								</div>
-								<div
-									class="text-[11px] text-muted-foreground font-mono flex items-center gap-1.5 mt-0.5 truncate"
-								>
-									<span>{r.metric} {r.operator} {r.target_value}</span>
-									<span class="text-muted-foreground/50">&bull;</span>
-									<span>{r.consecutive}x consecutive</span>
-								</div>
+					<li class="flex items-center justify-between gap-3 py-3 text-xs">
+						<div class="min-w-0">
+							<div class="font-medium text-foreground text-xs flex items-center gap-2 min-w-0">
+								<span class="truncate">{r.name}</span>
+								{#if !r.is_active}
+									<span
+										class="text-[10px] px-1.5 py-0.2 rounded bg-muted text-muted-foreground font-mono shrink-0"
+									>
+										Paused
+									</span>
+								{/if}
+							</div>
+							<div class="text-[11px] text-muted-foreground font-mono mt-0.5 truncate">
+								{r.metric}
+								{r.operator}
+								{r.target_value}
+								<span class="text-muted-foreground/50">&bull;</span>
+								{r.consecutive}x consecutive
 							</div>
 						</div>
 
@@ -171,14 +149,14 @@
 						>
 							{r.severity}
 						</span>
-					</div>
+					</li>
 				{/each}
-			</div>
+			</ul>
 		{/if}
 	{:else}
 		<!-- Fallback: System Default Checks -->
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-			<div class="p-3.5 rounded-lg bg-background/40 border border-border space-y-1">
+		<ul class="divide-y divide-border/60">
+			<li class="py-3 space-y-1">
 				<div class="flex items-center justify-between gap-2">
 					<span class="text-xs font-medium text-foreground">Timeout Warning</span>
 					<span
@@ -190,9 +168,9 @@
 				<p class="text-[11px] text-muted-foreground leading-relaxed">
 					Triggered when requests time out for <b>3 consecutive checks</b>.
 				</p>
-			</div>
+			</li>
 
-			<div class="p-3.5 rounded-lg bg-background/40 border border-border space-y-1">
+			<li class="py-3 space-y-1">
 				<div class="flex items-center justify-between gap-2">
 					<span class="text-xs font-medium text-foreground">Down Incident</span>
 					<span
@@ -209,7 +187,7 @@
 						Triggered when port is closed or target is unreachable for <b>3 consecutive checks</b>.
 					{/if}
 				</p>
-			</div>
-		</div>
+			</li>
+		</ul>
 	{/if}
 </div>

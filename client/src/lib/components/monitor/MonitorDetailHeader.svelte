@@ -77,35 +77,32 @@
 	});
 </script>
 
-<!-- Monitor Header Banner -->
-<div
-	class="bg-card border border-border rounded-lg p-5 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4"
->
-	<div class="flex items-start gap-4">
-		<!-- Monitor Icon Box -->
-		<div
-			class="size-12 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0"
-		>
-			<Globe class="size-6 text-primary" />
+<!-- Monitor Header (flat, no card container) -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+	<div class="flex items-start gap-4 min-w-0">
+		<!-- Monitor Icon -->
+		<div class="size-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+			<Globe class="size-5 text-primary" />
 		</div>
 
 		<!-- Title & Target Info -->
-		<div class="space-y-1">
+		<div class="space-y-1.5 min-w-0">
 			<div class="flex items-center gap-3 flex-wrap">
-				<h1 class="text-xl md:text-2xl font-bold text-foreground tracking-tight">
+				<h1 class="text-2xl md:text-3xl font-bold text-foreground tracking-tight break-all">
 					{monitor.Name}
 				</h1>
 
 				<!-- Status Badge -->
 				<div
-					class="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold uppercase tracking-wider border {statusColor.bg} {statusColor.text} {statusColor.border}"
+					class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider border {statusColor.bg} {statusColor.text} {statusColor.border}"
 				>
+					<span class="size-1.5 rounded-full {statusColor.dot}"></span>
 					<span>{statusLabel(monitor.Status)}</span>
 				</div>
 			</div>
 
 			<!-- Target URL & Metadata Badges -->
-			<div class="flex items-center gap-4 text-xs text-muted-foreground flex-wrap pt-1">
+			<div class="flex items-center gap-x-4 gap-y-2 text-xs text-muted-foreground flex-wrap">
 				<a
 					href={monitor.Target.startsWith('http') ? monitor.Target : `http://${monitor.Target}`}
 					target="_blank"

@@ -43,6 +43,7 @@
 		{
 			id: '2xx',
 			label: '2xx Success',
+			short: '2xx',
 			subtext: 'OK / Created',
 			desc: 'Status 200–299: Successful responses',
 			color: '#10B981',
@@ -51,6 +52,7 @@
 		{
 			id: '3xx',
 			label: '3xx Redirect',
+			short: '3xx',
 			subtext: 'Moved / Found',
 			desc: 'Status 300–399: Redirections',
 			color: '#3B82F6',
@@ -59,6 +61,7 @@
 		{
 			id: '4xx',
 			label: '4xx Client Err',
+			short: '4xx',
 			subtext: 'Bad Req / 404',
 			desc: 'Status 400–499: Client errors / Not found',
 			color: '#F59E0B',
@@ -67,6 +70,7 @@
 		{
 			id: '5xx',
 			label: '5xx Server Err',
+			short: '5xx',
 			subtext: '500 / 502 / 503',
 			desc: 'Status 500–599: Internal server errors',
 			color: '#EF4444',
@@ -75,6 +79,7 @@
 		{
 			id: 'error',
 			label: 'Timeout / Err',
+			short: 'Err',
 			subtext: 'No Response',
 			desc: 'Connection timeouts or dropped requests',
 			color: '#A855F7',
@@ -95,15 +100,15 @@
 			chartInstance = new Chart(canvasEl, {
 				type: 'bar',
 				data: {
-					labels: categories.map((c) => c.label),
+					labels: categories.map((c) => c.short),
 					datasets: [
 						{
 							data: currentData,
 							backgroundColor: categories.map((c) => c.color),
 							hoverBackgroundColor: categories.map((c) => c.hoverColor),
-							borderRadius: 8,
+							borderRadius: 6,
 							borderSkipped: 'bottom',
-							maxBarThickness: 54
+							maxBarThickness: 40
 						}
 					]
 				},
@@ -213,24 +218,19 @@
 	});
 </script>
 
-<div class="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-xl flex flex-col space-y-4">
+<div class="flex flex-col gap-4 min-w-0">
 	<!-- Header Bar -->
-	<div class="flex items-center justify-between flex-wrap gap-3">
-		<div class="space-y-0.5">
-			<h3 class="text-sm font-semibold text-foreground tracking-tight">
-				HTTP Status Code Distribution
+	<div class="flex items-center justify-between gap-3 min-h-7">
+		<div class="min-w-0">
+			<h3 class="text-sm font-semibold text-foreground tracking-tight truncate">
+				Status Codes ({periodLabel})
 			</h3>
-			<p class="text-xs text-muted-foreground">
-				Visual breakdown of HTTP status responses and network errors for ({periodLabel}).
-			</p>
 		</div>
 
-		<!-- View Switcher & Total Count -->
-		<div class="flex items-center gap-2">
+		<!-- View Switcher -->
+		<div class="flex items-center gap-2 shrink-0">
 			<!-- Toggle View Mode: % or Count -->
-			<div
-				class="bg-white/5 border border-border rounded-lg p-0.5 flex items-center text-[11px] font-mono"
-			>
+			<div class="bg-muted/60 rounded-lg p-0.5 flex items-center text-[11px] font-mono">
 				<button
 					type="button"
 					class="px-2.5 py-1 rounded-md transition-all {viewMode === 'percentage'
@@ -254,15 +254,15 @@
 	</div>
 
 	{#if effectiveTotal === 0}
-		<div class="h-48 flex items-center justify-center text-muted-foreground text-xs font-mono">
+		<div
+			class="h-[240px] flex items-center justify-center text-center text-muted-foreground text-xs font-mono"
+		>
 			No check data available for the selected timeframe
 		</div>
 	{:else}
-		<!-- Chart.js Canvas Container (Clean, Zero Bleeding, Zero Ghost Backgrounds) -->
-		<div class="w-full bg-white/2 border border-border/60 rounded-xl p-3 sm:p-4">
-			<div class="h-[220px] sm:h-[240px] w-full relative">
-				<canvas bind:this={canvasEl}></canvas>
-			</div>
+		<!-- Chart.js Canvas (drawn directly on the page surface) -->
+		<div class="h-[240px] w-full relative">
+			<canvas bind:this={canvasEl}></canvas>
 		</div>
 	{/if}
 </div>

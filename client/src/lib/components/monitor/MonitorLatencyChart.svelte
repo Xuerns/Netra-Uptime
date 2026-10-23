@@ -263,66 +263,65 @@
 	});
 </script>
 
-<div class="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-xl flex flex-col space-y-4">
+<div class="flex flex-col gap-4 min-w-0">
 	<!-- Header Bar -->
-	<div class="flex items-center justify-between min-h-7 flex-wrap gap-2">
-		<div class="flex items-center gap-3">
-			<h3 class="text-sm font-semibold text-foreground tracking-tight flex items-center gap-2">
-				<span>{title}</span>
-			</h3>
+	<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 min-h-7">
+		<h3 class="text-sm font-semibold text-foreground tracking-tight">
+			{title}
+		</h3>
 
-			<!-- Status Code Color Legend (Only for HTTP) or Status Legend (TCP / Ping) -->
-			{#if monitorType === 'http'}
-				<div
-					class="hidden md:flex items-center gap-2.5 text-[11px] font-mono text-muted-foreground pl-2 border-l border-border"
+		<!-- Status Code Color Legend (Only for HTTP) or Status Legend (TCP / Ping) -->
+		{#if monitorType === 'http'}
+			<div
+				class="flex items-center gap-x-3 gap-y-1 flex-wrap text-[11px] font-mono text-muted-foreground"
+			>
+				<span class="flex items-center gap-1"
+					><span class="size-2 rounded-full bg-emerald-400"></span> 2xx</span
 				>
-					<span class="flex items-center gap-1"
-						><span class="size-2 rounded-full bg-emerald-400"></span> 2xx</span
-					>
-					<span class="flex items-center gap-1"
-						><span class="size-2 rounded-full bg-blue-400"></span> 3xx</span
-					>
-					<span class="flex items-center gap-1"
-						><span class="size-2 rounded-full bg-amber-400"></span> 4xx</span
-					>
-					<span class="flex items-center gap-1"
-						><span class="size-2 rounded-full bg-rose-500"></span> 5xx/Err</span
-					>
-					<span class="flex items-center gap-1.5 pl-1.5 border-l border-border/80"
-						><span class="w-3 border-t border-dashed border-slate-400"></span> No Data</span
-					>
-				</div>
-			{:else}
-				<div
-					class="hidden md:flex items-center gap-2.5 text-[11px] font-mono text-muted-foreground pl-2 border-l border-border"
+				<span class="flex items-center gap-1"
+					><span class="size-2 rounded-full bg-blue-400"></span> 3xx</span
 				>
-					<span class="flex items-center gap-1"
-						><span class="size-2 rounded-full bg-emerald-400"></span> Operational</span
-					>
-					<span class="flex items-center gap-1"
-						><span class="size-2 rounded-full bg-amber-400"></span> Degraded</span
-					>
-					<span class="flex items-center gap-1"
-						><span class="size-2 rounded-full bg-rose-500"></span> Down / Timeout</span
-					>
-					<span class="flex items-center gap-1.5 pl-1.5 border-l border-border/80"
-						><span class="w-3 border-t border-dashed border-slate-400"></span> No Data</span
-					>
-				</div>
-			{/if}
-		</div>
+				<span class="flex items-center gap-1"
+					><span class="size-2 rounded-full bg-amber-400"></span> 4xx</span
+				>
+				<span class="flex items-center gap-1"
+					><span class="size-2 rounded-full bg-rose-500"></span> 5xx/Err</span
+				>
+				<span class="flex items-center gap-1.5"
+					><span class="w-3 border-t border-dashed border-slate-400"></span> No Data</span
+				>
+			</div>
+		{:else}
+			<div
+				class="flex items-center gap-x-3 gap-y-1 flex-wrap text-[11px] font-mono text-muted-foreground"
+			>
+				<span class="flex items-center gap-1"
+					><span class="size-2 rounded-full bg-emerald-400"></span> Operational</span
+				>
+				<span class="flex items-center gap-1"
+					><span class="size-2 rounded-full bg-amber-400"></span> Degraded</span
+				>
+				<span class="flex items-center gap-1"
+					><span class="size-2 rounded-full bg-rose-500"></span> Down / Timeout</span
+				>
+				<span class="flex items-center gap-1.5"
+					><span class="w-3 border-t border-dashed border-slate-400"></span> No Data</span
+				>
+			</div>
+		{/if}
 	</div>
 
 	{#if data.length === 0}
-		<div class="h-48 flex items-center justify-center text-muted-foreground text-xs font-mono">
+		<div
+			class="flex items-center justify-center text-muted-foreground text-xs font-mono"
+			style="height: {height}px;"
+		>
 			No latency data available for the selected period
 		</div>
 	{:else}
-		<!-- Chart.js Canvas Container -->
-		<div class="w-full bg-white/2 border border-border/60 rounded-xl p-3 sm:p-4">
-			<div class="w-full relative" style="height: {height}px;">
-				<canvas bind:this={canvasEl}></canvas>
-			</div>
+		<!-- Chart.js Canvas (drawn directly on the page surface) -->
+		<div class="w-full relative" style="height: {height}px;">
+			<canvas bind:this={canvasEl}></canvas>
 		</div>
 	{/if}
 </div>

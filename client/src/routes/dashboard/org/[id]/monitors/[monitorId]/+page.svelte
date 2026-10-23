@@ -381,9 +381,9 @@
 	<title>{monitor ? `${monitor.Name} • Analytics` : 'Monitor Analytics'} | Netra Uptime</title>
 </svelte:head>
 
-<div class="space-y-6 max-w-7xl mx-auto text-foreground antialiased">
+<div class="max-w-7xl mx-auto text-foreground antialiased">
 	<!-- Navigation breadcrumb / back button -->
-	<div>
+	<div class="mb-6">
 		<a
 			href="/dashboard/org/{orgId}/monitors"
 			class="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
@@ -410,62 +410,83 @@
 			</Button>
 		</div>
 	{:else}
-		<!-- 1. Header & Actions Banner -->
-		<MonitorDetailHeader
-			{monitor}
-			onPauseResume={handlePauseResume}
-			onDelete={handleDelete}
-			onCheckNow={handleTriggerCheck}
-			isChecking={isTriggeringCheck}
-		/>
-
-		<!-- 2. Time Range Selector Control Bar -->
-		<MonitorPeriodSelector
-			{activePeriod}
-			{effectiveDays}
-			onSelectPeriod={(p) => (activePeriod = p)}
-		/>
-
-		<!-- 3. Key Metrics Summary Grid Cards -->
-		<MonitorStatsGrid
-			uptimePercent={computedMetrics.uptimePercent}
-			avgLatencyMs={computedMetrics.avgLatencyMs}
-			minLatencyMs={computedMetrics.minLatencyMs}
-			maxLatencyMs={computedMetrics.maxLatencyMs}
-			totalIncidents={computedMetrics.totalIncidents}
-			downtimeFormatted={computedMetrics.downtimeFormatted}
-		/>
-
-		<!-- 4. Interactive Response Time Latency Line Chart -->
-		<MonitorLatencyChart
-			data={chartPoints}
-			title={`Response Time Latency (${activePeriod.toUpperCase()})`}
-			height={240}
-			monitorType={monitor.Type}
-		/>
-
-		<!-- 5. HTTP Status Code Distribution Chart -->
-		{#if monitor.Type === 'http'}
-			<MonitorStatusCodeChart
-				count2xx={statusCodeMetrics.count2xx}
-				count3xx={statusCodeMetrics.count3xx}
-				count4xx={statusCodeMetrics.count4xx}
-				count5xx={statusCodeMetrics.count5xx}
-				countError={statusCodeMetrics.countError}
-				totalChecks={statusCodeMetrics.total}
-				periodLabel={activePeriod.toUpperCase()}
+		<!-- 1. Header & Actions -->
+		<header class="pb-6 border-b border-border/60">
+			<MonitorDetailHeader
+				{monitor}
+				onPauseResume={handlePauseResume}
+				onDelete={handleDelete}
+				onCheckNow={handleTriggerCheck}
+				isChecking={isTriggeringCheck}
 			/>
-		{/if}
+		</header>
 
-		<!-- 6. Alert Rules & Incident Policies -->
-		<MonitorAlertRulesSection
-			{orgId}
-			{monitorId}
-			monitorType={monitor.Type}
-			alertTemplateId={monitor.AlertTemplateID}
-		/>
+		<!-- 2. Overview: Time Range Selector + Key Metrics Strip -->
+		<section class="py-6 border-b border-border/60 space-y-6" aria-labelledby="overview-heading">
+			<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+				<h2 id="overview-heading" class="text-base font-semibold tracking-tight">Overview</h2>
+				<MonitorPeriodSelector
+					{activePeriod}
+					{effectiveDays}
+					onSelectPeriod={(p) => (activePeriod = p)}
+				/>
+			</div>
 
-		<!-- 7. Recent Incident Logs History -->
-		<MonitorIncidentHistory {orgId} {incidents} {tz} />
+			<MonitorStatsGrid
+				uptimePercent={computedMetrics.uptimePercent}
+				avgLatencyMs={computedMetrics.avgLatencyMs}
+				minLatencyMs={computedMetrics.minLatencyMs}
+				maxLatencyMs={computedMetrics.maxLatencyMs}
+				totalIncidents={computedMetrics.totalIncidents}
+				downtimeFormatted={computedMetrics.downtimeFormatted}
+			/>
+		</section>
+
+		<!-- 3. Charts: Latency (2/3) + HTTP Status Codes (1/3) -->
+		<section
+			class="grid grid-cols-1 border-b border-border/60 {monitor.Type === 'http'
+				? 'lg:grid-cols-3'
+				: ''}"
+			aria-label="Performance charts"
+		>
+			<div class="py-6 min-w-0 {monitor.Type === 'http' ? 'lg:col-span-2 lg:pr-6' : ''}">
+				<MonitorLatencyChart
+					data={chartPoints}
+					title={`Response Time (${activePeriod.toUpperCase()})`}
+					height={240}
+					monitorType={monitor.Type}
+				/>
+			</div>
+
+			{#if monitor.Type === 'http'}
+				<div class="py-6 min-w-0 border-t border-border/60 lg:border-t-0 lg:border-l lg:pl-6">
+					<MonitorStatusCodeChart
+						count2xx={statusCodeMetrics.count2xx}
+						count3xx={statusCodeMetrics.count3xx}
+						count4xx={statusCodeMetrics.count4xx}
+						count5xx={statusCodeMetrics.count5xx}
+						countError={statusCodeMetrics.countError}
+						totalChecks={statusCodeMetrics.total}
+						periodLabel={activePeriod.toUpperCase()}
+					/>
+				</div>
+			{/if}
+		</section>
+
+		<!-- 4. Incidents (2/3) + Alert Policy (1/3) -->
+		<section class="grid grid-cols-1 lg:grid-cols-3" aria-label="Incidents and alert policy">
+			<div class="py-6 min-w-0 lg:col-span-2 lg:pr-6">
+				<MonitorIncidentHistory {orgId} {incidents} {tz} />
+			</div>
+
+			<div class="py-6 min-w-0 border-t border-border/60 lg:border-t-0 lg:border-l lg:pl-6">
+				<MonitorAlertRulesSection
+					{orgId}
+					{monitorId}
+					monitorType={monitor.Type}
+					alertTemplateId={monitor.AlertTemplateID}
+				/>
+			</div>
+		</section>
 	{/if}
 </div>
