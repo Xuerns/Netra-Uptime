@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { IncidentUpdateResponse } from '$lib/api/incident';
 	import { formatDateTime } from '$lib/utils/datetime';
-	import { MessageSquare, Clock, Loader2, User } from 'lucide-svelte';
+	import { Clock, Loader2, User } from 'lucide-svelte';
 
 	interface Props {
 		updates: IncidentUpdateResponse[];
@@ -16,14 +16,11 @@
 	}
 </script>
 
-<div class="bg-card border border-border rounded-lg p-5 space-y-4">
-	<div class="flex items-center justify-between">
-		<h2 class="text-sm font-semibold text-foreground tracking-tight flex items-center gap-2">
-			<MessageSquare class="size-4 text-primary" />
-			<span>Incident Communication Feed & Timeline</span>
-		</h2>
-		<span class="text-xs font-mono text-muted-foreground">
-			{updates.length} message{updates.length === 1 ? '' : 's'}
+<div class="flex flex-col gap-4 min-w-0">
+	<div class="flex items-center justify-between gap-3 min-h-7">
+		<h2 class="text-base font-semibold text-foreground tracking-tight">Timeline</h2>
+		<span class="text-xs font-mono text-muted-foreground shrink-0">
+			{updates.length} update{updates.length === 1 ? '' : 's'}
 		</span>
 	</div>
 
@@ -32,31 +29,34 @@
 			class="flex items-center justify-center py-8 text-xs text-muted-foreground gap-2 font-mono"
 		>
 			<Loader2 class="size-4 animate-spin text-primary" />
-			<span>Loading incident timeline updates...</span>
+			<span>Loading timeline updates...</span>
 		</div>
 	{:else if updates.length === 0}
-		<div class="p-6 bg-foreground/10 border border-border rounded-lg text-center space-y-1">
+		<div class="py-10 text-center space-y-1">
 			<p class="text-xs text-foreground font-medium">No updates recorded yet</p>
 			<p class="text-[11.5px] text-muted-foreground">
 				Responders will post status findings and resolution updates here.
 			</p>
 		</div>
 	{:else}
-		<div
-			class="space-y-3 relative before:absolute before:left-4 before:top-3 before:bottom-3 before:w-0.5 before:bg-white/10"
-		>
-			{#each updates as update}
-				<div class="relative pl-9 space-y-1">
+		<div class="relative pt-2">
+			{#each updates as update, idx}
+				{@const isLast = idx === updates.length - 1}
+				<div class="relative pl-7 pb-6 last:pb-1">
+					<!-- Timeline vertical line connecting events -->
+					{#if !isLast}
+						<div class="absolute left-2.5 top-3.5 bottom-0 w-px bg-border/60"></div>
+					{/if}
 					<!-- Timeline Dot Node -->
 					<div
-						class="absolute left-2.5 top-2.5 -translate-x-1/2 size-3 rounded-full bg-card border-2 border-primary"
+						class="absolute left-2.5 top-1.5 -translate-x-1/2 size-2 rounded-full bg-primary ring-4 ring-background"
 					></div>
 
-					<div class="bg-foreground/15 border border-border rounded-lg p-3.5 space-y-2">
-						<div class="flex items-center justify-between text-xs font-mono">
+					<div class="space-y-1.5">
+						<div class="flex items-center justify-between text-xs font-mono flex-wrap gap-2">
 							<div class="flex items-center gap-2">
 								<div
-									class="size-5 rounded-full bg-white/10 flex items-center justify-center overflow-hidden"
+									class="size-5 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0"
 								>
 									{#if update.avatarUrl}
 										<img
@@ -65,21 +65,21 @@
 											class="size-full object-cover"
 										/>
 									{:else}
-										<User class="size-3 text-foreground/60" />
+										<User class="size-3 text-primary" />
 									{/if}
 								</div>
-								<span class="font-semibold text-foreground"
+								<span class="font-semibold text-foreground text-xs"
 									>{update.username || 'System Responder'}</span
 								>
 							</div>
 
-							<span class="text-[11px] text-muted-foreground flex items-center gap-1">
+							<span class="text-[11px] text-muted-foreground flex items-center gap-1 font-mono">
 								<Clock class="size-3" />
 								<span>{fmtDateTime(update.createAt)}</span>
 							</span>
 						</div>
 
-						<p class="text-xs text-foreground leading-relaxed whitespace-pre-line">
+						<p class="text-xs text-foreground/90 leading-relaxed whitespace-pre-line pl-7">
 							{update.message}
 						</p>
 					</div>

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { Monitor } from '$lib/api/monitor';
 	import { TrendingUp, AlertTriangle, Globe, Lock } from 'lucide-svelte';
-	import MiniBarChart from '$lib/components/MiniBarChart.svelte';
 
 	interface Props {
 		monitors: Monitor[];
@@ -106,35 +105,7 @@
 
 	let lastProbeTimeAgo = $derived(formatProbeTimeAgo(mostRecentCheck ?? undefined));
 
-	// ── 6. Sparkline Data: Aggregate daily uptime from recent_checks ─────────
-	let dailyUptimeBars = $derived.by(() => {
-		// Collect all recent_checks across monitors and bucket by date
-		const buckets = new Map<string, { up: number; total: number }>();
-
-		for (const monitor of monitors) {
-			if (!monitor.recent_checks || monitor.Status === 'paused') continue;
-			for (const check of monitor.recent_checks) {
-				const date = check.CheckedAt.substring(0, 10); // YYYY-MM-DD
-				if (!buckets.has(date)) {
-					buckets.set(date, { up: 0, total: 0 });
-				}
-				const bucket = buckets.get(date)!;
-				bucket.total++;
-				if (check.Status === 'up') bucket.up++;
-			}
-		}
-
-		// Sort by date and calculate percentage
-		const sorted = [...buckets.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-		// Take last 14 days max
-		const recent = sorted.slice(-14);
-		return recent.map(([date, { up, total }]) => ({
-			value: total > 0 ? (up / total) * 100 : 100,
-			label: date
-		}));
-	});
-
-	// ── 7. Fleet status percentages ───────────────────────────────────────────
+	// ── 6. Fleet status percentages ───────────────────────────────────────────
 	let fleetUpPct = $derived(totalCount > 0 ? (upCount / totalCount) * 100 : 0);
 	let fleetDownPct = $derived(totalCount > 0 ? (downCount / totalCount) * 100 : 0);
 	let fleetPausedPct = $derived(totalCount > 0 ? (pausedCount / totalCount) * 100 : 0);
@@ -160,19 +131,13 @@
 			<span class="text-xs text-muted-foreground">across {totalCount} targets</span>
 		</div>
 
-		<!-- Mini Bar Chart: Daily uptime -->
-		{#if dailyUptimeBars.length > 1}
-			<div class="mt-3">
-				<MiniBarChart data={dailyUptimeBars} height={24} barGap={1.5} />
-			</div>
-		{:else}
-			<div class="mt-3 w-full bg-muted rounded-full h-1 overflow-hidden">
-				<div
-					class="bg-emerald-500 h-1 rounded-full transition-all duration-500"
-					style="width: {avgUptimeNum}%"
-				></div>
-			</div>
-		{/if}
+		<!-- Summary Info -->
+		<div class="mt-3 text-[11px] text-muted-foreground flex items-center justify-between">
+			<span>Evaluation window: <strong class="text-foreground font-mono">30d</strong></span>
+			<span
+				>Healthy: <strong class="text-emerald-400 font-mono">{upCount}/{totalCount}</strong></span
+			>
+		</div>
 	</div>
 
 	<!-- KPI 2: Global Avg Latency -->

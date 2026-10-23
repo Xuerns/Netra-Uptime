@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { IncidentAssignee } from '$lib/api/incident';
-	import { Users, UserCheck } from 'lucide-svelte';
+	import { UserCheck } from 'lucide-svelte';
 
 	interface Props {
 		assignees?: IncidentAssignee[];
@@ -9,35 +9,33 @@
 	let { assignees = [] }: Props = $props();
 </script>
 
-<div class="bg-card border border-border rounded-lg p-5 space-y-4">
-	<div class="flex items-center justify-between">
-		<h2 class="text-sm font-semibold text-foreground tracking-tight flex items-center gap-2">
-			<Users class="size-4 text-primary" />
-			<span>Command Responders & Assignees</span>
-		</h2>
-		<span class="text-xs font-mono text-muted-foreground">
-			{assignees.length} responder{assignees.length === 1 ? '' : 's'}
+<div class="flex flex-col gap-4 min-w-0">
+	<div class="flex items-center justify-between gap-3 min-h-7">
+		<h2 class="text-base font-semibold text-foreground tracking-tight">Command Responders</h2>
+		<span class="text-xs font-mono text-muted-foreground shrink-0">
+			{assignees.length}
 		</span>
 	</div>
 
 	{#if assignees.length === 0}
-		<div
-			class="p-4 bg-foreground/10 border border-border rounded-lg text-center text-xs text-muted-foreground"
-		>
-			No responders yet.
+		<div class="py-10 text-center space-y-1">
+			<p class="text-xs font-medium text-foreground">No responders assigned yet</p>
+			<p class="text-[11px] text-muted-foreground">
+				Team members can join this incident command bridge.
+			</p>
 		</div>
 	{:else}
-		<div class="space-y-2">
+		<ul class="divide-y divide-border/60">
 			{#each assignees as assignee (assignee.UserID || assignee.ID)}
-				<div class="bg-foreground/15 border border-border rounded-lg p-3 flex items-center gap-3">
+				<li class="py-3 flex items-center gap-3">
 					<div
-						class="size-8 rounded-lg bg-primary/20 border border-primary/30 text-primary font-bold text-xs flex items-center justify-center shrink-0 font-mono"
+						class="size-8 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center shrink-0 font-mono overflow-hidden"
 					>
 						{#if assignee.User?.Avatar}
 							<img
 								src={assignee.User.Avatar}
 								alt={assignee.User?.Name || 'User'}
-								class="size-full object-cover rounded-lg"
+								class="size-full object-cover"
 							/>
 						{:else}
 							<span>{(assignee.User?.Name || 'User').substring(0, 2).toUpperCase()}</span>
@@ -49,12 +47,12 @@
 							{assignee.User?.Name || 'Responder'}
 						</div>
 						<div class="text-[10.5px] font-mono text-muted-foreground flex items-center gap-1">
-							<UserCheck class="size-3 text-emerald-400" />
+							<UserCheck class="size-3 text-emerald-400 shrink-0" />
 							<span>{assignee.Role || 'Responder'}</span>
 						</div>
 					</div>
-				</div>
+				</li>
 			{/each}
-		</div>
+		</ul>
 	{/if}
 </div>

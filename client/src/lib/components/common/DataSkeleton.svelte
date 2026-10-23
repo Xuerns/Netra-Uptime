@@ -157,7 +157,9 @@
 	{:else if effectiveVariant === 'table'}
 		<!-- Table Skeleton (used in Audit Logs) -->
 		<div class="border border-border rounded-xl bg-card overflow-hidden">
-			<div class="p-3.5 bg-muted/40 border-b border-border flex items-center justify-between gap-4">
+			<div
+				class="p-3.5 bg-table-header border-b border-border flex items-center justify-between gap-4"
+			>
 				<div class="h-4 w-28 bg-white/10 rounded"></div>
 				<div class="h-4 w-24 bg-white/10 rounded"></div>
 				<div class="h-4 w-32 bg-white/10 rounded hidden sm:block"></div>

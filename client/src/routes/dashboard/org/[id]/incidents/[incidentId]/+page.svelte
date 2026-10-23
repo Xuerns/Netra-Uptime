@@ -98,9 +98,9 @@
 	>
 </svelte:head>
 
-<div class="space-y-6 text-foreground antialiased">
+<div class="max-w-7xl mx-auto text-foreground antialiased">
 	<!-- Navigation back button -->
-	<div>
+	<div class="mb-6">
 		<a
 			href="/dashboard/org/{orgId}/incidents"
 			class="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
@@ -125,27 +125,27 @@
 			</Button>
 		</div>
 	{:else if incident}
-		<div class="space-y-6">
-			<!-- 1. Header Section Component -->
+		<!-- 1. Header Section Component -->
+		<header class="pb-6 border-b border-border/60">
 			<IncidentDetailHeader {incident} {currentUserId} {isJoining} {tz} onJoin={handleJoinBridge} />
+		</header>
 
-			<!-- 2. Communication Feed & Responders Side by Side -->
-			<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-				<!-- Timeline Feed (75%) -->
-				<div class="lg:col-span-3">
-					<IncidentTimeline {updates} isLoading={isLoadingUpdates} {tz} />
-				</div>
+		<!-- 2. Timeline Feed (2/3) + Responders (1/3) -->
+		<section class="grid grid-cols-1 lg:grid-cols-3" aria-label="Incident timeline and responders">
+			<!-- Timeline Feed + Status Update Form (2/3) -->
+			<div class="py-6 min-w-0 lg:col-span-2 lg:pr-6 space-y-6">
+				<IncidentTimeline {updates} isLoading={isLoadingUpdates} {tz} />
 
-				<!-- Command Responders & Assignees (25%) -->
-				<div class="lg:col-span-1">
-					<IncidentResponders assignees={incident.Assignees} />
-				</div>
+				<!-- Post Status Update Form (Active Ongoing Incident) placed inside timeline column -->
+				{#if incident.Status === 'ongoing'}
+					<IncidentUpdateForm {isPosting} onPostUpdate={handlePostUpdate} />
+				{/if}
 			</div>
 
-			<!-- 3. Post Status Update Form (Active Ongoing Incident) -->
-			{#if incident.Status === 'ongoing'}
-				<IncidentUpdateForm {isPosting} onPostUpdate={handlePostUpdate} />
-			{/if}
-		</div>
+			<!-- Command Responders & Assignees (1/3) -->
+			<div class="py-6 min-w-0 border-t border-border/60 lg:border-t-0 lg:border-l lg:pl-6">
+				<IncidentResponders assignees={incident.Assignees} />
+			</div>
+		</section>
 	{/if}
 </div>

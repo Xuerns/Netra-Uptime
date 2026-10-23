@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Monitor } from '$lib/api/monitor';
-	import { typeIcon, statusLabel } from '$lib/utils/monitor';
-	import { Monitor as MonitorIcon, ArrowUpRight } from 'lucide-svelte';
+	import { statusLabel } from '$lib/utils/monitor';
+	import { ArrowUpRight } from 'lucide-svelte';
 
 	interface Props {
 		monitors: Monitor[];
@@ -9,67 +9,72 @@
 	}
 
 	let { monitors, orgId }: Props = $props();
+
+	function getStatusColor(status: string) {
+		switch (status) {
+			case 'up':
+				return 'bg-emerald-400';
+			case 'down':
+				return 'bg-rose-500';
+			case 'paused':
+				return 'bg-amber-400';
+			default:
+				return 'bg-sky-400';
+		}
+	}
 </script>
 
-<section class="bg-card border border-border rounded-xl p-5 md:p-6 space-y-4">
-	<div>
-		<h2 class="text-base font-semibold text-foreground tracking-tight">Linked Monitors</h2>
-		<p class="text-xs text-muted-foreground mt-0.5">
-			Monitors currently subscribed to this template's alert rules and thresholds.
-		</p>
+<div class="flex flex-col gap-4 min-w-0">
+	<div class="flex items-center justify-between gap-3 min-h-7">
+		<div>
+			<h2 class="text-base font-semibold text-foreground tracking-tight">Linked Monitors</h2>
+			<p class="text-xs text-muted-foreground mt-0.5">Monitors subscribed to this template.</p>
+		</div>
+		<span class="text-xs text-muted-foreground font-mono shrink-0">
+			{monitors.length}
+		</span>
 	</div>
 
 	{#if monitors.length === 0}
-		<div
-			class="rounded-xl border border-dashed border-border bg-background/40 p-6 text-center text-xs text-muted-foreground space-y-1.5"
-		>
-			<MonitorIcon class="size-6 mx-auto opacity-50 mb-1" />
-			<p class="font-medium text-foreground">No monitors linked to this template yet.</p>
-			<p class="text-[11px] max-w-[48ch] mx-auto leading-relaxed">
-				You can link monitors to this template from each monitor's settings or during monitor
-				creation.
+		<div class="py-10 text-center space-y-1">
+			<p class="text-xs font-medium text-foreground">No monitors linked yet</p>
+			<p class="text-[11px] text-muted-foreground">
+				Link monitors to this template from their settings or during creation.
 			</p>
 		</div>
 	{:else}
-		<div class="divide-y divide-border/60 border border-border rounded-xl overflow-hidden">
+		<ul class="divide-y divide-border/60">
 			{#each monitors as m (m.ID)}
-				{@const MonitorTypeIcon = typeIcon(m.Type)}
-				<div
-					class="flex items-center justify-between gap-4 p-4 bg-background/40 hover:bg-white/4 transition-colors"
-				>
-					<div class="flex items-center gap-3.5 min-w-0">
-						<div class="p-2 rounded-lg bg-secondary border border-border text-foreground shrink-0">
-							<MonitorTypeIcon class="size-4" />
-						</div>
-						<div class="min-w-0 space-y-0.5">
+				<li>
+					<a
+						href={`/dashboard/org/${orgId}/monitors/${m.ID}`}
+						class="flex items-center justify-between gap-3 py-3 px-2 -mx-2 rounded-md hover:bg-muted/40 transition-colors group"
+					>
+						<div class="min-w-0 space-y-1 flex-1">
 							<div class="flex items-center gap-2">
-								<a
-									href={`/dashboard/org/${orgId}/monitors/${m.ID}`}
-									class="font-semibold text-sm text-foreground hover:text-primary transition-colors truncate"
+								<span class="size-2 rounded-full shrink-0 {getStatusColor(m.Status)}"></span>
+								<span
+									class="font-medium text-sm text-foreground group-hover:text-primary transition-colors truncate"
 								>
 									{m.Name}
-								</a>
+								</span>
 								<span
-									class="status-badge status-badge--{m.Status} text-[10px] py-0.5 px-2 rounded-full inline-flex items-center gap-1 font-mono uppercase"
+									class="status-badge status-badge--{m.Status} text-[10px] py-0.5 px-2 rounded-full inline-flex items-center font-mono uppercase shrink-0"
 								>
 									{statusLabel(m.Status)}
 								</span>
 							</div>
-							<div class="text-xs font-mono text-muted-foreground/70 truncate">
+							<div class="text-xs font-mono text-muted-foreground/70 truncate pl-4">
 								{m.Target}
 							</div>
 						</div>
-					</div>
 
-					<a
-						href={`/dashboard/org/${orgId}/monitors/${m.ID}`}
-						class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary font-medium transition-colors shrink-0"
-					>
-						<span>View Monitor</span>
-						<ArrowUpRight class="size-3.5" />
+						<ArrowUpRight
+							class="size-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0"
+						/>
 					</a>
-				</div>
+				</li>
 			{/each}
-		</div>
+		</ul>
 	{/if}
-</section>
+</div>

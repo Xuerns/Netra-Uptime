@@ -1,16 +1,7 @@
 <script lang="ts">
 	import type { Incident } from '$lib/api/incident';
 	import { formatDateTime, formatIncidentTimeAgo } from '$lib/utils/datetime';
-	import {
-		AlertTriangle,
-		CheckCircle2,
-		Radio,
-		Users,
-		Loader2,
-		Server,
-		Clock,
-		ExternalLink
-	} from 'lucide-svelte';
+	import { CheckCircle2, Radio, Users, Loader2, Server, Clock, ExternalLink } from 'lucide-svelte';
 
 	interface Props {
 		incident: Incident;
@@ -31,11 +22,11 @@
 	let timeAgo = $derived(formatIncidentTimeAgo(incident.StartedAt));
 </script>
 
-<!-- Header Content Block -->
-<div class="bg-card border border-border rounded-lg p-5 md:p-6 space-y-4">
+<!-- Header Content Block (Flat, no card container) -->
+<div class="flex flex-col gap-6">
 	<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 		<!-- Title & Badges -->
-		<div class="space-y-2">
+		<div class="space-y-2 min-w-0">
 			<div class="flex items-center gap-2.5 flex-wrap">
 				<!-- Status Chip -->
 				<span
@@ -68,10 +59,10 @@
 					</span>
 				{/if}
 
-				<span class="text-xs text-foreground/40 font-mono">#{incident.ID.substring(0, 8)}</span>
+				<span class="text-xs text-muted-foreground font-mono">#{incident.ID.substring(0, 8)}</span>
 			</div>
 
-			<h1 class="text-xl md:text-2xl font-semibold text-foreground tracking-tight">
+			<h1 class="text-2xl md:text-3xl font-bold text-foreground tracking-tight break-words">
 				{incident.Summary || 'Service Disruption'}
 			</h1>
 		</div>
@@ -105,42 +96,57 @@
 		{/if}
 	</div>
 
-	<!-- Target Monitor & Timeline -->
-	<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
-		<!-- Target Monitor -->
-		<div>
-			<span class="text-foreground/40 block text-[11px] uppercase tracking-wider"
-				>Target Monitor</span
-			>
+	<!-- Metadata Strip (3 columns with vertical hairline dividers on sm+) -->
+	<div class="grid grid-cols-1 sm:grid-cols-3 gap-y-4 pt-4 border-t border-border/60">
+		<!-- 1. Target Monitor -->
+		<div class="flex flex-col gap-1 pr-4 min-w-0">
+			<span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+				Target Monitor
+			</span>
 			{#if incident.Monitor}
 				<a
 					href="/dashboard/org/{incident.Monitor?.OrganizationID}/monitors/{incident.MonitorID}"
-					class="inline-flex items-center gap-1.5 text-foreground hover:text-primary font-semibold transition-colors mt-0.5"
+					class="inline-flex items-center gap-1.5 text-foreground hover:text-primary font-semibold text-sm transition-colors truncate mt-0.5"
 				>
-					<Server class="size-3.5 text-primary" />
+					<Server class="size-3.5 text-primary shrink-0" />
 					<span class="truncate">{incident.Monitor.Name}</span>
-					<ExternalLink class="size-3 text-foreground/40" />
+					<ExternalLink class="size-3 text-muted-foreground shrink-0" />
 				</a>
-				<div class="text-[11px] text-muted-foreground truncate">
+				<div class="text-xs font-mono text-muted-foreground truncate">
 					{incident.Monitor.Target}
 				</div>
 			{:else}
-				<span class="text-foreground/60">Unknown Monitor ({incident.MonitorID})</span>
+				<span class="text-xs text-muted-foreground">Unknown Monitor ({incident.MonitorID})</span>
 			{/if}
 		</div>
 
-		<!-- Timeline Status -->
-		<div>
-			<span class="text-foreground/40 block text-[11px] uppercase tracking-wider"
-				>Timeline Status</span
-			>
-			<div class="flex items-center gap-1.5 text-foreground font-semibold">
-				<Clock class="size-3.5 text-amber-400" />
-				<span>Started: {formattedStartedAt}</span>
+		<!-- 2. Started -->
+		<div class="flex flex-col gap-1 sm:border-l sm:border-border/60 sm:px-4 min-w-0">
+			<span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+				Started At
+			</span>
+			<div class="flex items-center gap-1.5 text-foreground font-semibold text-sm mt-0.5">
+				<Clock class="size-3.5 text-amber-400 shrink-0" />
+				<span class="truncate">{formattedStartedAt}</span>
 			</div>
-			<div class="text-[11px] text-muted-foreground">
+			<span class="text-xs text-muted-foreground font-mono"> Incident opened </span>
+		</div>
+
+		<!-- 3. Duration & Status -->
+		<div class="flex flex-col gap-1 sm:border-l sm:border-border/60 sm:pl-4 min-w-0">
+			<span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+				Duration & Status
+			</span>
+			<div class="text-sm font-semibold text-foreground mt-0.5">
 				{#if formattedResolvedAt}
-					<span class="text-emerald-400">Resolved at {formattedResolvedAt}</span>
+					<span class="text-emerald-400">Resolved</span>
+				{:else}
+					<span class="text-rose-400">Active ({timeAgo})</span>
+				{/if}
+			</div>
+			<div class="text-xs text-muted-foreground">
+				{#if formattedResolvedAt}
+					<span>Resolved at {formattedResolvedAt}</span>
 				{:else}
 					<span>Impact duration: {timeAgo}</span>
 				{/if}

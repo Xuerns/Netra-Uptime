@@ -153,7 +153,7 @@
 	{:else}
 		<!-- ── List / Table View ───────────────────────────────────────────────── -->
 		<div class="border border-border rounded-xl overflow-hidden shadow-sm">
-			<!-- Table Header (Darker background than list rows) -->
+			<!-- Table Header -->
 			<div
 				class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-border bg-table-header text-[11px] font-semibold tracking-wider uppercase text-muted-foreground"
 			>

@@ -93,14 +93,14 @@
 	<title>{template ? `${template.name} | Alert Templates` : 'Alert Template | Netra Uptime'}</title>
 </svelte:head>
 
-<div class="text-foreground antialiased space-y-6">
+<div class="max-w-7xl mx-auto text-foreground antialiased">
 	<!-- ── Back Link ─────────────────────────────────────────────────────────── -->
-	<div>
+	<div class="mb-6">
 		<a
 			href={`/dashboard/org/${orgId}/alert-templates`}
-			class="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors group cursor-pointer"
+			class="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group cursor-pointer"
 		>
-			<ArrowLeft class="size-3.5 transition-transform group-hover:-translate-x-0.5" />
+			<ArrowLeft class="size-4 group-hover:-translate-x-1 transition-transform" />
 			<span>Back to Alert Templates</span>
 		</a>
 	</div>
@@ -123,11 +123,11 @@
 	{:else if template}
 		<!-- ── Dedicated Header ──────────────────────────────────────────────────── -->
 		<header
-			class="flex flex-col md:flex-row md:items-start justify-between gap-4 pb-5 border-b border-border"
+			class="flex flex-col md:flex-row md:items-start justify-between gap-4 pb-6 border-b border-border/60"
 		>
 			<div class="space-y-1.5 min-w-0 max-w-[70ch]">
 				<div class="flex items-center gap-2.5 flex-wrap">
-					<h1 class="text-2xl md:text-3xl font-semibold tracking-tight text-foreground truncate">
+					<h1 class="text-2xl md:text-3xl font-bold tracking-tight text-foreground truncate">
 						{template.name}
 					</h1>
 					{#if template.is_default}
@@ -165,11 +165,16 @@
 			</div>
 		</header>
 
-		<!-- ── Section: Configured Rules (Component) ──────────────────────────────── -->
-		<AlertRulesSection {template} {orgId} onRefresh={loadTemplateData} />
+		<!-- ── Sections: Alert Rules (2/3) + Linked Monitors (1/3) ────────────────── -->
+		<section class="grid grid-cols-1 lg:grid-cols-3" aria-label="Alert template configuration">
+			<div class="py-6 min-w-0 lg:col-span-2 lg:pr-6">
+				<AlertRulesSection {template} {orgId} onRefresh={loadTemplateData} />
+			</div>
 
-		<!-- ── Section: Linked Monitors (Component) ──────────────────────────────── -->
-		<LinkedMonitorsSection monitors={linkedMonitors} {orgId} />
+			<div class="py-6 min-w-0 border-t border-border/60 lg:border-t-0 lg:border-l lg:pl-6">
+				<LinkedMonitorsSection monitors={linkedMonitors} {orgId} />
+			</div>
+		</section>
 	{/if}
 </div>
 

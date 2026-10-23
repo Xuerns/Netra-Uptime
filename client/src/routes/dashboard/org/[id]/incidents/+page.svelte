@@ -143,7 +143,7 @@
 	<div class="bg-card border border-border rounded-lg overflow-hidden">
 		<!-- Table Header Bar with GitHub-Style Active/Resolved Toggles -->
 		<div
-			class="bg-white/3 border-b border-border px-5 py-3.5 flex items-center justify-between text-xs text-muted-foreground"
+			class="bg-table-header border-b border-border px-5 py-3.5 flex items-center justify-between text-xs text-muted-foreground"
 		>
 			<!-- Left: GitHub-style Status Filter Tabs (Active vs Resolved) -->
 			<div class="flex items-center gap-6">

@@ -4,7 +4,7 @@
 	import { AlertTemplateAPI } from '$lib/api/alertTemplate';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
-	import { ShieldAlert, AlertTriangle, Plus, Pencil, Trash2, Layers } from 'lucide-svelte';
+	import { Plus, Pencil, Trash2 } from 'lucide-svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import AlertRuleModal from './AlertRuleModal.svelte';
 
@@ -69,7 +69,7 @@
 	}
 </script>
 
-<section class="bg-card border border-border rounded-xl p-5 md:p-6 space-y-4">
+<div class="flex flex-col gap-4 min-w-0">
 	<div class="flex items-center justify-between gap-3 flex-wrap">
 		<div>
 			<h2 class="text-base font-semibold text-foreground tracking-tight">Alert Rules</h2>
@@ -87,86 +87,60 @@
 	</div>
 
 	{#if !template.rules || template.rules.length === 0}
-		<div
-			class="rounded-xl border border-dashed border-border bg-background/40 py-12 px-4 text-center space-y-3"
-		>
-			<div
-				class="size-10 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto"
-			>
-				<Layers class="size-5" />
+		<div class="py-10 text-center space-y-2">
+			<h3 class="text-sm font-semibold text-foreground">No alert rules defined yet</h3>
+			<p class="text-xs text-muted-foreground max-w-[44ch] mx-auto">
+				Add threshold conditions to activate automated alert triggers for linked monitors.
+			</p>
+			<div class="pt-2">
+				<button
+					onclick={openAddRule}
+					class="inline-flex items-center gap-1.5 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground h-8 px-3 rounded-lg font-medium text-xs cursor-pointer"
+				>
+					<Plus class="size-3" />
+					<span>Add First Rule</span>
+				</button>
 			</div>
-			<div>
-				<h3 class="text-sm font-semibold text-foreground">No alert rules defined yet</h3>
-				<p class="text-xs text-muted-foreground max-w-[44ch] mx-auto mt-1">
-					Add threshold conditions (such as 5xx status codes, high latency, or timeouts) to activate
-					automated alert triggers for linked monitors.
-				</p>
-			</div>
-			<button
-				onclick={openAddRule}
-				class="inline-flex items-center gap-1.5 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground h-8 px-3 rounded-lg font-medium text-xs cursor-pointer"
-			>
-				<Plus class="size-3" />
-				<span>Add First Rule</span>
-			</button>
 		</div>
 	{:else}
-		<div class="divide-y divide-border/60 border border-border rounded-xl overflow-hidden">
+		<ul class="divide-y divide-border/60">
 			{#each template.rules as r (r.id)}
-				<div
-					class="flex items-center justify-between gap-4 p-4 bg-background/40 hover:bg-white/4 transition-colors flex-wrap sm:flex-nowrap"
+				<li
+					class="flex items-start sm:items-center justify-between gap-3 py-3.5 px-2 -mx-2 rounded-md hover:bg-muted/40 transition-colors flex-col sm:flex-row"
 				>
-					<div class="flex items-center gap-3.5 min-w-0 flex-1">
-						{#if r.severity === 'critical'}
-							<div
-								class="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-500 shrink-0"
-								title="Critical Severity"
+					<div class="min-w-0 space-y-1">
+						<div class="flex items-center gap-2 flex-wrap">
+							<span class="font-semibold text-sm text-foreground truncate">{r.name}</span>
+							<span
+								class="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider font-mono border {r.severity ===
+								'critical'
+									? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+									: 'bg-amber-500/10 text-amber-400 border-amber-500/20'}"
 							>
-								<ShieldAlert class="size-4" />
-							</div>
-						{:else}
-							<div
-								class="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 shrink-0"
-								title="Warning Severity"
-							>
-								<AlertTriangle class="size-4" />
-							</div>
-						{/if}
-
-						<div class="min-w-0 space-y-0.5">
-							<div class="flex items-center gap-2 flex-wrap">
-								<span class="font-semibold text-sm text-foreground truncate">{r.name}</span>
+								{r.severity}
+							</span>
+							{#if !r.is_active}
 								<span
-									class="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider font-mono border {r.severity ===
-									'critical'
-										? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-										: 'bg-amber-500/10 text-amber-400 border-amber-500/20'}"
+									class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-muted border border-border text-muted-foreground"
 								>
-									{r.severity}
+									Paused
 								</span>
-								{#if !r.is_active}
-									<span
-										class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-muted border border-border text-muted-foreground"
-									>
-										Paused
-									</span>
-								{/if}
-							</div>
+							{/if}
+						</div>
 
-							<div class="text-xs text-muted-foreground font-mono flex items-center gap-1.5">
-								<span>
-									{r.metric}
-									{r.operator}
-									{r.target_value}
-								</span>
-								<span class="text-muted-foreground/50">&bull;</span>
-								<span>{r.consecutive}x consecutive</span>
-							</div>
+						<div class="text-xs text-muted-foreground font-mono flex items-center gap-1.5">
+							<span>
+								{r.metric}
+								{r.operator}
+								{r.target_value}
+							</span>
+							<span class="text-muted-foreground/50">&bull;</span>
+							<span>{r.consecutive}x consecutive</span>
 						</div>
 					</div>
 
 					<!-- Rule Actions -->
-					<div class="flex items-center gap-1.5 shrink-0">
+					<div class="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
 						<button
 							onclick={() => handleToggleRuleActive(r)}
 							class="px-2.5 py-1 text-xs rounded-md border border-border bg-secondary hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
@@ -189,11 +163,11 @@
 							<Trash2 class="size-4" />
 						</button>
 					</div>
-				</div>
+				</li>
 			{/each}
-		</div>
+		</ul>
 	{/if}
-</section>
+</div>
 
 <!-- Add / Edit Rule Modal Component -->
 <AlertRuleModal

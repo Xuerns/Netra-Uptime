@@ -19,8 +19,13 @@
 	}
 </script>
 
-<div class="bg-card border border-border rounded-lg p-5 space-y-3">
-	<h2 class="text-sm font-semibold text-foreground tracking-tight">Post Incident Status Update</h2>
+<div class="pt-6 border-t border-border/60 space-y-3">
+	<div class="space-y-0.5">
+		<h3 class="text-sm font-semibold text-foreground tracking-tight">Post Status Update</h3>
+		<p class="text-xs text-muted-foreground">
+			Provide status findings, root cause analysis, or resolution steps.
+		</p>
+	</div>
 
 	<div class="space-y-3">
 		<Textarea
