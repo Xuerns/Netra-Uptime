@@ -12,7 +12,7 @@ COPY client/ ./
 RUN pnpm build
 
 # ── STAGE 2: Build Server (Go with embedded Client) ──
-FROM golang:alpine AS server-builder
+FROM golang:1.27.3-alpine AS server-builder
 WORKDIR /app/server
 
 COPY server/go.mod server/go.sum ./

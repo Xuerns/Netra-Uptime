@@ -91,15 +91,6 @@
 	>
 		<Dialog.Header>
 			<div class="flex items-center gap-2.5">
-				<div
-					class="size-8 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center shrink-0"
-				>
-					{#if isEdit}
-						<Pencil class="size-4" />
-					{:else}
-						<Layers class="size-4" />
-					{/if}
-				</div>
 				<Dialog.Title class="text-lg font-semibold tracking-tight text-foreground">
 					{isEdit ? 'Edit Alert Template' : 'Create Alert Template'}
 				</Dialog.Title>

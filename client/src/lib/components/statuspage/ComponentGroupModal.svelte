@@ -8,15 +8,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { toast } from 'svelte-sonner';
-	import {
-		Plus,
-		Trash2,
-		Pencil,
-		Layers,
-		AlertCircle,
-		Check,
-		Radio
-	} from 'lucide-svelte';
+	import { Plus, Trash2, Pencil, Layers, AlertCircle, Check, Radio } from 'lucide-svelte';
 	import { parseApiError } from '$lib/utils/parseApiError';
 
 	let {

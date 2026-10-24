@@ -64,18 +64,18 @@
 	class="bg-sidebar! !border-r !border-sidebar-border text-sidebar-foreground"
 >
 	<!-- Header: Team Switcher -->
-	<Sidebar.Header class="p-3 border-b border-sidebar-border">
+	<Sidebar.Header class="p-2.5 border-b border-sidebar-border">
 		<div
-			class="flex items-center gap-3 p-2 rounded-lg transition-all duration-300 text-left w-full border border-transparent group group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
+			class="flex items-center gap-2.5 p-1.5 rounded-lg transition-all duration-300 text-left w-full border border-transparent group group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
 		>
 			{#if typeof activeTeam.logo === 'string'}
-				<img src={activeTeam.logo} alt="Logo" class="size-8 object-contain" />
+				<img src={activeTeam.logo} alt="Logo" class="size-7 object-contain" />
 			{:else}
 				<activeTeam.logo class="size-4" />
 			{/if}
 
-			<div class="grid flex-1 text-left text-lg leading-tight group-data-[collapsible=icon]:hidden">
-				<span class="truncate font-semibold text-sidebar-foreground tracking-tight"
+			<div class="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+				<span class="truncate font-semibold text-sidebar-foreground tracking-tight text-[13px]"
 					>{activeTeam.name}</span
 				>
 			</div>
@@ -83,11 +83,11 @@
 	</Sidebar.Header>
 
 	<!-- Content: Main Navigation -->
-	<Sidebar.Content class="py-2">
+	<Sidebar.Content class="py-1.5">
 		<!-- Workspace Group -->
-		<Sidebar.Group class="py-1">
+		<Sidebar.Group class="py-0.5">
 			<Sidebar.GroupContent>
-				<Sidebar.Menu class="space-y-1">
+				<Sidebar.Menu class="space-y-0.5">
 					{#each navWorkspace as item (item.title)}
 						{@const isActive =
 							$page.url.pathname === item.url || $page.url.pathname.startsWith(item.url + '/')}
@@ -97,7 +97,7 @@
 								: 'hover:bg-sidebar-accent/60'}"
 						>
 							<Sidebar.MenuButton
-								class="w-full flex-1 h-10 {isActive
+								class="w-full flex-1 h-8.5 {isActive
 									? 'text-sidebar-foreground!'
 									: 'text-muted-foreground! hover:text-sidebar-foreground!'}"
 							>
@@ -105,14 +105,15 @@
 									<a
 										href={item.url}
 										{...props}
-										class="flex items-center gap-3.5 w-full px-2.5 py-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
+										class="flex items-center gap-2.5 w-full px-2.5 py-1.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
 									>
 										<item.icon
-											class="size-4.5 shrink-0 transition-colors {isActive
+											class="size-4 shrink-0 transition-colors {isActive
 												? 'text-sidebar-foreground'
 												: 'text-muted-foreground group-hover/item:text-sidebar-foreground'}"
 										/>
-										<span class="text-md font-medium flex-1 group-data-[collapsible=icon]:hidden"
+										<span
+											class="text-[13px] font-medium flex-1 group-data-[collapsible=icon]:hidden"
 											>{item.title}</span
 										>
 									</a>
@@ -124,18 +125,18 @@
 			</Sidebar.GroupContent>
 		</Sidebar.Group>
 
-		<Sidebar.Separator class="my-1.5" />
+		<Sidebar.Separator class="my-1" />
 
 		<!-- Resources Group -->
-		<Sidebar.Group class="py-1">
+		<Sidebar.Group class="py-0.5">
 			<Sidebar.GroupContent>
-				<Sidebar.Menu class="space-y-1">
+				<Sidebar.Menu class="space-y-0.5">
 					{#each navResources as item (item.title)}
 						<Sidebar.MenuItem
 							class="group/item relative flex items-center justify-between rounded-lg border border-transparent hover:border-sidebar-border transition-all duration-300 hover:bg-sidebar-accent/60"
 						>
 							<Sidebar.MenuButton
-								class="w-full flex-1 h-10 text-muted-foreground! hover:text-sidebar-foreground!"
+								class="w-full flex-1 h-8.5 text-muted-foreground! hover:text-sidebar-foreground!"
 							>
 								{#snippet child({ props })}
 									<a
@@ -143,16 +144,17 @@
 										target="_blank"
 										rel="noopener noreferrer"
 										{...props}
-										class="flex items-center gap-3.5 w-full px-2.5 py-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
+										class="flex items-center gap-2.5 w-full px-2.5 py-1.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
 									>
 										<item.icon
-											class="size-4.5 shrink-0 transition-colors text-muted-foreground group-hover/item:text-sidebar-foreground"
+											class="size-4 shrink-0 transition-colors text-muted-foreground group-hover/item:text-sidebar-foreground"
 										/>
-										<span class="text-md font-medium flex-1 group-data-[collapsible=icon]:hidden"
+										<span
+											class="text-[13px] font-medium flex-1 group-data-[collapsible=icon]:hidden"
 											>{item.title}</span
 										>
 										<ExternalLink
-											class="size-3.5 text-muted-foreground group-hover/item:text-sidebar-foreground transition-colors group-data-[collapsible=icon]:hidden"
+											class="size-3 text-muted-foreground group-hover/item:text-sidebar-foreground transition-colors group-data-[collapsible=icon]:hidden"
 										/>
 									</a>
 								{/snippet}
@@ -165,14 +167,14 @@
 	</Sidebar.Content>
 
 	<!-- Footer: User Switcher -->
-	<Sidebar.Footer class="p-3 border-t border-sidebar-border">
+	<Sidebar.Footer class="p-2.5 border-t border-sidebar-border">
 		<DropdownMenu.Root>
 			<DropdownMenu.Trigger class="w-full focus:outline-none">
 				<div
-					class="flex items-center gap-3 p-2 hover:bg-sidebar-accent/60 rounded-lg transition-all duration-300 text-left w-full border border-transparent hover:border-sidebar-border group group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
+					class="flex items-center gap-2.5 p-1.5 hover:bg-sidebar-accent/60 rounded-lg transition-all duration-300 text-left w-full border border-transparent hover:border-sidebar-border group group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0!"
 				>
 					<div
-						class="relative size-9 rounded-lg overflow-hidden shrink-0 border border-primary/20 flex items-center justify-center bg-primary text-primary-foreground font-bold"
+						class="relative size-7.5 rounded-md overflow-hidden shrink-0 border border-primary/20 flex items-center justify-center bg-primary text-primary-foreground font-semibold text-xs"
 					>
 						<span class="z-0">{user.name ? user.name.slice(0, 2).toUpperCase() : ''}</span>
 						{#if user.avatar}
@@ -185,7 +187,7 @@
 						{/if}
 						{#if invitationStore.hasPending}
 							<span
-								class="absolute top-1 right-1 size-2 rounded-full bg-primary border border-background z-20"
+								class="absolute top-0.5 right-0.5 size-2 rounded-full bg-primary border border-background z-20"
 							></span>
 						{/if}
 					</div>
@@ -193,16 +195,16 @@
 						class="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden"
 					>
 						<span
-							class="truncate font-semibold text-sidebar-foreground group-hover:text-sidebar-foreground transition-colors"
+							class="truncate font-semibold text-sidebar-foreground group-hover:text-sidebar-foreground transition-colors text-[13px]"
 							>{user.name}</span
 						>
 						<span
-							class="truncate text-xs text-muted-foreground group-hover:text-muted-foreground transition-colors"
+							class="truncate text-[11px] text-muted-foreground group-hover:text-muted-foreground transition-colors"
 							>{user.email}</span
 						>
 					</div>
 					<ChevronsUpDown
-						class="ml-auto size-4 text-muted-foreground shrink-0 group-hover:text-sidebar-foreground transition-colors group-data-[collapsible=icon]:hidden"
+						class="ml-auto size-3.5 text-muted-foreground shrink-0 group-hover:text-sidebar-foreground transition-colors group-data-[collapsible=icon]:hidden"
 					/>
 				</div>
 			</DropdownMenu.Trigger>

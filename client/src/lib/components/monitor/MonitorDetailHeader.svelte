@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { type Monitor } from '$lib/api/monitor';
-	import { statusLabel, formatSSLBadge, formatDomainBadge } from '$lib/utils/monitor';
+	import { formatSSLBadge, formatDomainBadge } from '$lib/utils/monitor';
 	import {
 		Globe,
 		ShieldCheck,
@@ -12,6 +12,7 @@
 		Trash2
 	} from 'lucide-svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import MonitorStatusBadge from './MonitorStatusBadge.svelte';
 
 	interface Props {
 		monitor: Monitor;
@@ -42,39 +43,6 @@
 			monitor.DomainError
 		)
 	);
-
-	let statusColor = $derived.by(() => {
-		switch (monitor.Status) {
-			case 'up':
-				return {
-					bg: 'bg-emerald-500/10',
-					text: 'text-emerald-400',
-					border: 'border-emerald-500/20',
-					dot: 'bg-emerald-400'
-				};
-			case 'down':
-				return {
-					bg: 'bg-rose-500/10',
-					text: 'text-rose-400',
-					border: 'border-rose-500/20',
-					dot: 'bg-rose-400'
-				};
-			case 'paused':
-				return {
-					bg: 'bg-amber-500/10',
-					text: 'text-amber-400',
-					border: 'border-amber-500/20',
-					dot: 'bg-amber-400'
-				};
-			default:
-				return {
-					bg: 'bg-sky-500/10',
-					text: 'text-sky-400',
-					border: 'border-sky-500/20',
-					dot: 'bg-sky-400'
-				};
-		}
-	});
 </script>
 
 <!-- Monitor Header (flat, no card container) -->
@@ -92,13 +60,7 @@
 					{monitor.Name}
 				</h1>
 
-				<!-- Status Badge -->
-				<div
-					class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider border {statusColor.bg} {statusColor.text} {statusColor.border}"
-				>
-					<span class="size-1.5 rounded-full {statusColor.dot}"></span>
-					<span>{statusLabel(monitor.Status)}</span>
-				</div>
+				<MonitorStatusBadge status={monitor.Status} iconClass="size-4" class="text-xs" />
 			</div>
 
 			<!-- Target URL & Metadata Badges -->

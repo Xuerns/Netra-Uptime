@@ -6,7 +6,7 @@
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import { headerStore } from '$lib/stores/headerStore.svelte';
-	import { Search, Plus, Globe, Radio, Cpu, UserPlus, Mail } from 'lucide-svelte';
+	import { Search, Plus, Globe, Radio, Cpu, UserPlus } from 'lucide-svelte';
 	import { fade } from 'svelte/transition';
 	import { page } from '$app/stores';
 	import { beforeNavigate } from '$app/navigation';
@@ -119,25 +119,6 @@
 						>
 					</div>
 				{/if}
-
-				<!-- Invitations Button -->
-				<a
-					href="/dashboard/notification"
-					class="flex relative items-center justify-center size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
-					aria-label="Invitations"
-					title="Invitations"
-				>
-					<Mail class="size-4" />
-					{#if invitationStore.hasPending}
-						<span class="absolute top-1.5 right-1.5 flex size-2">
-							<span
-								class="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-75"
-							></span>
-							<span class="relative inline-flex size-2 rounded-full bg-primary ring-2 ring-card"
-							></span>
-						</span>
-					{/if}
-				</a>
 
 				<!-- Action CTA: Monitor Dropdown -->
 				{#if headerStore.actionType === 'monitor'}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Monitor } from '$lib/api/monitor';
-	import { statusLabel } from '$lib/utils/monitor';
 	import { ArrowUpRight } from 'lucide-svelte';
+	import MonitorStatusBadge from '$lib/components/monitor/MonitorStatusBadge.svelte';
 
 	interface Props {
 		monitors: Monitor[];
@@ -9,19 +9,6 @@
 	}
 
 	let { monitors, orgId }: Props = $props();
-
-	function getStatusColor(status: string) {
-		switch (status) {
-			case 'up':
-				return 'bg-emerald-400';
-			case 'down':
-				return 'bg-rose-500';
-			case 'paused':
-				return 'bg-amber-400';
-			default:
-				return 'bg-sky-400';
-		}
-	}
 </script>
 
 <div class="flex flex-col gap-4 min-w-0">
@@ -52,17 +39,12 @@
 					>
 						<div class="min-w-0 space-y-1 flex-1">
 							<div class="flex items-center gap-2">
-								<span class="size-2 rounded-full shrink-0 {getStatusColor(m.Status)}"></span>
 								<span
 									class="font-medium text-sm text-foreground group-hover:text-primary transition-colors truncate"
 								>
 									{m.Name}
 								</span>
-								<span
-									class="status-badge status-badge--{m.Status} text-[10px] py-0.5 px-2 rounded-full inline-flex items-center font-mono uppercase shrink-0"
-								>
-									{statusLabel(m.Status)}
-								</span>
+								<MonitorStatusBadge status={m.Status} />
 							</div>
 							<div class="text-xs font-mono text-muted-foreground/70 truncate pl-4">
 								{m.Target}

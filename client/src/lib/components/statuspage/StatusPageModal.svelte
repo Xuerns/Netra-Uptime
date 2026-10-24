@@ -10,15 +10,7 @@
 	import * as Alert from '$lib/components/ui/alert/index.js';
 	import * as Tabs from '$lib/components/ui/tabs/index.js';
 	import { toast } from 'svelte-sonner';
-	import {
-		TriangleAlert,
-		Palette,
-		Settings,
-		Image,
-		Sparkles,
-		Code2,
-		Check
-	} from 'lucide-svelte';
+	import { TriangleAlert, Palette, Settings, Image, Sparkles, Code2, Check } from 'lucide-svelte';
 	import { parseApiError } from '$lib/utils/parseApiError';
 
 	let {

@@ -1,16 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import {
-		Key,
-		Trash2,
-		Copy,
-		Check,
-		Shield,
-		ShieldCheck,
-		AlertCircle,
-		Clock
-	} from 'lucide-svelte';
+	import { Key, Trash2, Copy, Check, Shield, ShieldCheck, AlertCircle, Clock } from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -266,7 +257,7 @@
 	>
 		<Dialog.Header>
 			<Dialog.Title class="text-lg font-semibold flex items-center gap-2">
-				<Key class="size-5 text-primary" /> Create New API Key
+				 Create New API Key
 			</Dialog.Title>
 			<Dialog.Description class="text-xs text-muted-foreground mt-1">
 				Generate an API key for automated access. You will only be shown the key once.

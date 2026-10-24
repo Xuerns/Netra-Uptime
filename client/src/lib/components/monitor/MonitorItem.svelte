@@ -1,6 +1,5 @@
 <script lang="ts">
 	import {
-		CircleDot,
 		Clock,
 		ArrowUpRight,
 		MoreVertical,
@@ -17,7 +16,6 @@
 	import type { Monitor } from '$lib/api/monitor';
 	import {
 		typeIcon,
-		statusLabel,
 		formatInterval,
 		formatLastChecked,
 		formatResponseTime,
@@ -26,6 +24,7 @@
 		formatSSLBadge,
 		formatDomainBadge
 	} from '$lib/utils/monitor';
+	import MonitorStatusBadge from './MonitorStatusBadge.svelte';
 
 	let {
 		monitor,
@@ -103,14 +102,7 @@
 
 				<!-- Status & Actions -->
 				<div class="flex items-center gap-2 shrink-0">
-					<span
-						class="status-badge status-badge--{monitor.Status}"
-						role="status"
-						aria-label="Status: {statusLabel(monitor.Status)}"
-					>
-						<CircleDot class="size-2.5" aria-hidden="true" />
-						{statusLabel(monitor.Status)}
-					</span>
+					<MonitorStatusBadge status={monitor.Status} />
 
 					<DropdownMenu.Root>
 						<DropdownMenu.Trigger
@@ -287,14 +279,7 @@
 
 		<!-- 3. Status Badge -->
 		<div>
-			<span
-				class="status-badge status-badge--{monitor.Status}"
-				role="status"
-				aria-label="Status: {statusLabel(monitor.Status)}"
-			>
-				<CircleDot class="size-2.5" aria-hidden="true" />
-				{statusLabel(monitor.Status)}
-			</span>
+			<MonitorStatusBadge status={monitor.Status} />
 		</div>
 
 		<!-- 4. Response Time -->
@@ -420,52 +405,6 @@
 		border: 1px solid var(--color-border);
 		color: var(--color-muted-foreground);
 		flex-shrink: 0;
-	}
-
-	.status-badge {
-		display: inline-flex;
-		align-items: center;
-		gap: 5px;
-		padding: 3px 8px;
-		border-radius: 6px;
-		font-size: 11px;
-		font-weight: 600;
-		font-family: var(--font-mono, monospace);
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		border-width: 1px;
-		border-style: solid;
-		flex-shrink: 0;
-	}
-
-	.status-badge--up {
-		background: rgba(5, 150, 105, 0.1);
-		color: #059669;
-		border-color: rgba(5, 150, 105, 0.25);
-	}
-
-	:global(.dark) .status-badge--up {
-		background: rgba(78, 222, 163, 0.1);
-		color: #4edea3;
-		border-color: rgba(78, 222, 163, 0.25);
-	}
-
-	.status-badge--down {
-		background: rgba(225, 29, 72, 0.1);
-		color: #e11d48;
-		border-color: rgba(225, 29, 72, 0.25);
-	}
-
-	:global(.dark) .status-badge--down {
-		background: rgba(255, 107, 107, 0.1);
-		color: #ff6b6b;
-		border-color: rgba(255, 107, 107, 0.25);
-	}
-
-	.status-badge--paused {
-		background: var(--surface-sidebar);
-		color: var(--color-muted-foreground);
-		border-color: var(--color-border);
 	}
 
 	.metric-label {
