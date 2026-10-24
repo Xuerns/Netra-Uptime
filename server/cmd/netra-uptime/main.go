@@ -69,7 +69,9 @@ func main() {
 	}
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		v.RegisterValidation("nohtml", utils.NoHTMLValidator)
+		if err := v.RegisterValidation("nohtml", utils.NoHTMLValidator); err != nil {
+			log.Fatalf("Failed to register 'nohtml' validator: %v", err)
+		}
 	}
 
 	r.Use(middleware.SetupCORS())

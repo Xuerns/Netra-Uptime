@@ -67,8 +67,9 @@ func CheckSSLExpiry(target string, timeout time.Duration) *SSLCheckResult {
 	addr := net.JoinHostPort(hostname, port)
 
 	conn, dialErr := tls.DialWithDialer(dialer, "tcp", addr, &tls.Config{
-		ServerName:         hostname,
-		InsecureSkipVerify: true, // Allow reading cert even if expired or untrusted
+		ServerName: hostname,
+		// #nosec G402 -- InsecureSkipVerify is required to inspect certificates even when expired or untrusted
+		InsecureSkipVerify: true,
 	})
 
 	if dialErr != nil {

@@ -7,6 +7,15 @@
 		value: number | null; // response time in ms (null if no checks on this date)
 		status?: 'up' | 'down' | 'degraded' | 'unresponsive' | 'no_data';
 		statusCode?: number;
+		details?: {
+			count2xx?: number;
+			count3xx?: number;
+			count4xx?: number;
+			count5xx?: number;
+			countError?: number;
+			total?: number;
+			uptimePercent?: number;
+		};
 	}
 
 	interface Props {
@@ -15,6 +24,7 @@
 		height?: number;
 		color?: string;
 		monitorType?: string;
+		isAggregated?: boolean;
 	}
 
 	let {
@@ -22,22 +32,43 @@
 		title = 'Response Time (ms)',
 		height = 240,
 		color = '#10B981',
-		monitorType = 'http'
+		monitorType = 'http',
+		isAggregated = false
 	}: Props = $props();
 
 	let canvasEl = $state<HTMLCanvasElement | null>(null);
 	let chartInstance: Chart<'line'> | null = null;
 
-	function getPointColor(status?: string, statusCode?: number): string {
-		if (status === 'no_data') return 'transparent';
-		if (monitorType === 'http' && statusCode && statusCode > 0) {
-			if (statusCode >= 200 && statusCode < 300) return '#10B981'; // Emerald 2xx
-			if (statusCode >= 300 && statusCode < 400) return '#3B82F6'; // Blue 3xx
-			if (statusCode >= 400 && statusCode < 500) return '#F59E0B'; // Amber 4xx
-			if (statusCode >= 500 && statusCode < 600) return '#EF4444'; // Rose 5xx
+	function getPointColor(pt: DataPoint): string {
+		if (pt.status === 'no_data') return 'transparent';
+		if (monitorType === 'http') {
+			// 1. Single check realtime mode (24h)
+			if (pt.statusCode && pt.statusCode > 0) {
+				if (pt.statusCode >= 200 && pt.statusCode < 300) return '#10B981'; // Emerald 2xx
+				if (pt.statusCode >= 300 && pt.statusCode < 400) return '#3B82F6'; // Blue 3xx
+				if (pt.statusCode >= 400 && pt.statusCode < 500) return '#F59E0B'; // Amber 4xx
+				if (pt.statusCode >= 500 && pt.statusCode < 600) return '#EF4444'; // Rose 5xx
+			}
+			// 2. Daily aggregate mode (> 24h) with status breakdown
+			if (pt.details) {
+				if (
+					(pt.details.count5xx ?? 0) > 0 ||
+					(pt.details.countError ?? 0) > 0 ||
+					pt.status === 'down'
+				) {
+					return '#EF4444'; // Rose 5xx / Outage
+				}
+				if ((pt.details.count4xx ?? 0) > 0) {
+					return '#F59E0B'; // Amber 4xx / Client Errors
+				}
+				if ((pt.details.count3xx ?? 0) > 0) {
+					return '#3B82F6'; // Blue 3xx / Redirects
+				}
+				return '#10B981'; // Emerald 2xx / Healthy
+			}
 		}
-		if (status === 'down') return '#EF4444';
-		if (status === 'degraded' || status === 'unresponsive') return '#F59E0B';
+		if (pt.status === 'down') return '#EF4444';
+		if (pt.status === 'degraded' || pt.status === 'unresponsive') return '#F59E0B';
 		return '#10B981';
 	}
 
@@ -46,7 +77,7 @@
 
 		const labels = data.map((d) => d.label);
 		const values = data.map((d) => d.value);
-		const pointColors = data.map((d) => getPointColor(d.status, d.statusCode));
+		const pointColors = data.map((d) => getPointColor(d));
 		const isDark =
 			typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
 		const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.06)';
@@ -177,6 +208,28 @@
 									if (!pt || pt.status === 'no_data' || pt.value === 0) {
 										return 'Status: Monitor Offline / No checks';
 									}
+									if (pt.details) {
+										const lines: string[] = [];
+										if (pt.details.uptimePercent !== undefined) {
+											const val = Number(pt.details.uptimePercent);
+											if (!Number.isNaN(val)) {
+												const formatted = val === 100 ? '100%' : `${val.toFixed(2)}%`;
+												lines.push(`Uptime: ${formatted}`);
+											}
+										}
+										const counts: string[] = [];
+										if (pt.details.count2xx) counts.push(`2xx: ${pt.details.count2xx}`);
+										if (pt.details.count3xx) counts.push(`3xx: ${pt.details.count3xx}`);
+										if (pt.details.count4xx) counts.push(`4xx: ${pt.details.count4xx}`);
+										if (pt.details.count5xx) counts.push(`5xx: ${pt.details.count5xx}`);
+										if (pt.details.countError) counts.push(`Err: ${pt.details.countError}`);
+										if (counts.length > 0) {
+											lines.push(`Checks: ${counts.join(' | ')}`);
+										} else if (pt.details.total) {
+											lines.push(`Checks: ${pt.details.total} total`);
+										}
+										return lines.length > 0 ? (lines as any) : 'Status: OK';
+									}
 									if (pt.statusCode && pt.statusCode > 0) {
 										return `HTTP Status: ${pt.statusCode}`;
 									}
@@ -276,16 +329,20 @@
 				class="flex items-center gap-x-3 gap-y-1 flex-wrap text-[11px] font-mono text-muted-foreground"
 			>
 				<span class="flex items-center gap-1"
-					><span class="size-2 rounded-full bg-emerald-400"></span> 2xx</span
+					><span class="size-2 rounded-full bg-emerald-400"></span>
+					{isAggregated ? 'All 2xx' : '2xx'}</span
 				>
 				<span class="flex items-center gap-1"
-					><span class="size-2 rounded-full bg-blue-400"></span> 3xx</span
+					><span class="size-2 rounded-full bg-blue-400"></span>
+					{isAggregated ? 'Has 3xx' : '3xx'}</span
 				>
 				<span class="flex items-center gap-1"
-					><span class="size-2 rounded-full bg-amber-400"></span> 4xx</span
+					><span class="size-2 rounded-full bg-amber-400"></span>
+					{isAggregated ? 'Has 4xx' : '4xx'}</span
 				>
 				<span class="flex items-center gap-1"
-					><span class="size-2 rounded-full bg-rose-500"></span> 5xx/Err</span
+					><span class="size-2 rounded-full bg-rose-500"></span>
+					{isAggregated ? '5xx / Outage' : '5xx/Err'}</span
 				>
 				<span class="flex items-center gap-1.5"
 					><span class="w-3 border-t border-dashed border-slate-400"></span> No Data</span

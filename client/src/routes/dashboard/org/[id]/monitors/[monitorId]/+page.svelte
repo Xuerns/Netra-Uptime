@@ -164,10 +164,29 @@
 			const s = statMap.get(label);
 
 			if (s && s.TotalChecks > 0) {
+				const has5xxOrDown =
+					(s.Count5xx ?? 0) > 0 || (s.CountError ?? 0) > 0 || (s.DownChecks ?? 0) > 0;
+				const has4xx = (s.Count4xx ?? 0) > 0;
+				let calculatedStatus: 'up' | 'down' | 'degraded' = 'up';
+				if (has5xxOrDown) {
+					calculatedStatus = 'down';
+				} else if (has4xx) {
+					calculatedStatus = 'degraded';
+				}
+
 				points.push({
 					label,
 					value: s.AvgLatencyMs,
-					status: (s.DownChecks > 0 ? 'down' : 'up') as 'up' | 'down'
+					status: calculatedStatus,
+					details: {
+						count2xx: s.Count2xx,
+						count3xx: s.Count3xx,
+						count4xx: s.Count4xx,
+						count5xx: s.Count5xx,
+						countError: s.CountError ?? s.DownChecks,
+						total: s.TotalChecks,
+						uptimePercent: s.UptimePercentage
+					}
 				});
 			} else {
 				points.push({
@@ -455,6 +474,7 @@
 					title={`Response Time (${activePeriod.toUpperCase()})`}
 					height={240}
 					monitorType={monitor.Type}
+					isAggregated={activePeriod !== '24h'}
 				/>
 			</div>
 
