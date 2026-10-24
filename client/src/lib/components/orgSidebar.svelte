@@ -6,7 +6,6 @@
 
 	// Icons
 	import ChevronsUpDown from 'lucide-svelte/icons/chevrons-up-down';
-	import ChevronRight from 'lucide-svelte/icons/chevron-right';
 	import Check from 'lucide-svelte/icons/check';
 
 	// Nav Icons
@@ -22,15 +21,15 @@
 	// Footer Icons
 	import LogOut from 'lucide-svelte/icons/log-out';
 	import Bell from 'lucide-svelte/icons/bell';
+	import Mail from 'lucide-svelte/icons/mail';
 	import BadgeCheck from 'lucide-svelte/icons/badge-check';
 	import BookOpen from 'lucide-svelte/icons/book-open';
 	import ExternalLink from 'lucide-svelte/icons/external-link';
 	import Settings2 from 'lucide-svelte/icons/settings-2';
+	import { invitationStore } from '$lib/stores/invitation.svelte';
 
-	import Logo from '$lib/assets/Logo.svg';
 	import { AuthAPI } from '$lib/api/auth';
 	import UserSettingsModal from '$lib/components/UserSettingsModal.svelte';
-	import { isSelfHosted } from '$lib/utils/appMode';
 	import { activeOrgId } from '$lib/stores/organization';
 	import { getInitials as initials } from '$lib/utils/string';
 	import { toast } from 'svelte-sonner';
@@ -332,7 +331,7 @@
 								onerror={(e) => ((e.currentTarget as HTMLImageElement).style.display = 'none')}
 							/>
 						{/if}
-						{#if hasUnreadNotifications}
+						{#if hasUnreadNotifications || invitationStore.hasPending}
 							<span
 								class="absolute top-1 right-1 size-2 rounded-full bg-primary border border-background z-20"
 							></span>
@@ -399,7 +398,12 @@
 					<a class="" href="/dashboard/notification">
 						<DropdownMenu.Item
 							class="cursor-pointer rounded-lg p-2 flex items-center gap-2.5 hover:bg-accent! hover:text-accent-foreground!"
-							><Bell class="size-4" /> Notifications
+						>
+							<Mail class="size-4" />
+							<span>Invitations</span>
+							{#if hasUnreadNotifications || invitationStore.hasPending}
+								<span class="ml-auto size-2 rounded-full bg-primary"></span>
+							{/if}
 						</DropdownMenu.Item></a
 					>
 				</DropdownMenu.Group>

@@ -4,7 +4,7 @@
 	import { OrgAPI, type InviteMemberRequest } from '$lib/api/organization';
 	import { debounce } from '$lib/helper/utils';
 	import { toast } from 'svelte-sonner';
-	import { Search, UserPlus, X, TriangleAlert, Loader2 } from 'lucide-svelte';
+	import { Search, X, TriangleAlert, Loader2 } from 'lucide-svelte';
 	import { parseApiError } from '$lib/utils/parseApiError';
 	import { getInitials as initials } from '$lib/utils/string';
 

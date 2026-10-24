@@ -44,8 +44,6 @@
 		User: MemberUser;
 	}
 
-	type RoleFilter = 'all' | 'owner' | 'admin' | 'member';
-
 	const orgId = $derived(($page.params.id as string) || '');
 	const currentUserId = $derived(getCurrentUserId($page.data?.user));
 
@@ -66,7 +64,6 @@
 	const currentMember = $derived(findMemberByUserId(members, currentUserId));
 	const currentUserRole = $derived(getMemberRole(currentMember, 'member'));
 	const isOwner = $derived(currentUserRole === 'owner');
-	const isAdmin = $derived(currentUserRole === 'admin');
 	const canManage = $derived(canManageOrg(currentUserRole));
 
 	// Sync with layout header bar

@@ -9,7 +9,6 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { toast } from 'svelte-sonner';
 	import {
-		FolderTree,
 		Plus,
 		Trash2,
 		Pencil,

@@ -3,7 +3,6 @@
 	import { page } from '$app/stores';
 	import {
 		Key,
-		Plus,
 		Trash2,
 		Copy,
 		Check,

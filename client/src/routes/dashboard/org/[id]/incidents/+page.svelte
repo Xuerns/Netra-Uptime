@@ -2,22 +2,17 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { headerStore } from '$lib/stores/headerStore.svelte';
-	import { IncidentAPI, type Incident, type IncidentUpdateResponse } from '$lib/api/incident';
+	import { IncidentAPI, type Incident } from '$lib/api/incident';
 	import { userTimezone } from '$lib/stores/timezone';
 	import { formatDateTime, formatTimeOnly, formatIncidentTimeAgo } from '$lib/utils/datetime';
-	import { OrgAPI } from '$lib/api/organization';
 	import { Pagination, DataSkeleton } from '$lib/components/common';
 	import {
 		AlertTriangle,
 		Clock,
 		Server,
 		CheckCircle2,
-		Activity,
 		Users,
 		ChevronDown,
-		ChevronUp,
-		Search,
-		ChevronLeft,
 		ChevronRight,
 		Radio,
 		Check
@@ -34,8 +29,6 @@
 	let severityFilter = $state<'all' | 'sev1' | 'sev2' | 'sev3' | 'sev4'>('all');
 	let currentPage = $state(1);
 	let itemsPerPage = $state(10);
-
-	let currentUserId = $derived($page.data.user?.id || $page.data.user?.ID);
 
 	async function loadIncidents(orgId: string) {
 		const res = await IncidentAPI.getAll(orgId);

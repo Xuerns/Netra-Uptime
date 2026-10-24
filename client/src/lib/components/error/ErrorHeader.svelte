@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { Activity } from 'lucide-svelte';
 	import Logo from '$lib/assets/Logo.svg';
 	interface Props {
 		statusCode?: number;

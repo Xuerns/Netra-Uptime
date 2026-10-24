@@ -12,7 +12,6 @@
 	import { toast } from 'svelte-sonner';
 	import {
 		TriangleAlert,
-		Activity,
 		Palette,
 		Settings,
 		Image,

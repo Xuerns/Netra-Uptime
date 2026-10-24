@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Logo from '$lib/assets/Logo.svg';
-	import { ArrowLeft, Eye, EyeOff } from 'lucide-svelte';
+	import { Eye, EyeOff } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { AuthAPI } from '$lib/api/auth';
 	import { validateEmail, validatePassword } from '$lib/utils/validation';

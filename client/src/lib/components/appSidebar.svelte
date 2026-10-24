@@ -7,7 +7,7 @@
 	import ChevronsUpDown from 'lucide-svelte/icons/chevrons-up-down';
 	import Building2 from 'lucide-svelte/icons/building-2';
 	import LogOut from 'lucide-svelte/icons/log-out';
-	import Bell from 'lucide-svelte/icons/bell';
+	import Mail from 'lucide-svelte/icons/mail';
 	import BadgeCheck from 'lucide-svelte/icons/badge-check';
 	import BookOpen from 'lucide-svelte/icons/book-open';
 	import ExternalLink from 'lucide-svelte/icons/external-link';
@@ -18,6 +18,7 @@
 	import UserSettingsModal from '$lib/components/UserSettingsModal.svelte';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
+	import { invitationStore } from '$lib/stores/invitation.svelte';
 
 	let isSettingsOpen = $state(false);
 
@@ -182,6 +183,11 @@
 								onerror={(e) => ((e.currentTarget as HTMLImageElement).style.display = 'none')}
 							/>
 						{/if}
+						{#if invitationStore.hasPending}
+							<span
+								class="absolute top-1 right-1 size-2 rounded-full bg-primary border border-background z-20"
+							></span>
+						{/if}
 					</div>
 					<div
 						class="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden"
@@ -244,7 +250,12 @@
 					<a class="" href="/dashboard/notification">
 						<DropdownMenu.Item
 							class="cursor-pointer rounded-lg p-2 flex items-center gap-2.5 hover:!bg-accent hover:!text-accent-foreground"
-							><Bell class="size-4" /> Notifications
+						>
+							<Mail class="size-4" />
+							<span>Invitations</span>
+							{#if invitationStore.hasPending}
+								<span class="ml-auto size-2 rounded-full bg-primary"></span>
+							{/if}
 						</DropdownMenu.Item></a
 					>
 				</DropdownMenu.Group>

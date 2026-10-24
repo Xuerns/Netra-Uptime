@@ -1,31 +1,22 @@
 <script lang="ts">
-	import type { LayoutData } from './$types';
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import AppSidebar from '$lib/components/appSidebar.svelte';
 
-	import { Bell } from 'lucide-svelte';
+	import { Mail } from 'lucide-svelte';
 	import { fade } from 'svelte/transition';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { OrgAPI } from '$lib/api/organization';
+	import { invitationStore } from '$lib/stores/invitation.svelte';
 
 	let { data, children } = $props();
-
-	let hasUnreadNotifications = $state(false);
 
 	const isOrgScoped = $derived(
 		$page.url.pathname.startsWith('/dashboard/org/') &&
 			$page.url.pathname.split('/').filter(Boolean).length > 2
 	);
 
-	onMount(async () => {
-		try {
-			const res = await OrgAPI.getInvitations();
-			const invitations = res.data || res.message || res || [];
-			hasUnreadNotifications = invitations.some((inv: any) => inv.Status === 'pending');
-		} catch (e) {
-			// ignore
-		}
+	onMount(() => {
+		invitationStore.fetch();
 	});
 </script>
 
@@ -42,14 +33,19 @@
 
 				<a
 					href="/dashboard/notification"
-					class="flex relative items-center justify-center size-9 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
-					aria-label="Notifications"
+					class="flex relative items-center justify-center size-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+					aria-label="Invitations"
+					title="Invitations"
 				>
-					<Bell class="size-4.5" />
-					{#if hasUnreadNotifications}
-						<span
-							class="absolute top-2.25 right-2.25 size-2 rounded-full bg-primary border border-background"
-						></span>
+					<Mail class="size-4.5" />
+					{#if invitationStore.hasPending}
+						<span class="absolute top-2 right-2 flex size-2">
+							<span
+								class="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-75"
+							></span>
+							<span class="relative inline-flex size-2 rounded-full bg-primary ring-2 ring-card"
+							></span>
+						</span>
 					{/if}
 				</a>
 			</header>

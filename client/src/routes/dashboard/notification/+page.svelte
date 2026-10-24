@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { OrgAPI } from '$lib/api/organization';
-	import { Check, X, Bell } from 'lucide-svelte';
+	import { Check, X, Mail } from 'lucide-svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { DataSkeleton } from '$lib/components/common';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
 	import { getInitials as initials, getAvatarColor as avatarColor } from '$lib/utils/string';
+	import { invitationStore } from '$lib/stores/invitation.svelte';
 
 	interface User {
 		id: string;
@@ -45,11 +46,11 @@
 		errorMsg = '';
 		try {
 			const res = await OrgAPI.getInvitations();
-			const raw = Array.isArray(res.data) ? res.data : [];
+			const raw = Array.isArray(res.data) ? res.data : Array.isArray(res) ? res : [];
 			invitations = raw.map((inv: any) => ({
 				ID: inv.id ?? inv.ID,
 				Role: inv.role ?? inv.Role,
-				Status: inv.status ?? inv.Status,
+				Status: (inv.status ?? inv.Status ?? '').toLowerCase(),
 				Organization: {
 					id: inv.organization?.id,
 					name: inv.organization?.name ?? inv.Organization?.name,
@@ -61,6 +62,7 @@
 					avatar_url: inv.inviter?.avatar_url ?? inv.Inviter?.avatar_url
 				}
 			}));
+			await invitationStore.fetch();
 		} catch (err: any) {
 			errorMsg = parseApiError(err, 'Failed to load invitations');
 		} finally {
@@ -73,6 +75,7 @@
 			await OrgAPI.actionInvitation(id, action);
 			// Refresh list after action
 			await loadInvitations();
+			await invitationStore.fetch();
 			// Also invalidate layout data to refresh org list in sidebar if accepted
 			if (action === 'accept') {
 				invalidateAll();
@@ -88,7 +91,7 @@
 </script>
 
 <svelte:head>
-	<title>Notification | Netra Uptime</title>
+	<title>Invitations | Netra Uptime</title>
 </svelte:head>
 
 <div class="w-full text-foreground antialiased py-4">
@@ -114,7 +117,7 @@
 				<div
 					class="flex items-center justify-center size-12 rounded-full bg-white/5 text-muted-foreground/50 mb-4"
 				>
-					<Bell class="size-5" />
+					<Mail class="size-5" />
 				</div>
 				<p class="text-[14px] font-medium text-foreground">No pending invitations</p>
 				<p class="text-[13px] text-muted-foreground mt-1 text-center">
@@ -172,7 +175,7 @@
 								class="flex items-center gap-2 h-9 px-4 rounded-lg bg-primary text-primary-foreground font-medium text-[13.5px] hover:bg-[#12c98d] transition-colors"
 								onclick={() => handleAction(invite.ID, 'accept')}
 							>
-								<Check class="size-sm" />
+								<Check class="size-4" />
 								<span>Accept</span>
 							</button>
 						</div>

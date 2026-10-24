@@ -6,16 +6,15 @@
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import { headerStore } from '$lib/stores/headerStore.svelte';
-	import { Search, Plus, Globe, Radio, Cpu, UserPlus } from 'lucide-svelte';
+	import { Search, Plus, Globe, Radio, Cpu, UserPlus, Mail } from 'lucide-svelte';
 	import { fade } from 'svelte/transition';
 	import { page } from '$app/stores';
 	import { beforeNavigate } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { OrgAPI } from '$lib/api/organization';
+	import { invitationStore } from '$lib/stores/invitation.svelte';
 
 	let { data, children } = $props();
 
-	let hasUnreadNotifications = $state(false);
 	let searchInputRef = $state<HTMLInputElement | null>(null);
 
 	const orgName = $derived(data?.org?.Name || data?.org?.name || 'Workspace');
@@ -43,16 +42,7 @@
 	});
 
 	onMount(() => {
-		async function checkInvitations() {
-			try {
-				const res = await OrgAPI.getInvitations();
-				const invitations = res.data || res.message || res || [];
-				hasUnreadNotifications = invitations.some((inv: any) => inv.Status === 'pending');
-			} catch (e) {
-				// ignore
-			}
-		}
-		checkInvitations();
+		invitationStore.fetch();
 
 		function handleKeyDown(e: KeyboardEvent) {
 			if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -75,7 +65,7 @@
 		user={data?.user}
 		org={data?.org}
 		allOrgs={data?.allOrgs ?? []}
-		{hasUnreadNotifications}
+		hasUnreadNotifications={invitationStore.hasPending}
 	/>
 	<Sidebar.Inset class="flex flex-col min-h-screen">
 		<!-- ── Top Dark Utility Bar ─────────────────────────────────────────── -->
@@ -93,7 +83,7 @@
 						<Breadcrumb.Item>
 							<Breadcrumb.Link
 								href="/dashboard/org/{$page.params.id}"
-								class="truncate max-w-[180px] sm:max-w-[280px]"
+								class="truncate max-w-45 sm:max-w-70"
 							>
 								{orgName}
 							</Breadcrumb.Link>
@@ -129,6 +119,25 @@
 						>
 					</div>
 				{/if}
+
+				<!-- Invitations Button -->
+				<a
+					href="/dashboard/notification"
+					class="flex relative items-center justify-center size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+					aria-label="Invitations"
+					title="Invitations"
+				>
+					<Mail class="size-4" />
+					{#if invitationStore.hasPending}
+						<span class="absolute top-1.5 right-1.5 flex size-2">
+							<span
+								class="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-75"
+							></span>
+							<span class="relative inline-flex size-2 rounded-full bg-primary ring-2 ring-card"
+							></span>
+						</span>
+					{/if}
+				</a>
 
 				<!-- Action CTA: Monitor Dropdown -->
 				{#if headerStore.actionType === 'monitor'}

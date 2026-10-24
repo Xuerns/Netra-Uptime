@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { ExternalLink } from 'lucide-svelte';
-
 	const currentYear = new Date().getFullYear();
 </script>
 

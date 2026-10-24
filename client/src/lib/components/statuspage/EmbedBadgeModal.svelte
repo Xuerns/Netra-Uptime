@@ -1,9 +1,8 @@
 <script lang="ts">
 	import type { StatusPage } from '$lib/api/statuspage';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import { Button } from '$lib/components/ui/button/index.js';
 	import { toast } from 'svelte-sonner';
-	import { Shield, Copy, Check, ExternalLink, Code2, FileJson, Sparkles } from 'lucide-svelte';
+	import { Copy, Check, ExternalLink, Code2, FileJson, Sparkles } from 'lucide-svelte';
 	import { env } from '$env/dynamic/public';
 
 	let { isOpen = $bindable(false), statusPage } = $props<{
