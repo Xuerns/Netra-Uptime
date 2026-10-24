@@ -31,7 +31,7 @@
 	const navResources = [
 		{
 			title: 'Documentation',
-			url: 'https://pulsewatch-dev.dmmaulana06.workers.dev/docs',
+			url: 'https://netra-uptime.com/docs',
 			icon: BookOpen,
 			isExternal: true
 		}

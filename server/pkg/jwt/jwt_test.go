@@ -34,8 +34,8 @@ func TestGenerateToken_ContainsUserID(t *testing.T) {
 	if claims.UserID != userID {
 		t.Errorf("expected userID %s, got %s", userID, claims.UserID)
 	}
-	if claims.Issuer != "pulsewatch" {
-		t.Errorf("expected issuer pulsewatch, got %s", claims.Issuer)
+	if claims.Issuer != "netra-uptime" {
+		t.Errorf("expected issuer netra-uptime, got %s", claims.Issuer)
 	}
 }
 
@@ -128,7 +128,7 @@ func TestValidateToken_NonHMACMethod(t *testing.T) {
 	token := jwt.NewWithClaims(jwt.SigningMethodNone, &JWTClaims{
 		UserID: "user-none",
 		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    "pulsewatch",
+			Issuer:    "netra-uptime",
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 		},
 	})

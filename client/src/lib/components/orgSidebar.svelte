@@ -88,14 +88,14 @@
 	function switchOrg(newOrgId: string) {
 		activeOrgId.set(newOrgId);
 		if (typeof window !== 'undefined') {
-			localStorage.setItem('pulsewatch_last_org', newOrgId);
+			localStorage.setItem('netra_last_org', newOrgId);
 		}
 		goto(`/dashboard/org/${newOrgId}/monitors`);
 	}
 
 	function viewAllOrganizations() {
 		if (typeof window !== 'undefined') {
-			localStorage.removeItem('pulsewatch_last_org');
+			localStorage.removeItem('netra_last_org');
 		}
 		activeOrgId.set(null);
 		goto('/dashboard/org');
@@ -289,7 +289,7 @@
 						>
 							{#snippet child({ props })}
 								<a
-									href="https://pulsewatch-dev.dmmaulana06.workers.dev/docs"
+									href="https://netra-uptime.com/docs"
 									target="_blank"
 									rel="noopener noreferrer"
 									{...props}

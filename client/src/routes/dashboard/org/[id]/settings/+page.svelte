@@ -118,7 +118,7 @@
 		try {
 			await OrgAPI.disband(orgId);
 			if (typeof window !== 'undefined') {
-				localStorage.removeItem('pulsewatch_last_org');
+				localStorage.removeItem('netra_last_org');
 			}
 			toast.success('Organization disbanded successfully');
 			goto('/dashboard/org');
@@ -147,7 +147,7 @@
 		try {
 			await OrgAPI.leaveOrganization(orgId);
 			if (typeof window !== 'undefined') {
-				localStorage.removeItem('pulsewatch_last_org');
+				localStorage.removeItem('netra_last_org');
 			}
 			toast.success('You have left the organization');
 			goto('/dashboard/org');

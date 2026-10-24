@@ -55,7 +55,7 @@
 
 	function selectOrg(orgId: string) {
 		activeOrgId.set(orgId);
-		localStorage.setItem('pulsewatch_last_org', orgId);
+		localStorage.setItem('netra_last_org', orgId);
 		goto(`/dashboard/org/${orgId}/monitors`);
 	}
 

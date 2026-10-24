@@ -1,20 +1,20 @@
 <div align="center">
-  <a href="https://pulsewatch.dev" target="_blank">
+  <a href="https://netra-uptime.com" target="_blank">
     <img src="assets/Logo.png" alt="Netra Uptime Logo" width="84" />
   </a>
   <h1 style="border:none; margin-top: 10px; margin-bottom: 6px;">Netra Uptime</h1>
   <p><strong>Modern, Lightweight, Self-Hosted Uptime & Status Monitoring</strong></p>
 
   <p>
-    <a href="https://github.com/Xuerns/PulseWatch/actions/workflows/ci.yml"><img src="https://github.com/Xuerns/PulseWatch/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
+    <a href="https://github.com/Xuerns/Netra-Uptime/actions/workflows/ci.yml"><img src="https://github.com/Xuerns/Netra-Uptime/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
     <a href="https://go.dev/"><img src="https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go&logoColor=white" alt="Go Version"></a>
     <a href="https://kit.svelte.dev/"><img src="https://img.shields.io/badge/SvelteKit-5-FF3E00?logo=svelte&logoColor=white" alt="SvelteKit 5"></a>
-    <a href="https://github.com/Xuerns/PulseWatch/pkgs/container/pulsewatch"><img src="https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white" alt="Docker Ready"></a>
+    <a href="https://github.com/Xuerns/Netra-Uptime/pkgs/container/netra-uptime"><img src="https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white" alt="Docker Ready"></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_3.0-blue.svg" alt="License: AGPL-3.0"></a>
   </p>
 
   <p>
-    <a href="https://pulsewatch.dev/docs"><strong>Documentation</strong></a> •
+    <a href="https://netra-uptime.com/docs"><strong>Documentation</strong></a> •
     <a href="#quick-start"><strong>Quick Start</strong></a> •
     <a href="#key-features"><strong>Key Features</strong></a> •
     <a href="#contributing"><strong>Contributing</strong></a> •

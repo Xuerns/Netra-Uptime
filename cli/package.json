@@ -13,9 +13,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/xuerns/PulseWatch.git"
+    "url": "git+https://github.com/Xuerns/Netra-Uptime.git"
   },
-  "homepage": "https://github.com/xuerns/PulseWatch#readme",
+  "homepage": "https://github.com/Xuerns/Netra-Uptime#readme",
   "keywords": [
     "netra",
     "netra-uptime",

@@ -119,7 +119,7 @@ func loadConfig() *Config {
 		}
 	} else if len(cfg.JwtSecret) == 0 {
 		log.Println("WARNING: JWT_SECRET is not set in development. Using development fallback.")
-		cfg.JwtSecret = "pulsewatch-dev-secret-must-be-at-least-32-chars-long!"
+		cfg.JwtSecret = "netra-uptime-dev-secret-must-be-at-least-32-chars-long!"
 	}
 
 	return cfg

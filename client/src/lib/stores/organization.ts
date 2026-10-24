@@ -11,16 +11,16 @@ export interface Organization {
 // Menyimpan daftar seluruh organisasi milik user
 export const organizations = writable<Organization[]>([]);
 
-const initialOrgId = browser ? localStorage.getItem('pulsewatch_last_org') : null;
+const initialOrgId = browser ? localStorage.getItem('netra_last_org') : null;
 // Menyimpan ID organisasi yang saat ini sedang aktif (dipilih) di sidebar/dashboard
 export const activeOrgId = writable<string | null>(initialOrgId);
 
 if (browser) {
 	activeOrgId.subscribe((value) => {
 		if (value) {
-			localStorage.setItem('pulsewatch_last_org', value);
+			localStorage.setItem('netra_last_org', value);
 		} else {
-			localStorage.removeItem('pulsewatch_last_org');
+			localStorage.removeItem('netra_last_org');
 		}
 	});
 }

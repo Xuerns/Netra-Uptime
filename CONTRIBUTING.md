@@ -49,7 +49,7 @@ docker compose up -d postgres redis
 
 # 2. Run the Go backend server (terminal 1)
 cd server
-go run ./cmd/api
+go run ./cmd/netra-uptime
 
 # 3. Run the SvelteKit frontend server (terminal 2)
 cd client

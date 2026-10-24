@@ -5,7 +5,7 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-  cmd = "go build -o ./tmp/main ./cmd/pulsewatch"
+  cmd = "go build -o ./tmp/main ./cmd/netra-uptime"
   bin = "./tmp/main"
   delay = 1000               # ms
   exclude_dir = ["assets", "tmp", "vendor", "migrations"]

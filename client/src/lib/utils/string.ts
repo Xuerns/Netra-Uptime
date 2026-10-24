@@ -1,5 +1,5 @@
 /**
- * String and naming utilities for Netra Uptime / PulseWatch.
+ * String and naming utilities for Netra Uptime.
  */
 
 export const DEFAULT_AVATAR_COLORS = [

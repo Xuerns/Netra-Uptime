@@ -22,7 +22,7 @@ export const load: LayoutLoad = async ({ params }) => {
 
 		// Persist last selected org
 		if (typeof window !== 'undefined') {
-			localStorage.setItem('pulsewatch_last_org', orgId);
+			localStorage.setItem('netra_last_org', orgId);
 		}
 
 		// Fetch members

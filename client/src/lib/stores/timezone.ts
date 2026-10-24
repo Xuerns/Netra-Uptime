@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 
-const STORAGE_KEY = 'pulsewatch_timezone';
+const STORAGE_KEY = 'netra_timezone';
 
 function getInitialTimezone(): string {
 	if (typeof localStorage === 'undefined') return 'UTC';

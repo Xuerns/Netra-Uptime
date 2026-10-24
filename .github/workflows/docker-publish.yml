@@ -1,4 +1,4 @@
-name: Build & Publish PulseWatch Single Docker Image
+name: Build & Publish Netra Uptime Docker Image
 
 on:
   push:

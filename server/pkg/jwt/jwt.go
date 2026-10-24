@@ -23,7 +23,7 @@ func getJWTSecret() []byte {
 			log.Fatal("FATAL SECURITY CONFIGURATION: JWT_SECRET must be at least 32 characters long in production")
 		}
 		if len(secret) == 0 {
-			return []byte("pulsewatch-dev-secret-must-be-at-least-32-chars-long!")
+			return []byte("netra-uptime-dev-secret-must-be-at-least-32-chars-long!")
 		}
 	}
 	return []byte(secret)
@@ -34,7 +34,7 @@ func GenerateToken(userID string, expiryTime time.Duration) (string, error) {
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        uuid.NewString(),
-			Issuer:    "pulsewatch",
+			Issuer:    "netra-uptime",
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiryTime)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
