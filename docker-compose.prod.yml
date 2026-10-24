@@ -10,6 +10,9 @@ services:
       - APP_ENV=production
       - APP_MODE=selfhosted
       - PORT=8080
+      - JWT_SECRET=change_me_to_a_random_secret_of_at_least_32_characters
+      - ALLOWED_ORIGIN=http://localhost:8080
+      - PUBLIC_API_URL=http://localhost:8080/api/v1
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USER=netra
