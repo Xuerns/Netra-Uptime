@@ -253,7 +253,7 @@
 	const fmtTimeAgo = formatTimeAgo;
 	const fmtFullDate = (iso: string) => formatDateTime(iso, tz);
 
-	async function fetchAuditLogs(showSkeleton = false) {
+	async function fetchAuditLogs(showSkeleton = false, pageNum?: number) {
 		if (!orgId) return;
 		if (showSkeleton) {
 			isInitialLoading = true;
@@ -262,12 +262,14 @@
 		}
 		errorMsg = '';
 
+		const pageToFetch = pageNum ?? currentPage;
+
 		try {
 			const cat = categories.find((c) => c.id === selectedCategory);
 			const entityTypeFilter = cat && cat.id !== 'ALL' ? cat.entityTypes : undefined;
 
 			const res = await AuditAPI.getLogs(orgId, {
-				page: currentPage,
+				page: pageToFetch,
 				limit: 20,
 				search: searchQuery.trim() || undefined,
 				action: selectedAction || undefined,
@@ -277,6 +279,7 @@
 			logs = res.logs ?? [];
 			totalCount = res.total_count ?? 0;
 			totalPages = res.total_pages ?? 1;
+			currentPage = pageToFetch;
 		} catch (err: unknown) {
 			errorMsg = err instanceof Error ? err.message : 'Failed to load audit logs.';
 			logs = [];
@@ -437,7 +440,7 @@
 			{totalPages}
 			totalItems={totalCount}
 			itemName="events"
-			onPageChange={() => fetchAuditLogs(false)}
+			onPageChange={(page) => fetchAuditLogs(false, page)}
 			class="mt-4"
 		/>
 	{/if}

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Incident } from '$lib/api/incident';
-	import { formatDateTime, formatIncidentTimeAgo } from '$lib/utils/datetime';
+	import { formatDateTime, formatIncidentTimeAgo, formatDuration } from '$lib/utils/datetime';
 	import { CheckCircle2, Radio, Users, Loader2, Server, Clock, ExternalLink } from 'lucide-svelte';
 
 	interface Props {
@@ -20,6 +20,7 @@
 		incident.ResolvedAt ? formatDateTime(incident.ResolvedAt, tz) : null
 	);
 	let timeAgo = $derived(formatIncidentTimeAgo(incident.StartedAt));
+	let impactDuration = $derived(formatDuration(incident.StartedAt, incident.ResolvedAt));
 </script>
 
 <!-- Header Content Block (Flat, no card container) -->
@@ -141,14 +142,14 @@
 				{#if formattedResolvedAt}
 					<span class="text-emerald-400">Resolved</span>
 				{:else}
-					<span class="text-rose-400">Active ({timeAgo})</span>
+					<span class="text-rose-400">Active since {timeAgo}</span>
 				{/if}
 			</div>
 			<div class="text-xs text-muted-foreground">
 				{#if formattedResolvedAt}
-					<span>Resolved at {formattedResolvedAt}</span>
+					<span>Resolved at {formattedResolvedAt} ({impactDuration})</span>
 				{:else}
-					<span>Impact duration: {timeAgo}</span>
+					<span>Impact duration: {impactDuration}</span>
 				{/if}
 			</div>
 		</div>

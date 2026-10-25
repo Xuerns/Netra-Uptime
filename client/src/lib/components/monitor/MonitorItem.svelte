@@ -41,6 +41,7 @@
 	}>();
 
 	let isConfirmDeleteOpen = $state(false);
+	let isMenuOpen = $state(false);
 
 	async function confirmDelete() {
 		if (handleDeleteMonitor) {
@@ -101,16 +102,22 @@
 				</div>
 
 				<!-- Status & Actions -->
-				<div class="flex items-center gap-2 shrink-0">
-					<MonitorStatusBadge status={monitor.Status} />
+				<div class="flex items-center shrink-0">
+					<MonitorStatusBadge status={monitor.Status} class="shrink-0" />
 
-					<DropdownMenu.Root>
-						<DropdownMenu.Trigger
-							class="flex items-center justify-center size-7 rounded-md text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 cursor-pointer focus:outline-none"
-							aria-label="Monitor options"
+					<DropdownMenu.Root bind:open={isMenuOpen}>
+						<div
+							class="overflow-hidden transition-all duration-200 ease-in-out flex items-center justify-end {isMenuOpen
+								? 'w-7 ml-2 opacity-100 pointer-events-auto'
+								: 'w-0 ml-0 opacity-0 pointer-events-none group-hover:w-7 group-hover:ml-2 group-hover:opacity-100 group-hover:pointer-events-auto focus-within:w-7 focus-within:ml-2 focus-within:opacity-100 focus-within:pointer-events-auto'}"
 						>
-							<MoreVertical class="size-4" />
-						</DropdownMenu.Trigger>
+							<DropdownMenu.Trigger
+								class="flex items-center justify-center size-7 shrink-0 rounded-md text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+								aria-label="Monitor options"
+							>
+								<MoreVertical class="size-4" />
+							</DropdownMenu.Trigger>
+						</div>
 						<DropdownMenu.Content
 							align="end"
 							class="w-40 bg-card border-border text-foreground rounded-lg p-1 shadow-xl z-50"

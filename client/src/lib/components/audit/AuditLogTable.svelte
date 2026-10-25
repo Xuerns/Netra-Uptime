@@ -36,6 +36,14 @@
 		fmtFullDate,
 		initials
 	}: Props = $props();
+
+	let tableContainer = $state<HTMLDivElement | null>(null);
+
+	$effect(() => {
+		if (logs && tableContainer) {
+			tableContainer.scrollTop = 0;
+		}
+	});
 </script>
 
 <div
@@ -132,7 +140,11 @@
 	</div>
 
 	<!-- Log Rows (Scrollable) -->
-	<div data-lenis-prevent class="overflow-y-auto flex-1 divide-y divide-white/5">
+	<div
+		bind:this={tableContainer}
+		data-lenis-prevent
+		class="overflow-y-auto flex-1 divide-y divide-white/5"
+	>
 		{#each logs as log (log.id)}
 			{@const actionStyle = getActionStyle(log.action)}
 			<div

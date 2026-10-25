@@ -257,7 +257,7 @@
 	>
 		<Dialog.Header>
 			<Dialog.Title class="text-lg font-semibold flex items-center gap-2">
-				 Create New API Key
+				Create New API Key
 			</Dialog.Title>
 			<Dialog.Description class="text-xs text-muted-foreground mt-1">
 				Generate an API key for automated access. You will only be shown the key once.

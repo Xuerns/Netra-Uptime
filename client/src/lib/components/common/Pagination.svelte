@@ -18,9 +18,16 @@
 		onPageChange?: (page: number) => void;
 	}>();
 
+	let lastPage = $state(currentPage);
+
+	$effect(() => {
+		lastPage = currentPage;
+	});
+
 	function handlePageChange(p: number) {
 		const target = Math.max(1, Math.min(totalPages, p));
-		if (target === currentPage) return;
+		if (target === lastPage) return;
+		lastPage = target;
 		currentPage = target;
 		onPageChange?.(target);
 	}

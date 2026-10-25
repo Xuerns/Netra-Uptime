@@ -101,18 +101,34 @@ export function formatTimeAgo(dateStr: string | undefined | null): string {
 }
 
 /**
- * Format incident time dengan pola militer: "T-HH:MM:00"
- * Contoh output: "T-02:15:00"
+ * Format incident relative time: "just now", "5m ago", "11h 1m ago", "2d 4h ago"
  */
 export function formatIncidentTimeAgo(dateStr: string | undefined | null): string {
-	if (!dateStr) return 'T-??:??:00';
+	if (!dateStr) return '—';
 	try {
-		const diff = Date.now() - new Date(dateStr).getTime();
-		const hours = Math.floor(diff / (1000 * 60 * 60));
-		const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-		return `T-${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+		const parsed = new Date(dateStr).getTime();
+		if (isNaN(parsed)) return dateStr;
+		const diff = Math.max(0, Date.now() - parsed);
+		const seconds = Math.floor(diff / 1000);
+		if (seconds < 5) return 'just now';
+		if (seconds < 60) return `${seconds}s ago`;
+		const minutes = Math.floor(seconds / 60);
+		if (minutes < 60) return `${minutes}m ago`;
+		const hours = Math.floor(minutes / 60);
+		const remMinutes = minutes % 60;
+		if (hours < 24) {
+			return remMinutes > 0 ? `${hours}h ${remMinutes}m ago` : `${hours}h ago`;
+		}
+		const days = Math.floor(hours / 24);
+		const remHours = hours % 24;
+		if (days < 30) {
+			return remHours > 0 ? `${days}d ${remHours}h ago` : `${days}d ago`;
+		}
+		const months = Math.floor(days / 30);
+		if (months < 12) return `${months}mo ago`;
+		return `${Math.floor(months / 12)}y ago`;
 	} catch {
-		return 'T-??:??:00';
+		return dateStr;
 	}
 }
 
@@ -133,15 +149,21 @@ export function formatDateHeader(dateStr?: string | null): string {
 
 /**
  * Format durasi antara waktu mulai dan waktu selesai insiden (misal: "45m", "2h 15m").
+ * Jika resolvedAt tidak ada (masih ongoing), menghitung durasi dari waktu mulai hingga sekarang.
  */
 export function formatDuration(startedAt?: string | null, resolvedAt?: string | null): string {
-	if (!startedAt || !resolvedAt) return '';
-	const start = new Date(startedAt).getTime();
-	const end = new Date(resolvedAt).getTime();
-	const diffMins = Math.max(1, Math.round((end - start) / 60000));
-	if (diffMins < 60) return `${diffMins}m`;
-	const hours = Math.floor(diffMins / 60);
-	const remainingMins = diffMins % 60;
-	if (remainingMins === 0) return `${hours}h`;
-	return `${hours}h ${remainingMins}m`;
+	if (!startedAt) return '—';
+	try {
+		const start = new Date(startedAt).getTime();
+		if (isNaN(start)) return '—';
+		const end = resolvedAt ? new Date(resolvedAt).getTime() : Date.now();
+		const diffMins = Math.max(1, Math.round((end - start) / 60000));
+		if (diffMins < 60) return `${diffMins}m`;
+		const hours = Math.floor(diffMins / 60);
+		const remainingMins = diffMins % 60;
+		if (remainingMins === 0) return `${hours}h`;
+		return `${hours}h ${remainingMins}m`;
+	} catch {
+		return '—';
+	}
 }
