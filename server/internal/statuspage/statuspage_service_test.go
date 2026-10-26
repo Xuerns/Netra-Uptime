@@ -393,9 +393,9 @@ func TestStatusPageHandler_Create_Success(t *testing.T) {
 
 	desc3 := "Production dashboard"
 	body := CreateStatusPageRequest{
-		Title:       "PulseWatch Status",
+		Title:       "Netra Uptime Status",
 		Description: &desc3,
-		Subdomain:   "pulsewatch-test",
+		Subdomain:   "netra-uptime-test",
 		IsPublic:    true,
 		MonitorID:   []string{uuid.New().String()},
 	}
@@ -587,7 +587,7 @@ func TestStatusPageHandler_GetPublicBySubdomain(t *testing.T) {
 	r := gin.New()
 	r.GET("/public/statuspage/:subdomain", handler.GetPublicBySubdomain)
 
-	req, _ := http.NewRequest(http.MethodGet, "/public/statuspage/pulsewatch", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/public/statuspage/netra-uptime", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
@@ -656,7 +656,7 @@ func TestStatusPageService_GetBySubdomain_OverallStatus(t *testing.T) {
 			repo := &mockStatusPageRepo{
 				getBySubdomainFunc: func(sub string) (*model.StatusPage, error) {
 					return &model.StatusPage{
-						Title:              "PulseWatch Status",
+						Title:              "Netra Uptime Status",
 						Subdomain:          sub,
 						StatusPageMonitors: tc.monitors,
 					}, nil
@@ -666,7 +666,7 @@ func TestStatusPageService_GetBySubdomain_OverallStatus(t *testing.T) {
 				},
 			}
 			svc := NewStatusPageService(repo, nil, nil, nil)
-			resp, err := svc.GetBySubdomain("pulsewatch")
+			resp, err := svc.GetBySubdomain("netra-uptime")
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -685,7 +685,7 @@ func TestStatusPageService_GetBySubdomain_IncidentsAndUptime(t *testing.T) {
 	repo := &mockStatusPageRepo{
 		getBySubdomainFunc: func(sub string) (*model.StatusPage, error) {
 			return &model.StatusPage{
-				Title:     "PulseWatch Status",
+				Title:     "Netra Uptime Status",
 				Subdomain: sub,
 				StatusPageMonitors: []model.StatusPageMonitor{
 					{
@@ -745,7 +745,7 @@ func TestStatusPageService_GetBySubdomain_IncidentsAndUptime(t *testing.T) {
 	}
 
 	svc := NewStatusPageService(repo, nil, nil, nil)
-	resp, err := svc.GetBySubdomain("pulsewatch")
+	resp, err := svc.GetBySubdomain("netra-uptime")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -787,7 +787,7 @@ func TestStatusPageService_GetBySubdomain_90DayStatsAndMaintenance(t *testing.T)
 		getBySubdomainFunc: func(sub string) (*model.StatusPage, error) {
 			return &model.StatusPage{
 				ID:        spID,
-				Title:     "PulseWatch Test",
+				Title:     "Netra Uptime Test",
 				Subdomain: sub,
 				StatusPageMonitors: []model.StatusPageMonitor{
 					{
@@ -845,7 +845,7 @@ func TestStatusPageService_GetBySubdomain_90DayStatsAndMaintenance(t *testing.T)
 	}
 
 	svc := NewStatusPageService(repo, nil, nil, nil)
-	resp, err := svc.GetBySubdomain("pulsewatch")
+	resp, err := svc.GetBySubdomain("netra-uptime")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

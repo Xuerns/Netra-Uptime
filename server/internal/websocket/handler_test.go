@@ -28,11 +28,11 @@ func TestCheckOrigin(t *testing.T) {
 	}
 
 	// Case 3: Production mode with ALLOWED_ORIGIN configured
-	os.Setenv("ALLOWED_ORIGIN", "https://app.pulsewatch.dev, https://pulsewatch.dev")
+	os.Setenv("ALLOWED_ORIGIN", "https://app.netra-uptime.dev, https://netra-uptime.dev")
 	defer os.Unsetenv("ALLOWED_ORIGIN")
 
 	reqValid := httptest.NewRequest("GET", "/ws", nil)
-	reqValid.Header.Set("Origin", "https://app.pulsewatch.dev")
+	reqValid.Header.Set("Origin", "https://app.netra-uptime.dev")
 	if !upgrader.CheckOrigin(reqValid) {
 		t.Fatal("expected ALLOWED_ORIGIN to be allowed, got rejected")
 	}

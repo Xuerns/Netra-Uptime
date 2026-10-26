@@ -447,7 +447,7 @@ func TestForgotPassword_UserNotFound_NoError(t *testing.T) {
 }
 
 func TestForgotPassword_Success(t *testing.T) {
-	os.Setenv("ALLOWED_ORIGIN", "https://app.pulsewatch.dev")
+	os.Setenv("ALLOWED_ORIGIN", "https://app.netra-uptime.dev")
 	repo := &mockAuthRepo{
 		findUserByEmailFunc: func(email string) (*model.User, error) {
 			return &model.User{ID: uuid.New(), Email: email}, nil
@@ -462,7 +462,7 @@ func TestForgotPassword_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(resetURL, "https://app.pulsewatch.dev/auth/forgot?token=") {
+	if !strings.Contains(resetURL, "https://app.netra-uptime.dev/auth/forgot?token=") {
 		t.Errorf("unexpected reset URL: %s", resetURL)
 	}
 }
