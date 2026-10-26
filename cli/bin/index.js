@@ -19,6 +19,7 @@ Commands:
   stop      Run: docker compose down
   status    Show container status
   logs      Follow logs
+  credentials  Display database and redis credentials from .env (alias: creds)
   update    Pull the latest image and restart
   help      Show this help
 
@@ -101,6 +102,45 @@ function getPortFromEnv(dir, fallback = '27346') {
   return fallback;
 }
 
+function readCredentials(dir) {
+  const envPath = join(dir, '.env');
+  if (!existsSync(envPath)) return null;
+
+  try {
+    const content = readFileSync(envPath, 'utf-8');
+    const parse = (key) => {
+      const match = content.match(new RegExp(`^${key}=(.*)$`, 'm'));
+      return match ? match[1].trim() : '';
+    };
+
+    return {
+      envPath,
+      hostPort: parse('HOST_PORT') || '27346',
+      dbUser: parse('POSTGRES_USER') || 'netra',
+      dbPassword: parse('POSTGRES_PASSWORD'),
+      dbName: parse('POSTGRES_DB') || 'netra_uptime',
+      redisPassword: parse('REDIS_PASSWORD'),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function formatCredentialsSummary(creds) {
+  if (!creds) {
+    return '✖ No .env file found. Run "netra-uptime init" first.';
+  }
+
+  return `[Configuration & Credentials]
+  Config file : ${creds.envPath}
+  PostgreSQL  : localhost:5432
+    • Database: ${creds.dbName}
+    • User    : ${creds.dbUser}
+    • Password: ${creds.dbPassword || '(not set)'}
+  Redis       : localhost:6379
+    • Password: ${creds.redisPassword || '(not set)'}`;
+}
+
 function main() {
   const opts = parseArgs(process.argv.slice(2));
   const command = opts._[0] || 'help';
@@ -110,17 +150,23 @@ function main() {
   switch (command) {
     case 'init': {
       const { port } = init(dir, opts);
+      const creds = readCredentials(dir);
       console.log(`
 ⪢ Netra Uptime initialized successfully! ⪡
+
+${formatCredentialsSummary(creds)}
 
 Next steps:
   1. Start Netra Uptime:
      netra-uptime start${dirFlag}
 
-  2. Check container status:
+  2. View credentials anytime:
+     netra-uptime credentials${dirFlag}
+
+  3. Check container status:
      netra-uptime status${dirFlag}
 
-  3. Need more info? Run:
+  4. Need more info? Run:
      netra-uptime help
 `);
       break;
@@ -130,15 +176,27 @@ Next steps:
       init(dir, opts);
       run('docker', ['compose', 'up', '-d'], dir);
       const activePort = opts.port || getPortFromEnv(dir, '27346');
+      const creds = readCredentials(dir);
       console.log(`
 ⫸ Netra Uptime is up and running! ⫷
    Web Dashboard: http://localhost:${activePort}
 
+${formatCredentialsSummary(creds)}
+
 Useful commands:
-  • netra-uptime status${dirFlag}  - Check container health
-  • netra-uptime logs${dirFlag}    - Stream live logs
-  • netra-uptime stop${dirFlag}    - Stop all containers
-  • netra-uptime help          - View all commands
+  • netra-uptime credentials${dirFlag} - View database and redis credentials
+  • netra-uptime status${dirFlag}      - Check container health
+  • netra-uptime logs${dirFlag}        - Stream live logs
+  • netra-uptime stop${dirFlag}        - Stop all containers
+  • netra-uptime help              - View all commands
+`);
+      break;
+    }
+    case 'credentials':
+    case 'creds': {
+      const creds = readCredentials(dir);
+      console.log(`
+${formatCredentialsSummary(creds)}
 `);
       break;
     }

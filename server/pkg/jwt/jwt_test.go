@@ -19,7 +19,7 @@ func TestGenerateToken_ContainsUserID(t *testing.T) {
 	os.Setenv("JWT_SECRET", "my-test-secret")
 	userID := "user-12345"
 
-	token, err := GenerateToken(userID, time.Hour)
+	token, err := GenerateToken(userID, TokenTypeAccess, time.Hour)
 	if err != nil {
 		t.Fatalf("GenerateToken failed: %v", err)
 	}
@@ -34,14 +34,35 @@ func TestGenerateToken_ContainsUserID(t *testing.T) {
 	if claims.UserID != userID {
 		t.Errorf("expected userID %s, got %s", userID, claims.UserID)
 	}
+	if claims.TokenType != TokenTypeAccess {
+		t.Errorf("expected tokenType %s, got %s", TokenTypeAccess, claims.TokenType)
+	}
 	if claims.Issuer != "netra-uptime" {
 		t.Errorf("expected issuer netra-uptime, got %s", claims.Issuer)
 	}
 }
 
+func TestGenerateToken_TokenTypeRefresh(t *testing.T) {
+	os.Setenv("JWT_SECRET", "my-test-secret")
+	userID := "user-refresh-123"
+
+	token, err := GenerateToken(userID, TokenTypeRefresh, time.Hour)
+	if err != nil {
+		t.Fatalf("GenerateToken failed: %v", err)
+	}
+
+	claims, err := ValidateToken(token)
+	if err != nil {
+		t.Fatalf("ValidateToken failed on generated token: %v", err)
+	}
+	if claims.TokenType != TokenTypeRefresh {
+		t.Errorf("expected tokenType %s, got %s", TokenTypeRefresh, claims.TokenType)
+	}
+}
+
 func TestValidateToken_Valid(t *testing.T) {
 	os.Setenv("JWT_SECRET", "secret-xyz")
-	token, err := GenerateToken("user-abc", 10*time.Minute)
+	token, err := GenerateToken("user-abc", TokenTypeAccess, 10*time.Minute)
 	if err != nil {
 		t.Fatalf("GenerateToken error: %v", err)
 	}
@@ -58,7 +79,7 @@ func TestValidateToken_Valid(t *testing.T) {
 func TestValidateToken_Expired(t *testing.T) {
 	os.Setenv("JWT_SECRET", "secret-xyz")
 	// Expiry in past (-1 second)
-	token, err := GenerateToken("user-expired", -1*time.Second)
+	token, err := GenerateToken("user-expired", TokenTypeAccess, -1*time.Second)
 	if err != nil {
 		t.Fatalf("GenerateToken error: %v", err)
 	}
@@ -74,7 +95,7 @@ func TestValidateToken_Expired(t *testing.T) {
 
 func TestValidateToken_TamperedPayload(t *testing.T) {
 	os.Setenv("JWT_SECRET", "secret-xyz")
-	token, err := GenerateToken("user-safe", time.Hour)
+	token, err := GenerateToken("user-safe", TokenTypeAccess, time.Hour)
 	if err != nil {
 		t.Fatalf("GenerateToken error: %v", err)
 	}
@@ -97,7 +118,7 @@ func TestValidateToken_TamperedPayload(t *testing.T) {
 
 func TestValidateToken_WrongSignatureKey(t *testing.T) {
 	os.Setenv("JWT_SECRET", "secret-A")
-	token, err := GenerateToken("user-key", time.Hour)
+	token, err := GenerateToken("user-key", TokenTypeAccess, time.Hour)
 	if err != nil {
 		t.Fatalf("GenerateToken error: %v", err)
 	}

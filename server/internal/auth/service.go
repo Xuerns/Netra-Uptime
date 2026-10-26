@@ -158,13 +158,13 @@ func (s *AuthServiceImpl) Login(req LoginRequest) (*LoginResponse, error) {
 		expiryRefresh = 168 * time.Hour
 	}
 
-	accessToken, err := jwt.GenerateToken(user.ID.String(), expiryAccess)
+	accessToken, err := jwt.GenerateToken(user.ID.String(), jwt.TokenTypeAccess, expiryAccess)
 
 	if err != nil {
 		return nil, errors.New("Failed to generate access token")
 	}
 
-	refreshToken, err := jwt.GenerateToken(user.ID.String(), expiryRefresh)
+	refreshToken, err := jwt.GenerateToken(user.ID.String(), jwt.TokenTypeRefresh, expiryRefresh)
 
 	if err != nil {
 		return nil, errors.New("Failed to generate refresh token")
@@ -332,12 +332,12 @@ func (s *AuthServiceImpl) OauthLoginAndRegister(req OAuthRequest) (*LoginRespons
 		expiryRefresh = 168 * time.Hour
 	}
 
-	accessToken, err := jwt.GenerateToken(user.ID.String(), expiryAccess)
+	accessToken, err := jwt.GenerateToken(user.ID.String(), jwt.TokenTypeAccess, expiryAccess)
 	if err != nil {
 		return nil, errors.New("Something went wrong, please try again")
 	}
 
-	refreshToken, err := jwt.GenerateToken(user.ID.String(), expiryRefresh)
+	refreshToken, err := jwt.GenerateToken(user.ID.String(), jwt.TokenTypeRefresh, expiryRefresh)
 	if err != nil {
 		return nil, errors.New("Something went wrong, please try again")
 	}
@@ -404,12 +404,12 @@ func (s *AuthServiceImpl) RefreshAccessToken(token string) (*LoginResponse, erro
 		expiryRefresh = 168 * time.Hour
 	}
 
-	newAccessToken, err := jwt.GenerateToken(refreshToken.UserID.String(), expiryAccess)
+	newAccessToken, err := jwt.GenerateToken(refreshToken.UserID.String(), jwt.TokenTypeAccess, expiryAccess)
 	if err != nil {
 		return nil, errors.New("Failed to generate access token")
 	}
 
-	newRefreshToken, err := jwt.GenerateToken(refreshToken.UserID.String(), expiryRefresh)
+	newRefreshToken, err := jwt.GenerateToken(refreshToken.UserID.String(), jwt.TokenTypeRefresh, expiryRefresh)
 	if err != nil {
 		return nil, errors.New("Failed to generate refresh token")
 	}

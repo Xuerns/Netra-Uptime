@@ -24,6 +24,12 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		if claims.TokenType != jwt.TokenTypeAccess {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token type for access"})
+			c.Abort()
+			return
+		}
+
 		c.Set("userID", claims.UserID)
 		c.Next()
 	}

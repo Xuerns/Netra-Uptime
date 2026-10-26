@@ -11,27 +11,42 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	TokenTypeAccess  = "access"
+	TokenTypeRefresh = "refresh"
+)
+
+var knownPlaceholderSecrets = map[string]bool{
+	"change_me_to_a_random_secret_of_at_least_32_characters":  true,
+	"netra-uptime-dev-secret-must-be-at-least-32-chars-long!": true,
+}
+
 type JWTClaims struct {
-	UserID string `json:"user_id"`
+	UserID    string `json:"user_id"`
+	TokenType string `json:"token_type"`
 	jwt.RegisteredClaims
 }
 
 func getJWTSecret() []byte {
 	secret := os.Getenv("JWT_SECRET")
-	if len(secret) < 32 {
-		if strings.EqualFold(os.Getenv("APP_ENV"), "production") {
+	if strings.EqualFold(os.Getenv("APP_ENV"), "production") {
+		if knownPlaceholderSecrets[secret] {
+			log.Fatal("FATAL: Insecure placeholder JWT_SECRET detected in production. Please provide a secure random secret.")
+		}
+		if len(secret) < 32 {
 			log.Fatal("FATAL SECURITY CONFIGURATION: JWT_SECRET must be at least 32 characters long in production")
 		}
-		if len(secret) == 0 {
-			return []byte("netra-uptime-dev-secret-must-be-at-least-32-chars-long!")
-		}
+	}
+	if len(secret) == 0 {
+		return []byte("netra-uptime-dev-secret-must-be-at-least-32-chars-long!")
 	}
 	return []byte(secret)
 }
 
-func GenerateToken(userID string, expiryTime time.Duration) (string, error) {
+func GenerateToken(userID string, tokenType string, expiryTime time.Duration) (string, error) {
 	claims := JWTClaims{
-		UserID: userID,
+		UserID:    userID,
+		TokenType: tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        uuid.NewString(),
 			Issuer:    "netra-uptime",

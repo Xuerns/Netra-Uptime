@@ -342,7 +342,7 @@ func setupTestRouter(t *testing.T) (*testEnv, func()) {
 }
 
 func createValidToken(userID string) string {
-	tok, _ := jwt.GenerateToken(userID, time.Hour)
+	tok, _ := jwt.GenerateToken(userID, jwt.TokenTypeAccess, time.Hour)
 	return tok
 }
 
@@ -766,10 +766,20 @@ func TestBadRoute_PasswordChangeWithoutToken(t *testing.T) {
 func TestBadRoute_ProfileWithExpiredToken(t *testing.T) {
 	env, cleanup := setupTestRouter(t)
 	defer cleanup()
-	token, _ := jwt.GenerateToken("user-123", -1*time.Hour)
+	token, _ := jwt.GenerateToken("user-123", jwt.TokenTypeAccess, -1*time.Hour)
 	w := executeRequest(env.router, http.MethodGet, "/api/v1/auth/profile", nil, token, nil)
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("expected 401 for expired token, got %d", w.Code)
+	}
+}
+
+func TestBadRoute_ProfileWithRefreshToken(t *testing.T) {
+	env, cleanup := setupTestRouter(t)
+	defer cleanup()
+	token, _ := jwt.GenerateToken("user-123", jwt.TokenTypeRefresh, time.Hour)
+	w := executeRequest(env.router, http.MethodGet, "/api/v1/auth/profile", nil, token, nil)
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected 401 when refresh token is supplied as access token, got %d", w.Code)
 	}
 }
 
@@ -786,7 +796,7 @@ func TestBadRoute_ProfileWithWrongSignature(t *testing.T) {
 	env, cleanup := setupTestRouter(t)
 	defer cleanup()
 	os.Setenv("JWT_SECRET", "secret-other")
-	token, _ := jwt.GenerateToken("user-123", time.Hour)
+	token, _ := jwt.GenerateToken("user-123", jwt.TokenTypeAccess, time.Hour)
 	os.Setenv("JWT_SECRET", "super-secret-key-for-test-purposes-123456")
 
 	w := executeRequest(env.router, http.MethodGet, "/api/v1/auth/profile", nil, token, nil)

@@ -63,7 +63,7 @@ func TestAuthMiddleware_MissingCookie(t *testing.T) {
 }
 
 func TestAuthMiddleware_ExpiredToken(t *testing.T) {
-	token, _ := jwt.GenerateToken("user-123", -10*time.Minute)
+	token, _ := jwt.GenerateToken("user-123", jwt.TokenTypeAccess, -10*time.Minute)
 
 	r := gin.New()
 	r.Use(AuthMiddleware())
@@ -81,6 +81,28 @@ func TestAuthMiddleware_ExpiredToken(t *testing.T) {
 
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("expected status 401, got %d", w.Code)
+	}
+}
+
+func TestAuthMiddleware_RefreshTokenRejectedAsAccessToken(t *testing.T) {
+	token, _ := jwt.GenerateToken("user-refresh-only", jwt.TokenTypeRefresh, 10*time.Minute)
+
+	r := gin.New()
+	r.Use(AuthMiddleware())
+	r.GET("/protected", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	req, _ := http.NewRequest(http.MethodGet, "/protected", nil)
+	req.AddCookie(&http.Cookie{
+		Name:  "access_token",
+		Value: token,
+	})
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected status 401 for refresh token used as access token, got %d", w.Code)
 	}
 }
 
@@ -105,7 +127,7 @@ func TestAuthMiddleware_MalformedToken(t *testing.T) {
 }
 
 func TestAuthMiddleware_ValidToken_SetsUserID(t *testing.T) {
-	token, _ := jwt.GenerateToken("user-valid-999", 10*time.Minute)
+	token, _ := jwt.GenerateToken("user-valid-999", jwt.TokenTypeAccess, 10*time.Minute)
 
 	var extractedUserID string
 	r := gin.New()

@@ -59,6 +59,11 @@ func Load() *Config {
 	return cfgInstance
 }
 
+var knownPlaceholderSecrets = map[string]bool{
+	"change_me_to_a_random_secret_of_at_least_32_characters":  true,
+	"netra-uptime-dev-secret-must-be-at-least-32-chars-long!": true,
+}
+
 func loadConfig() *Config {
 	if err := godotenv.Load(); err != nil {
 		if err := godotenv.Load("../.env"); err != nil {
@@ -111,6 +116,9 @@ func loadConfig() *Config {
 	}
 
 	if strings.EqualFold(cfg.AppEnv, "production") {
+		if knownPlaceholderSecrets[cfg.JwtSecret] {
+			log.Fatal("FATAL: Insecure placeholder JWT_SECRET detected. Please provide a secure random secret.")
+		}
 		if len(cfg.JwtSecret) < 32 {
 			log.Fatal("FATAL SECURITY CONFIGURATION: JWT_SECRET must be at least 32 characters in production")
 		}

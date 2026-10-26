@@ -10,7 +10,7 @@ services:
       - APP_ENV=production
       - APP_MODE=selfhosted
       - PORT=27346
-      - JWT_SECRET=change_me_to_a_random_secret_of_at_least_32_characters
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in environment}
       - ALLOWED_ORIGIN=http://localhost:27346
       - PUBLIC_API_URL=http://localhost:27346/api/v1
       - DB_HOST=postgres
