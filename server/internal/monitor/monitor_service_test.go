@@ -3,6 +3,7 @@ package monitor
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -261,7 +262,7 @@ func TestCreate_Success_HobbyPlan(t *testing.T) {
 	mon, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
 		Name:            "My API",
 		Type:            "http",
-		Target:          "https://api.example.com/health",
+		Target:          "https://1.1.1.1/health",
 		IntervalSeconds: 300,
 		TimeoutSeconds:  10,
 	})
@@ -288,7 +289,7 @@ func TestCreate_ExceedsMonitorLimit(t *testing.T) {
 	_, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
 		Name:            "My API",
 		Type:            "http",
-		Target:          "https://api.example.com/health",
+		Target:          "https://1.1.1.1/health",
 		IntervalSeconds: 300,
 		TimeoutSeconds:  10,
 	})
@@ -307,7 +308,7 @@ func TestCreate_ExceedsPICLimit(t *testing.T) {
 	_, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
 		Name:            "My API",
 		Type:            "http",
-		Target:          "https://api.example.com",
+		Target:          "https://1.1.1.1",
 		IntervalSeconds: 300,
 		TimeoutSeconds:  10,
 		Assignees:       []string{uuid.New().String(), uuid.New().String(), uuid.New().String(), uuid.New().String(), uuid.New().String(), uuid.New().String()}, // 6 Assignees > 5 max
@@ -327,7 +328,7 @@ func TestCreate_ZeroAssignees_Success(t *testing.T) {
 	_, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
 		Name:            "My API",
 		Type:            "http",
-		Target:          "https://api.example.com",
+		Target:          "https://1.1.1.1",
 		IntervalSeconds: 300,
 		TimeoutSeconds:  10,
 		Assignees:       []string{},
@@ -347,7 +348,7 @@ func TestCreate_InvalidIntervalForPlan(t *testing.T) {
 	_, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
 		Name:            "My API",
 		Type:            "http",
-		Target:          "https://api.example.com",
+		Target:          "https://1.1.1.1",
 		IntervalSeconds: 60, // Hobby min is 300
 		TimeoutSeconds:  10,
 	})
@@ -366,7 +367,7 @@ func TestCreate_TimeoutTooHigh(t *testing.T) {
 	_, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
 		Name:            "My API",
 		Type:            "http",
-		Target:          "https://api.example.com",
+		Target:          "https://1.1.1.1",
 		IntervalSeconds: 300,
 		TimeoutSeconds:  25, // Hobby max timeout is 10
 	})
@@ -385,7 +386,7 @@ func TestCreate_TimeoutTooLow(t *testing.T) {
 	_, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
 		Name:            "My API",
 		Type:            "http",
-		Target:          "https://api.example.com",
+		Target:          "https://1.1.1.1",
 		IntervalSeconds: 300,
 		TimeoutSeconds:  5, // < 10
 	})
@@ -409,7 +410,7 @@ func TestCreate_ProPlan_HigherLimits(t *testing.T) {
 	mon, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
 		Name:            "Pro Monitor",
 		Type:            "http",
-		Target:          "https://api.example.com",
+		Target:          "https://1.1.1.1",
 		IntervalSeconds: 180, // Pro allowed 180
 		TimeoutSeconds:  15,  // Pro allowed 15
 	})
@@ -455,6 +456,20 @@ func TestGetById_CacheMiss_ThenCacheSet(t *testing.T) {
 		t.Fatalf("expected 1 repo call, got %d", repoCalls)
 	}
 
+	// Verify key in Redis is scoped by orgId
+	expectedKey := "monitor:org:" + orgID.String() + ":" + monID.String()
+	val, err := rdb.Get(context.Background(), expectedKey).Result()
+	if err != nil || val == "" {
+		t.Errorf("expected key %s in redis, err: %v", expectedKey, err)
+	}
+
+	// Verify legacy global key without orgId does NOT exist
+	legacyKey := "monitor:" + monID.String()
+	_, err = rdb.Get(context.Background(), legacyKey).Result()
+	if err == nil {
+		t.Errorf("expected legacy key %s to NOT exist in redis", legacyKey)
+	}
+
 	// Second call: cache hit! repoCalls should still be 1
 	resp2, err := svc.GetById(orgID.String(), monID.String())
 	if err != nil {
@@ -465,6 +480,64 @@ func TestGetById_CacheMiss_ThenCacheSet(t *testing.T) {
 	}
 	if repoCalls != 1 {
 		t.Errorf("expected cache hit to not call repo, got %d calls", repoCalls)
+	}
+}
+
+func TestGetById_CrossTenantCacheIsolation(t *testing.T) {
+	rdb, cleanup := newMockRedisClient(t)
+	defer cleanup()
+
+	orgA := uuid.New().String()
+	orgB := uuid.New().String()
+	monID := uuid.New().String()
+
+	repo := &mockMonitorRepo{
+		getByIdFunc: func(o, m string) (*model.Monitor, error) {
+			if o == orgA && m == monID {
+				parsedMonID, _ := uuid.Parse(monID)
+				parsedOrgA, _ := uuid.Parse(orgA)
+				return &model.Monitor{
+					ID:             parsedMonID,
+					OrganizationID: parsedOrgA,
+					Name:           "Tenant A Private Monitor",
+					Status:         "up",
+					IsActive:       true,
+				}, nil
+			}
+			return nil, errors.New("monitor not found")
+		},
+	}
+	svc := NewMonitorService(repo, rdb, &mockSubsChecker{}, nil)
+
+	// Tenant A reads their monitor -> populates cache under "monitor:org:orgA:monID"
+	respA, err := svc.GetById(orgA, monID)
+	if err != nil {
+		t.Fatalf("unexpected error for Tenant A: %v", err)
+	}
+	if respA.Name != "Tenant A Private Monitor" {
+		t.Errorf("expected Tenant A Private Monitor, got %s", respA.Name)
+	}
+
+	// Tenant B attempts to read Tenant A's monitor using Tenant A's monitorId
+	// Because cache is scoped to org, Tenant B hits "monitor:org:orgB:monID" (cache-miss)
+	// and repo query for (orgB, monID) fails.
+	respB, err := svc.GetById(orgB, monID)
+	if err == nil {
+		t.Fatalf("expected error for Tenant B cross-tenant read, got nil (leaked data: %+v)", respB)
+	}
+
+	// Defensive check: Even if a poisoned/malformed cache entry exists with Org B's key containing Org A's ID
+	poisonedResp := MonitorResponse{
+		ID:             monID,
+		OrganizationID: orgA, // Mismatched organization
+		Name:           "Leaked Monitor Data",
+	}
+	poisonedData, _ := json.Marshal(poisonedResp)
+	rdb.Set(context.Background(), "monitor:org:"+orgB+":"+monID, poisonedData, 60*time.Second)
+
+	respPoisoned, err := svc.GetById(orgB, monID)
+	if err == nil {
+		t.Fatalf("expected error when cache has mismatched OrganizationID, got response: %+v", respPoisoned)
 	}
 }
 
@@ -562,6 +635,91 @@ func TestDeleteMonitor_Success(t *testing.T) {
 	}
 	if !deleted {
 		t.Fatal("expected Delete to be called")
+	}
+}
+
+func TestUpdateMonitor_InvalidatesOrgScopedCache(t *testing.T) {
+	rdb, cleanup := newMockRedisClient(t)
+	defer cleanup()
+
+	monID := uuid.New()
+	orgID := uuid.New()
+	existing := &model.Monitor{
+		ID:              monID,
+		OrganizationID:  orgID,
+		Name:            "Active Mon",
+		Status:          "up",
+		IsActive:        true,
+		IntervalSeconds: 300,
+		TimeoutSeconds:  10,
+	}
+
+	repo := &mockMonitorRepo{
+		getByIdFunc: func(o, m string) (*model.Monitor, error) {
+			return existing, nil
+		},
+		updateFunc: func(m *model.Monitor) error {
+			return nil
+		},
+	}
+	svc := NewMonitorService(repo, rdb, &mockSubsChecker{}, nil)
+
+	ctx := context.Background()
+	monitorKey := "monitor:org:" + orgID.String() + ":" + monID.String()
+	listKey := "monitors:org:" + orgID.String()
+
+	_ = rdb.Set(ctx, monitorKey, "cached-data", 60*time.Second).Err()
+	_ = rdb.Set(ctx, listKey, "cached-list", 60*time.Second).Err()
+
+	newName := "Renamed Mon"
+	_, err := svc.UpdateMonitor(orgID.String(), "user-1", "127.0.0.1", monID.String(), UpdatedMonitorRequest{
+		Name: &newName,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify both cache keys are invalidated
+	if _, err := rdb.Get(ctx, monitorKey).Result(); err == nil {
+		t.Errorf("expected monitor cache key %s to be invalidated", monitorKey)
+	}
+	if _, err := rdb.Get(ctx, listKey).Result(); err == nil {
+		t.Errorf("expected monitors list cache key %s to be invalidated", listKey)
+	}
+}
+
+func TestDeleteMonitor_InvalidatesOrgScopedCache(t *testing.T) {
+	rdb, cleanup := newMockRedisClient(t)
+	defer cleanup()
+
+	monID := uuid.New().String()
+	orgID := uuid.New().String()
+
+	repo := &mockMonitorRepo{
+		deleteFunc: func(o, m string) error {
+			return nil
+		},
+	}
+	svc := NewMonitorService(repo, rdb, &mockSubsChecker{}, nil)
+
+	ctx := context.Background()
+	monitorKey := "monitor:org:" + orgID + ":" + monID
+	listKey := "monitors:org:" + orgID
+
+	_ = rdb.Set(ctx, monitorKey, "cached-data", 60*time.Second).Err()
+	_ = rdb.Set(ctx, listKey, "cached-list", 60*time.Second).Err()
+
+	err := svc.DeleteMonitor(orgID, "user-1", "127.0.0.1", monID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify both cache keys are invalidated
+	if _, err := rdb.Get(ctx, monitorKey).Result(); err == nil {
+		t.Errorf("expected monitor cache key %s to be invalidated", monitorKey)
+	}
+	if _, err := rdb.Get(ctx, listKey).Result(); err == nil {
+		t.Errorf("expected monitors list cache key %s to be invalidated", listKey)
 	}
 }
 

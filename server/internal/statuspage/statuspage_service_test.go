@@ -47,6 +47,7 @@ type mockStatusPageRepo struct {
 	getMaintenanceByIDFunc                     func(maintenanceID, orgID string) (*model.ScheduledMaintenance, error)
 	updateMaintenanceFunc                      func(maintenance *model.ScheduledMaintenance, monitorIDs *[]string) (*model.ScheduledMaintenance, error)
 	deleteMaintenanceFunc                      func(maintenanceID, orgID string) error
+	validateMonitorsBelongToOrgFunc            func(orgID string, monitorIDs []string) error
 }
 
 func (m *mockStatusPageRepo) Create(statuspage *model.StatusPage) (*model.StatusPage, error) {
@@ -180,6 +181,12 @@ func (m *mockStatusPageRepo) DeleteComponentGroup(groupID, statusPageID string) 
 	return nil
 }
 func (m *mockStatusPageRepo) AssignMonitorToGroup(statusPageID, monitorID string, groupID *string) error {
+	return nil
+}
+func (m *mockStatusPageRepo) ValidateMonitorsBelongToOrg(orgID string, monitorIDs []string) error {
+	if m.validateMonitorsBelongToOrgFunc != nil {
+		return m.validateMonitorsBelongToOrgFunc(orgID, monitorIDs)
+	}
 	return nil
 }
 
@@ -1154,4 +1161,158 @@ func TestStatusPageBrandingAndBadgeEndpoints(t *testing.T) {
 	if !strings.Contains(svgContent, "<svg") || !strings.Contains(svgContent, "operational") {
 		t.Errorf("expected valid SVG with operational text, got: %s", svgContent)
 	}
+}
+
+func TestStatusPageService_CrossTenantMonitorRejected(t *testing.T) {
+	orgID := uuid.New().String()
+	userID := uuid.New().String()
+	spID := uuid.New().String()
+	victimMonID := uuid.New().String()
+	desc := "Status page"
+
+	t.Run("Create rejects cross-tenant monitor", func(t *testing.T) {
+		repo := &mockStatusPageRepo{
+			validateMonitorsBelongToOrgFunc: func(oID string, mIDs []string) error {
+				if oID == orgID && len(mIDs) == 1 && mIDs[0] == victimMonID {
+					return errors.New("one or more monitors do not belong to this organization")
+				}
+				return nil
+			},
+		}
+		checker := &mockStatusPageChecker{plan: "hobby"}
+		svc := NewStatusPageService(repo, checker, nil, nil)
+
+		_, err := svc.Create(orgID, userID, "127.0.0.1", &CreateStatusPageRequest{
+			Title:       "Attack Page",
+			Description: &desc,
+			Subdomain:   "attack-page",
+			IsPublic:    true,
+			MonitorID:   []string{victimMonID},
+		})
+
+		if err == nil {
+			t.Fatal("expected error when attaching cross-tenant monitor on Create, got nil")
+		}
+		if !strings.Contains(err.Error(), "one or more monitors do not belong to this organization") {
+			t.Errorf("unexpected error message: %v", err)
+		}
+	})
+
+	t.Run("Update rejects cross-tenant monitor", func(t *testing.T) {
+		repo := &mockStatusPageRepo{
+			getByIdFunc: func(sid, oid string) (*model.StatusPage, error) {
+				return &model.StatusPage{
+					ID:             uuid.MustParse(spID),
+					OrganizationID: uuid.MustParse(orgID),
+					Title:          "Existing Page",
+				}, nil
+			},
+			validateMonitorsBelongToOrgFunc: func(oID string, mIDs []string) error {
+				return errors.New("one or more monitors do not belong to this organization")
+			},
+		}
+		checker := &mockStatusPageChecker{}
+		svc := NewStatusPageService(repo, checker, nil, nil)
+
+		monIDs := []string{victimMonID}
+		_, err := svc.Update(spID, orgID, userID, "127.0.0.1", &UpdateStatusPageRequest{
+			MonitorID: &monIDs,
+		})
+
+		if err == nil {
+			t.Fatal("expected error when attaching cross-tenant monitor on Update, got nil")
+		}
+		if !strings.Contains(err.Error(), "one or more monitors do not belong to this organization") {
+			t.Errorf("unexpected error message: %v", err)
+		}
+	})
+
+	t.Run("CreateMaintenance rejects cross-tenant monitor", func(t *testing.T) {
+		repo := &mockStatusPageRepo{
+			getByIdFunc: func(sid, oid string) (*model.StatusPage, error) {
+				return &model.StatusPage{
+					ID:             uuid.MustParse(spID),
+					OrganizationID: uuid.MustParse(orgID),
+				}, nil
+			},
+			validateMonitorsBelongToOrgFunc: func(oID string, mIDs []string) error {
+				return errors.New("one or more monitors do not belong to this organization")
+			},
+		}
+		checker := &mockStatusPageChecker{member: &model.OrganizationMember{Role: "admin"}}
+		svc := NewStatusPageService(repo, checker, nil, nil)
+
+		_, err := svc.CreateMaintenance(orgID, spID, userID, "127.0.0.1", &CreateMaintenanceRequest{
+			Title:          "Unauthorized Maintenance",
+			ScheduledStart: time.Now(),
+			ScheduledEnd:   time.Now().Add(1 * time.Hour),
+			MonitorIDs:     []string{victimMonID},
+		})
+
+		if err == nil {
+			t.Fatal("expected error when attaching cross-tenant monitor on CreateMaintenance, got nil")
+		}
+		if !strings.Contains(err.Error(), "one or more monitors do not belong to this organization") {
+			t.Errorf("unexpected error message: %v", err)
+		}
+	})
+
+	t.Run("UpdateMaintenance rejects cross-tenant monitor", func(t *testing.T) {
+		mID := uuid.New().String()
+		repo := &mockStatusPageRepo{
+			getMaintenanceByIDFunc: func(mid, oid string) (*model.ScheduledMaintenance, error) {
+				return &model.ScheduledMaintenance{
+					ID:             uuid.MustParse(mID),
+					StatusPageID:   uuid.MustParse(spID),
+					OrganizationID: uuid.MustParse(orgID),
+					Title:          "Existing Maintenance",
+				}, nil
+			},
+			validateMonitorsBelongToOrgFunc: func(oID string, mIDs []string) error {
+				return errors.New("one or more monitors do not belong to this organization")
+			},
+		}
+		checker := &mockStatusPageChecker{member: &model.OrganizationMember{Role: "admin"}}
+		svc := NewStatusPageService(repo, checker, nil, nil)
+
+		monIDs := []string{victimMonID}
+		_, err := svc.UpdateMaintenance(orgID, spID, mID, userID, "127.0.0.1", &UpdateMaintenanceRequest{
+			MonitorIDs: &monIDs,
+		})
+
+		if err == nil {
+			t.Fatal("expected error when attaching cross-tenant monitor on UpdateMaintenance, got nil")
+		}
+		if !strings.Contains(err.Error(), "one or more monitors do not belong to this organization") {
+			t.Errorf("unexpected error message: %v", err)
+		}
+	})
+
+	t.Run("AssignMonitorToGroup rejects cross-tenant monitor", func(t *testing.T) {
+		repo := &mockStatusPageRepo{
+			getByIdFunc: func(sid, oid string) (*model.StatusPage, error) {
+				return &model.StatusPage{
+					ID:             uuid.MustParse(spID),
+					OrganizationID: uuid.MustParse(orgID),
+				}, nil
+			},
+			validateMonitorsBelongToOrgFunc: func(oID string, mIDs []string) error {
+				return errors.New("one or more monitors do not belong to this organization")
+			},
+		}
+		checker := &mockStatusPageChecker{member: &model.OrganizationMember{Role: "admin"}}
+		svc := NewStatusPageService(repo, checker, nil, nil)
+
+		gID := uuid.New().String()
+		err := svc.AssignMonitorToGroup(orgID, spID, victimMonID, userID, "127.0.0.1", &AssignMonitorGroupRequest{
+			GroupID: &gID,
+		})
+
+		if err == nil {
+			t.Fatal("expected error when assigning cross-tenant monitor to group, got nil")
+		}
+		if !strings.Contains(err.Error(), "one or more monitors do not belong to this organization") {
+			t.Errorf("unexpected error message: %v", err)
+		}
+	})
 }

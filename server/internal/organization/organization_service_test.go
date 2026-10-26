@@ -28,28 +28,29 @@ func init() {
 
 // Mock Repository
 type mockOrgRepo struct {
-	getAllSlugOrgFunc     func(slug string) (*[]model.Organization, error)
-	getMemberByIdFunc     func(orgId, memberId string) (*model.OrganizationMember, error)
-	getOrgMemberFunc      func(orgId, memberId string) error
-	getOrgAllMemberFunc   func(orgId string) (*[]model.OrganizationMember, error)
-	getAllOrgByUserIdFunc func(userId string) (*[]model.Organization, error)
-	createOrgFunc         func(org *model.Organization, ownerMember *model.OrganizationMember, invitations *[]model.OrganizationInvitation, subscription *model.Subscription) error
-	acceptInvitationFunc  func(invitation *model.OrganizationInvitation, member *model.OrganizationMember) error
-	rejectInvitationFunc  func(invitation *model.OrganizationInvitation) error
-	kickMemberFunc        func(orgId, memberId string) error
-	inviteMemberFunc      func(invitations *[]model.OrganizationInvitation) error
-	getInvitationFunc     func(userId string) (*[]model.OrganizationInvitation, error)
-	getInvitationByIdFunc func(invitationId string) (*model.OrganizationInvitation, error)
-	disbandFunc           func(orgId, ownerId string) error
-	updateOrgFunc         func(updateData *map[string]interface{}, orgId string) error
-	searchPersonsFunc     func(name string, excludeUserId string, limit int, offset int, orgId string) ([]model.User, error)
-	promoteToAdminFunc    func(userId, orgId string) error
-	demotedToMemberFunc   func(userId, orgId string) error
-	transferOwnershipFunc func(ownerId, newOwnerId, orgId string) error
-	leaveOrgFunc          func(userId, orgId string) error
-	totalOrgUserFunc      func(userId string) (int64, error)
-	totalOrgMemberFunc    func(orgId string) (int64, error)
-	getOrgPlanFunc        func(orgId string) (*model.Subscription, error)
+	getAllSlugOrgFunc         func(slug string) (*[]model.Organization, error)
+	getMemberByIdFunc         func(orgId, memberId string) (*model.OrganizationMember, error)
+	getOrgMemberFunc          func(orgId, memberId string) error
+	getOrgAllMemberFunc       func(orgId string) (*[]model.OrganizationMember, error)
+	getAllOrgByUserIdFunc     func(userId string) (*[]model.Organization, error)
+	createOrgFunc             func(org *model.Organization, ownerMember *model.OrganizationMember, invitations *[]model.OrganizationInvitation, subscription *model.Subscription) error
+	acceptInvitationFunc      func(invitation *model.OrganizationInvitation, member *model.OrganizationMember) error
+	rejectInvitationFunc      func(invitation *model.OrganizationInvitation) error
+	kickMemberFunc            func(orgId, memberId string) error
+	inviteMemberFunc          func(invitations *[]model.OrganizationInvitation) error
+	getInvitationFunc         func(userId string) (*[]model.OrganizationInvitation, error)
+	getInvitationByIdFunc     func(invitationId string) (*model.OrganizationInvitation, error)
+	disbandFunc               func(orgId, ownerId string) error
+	updateOrgFunc             func(updateData *map[string]interface{}, orgId string) error
+	searchPersonsFunc         func(name string, excludeUserId string, limit int, offset int, orgId string) ([]model.User, error)
+	promoteToAdminFunc        func(userId, orgId string) error
+	demotedToMemberFunc       func(userId, orgId string) error
+	transferOwnershipFunc     func(ownerId, newOwnerId, orgId string) error
+	leaveOrgFunc              func(userId, orgId string) error
+	totalOrgUserFunc          func(userId string) (int64, error)
+	totalOrgMemberFunc        func(orgId string) (int64, error)
+	getOrgPlanFunc            func(orgId string) (*model.Subscription, error)
+	revokeAPIKeysByMemberFunc func(orgId, memberId string) error
 }
 
 func (m *mockOrgRepo) GetAllSlugOrganization(slug string) (*[]model.Organization, error) {
@@ -184,6 +185,12 @@ func (m *mockOrgRepo) GetOrganizationPlan(orgId string) (*model.Subscription, er
 	}
 	return nil, nil
 }
+func (m *mockOrgRepo) RevokeAPIKeysByMember(orgId, memberId string) error {
+	if m.revokeAPIKeysByMemberFunc != nil {
+		return m.revokeAPIKeysByMemberFunc(orgId, memberId)
+	}
+	return nil
+}
 
 // ====================== SERVICE TESTS ======================
 
@@ -294,8 +301,30 @@ func TestCreateOrganization_MaxOrgsReached(t *testing.T) {
 	}
 }
 
+type mockWsEvicter struct {
+	evictedOrgID  string
+	evictedUserID string
+}
+
+func (m *mockWsEvicter) EvictUserFromOrg(orgID, userID string) {
+	m.evictedOrgID = orgID
+	m.evictedUserID = userID
+}
+
+type mockAPIKeyRevoker struct {
+	revokedOrgID  string
+	revokedUserID string
+}
+
+func (m *mockAPIKeyRevoker) RevokeKeysByOrgAndUser(orgID, userID string) error {
+	m.revokedOrgID = orgID
+	m.revokedUserID = userID
+	return nil
+}
+
 func TestKickMember_Success(t *testing.T) {
 	kicked := false
+	repoRevoked := false
 	repo := &mockOrgRepo{
 		getMemberByIdFunc: func(orgId, memberId string) (*model.OrganizationMember, error) {
 			return &model.OrganizationMember{}, nil
@@ -304,8 +333,16 @@ func TestKickMember_Success(t *testing.T) {
 			kicked = true
 			return nil
 		},
+		revokeAPIKeysByMemberFunc: func(orgId, memberId string) error {
+			repoRevoked = true
+			return nil
+		},
 	}
 	svc := NewOrganizationService(repo, nil)
+	wsEvicter := &mockWsEvicter{}
+	apiKeyRevoker := &mockAPIKeyRevoker{}
+	svc.SetWebSocketEvicter(wsEvicter)
+	svc.SetAPIKeyRevoker(apiKeyRevoker)
 
 	_, err := svc.KickMember("org-1", "actor-1", "member-1", "127.0.0.1")
 	if err != nil {
@@ -313,6 +350,15 @@ func TestKickMember_Success(t *testing.T) {
 	}
 	if !kicked {
 		t.Fatal("expected KickMember to be called")
+	}
+	if !repoRevoked {
+		t.Fatal("expected repo.RevokeAPIKeysByMember to be called")
+	}
+	if apiKeyRevoker.revokedOrgID != "org-1" || apiKeyRevoker.revokedUserID != "member-1" {
+		t.Fatalf("expected apiKeyRevoker to be called with org-1, member-1, got %s, %s", apiKeyRevoker.revokedOrgID, apiKeyRevoker.revokedUserID)
+	}
+	if wsEvicter.evictedOrgID != "org-1" || wsEvicter.evictedUserID != "member-1" {
+		t.Fatalf("expected wsEvicter to be called with org-1, member-1, got %s, %s", wsEvicter.evictedOrgID, wsEvicter.evictedUserID)
 	}
 }
 
@@ -675,6 +721,41 @@ func TestDemotedToMember_AlreadyMember(t *testing.T) {
 	}
 }
 
+func TestDemotedToMember_Success_RevokesAPIKey(t *testing.T) {
+	demoted := false
+	repoRevoked := false
+	repo := &mockOrgRepo{
+		getMemberByIdFunc: func(orgId, memberId string) (*model.OrganizationMember, error) {
+			return &model.OrganizationMember{Role: "admin"}, nil
+		},
+		demotedToMemberFunc: func(userId, orgId string) error {
+			demoted = true
+			return nil
+		},
+		revokeAPIKeysByMemberFunc: func(orgId, memberId string) error {
+			repoRevoked = true
+			return nil
+		},
+	}
+	svc := NewOrganizationService(repo, nil)
+	apiKeyRevoker := &mockAPIKeyRevoker{}
+	svc.SetAPIKeyRevoker(apiKeyRevoker)
+
+	_, err := svc.DemotedToMember("user-1", "org-1", "actor-1", "127.0.0.1")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !demoted {
+		t.Fatal("expected DemotedToMember to be called")
+	}
+	if !repoRevoked {
+		t.Fatal("expected repo.RevokeAPIKeysByMember to be called")
+	}
+	if apiKeyRevoker.revokedOrgID != "org-1" || apiKeyRevoker.revokedUserID != "user-1" {
+		t.Fatalf("expected apiKeyRevoker to be called with org-1, user-1, got %s, %s", apiKeyRevoker.revokedOrgID, apiKeyRevoker.revokedUserID)
+	}
+}
+
 func TestTransferOwnership_NotOwner(t *testing.T) {
 	targetID := uuid.New()
 	callerID := uuid.New()
@@ -705,6 +786,46 @@ func TestLeaveOrganization_OwnerBlocked(t *testing.T) {
 	_, err := svc.LeaveOrganization("user-1", "org-1", "127.0.0.1")
 	if err == nil {
 		t.Fatal("expected error when owner attempts to leave, got nil")
+	}
+}
+
+func TestLeaveOrganization_Success_EvictsWebSocketAndRevokesAPIKey(t *testing.T) {
+	left := false
+	repoRevoked := false
+	repo := &mockOrgRepo{
+		getMemberByIdFunc: func(orgId, memberId string) (*model.OrganizationMember, error) {
+			return &model.OrganizationMember{Role: "admin"}, nil
+		},
+		leaveOrgFunc: func(userId, orgId string) error {
+			left = true
+			return nil
+		},
+		revokeAPIKeysByMemberFunc: func(orgId, memberId string) error {
+			repoRevoked = true
+			return nil
+		},
+	}
+	svc := NewOrganizationService(repo, nil)
+	wsEvicter := &mockWsEvicter{}
+	apiKeyRevoker := &mockAPIKeyRevoker{}
+	svc.SetWebSocketEvicter(wsEvicter)
+	svc.SetAPIKeyRevoker(apiKeyRevoker)
+
+	_, err := svc.LeaveOrganization("user-1", "org-1", "127.0.0.1")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !left {
+		t.Fatal("expected LeaveOrganization to be called")
+	}
+	if !repoRevoked {
+		t.Fatal("expected repo.RevokeAPIKeysByMember to be called")
+	}
+	if apiKeyRevoker.revokedOrgID != "org-1" || apiKeyRevoker.revokedUserID != "user-1" {
+		t.Fatalf("expected apiKeyRevoker to be called with org-1, user-1, got %s, %s", apiKeyRevoker.revokedOrgID, apiKeyRevoker.revokedUserID)
+	}
+	if wsEvicter.evictedOrgID != "org-1" || wsEvicter.evictedUserID != "user-1" {
+		t.Fatalf("expected wsEvicter to be called with org-1, user-1, got %s, %s", wsEvicter.evictedOrgID, wsEvicter.evictedUserID)
 	}
 }
 

@@ -13,13 +13,13 @@
 - Run 'pnpm run format' on client folder
 - Run 'pnpm run build' on client folder
 
+# Client Rules
 - Always use **pnpm** as the package manager
 - Always use **SvelteKit (Svelte 5 + Runes)** as the framework
 - Always use **TypeScript** as the language
 - Always use **Tailwind CSS** as the styling
 - Always use **lucide-svelte** as the icons
 - Never use emoji in the code
-- Never hardcode any string, use localization instead
 - Always make the code clean and readable
 - Always follow the **SvelteKit** guidelines
 - Never use shadow drop

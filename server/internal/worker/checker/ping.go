@@ -1,9 +1,11 @@
 package checker
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
+	"netra-uptime/pkg/utils"
 	"os"
 	"strings"
 	"syscall"
@@ -26,8 +28,12 @@ func CheckPing(target string, timeout time.Duration) (duration time.Duration, er
 		host = h
 	}
 
+	if err := utils.ValidateTargetHost(host); err != nil {
+		return 0, err
+	}
+
 	start := time.Now()
-	ips, err := net.LookupIP(host)
+	ips, err := utils.ResolveSafeIPs(context.Background(), host)
 	if err != nil {
 		return time.Since(start), err
 	}
@@ -61,6 +67,10 @@ var errICMPUnavailable = errors.New("icmp sockets unavailable")
 func icmpEcho(ip net.IP, timeout time.Duration) (time.Duration, error) {
 	if timeout <= 0 {
 		return 0, errors.New("ping timed out")
+	}
+
+	if err := utils.IsRestrictedIP(ip); err != nil {
+		return 0, err
 	}
 
 	var (
@@ -144,6 +154,10 @@ func tcpReachable(ip net.IP, timeout time.Duration) (time.Duration, error) {
 		return 0, errors.New("ping timed out")
 	}
 
+	if err := utils.IsRestrictedIP(ip); err != nil {
+		return 0, err
+	}
+
 	start := time.Now()
 	var lastErr error
 	for _, port := range []string{"443", "80"} {
@@ -151,7 +165,7 @@ func tcpReachable(ip net.IP, timeout time.Duration) (time.Duration, error) {
 		if remaining <= 0 {
 			break
 		}
-		conn, err := net.DialTimeout("tcp", net.JoinHostPort(ip.String(), port), remaining)
+		conn, err := utils.SafeDialTimeout("tcp", net.JoinHostPort(ip.String(), port), remaining)
 		if err == nil {
 			_ = conn.Close()
 			return time.Since(start), nil

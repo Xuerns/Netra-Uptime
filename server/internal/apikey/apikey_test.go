@@ -21,11 +21,13 @@ func init() {
 
 // Mock Repository
 type mockAPIKeyRepo struct {
-	createFunc         func(key *model.APIKey) error
-	getAllByOrgIDFunc  func(orgID string) ([]model.APIKey, error)
-	getByHashFunc      func(keyHash string) (*model.APIKey, error)
-	deleteFunc         func(orgID, keyID string) error
-	updateLastUsedFunc func(keyID string, ip string) error
+	createFunc                 func(key *model.APIKey) error
+	getAllByOrgIDFunc          func(orgID string) ([]model.APIKey, error)
+	getByHashFunc              func(keyHash string) (*model.APIKey, error)
+	deleteFunc                 func(orgID, keyID string) error
+	updateLastUsedFunc         func(keyID string, ip string) error
+	getCreatorRoleFunc         func(orgID, userID string) (string, error)
+	revokeKeysByOrgAndUserFunc func(orgID, userID string) error
 }
 
 func (m *mockAPIKeyRepo) Create(key *model.APIKey) error {
@@ -61,6 +63,20 @@ func (m *mockAPIKeyRepo) Delete(orgID, keyID string) error {
 func (m *mockAPIKeyRepo) UpdateLastUsed(keyID string, ip string) error {
 	if m.updateLastUsedFunc != nil {
 		return m.updateLastUsedFunc(keyID, ip)
+	}
+	return nil
+}
+
+func (m *mockAPIKeyRepo) GetCreatorRole(orgID, userID string) (string, error) {
+	if m.getCreatorRoleFunc != nil {
+		return m.getCreatorRoleFunc(orgID, userID)
+	}
+	return "admin", nil
+}
+
+func (m *mockAPIKeyRepo) RevokeKeysByOrgAndUser(orgID, userID string) error {
+	if m.revokeKeysByOrgAndUserFunc != nil {
+		return m.revokeKeysByOrgAndUserFunc(orgID, userID)
 	}
 	return nil
 }
@@ -238,6 +254,113 @@ func TestValidateKey_Expired(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "expired") {
 		t.Errorf("unexpected error message: %v", err)
+	}
+}
+
+func TestValidateKey_CreatorDemotedOrRemoved(t *testing.T) {
+	keyID := uuid.New()
+	orgID := uuid.New()
+	creatorID := uuid.New()
+	plainKey := "pw_live_test_stale_creator"
+	keyHash := HashAPIKey(plainKey)
+
+	apiKey := &model.APIKey{
+		ID:             keyID,
+		OrganizationID: orgID,
+		CreatedByID:    creatorID,
+		KeyHash:        keyHash,
+		Permissions:    "write",
+	}
+
+	t.Run("creator is owner -> success", func(t *testing.T) {
+		repo := &mockAPIKeyRepo{
+			getByHashFunc: func(h string) (*model.APIKey, error) {
+				return apiKey, nil
+			},
+			getCreatorRoleFunc: func(o, u string) (string, error) {
+				return "owner", nil
+			},
+		}
+		svc := NewAPIKeyService(repo, nil)
+		key, err := svc.ValidateKey(plainKey)
+		if err != nil {
+			t.Fatalf("expected success, got error: %v", err)
+		}
+		if key.ID != keyID {
+			t.Errorf("expected key ID %s, got %s", keyID, key.ID)
+		}
+	})
+
+	t.Run("creator is admin -> success", func(t *testing.T) {
+		repo := &mockAPIKeyRepo{
+			getByHashFunc: func(h string) (*model.APIKey, error) {
+				return apiKey, nil
+			},
+			getCreatorRoleFunc: func(o, u string) (string, error) {
+				return "admin", nil
+			},
+		}
+		svc := NewAPIKeyService(repo, nil)
+		_, err := svc.ValidateKey(plainKey)
+		if err != nil {
+			t.Fatalf("expected success, got error: %v", err)
+		}
+	})
+
+	t.Run("creator demoted to member -> rejected", func(t *testing.T) {
+		repo := &mockAPIKeyRepo{
+			getByHashFunc: func(h string) (*model.APIKey, error) {
+				return apiKey, nil
+			},
+			getCreatorRoleFunc: func(o, u string) (string, error) {
+				return "member", nil
+			},
+		}
+		svc := NewAPIKeyService(repo, nil)
+		_, err := svc.ValidateKey(plainKey)
+		if err == nil {
+			t.Fatal("expected error for demoted creator, got nil")
+		}
+		if err.Error() != "API key creator is no longer an active administrator" {
+			t.Errorf("unexpected error message: %v", err)
+		}
+	})
+
+	t.Run("creator removed from org -> rejected", func(t *testing.T) {
+		repo := &mockAPIKeyRepo{
+			getByHashFunc: func(h string) (*model.APIKey, error) {
+				return apiKey, nil
+			},
+			getCreatorRoleFunc: func(o, u string) (string, error) {
+				return "", errors.New("record not found")
+			},
+		}
+		svc := NewAPIKeyService(repo, nil)
+		_, err := svc.ValidateKey(plainKey)
+		if err == nil {
+			t.Fatal("expected error for removed creator, got nil")
+		}
+		if err.Error() != "API key creator is no longer an active administrator" {
+			t.Errorf("unexpected error message: %v", err)
+		}
+	})
+}
+
+func TestRevokeKeysByOrgAndUser_Success(t *testing.T) {
+	called := false
+	repo := &mockAPIKeyRepo{
+		revokeKeysByOrgAndUserFunc: func(orgID, userID string) error {
+			called = true
+			return nil
+		},
+	}
+	svc := NewAPIKeyService(repo, nil)
+	err := svc.RevokeKeysByOrgAndUser("org-123", "user-456")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !called {
+		t.Fatal("expected RevokeKeysByOrgAndUser to be called on repo")
 	}
 }
 

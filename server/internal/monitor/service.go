@@ -187,7 +187,9 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 		return nil, errors.New("Failed to create new monitor")
 	}
 
-	s.rdb.Del(context.Background(), "monitors:org:"+orgId)
+	if s.rdb != nil {
+		s.rdb.Del(context.Background(), "monitors:org:"+orgId)
+	}
 
 	if s.auditService != nil {
 		monitorIDStr := monitor.ID.String()
@@ -308,14 +310,19 @@ func mapMonitorToResponse(m model.Monitor) MonitorResponse {
 
 func (s *MonitorServiceImpl) GetById(orgId, monitorId string) (*MonitorResponse, error) {
 	ctx := context.Background()
-	cacheKey := "monitor:" + monitorId
+	cacheKey := "monitor:org:" + orgId + ":" + monitorId
 
-	cacheData, err := s.rdb.Get(ctx, cacheKey).Result()
-	if err == nil && cacheData != "" {
-		var monitorResponse MonitorResponse
+	if s.rdb != nil {
+		cacheData, err := s.rdb.Get(ctx, cacheKey).Result()
+		if err == nil && cacheData != "" {
+			var monitorResponse MonitorResponse
 
-		if err := json.Unmarshal([]byte(cacheData), &monitorResponse); err == nil {
-			return &monitorResponse, nil
+			if err := json.Unmarshal([]byte(cacheData), &monitorResponse); err == nil {
+				if monitorResponse.OrganizationID == orgId {
+					return &monitorResponse, nil
+				}
+				return nil, errors.New("Failed to get Monitor")
+			}
 		}
 	}
 
@@ -327,8 +334,10 @@ func (s *MonitorServiceImpl) GetById(orgId, monitorId string) (*MonitorResponse,
 
 	response := mapMonitorToResponse(*monitor)
 
-	if jsonData, err := json.Marshal(response); err == nil {
-		s.rdb.Set(ctx, cacheKey, jsonData, 60*time.Second)
+	if s.rdb != nil {
+		if jsonData, err := json.Marshal(response); err == nil {
+			s.rdb.Set(ctx, cacheKey, jsonData, 60*time.Second)
+		}
 	}
 
 	return &response, nil
@@ -338,12 +347,14 @@ func (s *MonitorServiceImpl) GetAllMonitor(orgId string) ([]MonitorResponse, err
 	ctx := context.Background()
 	cacheKey := "monitors:org:" + orgId
 
-	cacheData, err := s.rdb.Get(ctx, cacheKey).Result()
-	if err == nil && cacheData != "" {
-		var monitorsResponse []MonitorResponse
+	if s.rdb != nil {
+		cacheData, err := s.rdb.Get(ctx, cacheKey).Result()
+		if err == nil && cacheData != "" {
+			var monitorsResponse []MonitorResponse
 
-		if err := json.Unmarshal([]byte(cacheData), &monitorsResponse); err == nil {
-			return monitorsResponse, nil
+			if err := json.Unmarshal([]byte(cacheData), &monitorsResponse); err == nil {
+				return monitorsResponse, nil
+			}
 		}
 	}
 
@@ -357,8 +368,10 @@ func (s *MonitorServiceImpl) GetAllMonitor(orgId string) ([]MonitorResponse, err
 		response = append(response, mapMonitorToResponse(m))
 	}
 
-	if jsonData, err := json.Marshal(response); err == nil {
-		s.rdb.Set(ctx, cacheKey, jsonData, 60*time.Second)
+	if s.rdb != nil {
+		if jsonData, err := json.Marshal(response); err == nil {
+			s.rdb.Set(ctx, cacheKey, jsonData, 60*time.Second)
+		}
 	}
 
 	return response, nil
@@ -485,8 +498,10 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 		}
 	}
 
-	s.rdb.Del(context.Background(), "monitors:org:"+orgId)
-	s.rdb.Del(context.Background(), "monitor:"+monitorId)
+	if s.rdb != nil {
+		s.rdb.Del(context.Background(), "monitors:org:"+orgId)
+		s.rdb.Del(context.Background(), "monitor:org:"+orgId+":"+monitorId)
+	}
 
 	if s.auditService != nil {
 		_ = s.auditService.Record(audit.RecordAuditLogParams{
@@ -508,8 +523,10 @@ func (s *MonitorServiceImpl) DeleteMonitor(orgId, userId, ipAddress, monitorId s
 		return errors.New("Failed to delete monitor")
 	}
 
-	s.rdb.Del(context.Background(), "monitors:org:"+orgId)
-	s.rdb.Del(context.Background(), "monitor:"+monitorId)
+	if s.rdb != nil {
+		s.rdb.Del(context.Background(), "monitors:org:"+orgId)
+		s.rdb.Del(context.Background(), "monitor:org:"+orgId+":"+monitorId)
+	}
 
 	if s.auditService != nil {
 		_ = s.auditService.Record(audit.RecordAuditLogParams{

@@ -13,6 +13,8 @@ type APIKeyRepository interface {
 	GetByHash(keyHash string) (*model.APIKey, error)
 	Delete(orgID, keyID string) error
 	UpdateLastUsed(keyID string, ip string) error
+	GetCreatorRole(orgID, userID string) (string, error)
+	RevokeKeysByOrgAndUser(orgID, userID string) error
 }
 
 type APIKeyRepositoryImpl struct {
@@ -52,4 +54,17 @@ func (r *APIKeyRepositoryImpl) UpdateLastUsed(keyID string, ip string) error {
 		"last_used_at": now,
 		"last_used_ip": ip,
 	}).Error
+}
+
+func (r *APIKeyRepositoryImpl) GetCreatorRole(orgID, userID string) (string, error) {
+	var member model.OrganizationMember
+	err := r.db.Where("organization_id = ? AND user_id = ?", orgID, userID).First(&member).Error
+	if err != nil {
+		return "", err
+	}
+	return member.Role, nil
+}
+
+func (r *APIKeyRepositoryImpl) RevokeKeysByOrgAndUser(orgID, userID string) error {
+	return r.db.Where("organization_id = ? AND created_by_id = ?", orgID, userID).Delete(&model.APIKey{}).Error
 }

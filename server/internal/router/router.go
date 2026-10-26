@@ -106,8 +106,8 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 	orgRoutes.GET("/monitors/:monitorId", h.MonitorHandler.GetById)
 	orgRoutes.GET("/monitors/:monitorId/stats", h.MonitorHandler.GetDailyStats)
 	orgRoutes.POST("/monitors/:monitorId/check", h.MonitorHandler.TriggerCheck)
-	orgRoutes.PUT("/monitors/:monitorId", h.MonitorHandler.UpdateMonitor)
-	orgRoutes.DELETE("/monitors/:monitorId", h.MonitorHandler.DeleteMonitor)
+	orgRoutes.PUT("/monitors/:monitorId", middleware.RequireRole("owner", "admin"), h.MonitorHandler.UpdateMonitor)
+	orgRoutes.DELETE("/monitors/:monitorId", middleware.RequireRole("owner", "admin"), h.MonitorHandler.DeleteMonitor)
 
 	// Alert Rules
 	orgRoutes.GET("/monitors/:monitorId/alert-rules", h.AlertRuleHandler.GetByMonitor)
@@ -137,21 +137,21 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 	orgRoutes.GET("/incident/:incidentId/updates", h.IncidentHandler.GetMessageAndUser)
 
 	// StatusPage
-	orgRoutes.POST("/statuspage", h.StatusPageHandler.CreateStatusPage)
+	orgRoutes.POST("/statuspage", middleware.RequireRole("owner", "admin"), h.StatusPageHandler.CreateStatusPage)
 	orgRoutes.GET("/statuspage", h.StatusPageHandler.GetAllStatusPage)
 	orgRoutes.GET("/statuspage/:statusPageId", h.StatusPageHandler.GetById)
 	orgRoutes.GET("/statuspage/:statusPageId/monitors", h.StatusPageHandler.GetStatusPageMonitor)
-	orgRoutes.DELETE("/statuspage/:statusPageId", h.StatusPageHandler.DeleteStatusPage)
-	orgRoutes.PUT("/statuspage/:statusPageId", h.StatusPageHandler.UpdateStatusPage)
-	orgRoutes.POST("/statuspage/:statusPageId/maintenance", h.StatusPageHandler.CreateMaintenance)
+	orgRoutes.DELETE("/statuspage/:statusPageId", middleware.RequireRole("owner", "admin"), h.StatusPageHandler.DeleteStatusPage)
+	orgRoutes.PUT("/statuspage/:statusPageId", middleware.RequireRole("owner", "admin"), h.StatusPageHandler.UpdateStatusPage)
+	orgRoutes.POST("/statuspage/:statusPageId/maintenance", middleware.RequireRole("owner", "admin"), h.StatusPageHandler.CreateMaintenance)
 	orgRoutes.GET("/statuspage/:statusPageId/maintenance", h.StatusPageHandler.GetMaintenances)
-	orgRoutes.PUT("/statuspage/:statusPageId/maintenance/:maintenanceId", h.StatusPageHandler.UpdateMaintenance)
-	orgRoutes.DELETE("/statuspage/:statusPageId/maintenance/:maintenanceId", h.StatusPageHandler.DeleteMaintenance)
-	orgRoutes.POST("/statuspage/:statusPageId/groups", h.StatusPageHandler.CreateComponentGroup)
+	orgRoutes.PUT("/statuspage/:statusPageId/maintenance/:maintenanceId", middleware.RequireRole("owner", "admin"), h.StatusPageHandler.UpdateMaintenance)
+	orgRoutes.DELETE("/statuspage/:statusPageId/maintenance/:maintenanceId", middleware.RequireRole("owner", "admin"), h.StatusPageHandler.DeleteMaintenance)
+	orgRoutes.POST("/statuspage/:statusPageId/groups", middleware.RequireRole("owner", "admin"), h.StatusPageHandler.CreateComponentGroup)
 	orgRoutes.GET("/statuspage/:statusPageId/groups", h.StatusPageHandler.GetComponentGroups)
-	orgRoutes.PUT("/statuspage/:statusPageId/groups/:groupId", h.StatusPageHandler.UpdateComponentGroup)
-	orgRoutes.DELETE("/statuspage/:statusPageId/groups/:groupId", h.StatusPageHandler.DeleteComponentGroup)
-	orgRoutes.PUT("/statuspage/:statusPageId/monitors/:monitorId/group", h.StatusPageHandler.AssignMonitorGroup)
+	orgRoutes.PUT("/statuspage/:statusPageId/groups/:groupId", middleware.RequireRole("owner", "admin"), h.StatusPageHandler.UpdateComponentGroup)
+	orgRoutes.DELETE("/statuspage/:statusPageId/groups/:groupId", middleware.RequireRole("owner", "admin"), h.StatusPageHandler.DeleteComponentGroup)
+	orgRoutes.PUT("/statuspage/:statusPageId/monitors/:monitorId/group", middleware.RequireRole("owner", "admin"), h.StatusPageHandler.AssignMonitorGroup)
 
 	// Audit Logs
 	orgRoutes.GET("/audit-logs", h.AuditHandler.GetOrgAuditLogs)

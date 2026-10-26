@@ -45,16 +45,12 @@ func (h *Hub) Run() {
 			h.mu.Unlock()
 		case client := <-h.Unregister:
 			h.mu.Lock()
-			closed := false
 			for _, orgID := range client.OrgIDs {
 				if _, ok := h.Rooms[orgID][client]; ok {
 					delete(h.Rooms[orgID], client)
-					if !closed {
-						close(client.Send)
-						closed = true
-					}
 				}
 			}
+			client.CloseSend()
 			h.mu.Unlock()
 		case message := <-h.Broadcast:
 			msgBytes, err := json.Marshal(message)
@@ -67,16 +63,12 @@ func (h *Hub) Run() {
 				select {
 				case client.Send <- msgBytes:
 				default:
-					closed := false
 					for _, orgID := range client.OrgIDs {
 						if _, ok := h.Rooms[orgID][client]; ok {
 							delete(h.Rooms[orgID], client)
-							if !closed {
-								close(client.Send)
-								closed = true
-							}
 						}
 					}
+					client.CloseSend()
 				}
 			}
 			h.mu.Unlock()
@@ -89,5 +81,28 @@ func (h *Hub) BroadcastToOrg(orgID, msgType string, payload interface{}) {
 		Room:    orgID,
 		Type:    msgType,
 		Payload: payload,
+	}
+}
+
+func (h *Hub) EvictUserFromOrg(orgID, userID string) {
+	if h == nil {
+		return
+	}
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	roomClients, exists := h.Rooms[orgID]
+	if !exists {
+		return
+	}
+
+	for client := range roomClients {
+		if client.UserID == userID {
+			delete(roomClients, client)
+			if client.Conn != nil {
+				_ = client.Conn.Close()
+			}
+			client.CloseSend()
+		}
 	}
 }

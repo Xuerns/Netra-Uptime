@@ -93,6 +93,12 @@ func (s *StatusPageServiceImpl) Create(orgID, userID, ipAddress string, req *Cre
 		return nil, errors.New("You're not member of this organization")
 	}
 
+	if len(req.MonitorID) > 0 {
+		if err := s.repo.ValidateMonitorsBelongToOrg(orgID, req.MonitorID); err != nil {
+			return nil, errors.New("one or more monitors do not belong to this organization")
+		}
+	}
+
 	var statusPageMonitor []model.StatusPageMonitor
 	for _, monitorID := range req.MonitorID {
 
@@ -310,6 +316,12 @@ func (s *StatusPageServiceImpl) Update(statuspageID, orgID, userID, ipAddress st
 	}
 
 	if req.MonitorID != nil {
+		if len(*req.MonitorID) > 0 {
+			if err := s.repo.ValidateMonitorsBelongToOrg(orgID, *req.MonitorID); err != nil {
+				return nil, errors.New("one or more monitors do not belong to this organization")
+			}
+		}
+
 		var statusPageMonitor []model.StatusPageMonitor
 		for _, monitorID := range *req.MonitorID {
 
@@ -623,6 +635,12 @@ func (s *StatusPageServiceImpl) CreateMaintenance(orgID, statusPageID, userID, i
 		return nil, errors.New("Status page not found")
 	}
 
+	if len(req.MonitorIDs) > 0 {
+		if err := s.repo.ValidateMonitorsBelongToOrg(orgID, req.MonitorIDs); err != nil {
+			return nil, errors.New("one or more monitors do not belong to this organization")
+		}
+	}
+
 	orgUUID, err := uuid.Parse(orgID)
 	if err != nil {
 		return nil, errors.New("Invalid organization ID")
@@ -731,6 +749,12 @@ func (s *StatusPageServiceImpl) UpdateMaintenance(orgID, statusPageID, maintenan
 	}
 	if req.ScheduledEnd != nil {
 		existing.ScheduledEnd = *req.ScheduledEnd
+	}
+
+	if req.MonitorIDs != nil && len(*req.MonitorIDs) > 0 {
+		if err := s.repo.ValidateMonitorsBelongToOrg(orgID, *req.MonitorIDs); err != nil {
+			return nil, errors.New("one or more monitors do not belong to this organization")
+		}
 	}
 
 	updated, err := s.repo.UpdateMaintenance(existing, req.MonitorIDs)
@@ -982,6 +1006,10 @@ func (s *StatusPageServiceImpl) AssignMonitorToGroup(orgID, statusPageID, monito
 	_, err = s.repo.GetById(statusPageID, orgID)
 	if err != nil {
 		return errors.New("Status page not found")
+	}
+
+	if err := s.repo.ValidateMonitorsBelongToOrg(orgID, []string{monitorID}); err != nil {
+		return errors.New("one or more monitors do not belong to this organization")
 	}
 
 	if req.GroupID != nil && *req.GroupID != "" {

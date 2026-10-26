@@ -448,6 +448,8 @@ func (m *mockOrgService) LeaveOrganization(userId, orgId, ipAddress string) (str
 func (m *mockOrgService) GetOrganizationPlan(orgId string) (*model.Subscription, error) {
 	return &model.Subscription{Plan: "hobby"}, nil
 }
+func (m *mockOrgService) SetWebSocketEvicter(evicter organization.WebSocketEvicter) {}
+func (m *mockOrgService) SetAPIKeyRevoker(revoker organization.APIKeyRevoker)       {}
 
 type mockMonService struct{}
 
@@ -566,7 +568,8 @@ func (m *mockKeyService) ValidateKey(plaintextKey string) (*model.APIKey, error)
 	}
 	return nil, errors.New("invalid API key")
 }
-func (m *mockKeyService) TouchLastUsed(keyID string, ip string) error { return nil }
+func (m *mockKeyService) TouchLastUsed(keyID string, ip string) error       { return nil }
+func (m *mockKeyService) RevokeKeysByOrgAndUser(orgID, userID string) error { return nil }
 
 type mockNotifService struct{}
 
@@ -955,6 +958,190 @@ func TestBadRoute_MemberCannotKick(t *testing.T) {
 	w := executeRequest(env.router, http.MethodDelete, "/api/v1/organization/"+orgID+"/kick", nil, token, nil)
 	if w.Code != http.StatusForbidden {
 		t.Errorf("expected 403 for member kicking someone, got %d", w.Code)
+	}
+}
+
+func TestBadRoute_MemberCannotUpdateMonitor(t *testing.T) {
+	env, cleanup := setupTestRouter(t)
+	defer cleanup()
+	userID := uuid.New().String()
+	orgID := uuid.New().String()
+	monitorID := uuid.New().String()
+	setMockMember(orgID, userID, "member")
+	token := createValidToken(userID)
+
+	w := executeRequest(env.router, http.MethodPut, "/api/v1/organization/"+orgID+"/monitors/"+monitorID, []byte(`{}`), token, nil)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected 403 for member updating monitor, got %d", w.Code)
+	}
+}
+
+func TestBadRoute_MemberCannotDeleteMonitor(t *testing.T) {
+	env, cleanup := setupTestRouter(t)
+	defer cleanup()
+	userID := uuid.New().String()
+	orgID := uuid.New().String()
+	monitorID := uuid.New().String()
+	setMockMember(orgID, userID, "member")
+	token := createValidToken(userID)
+
+	w := executeRequest(env.router, http.MethodDelete, "/api/v1/organization/"+orgID+"/monitors/"+monitorID, nil, token, nil)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected 403 for member deleting monitor, got %d", w.Code)
+	}
+}
+
+func TestBadRoute_MemberCannotCreateStatusPage(t *testing.T) {
+	env, cleanup := setupTestRouter(t)
+	defer cleanup()
+	userID := uuid.New().String()
+	orgID := uuid.New().String()
+	setMockMember(orgID, userID, "member")
+	token := createValidToken(userID)
+
+	w := executeRequest(env.router, http.MethodPost, "/api/v1/organization/"+orgID+"/statuspage", []byte(`{}`), token, nil)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected 403 for member creating status page, got %d", w.Code)
+	}
+}
+
+func TestBadRoute_MemberCannotUpdateStatusPage(t *testing.T) {
+	env, cleanup := setupTestRouter(t)
+	defer cleanup()
+	userID := uuid.New().String()
+	orgID := uuid.New().String()
+	spID := uuid.New().String()
+	setMockMember(orgID, userID, "member")
+	token := createValidToken(userID)
+
+	w := executeRequest(env.router, http.MethodPut, "/api/v1/organization/"+orgID+"/statuspage/"+spID, []byte(`{}`), token, nil)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected 403 for member updating status page, got %d", w.Code)
+	}
+}
+
+func TestBadRoute_MemberCannotDeleteStatusPage(t *testing.T) {
+	env, cleanup := setupTestRouter(t)
+	defer cleanup()
+	userID := uuid.New().String()
+	orgID := uuid.New().String()
+	spID := uuid.New().String()
+	setMockMember(orgID, userID, "member")
+	token := createValidToken(userID)
+
+	w := executeRequest(env.router, http.MethodDelete, "/api/v1/organization/"+orgID+"/statuspage/"+spID, nil, token, nil)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected 403 for member deleting status page, got %d", w.Code)
+	}
+}
+
+func TestBadRoute_MemberCannotCreateMaintenance(t *testing.T) {
+	env, cleanup := setupTestRouter(t)
+	defer cleanup()
+	userID := uuid.New().String()
+	orgID := uuid.New().String()
+	spID := uuid.New().String()
+	setMockMember(orgID, userID, "member")
+	token := createValidToken(userID)
+
+	w := executeRequest(env.router, http.MethodPost, "/api/v1/organization/"+orgID+"/statuspage/"+spID+"/maintenance", []byte(`{}`), token, nil)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected 403 for member creating maintenance, got %d", w.Code)
+	}
+}
+
+func TestBadRoute_MemberCannotUpdateMaintenance(t *testing.T) {
+	env, cleanup := setupTestRouter(t)
+	defer cleanup()
+	userID := uuid.New().String()
+	orgID := uuid.New().String()
+	spID := uuid.New().String()
+	mID := uuid.New().String()
+	setMockMember(orgID, userID, "member")
+	token := createValidToken(userID)
+
+	w := executeRequest(env.router, http.MethodPut, "/api/v1/organization/"+orgID+"/statuspage/"+spID+"/maintenance/"+mID, []byte(`{}`), token, nil)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected 403 for member updating maintenance, got %d", w.Code)
+	}
+}
+
+func TestBadRoute_MemberCannotDeleteMaintenance(t *testing.T) {
+	env, cleanup := setupTestRouter(t)
+	defer cleanup()
+	userID := uuid.New().String()
+	orgID := uuid.New().String()
+	spID := uuid.New().String()
+	mID := uuid.New().String()
+	setMockMember(orgID, userID, "member")
+	token := createValidToken(userID)
+
+	w := executeRequest(env.router, http.MethodDelete, "/api/v1/organization/"+orgID+"/statuspage/"+spID+"/maintenance/"+mID, nil, token, nil)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected 403 for member deleting maintenance, got %d", w.Code)
+	}
+}
+
+func TestBadRoute_MemberCannotCreateComponentGroup(t *testing.T) {
+	env, cleanup := setupTestRouter(t)
+	defer cleanup()
+	userID := uuid.New().String()
+	orgID := uuid.New().String()
+	spID := uuid.New().String()
+	setMockMember(orgID, userID, "member")
+	token := createValidToken(userID)
+
+	w := executeRequest(env.router, http.MethodPost, "/api/v1/organization/"+orgID+"/statuspage/"+spID+"/groups", []byte(`{}`), token, nil)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected 403 for member creating component group, got %d", w.Code)
+	}
+}
+
+func TestBadRoute_MemberCannotUpdateComponentGroup(t *testing.T) {
+	env, cleanup := setupTestRouter(t)
+	defer cleanup()
+	userID := uuid.New().String()
+	orgID := uuid.New().String()
+	spID := uuid.New().String()
+	gID := uuid.New().String()
+	setMockMember(orgID, userID, "member")
+	token := createValidToken(userID)
+
+	w := executeRequest(env.router, http.MethodPut, "/api/v1/organization/"+orgID+"/statuspage/"+spID+"/groups/"+gID, []byte(`{}`), token, nil)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected 403 for member updating component group, got %d", w.Code)
+	}
+}
+
+func TestBadRoute_MemberCannotDeleteComponentGroup(t *testing.T) {
+	env, cleanup := setupTestRouter(t)
+	defer cleanup()
+	userID := uuid.New().String()
+	orgID := uuid.New().String()
+	spID := uuid.New().String()
+	gID := uuid.New().String()
+	setMockMember(orgID, userID, "member")
+	token := createValidToken(userID)
+
+	w := executeRequest(env.router, http.MethodDelete, "/api/v1/organization/"+orgID+"/statuspage/"+spID+"/groups/"+gID, nil, token, nil)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected 403 for member deleting component group, got %d", w.Code)
+	}
+}
+
+func TestBadRoute_MemberCannotAssignMonitorGroup(t *testing.T) {
+	env, cleanup := setupTestRouter(t)
+	defer cleanup()
+	userID := uuid.New().String()
+	orgID := uuid.New().String()
+	spID := uuid.New().String()
+	mID := uuid.New().String()
+	setMockMember(orgID, userID, "member")
+	token := createValidToken(userID)
+
+	w := executeRequest(env.router, http.MethodPut, "/api/v1/organization/"+orgID+"/statuspage/"+spID+"/monitors/"+mID+"/group", []byte(`{}`), token, nil)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected 403 for member assigning monitor group, got %d", w.Code)
 	}
 }
 

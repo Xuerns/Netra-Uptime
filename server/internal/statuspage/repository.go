@@ -37,6 +37,7 @@ type StatusPageRepository interface {
 	UpdateComponentGroup(group *model.ComponentGroup) (*model.ComponentGroup, error)
 	DeleteComponentGroup(groupID, statusPageID string) error
 	AssignMonitorToGroup(statusPageID, monitorID string, groupID *string) error
+	ValidateMonitorsBelongToOrg(orgID string, monitorIDs []string) error
 }
 
 type StatusPageRepositoryImpl struct {
@@ -561,4 +562,47 @@ func (r *StatusPageRepositoryImpl) AssignMonitorToGroup(statusPageID, monitorID 
 	return r.db.Model(&model.StatusPageMonitor{}).
 		Where("status_page_id = ? AND monitor_id = ?", statusPageID, monitorID).
 		Update("group_id", parsedGroupID).Error
+}
+
+func (r *StatusPageRepositoryImpl) ValidateMonitorsBelongToOrg(orgID string, monitorIDs []string) error {
+	if len(monitorIDs) == 0 {
+		return nil
+	}
+
+	orgUUID, err := uuid.Parse(orgID)
+	if err != nil {
+		return errors.New("invalid organization id")
+	}
+
+	uniqueMap := make(map[uuid.UUID]struct{})
+	for _, idStr := range monitorIDs {
+		parsed, err := uuid.Parse(idStr)
+		if err != nil {
+			return errors.New("one or more monitors do not belong to this organization")
+		}
+		uniqueMap[parsed] = struct{}{}
+	}
+
+	if len(uniqueMap) == 0 {
+		return nil
+	}
+
+	uniqueList := make([]uuid.UUID, 0, len(uniqueMap))
+	for id := range uniqueMap {
+		uniqueList = append(uniqueList, id)
+	}
+
+	var count int64
+	err = r.db.Model(&model.Monitor{}).
+		Where("organization_id = ? AND id IN ?", orgUUID, uniqueList).
+		Count(&count).Error
+	if err != nil {
+		return err
+	}
+
+	if count != int64(len(uniqueMap)) {
+		return errors.New("one or more monitors do not belong to this organization")
+	}
+
+	return nil
 }

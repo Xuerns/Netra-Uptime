@@ -8,6 +8,7 @@ import (
 	"netra-uptime/internal/model"
 	"netra-uptime/pkg/jwt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -43,6 +44,9 @@ func (m *mockAPIKeyService) ValidateKey(plaintextKey string) (*model.APIKey, err
 	return nil, errors.New("invalid API key")
 }
 func (m *mockAPIKeyService) TouchLastUsed(keyID string, ip string) error {
+	return nil
+}
+func (m *mockAPIKeyService) RevokeKeysByOrgAndUser(orgID, userID string) error {
 	return nil
 }
 
@@ -260,6 +264,31 @@ func TestAPIKeyAuthMiddleware_NoHeader(t *testing.T) {
 
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("expected 401, got %d", w.Code)
+	}
+}
+
+func TestAPIKeyAuthMiddleware_CreatorNoLongerAdmin(t *testing.T) {
+	mock := &mockAPIKeyService{
+		validateKeyFunc: func(key string) (*model.APIKey, error) {
+			return nil, errors.New("API key creator is no longer an active administrator")
+		},
+	}
+	r := gin.New()
+	r.Use(APIKeyAuthMiddleware(mock, nil))
+	r.GET("/public", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	req, _ := http.NewRequest(http.MethodGet, "/public", nil)
+	req.Header.Set("X-API-Key", "pw_live_test_creator_removed")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected 401, got %d", w.Code)
+	}
+	if !strings.Contains(w.Body.String(), "API key creator is no longer an active administrator") {
+		t.Errorf("expected creator error message, got: %s", w.Body.String())
 	}
 }
 

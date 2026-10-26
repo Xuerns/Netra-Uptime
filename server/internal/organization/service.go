@@ -12,6 +12,14 @@ import (
 	"github.com/google/uuid"
 )
 
+type WebSocketEvicter interface {
+	EvictUserFromOrg(orgID, userID string)
+}
+
+type APIKeyRevoker interface {
+	RevokeKeysByOrgAndUser(orgID, userID string) error
+}
+
 type OrganizationService interface {
 	GetAllOrganization(userId string) (*[]GetAllOrganizationResponse, error)
 	GetOrganizationAllMember(orgId, memberId string) (*[]MemberResponse, error)
@@ -28,12 +36,16 @@ type OrganizationService interface {
 	TransferOwnership(ownerId, userId, orgId, ipAddress string) (string, error)
 	LeaveOrganization(userId, orgId, ipAddress string) (string, error)
 	GetOrganizationPlan(orgId string) (*model.Subscription, error)
+	SetWebSocketEvicter(evicter WebSocketEvicter)
+	SetAPIKeyRevoker(revoker APIKeyRevoker)
 }
 
 type OrganizationServiceImpl struct {
-	repo         OrganizationRepository
-	auditService audit.AuditService
-	cfg          *config.Config
+	repo          OrganizationRepository
+	auditService  audit.AuditService
+	cfg           *config.Config
+	wsEvicter     WebSocketEvicter
+	apiKeyRevoker APIKeyRevoker
 }
 
 func NewOrganizationService(repo OrganizationRepository, auditService audit.AuditService, cfg ...*config.Config) OrganizationService {
@@ -42,6 +54,21 @@ func NewOrganizationService(repo OrganizationRepository, auditService audit.Audi
 		c = cfg[0]
 	}
 	return &OrganizationServiceImpl{repo: repo, auditService: auditService, cfg: c}
+}
+
+func (s *OrganizationServiceImpl) SetWebSocketEvicter(evicter WebSocketEvicter) {
+	s.wsEvicter = evicter
+}
+
+func (s *OrganizationServiceImpl) SetAPIKeyRevoker(revoker APIKeyRevoker) {
+	s.apiKeyRevoker = revoker
+}
+
+func (s *OrganizationServiceImpl) revokeMemberAPIKeys(orgID, userID string) {
+	if s.apiKeyRevoker != nil {
+		_ = s.apiKeyRevoker.RevokeKeysByOrgAndUser(orgID, userID)
+	}
+	_ = s.repo.RevokeAPIKeysByMember(orgID, userID)
 }
 
 func (s *OrganizationServiceImpl) getConfig() *config.Config {
@@ -234,6 +261,12 @@ func (s *OrganizationServiceImpl) KickMember(orgId, actorId, memberId, ipAddress
 
 	if err := s.repo.KickMember(orgId, memberId); err != nil {
 		return "", err
+	}
+
+	s.revokeMemberAPIKeys(orgId, memberId)
+
+	if s.wsEvicter != nil {
+		s.wsEvicter.EvictUserFromOrg(orgId, memberId)
 	}
 
 	if s.auditService != nil {
@@ -581,6 +614,8 @@ func (s *OrganizationServiceImpl) DemotedToMember(userId, orgId, actorId, ipAddr
 		return "", err
 	}
 
+	s.revokeMemberAPIKeys(orgId, userId)
+
 	if s.auditService != nil {
 		_ = s.auditService.Record(audit.RecordAuditLogParams{
 			OrganizationID: orgId,
@@ -642,6 +677,12 @@ func (s *OrganizationServiceImpl) LeaveOrganization(userId, orgId, ipAddress str
 
 	if err := s.repo.LeaveOrganization(userId, orgId); err != nil {
 		return "", err
+	}
+
+	s.revokeMemberAPIKeys(orgId, userId)
+
+	if s.wsEvicter != nil {
+		s.wsEvicter.EvictUserFromOrg(orgId, userId)
 	}
 
 	if s.auditService != nil {

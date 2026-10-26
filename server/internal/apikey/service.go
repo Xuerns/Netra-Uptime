@@ -19,6 +19,7 @@ type APIKeyService interface {
 	RevokeKey(orgID, userID, keyID string, ip string) error
 	ValidateKey(plaintextKey string) (*model.APIKey, error)
 	TouchLastUsed(keyID string, ip string) error
+	RevokeKeysByOrgAndUser(orgID, userID string) error
 }
 
 type APIKeyServiceImpl struct {
@@ -148,7 +149,16 @@ func (s *APIKeyServiceImpl) ValidateKey(plaintextKey string) (*model.APIKey, err
 		return nil, errors.New("API key has expired")
 	}
 
+	role, err := s.repo.GetCreatorRole(key.OrganizationID.String(), key.CreatedByID.String())
+	if err != nil || (role != "admin" && role != "owner") {
+		return nil, errors.New("API key creator is no longer an active administrator")
+	}
+
 	return key, nil
+}
+
+func (s *APIKeyServiceImpl) RevokeKeysByOrgAndUser(orgID, userID string) error {
+	return s.repo.RevokeKeysByOrgAndUser(orgID, userID)
 }
 
 func (s *APIKeyServiceImpl) TouchLastUsed(keyID string, ip string) error {

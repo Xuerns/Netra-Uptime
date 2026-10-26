@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"log"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -15,11 +16,18 @@ const (
 )
 
 type Client struct {
-	Hub    *Hub
-	Conn   *websocket.Conn
-	Send   chan []byte
-	UserID string
-	OrgIDs []string
+	Hub       *Hub
+	Conn      *websocket.Conn
+	Send      chan []byte
+	UserID    string
+	OrgIDs    []string
+	closeOnce sync.Once
+}
+
+func (c *Client) CloseSend() {
+	c.closeOnce.Do(func() {
+		close(c.Send)
+	})
 }
 
 func (c *Client) ReadPump() {

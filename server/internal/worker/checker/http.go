@@ -2,13 +2,23 @@ package checker
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"netra-uptime/pkg/utils"
 	"time"
 )
 
 func CheckHTTP(target string, timeout time.Duration, expectedStatus int) (statusCode int, duration time.Duration, err error) {
-	client := &http.Client{
-		Timeout: timeout,
+	if err := utils.ValidateTargetHost(target); err != nil {
+		return 0, 0, err
+	}
+
+	client := utils.NewSafeHTTPClient(timeout)
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		if len(via) >= 5 {
+			return errors.New("stopped after 5 redirects")
+		}
+		return utils.ValidateTargetHost(req.URL.String())
 	}
 
 	start := time.Now()

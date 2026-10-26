@@ -21,7 +21,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func BuildHandler(db *gorm.DB, rdb *redis.Client, wp *worker.WorkerPool, cfg *config.Config) router.Handlers {
+func BuildHandler(db *gorm.DB, rdb *redis.Client, wp *worker.WorkerPool, cfg *config.Config, wsEvicter ...organization.WebSocketEvicter) router.Handlers {
 	authRepo := auth.NewAuthRepository(db)
 	authService := auth.NewAuthService(authRepo, rdb)
 	authHandler := auth.NewAuthHandler(authService)
@@ -32,6 +32,9 @@ func BuildHandler(db *gorm.DB, rdb *redis.Client, wp *worker.WorkerPool, cfg *co
 
 	organizationRepo := organization.NewOrganizationRepository(db)
 	organizationService := organization.NewOrganizationService(organizationRepo, auditService, cfg)
+	if len(wsEvicter) > 0 && wsEvicter[0] != nil {
+		organizationService.SetWebSocketEvicter(wsEvicter[0])
+	}
 	organizationHandler := organization.NewOrganizationHandler(organizationService)
 
 	monitorRepo := monitor.NewMonitorRepository(db, cfg)
@@ -48,6 +51,7 @@ func BuildHandler(db *gorm.DB, rdb *redis.Client, wp *worker.WorkerPool, cfg *co
 
 	apiKeyRepo := apikey.NewAPIKeyRepository(db)
 	apiKeyService := apikey.NewAPIKeyService(apiKeyRepo, auditService)
+	organizationService.SetAPIKeyRevoker(apiKeyService)
 	apiKeyHandler := apikey.NewAPIKeyHandler(apiKeyService)
 
 	publicAPIHandler := publicapi.NewPublicAPIHandler(monitorServise, incidentService, statuspageService)

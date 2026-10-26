@@ -31,6 +31,7 @@ type OrganizationRepository interface {
 	TotalOrganizationUser(useId string) (int64, error)
 	TotalOrganizationMember(orgId string) (int64, error)
 	GetOrganizationPlan(orgId string) (*model.Subscription, error)
+	RevokeAPIKeysByMember(orgId, memberId string) error
 }
 
 type OrganizationRepositoryImpl struct {
@@ -301,4 +302,8 @@ func (r *OrganizationRepositoryImpl) GetOrganizationPlan(orgId string) (*model.S
 		return nil, err
 	}
 	return &subscription, nil
+}
+
+func (r *OrganizationRepositoryImpl) RevokeAPIKeysByMember(orgId, memberId string) error {
+	return r.db.Where("organization_id = ? AND created_by_id = ?", orgId, memberId).Delete(&model.APIKey{}).Error
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"netra-uptime/pkg/utils"
 	"strings"
 	"time"
 )
@@ -63,17 +64,36 @@ func CheckSSLExpiry(target string, timeout time.Duration) *SSLCheckResult {
 		}
 	}
 
-	dialer := &net.Dialer{Timeout: timeout}
-	addr := net.JoinHostPort(hostname, port)
+	// Validate target hostname against SSRF before dialing
+	if err := utils.ValidateTargetHost(hostname); err != nil {
+		return &SSLCheckResult{
+			Status:   "error",
+			ErrorMsg: fmt.Sprintf("Restricted Target: %s", err.Error()),
+		}
+	}
 
-	conn, dialErr := tls.DialWithDialer(dialer, "tcp", addr, &tls.Config{
+	addr := net.JoinHostPort(hostname, port)
+	rawConn, dialErr := utils.SafeDialTimeout("tcp", addr, timeout)
+	if dialErr != nil {
+		errMsg := mapSSLError(dialErr)
+		return &SSLCheckResult{
+			Status:   "error",
+			ErrorMsg: errMsg,
+		}
+	}
+	defer func() {
+		_ = rawConn.Close()
+	}()
+
+	tlsConfig := &tls.Config{
 		ServerName: hostname,
 		// #nosec G402 -- InsecureSkipVerify is required to inspect certificates even when expired or untrusted
 		InsecureSkipVerify: true,
-	})
-
-	if dialErr != nil {
-		errMsg := mapSSLError(dialErr)
+	}
+	conn := tls.Client(rawConn, tlsConfig)
+	_ = conn.SetDeadline(time.Now().Add(timeout))
+	if err := conn.Handshake(); err != nil {
+		errMsg := mapSSLError(err)
 		return &SSLCheckResult{
 			Status:   "error",
 			ErrorMsg: errMsg,
@@ -112,7 +132,10 @@ func CheckSSLExpiry(target string, timeout time.Duration) *SSLCheckResult {
 
 func mapSSLError(err error) string {
 	errStr := err.Error()
-	if strings.Contains(errStr, "no such host") {
+	if strings.Contains(errStr, "restricted") || strings.Contains(errStr, "prohibited") || strings.Contains(errStr, "SSRF") {
+		return fmt.Sprintf("Restricted Target: %s", errStr)
+	}
+	if strings.Contains(errStr, "no such host") || strings.Contains(errStr, "failed to resolve") {
 		return "DNS Lookup Failed: Hostname could not be resolved"
 	}
 	if strings.Contains(errStr, "timeout") || strings.Contains(errStr, "i/o timeout") {

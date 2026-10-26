@@ -49,6 +49,12 @@ func NewWsHandler(Hub *Hub, db *gorm.DB) *WsHandler {
 	return &WsHandler{Hub: Hub, db: db}
 }
 
+func (h *WsHandler) EvictUserFromOrg(orgID, userID string) {
+	if h != nil && h.Hub != nil {
+		h.Hub.EvictUserFromOrg(orgID, userID)
+	}
+}
+
 func (h *WsHandler) ServeWS(c *gin.Context) {
 	userId, exist := c.Get("userID")
 	if !exist {
