@@ -182,7 +182,7 @@
 		isRefreshing = true;
 		try {
 			const subdomain = $page.params.subdomain;
-			const apiUrl = env.PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+			const apiUrl = env.PUBLIC_API_URL || 'http://localhost:27346/api/v1';
 			const res = await fetch(`${apiUrl}/public/statuspage/${subdomain}`);
 			if (res.ok) {
 				const json = await res.json();

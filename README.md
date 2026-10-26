@@ -54,7 +54,7 @@ curl -fsSL https://raw.githubusercontent.com/Xuerns/Netra-Uptime/main/docker-com
 docker compose up -d
 ```
 
-Once running, access the dashboard at: **[http://localhost:8080](http://localhost:8080)**.
+Once running, access the dashboard at: **[http://localhost:27346](http://localhost:27346)**.
 
 ## Key Features
 

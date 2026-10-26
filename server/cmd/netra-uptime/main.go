@@ -82,7 +82,7 @@ func main() {
 	handlers := BuildHandler(db, rdb, wp, config)
 	router.SetupRouter(r, db, rdb, handlers, wsHandler)
 
-	addr := ":8080"
+	addr := ":27346"
 	if config.Port != "" {
 		addr = ":" + config.Port
 	}

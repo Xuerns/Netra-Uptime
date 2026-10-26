@@ -23,7 +23,7 @@ Commands:
   help      Show this help
 
 Options:
-  --port <n>   Host port for the web UI (default: 8080)
+  --port <n>   Host port for the web UI (default: 27346)
   --dir <path> Install directory (default: ~/.netra-uptime)
   --force      Overwrite existing .env / docker-compose.yml (init)
 `;
@@ -61,7 +61,7 @@ function ensureDocker() {
 }
 
 function init(dir, opts) {
-  const port = Number(opts.port || 8080);
+  const port = Number(opts.port || 27346);
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     console.error('✖ Invalid --port value');
     process.exit(1);
@@ -92,7 +92,7 @@ function init(dir, opts) {
   return { dir, port };
 }
 
-function getPortFromEnv(dir, fallback = '8080') {
+function getPortFromEnv(dir, fallback = '27346') {
   try {
     const envContent = readFileSync(join(dir, '.env'), 'utf-8');
     const match = envContent.match(/^HOST_PORT=(\d+)/m);
@@ -129,7 +129,7 @@ Next steps:
       ensureDocker();
       init(dir, opts);
       run('docker', ['compose', 'up', '-d'], dir);
-      const activePort = opts.port || getPortFromEnv(dir, '8080');
+      const activePort = opts.port || getPortFromEnv(dir, '27346');
       console.log(`
 ⫸ Netra Uptime is up and running! ⫷
    Web Dashboard: http://localhost:${activePort}

@@ -34,7 +34,7 @@ func TestEvaluateRules_DefaultFallback(t *testing.T) {
 	}
 
 	// 4. Fatal Connection Error -> critical (red)
-	res = EvaluateRules(mon, nil, 0, 100*time.Millisecond, errors.New("dial tcp 127.0.0.1:8080: connect: connection refused"))
+	res = EvaluateRules(mon, nil, 0, 100*time.Millisecond, errors.New("dial tcp 127.0.0.1:27346: connect: connection refused"))
 	if !res.IsBreached || res.Severity != "critical" || res.RuleName != "Connection Failure" {
 		t.Errorf("Expected critical breach for connection refused, got: %+v", res)
 	}

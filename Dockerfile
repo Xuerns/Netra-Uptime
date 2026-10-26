@@ -35,9 +35,9 @@ COPY --from=server-builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 COPY --from=server-builder /app/server/netra-uptime ./netra-uptime
 
-EXPOSE 8080
+EXPOSE 27346
 
-ENV PORT=8080
+ENV PORT=27346
 ENV APP_ENV=production
 ENV APP_MODE=selfhosted
 

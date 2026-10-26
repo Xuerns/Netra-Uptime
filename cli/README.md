@@ -46,7 +46,7 @@ Then run anywhere:
 netra-uptime start
 ```
 
-Netra Uptime web dashboard will be available at: **http://localhost:8080**
+Netra Uptime web dashboard will be available at: **http://localhost:27346**
 
 ---
 
@@ -67,7 +67,7 @@ Netra Uptime web dashboard will be available at: **http://localhost:8080**
 ## Options
 
 ### Custom Port
-By default, Netra Uptime runs on port `8080`. You can change the port with `--port`:
+By default, Netra Uptime runs on port `27346`. You can change the port with `--port`:
 
 ```bash
 npx netra-uptime start --port 3000

@@ -14,7 +14,7 @@ func TestValidateTargetHost(t *testing.T) {
 	}{
 		{
 			name:    "Block loopback IP",
-			target:  "http://127.0.0.1:8080/health",
+			target:  "http://127.0.0.1:27346/health",
 			wantErr: true,
 		},
 		{
@@ -61,7 +61,7 @@ func TestValidateTargetHost(t *testing.T) {
 		},
 		{
 			name:         "Loopback still blocked even when allowPrivate is true",
-			target:       "http://127.0.0.1:8080",
+			target:       "http://127.0.0.1:27346",
 			allowPrivate: true,
 			wantErr:      true,
 		},

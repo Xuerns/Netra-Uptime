@@ -35,7 +35,7 @@ Build and spin up the complete application stack (app container, PostgreSQL, and
 docker compose up --build
 ```
 
-The web interface will be accessible at: `http://localhost:8080`.
+The web interface will be accessible at: `http://localhost:27346`.
 
 ---
 

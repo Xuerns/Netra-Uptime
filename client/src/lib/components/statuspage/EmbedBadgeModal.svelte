@@ -17,7 +17,7 @@
 		if (typeof window !== 'undefined') {
 			return window.location.origin;
 		}
-		return env.PUBLIC_API_URL || 'http://localhost:8080';
+		return env.PUBLIC_API_URL || 'http://localhost:27346';
 	});
 
 	let badgeUrl = $derived(

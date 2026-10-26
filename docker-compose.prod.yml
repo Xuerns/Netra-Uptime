@@ -9,10 +9,10 @@ services:
     environment:
       - APP_ENV=production
       - APP_MODE=selfhosted
-      - PORT=8080
+      - PORT=27346
       - JWT_SECRET=change_me_to_a_random_secret_of_at_least_32_characters
-      - ALLOWED_ORIGIN=http://localhost:8080
-      - PUBLIC_API_URL=http://localhost:8080/api/v1
+      - ALLOWED_ORIGIN=http://localhost:27346
+      - PUBLIC_API_URL=http://localhost:27346/api/v1
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USER=netra
@@ -30,9 +30,9 @@ services:
       - SELFHOSTED_MIN_INTERVAL=10
       - SELFHOSTED_MAX_TIMEOUT=60
     ports:
-      - "8080:8080"
+      - "27346:27346"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/healthz || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:27346/healthz || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3

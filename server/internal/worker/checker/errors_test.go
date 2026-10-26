@@ -47,7 +47,7 @@ func TestClassifyNetworkError(t *testing.T) {
 		},
 		{
 			name:     "connection refused",
-			err:      errors.New("dial tcp 127.0.0.1:8080: connect: connection refused"),
+			err:      errors.New("dial tcp 127.0.0.1:27346: connect: connection refused"),
 			expected: ErrorTypeConnectionRefused,
 		},
 		{

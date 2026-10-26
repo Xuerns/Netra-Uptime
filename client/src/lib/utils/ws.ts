@@ -42,7 +42,7 @@ class WebSocketClient {
 		this.isConnecting = true;
 
 		// Convert http:// to ws:// and https:// to wss://
-		const apiBase = env.PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+		const apiBase = env.PUBLIC_API_URL || 'http://localhost:27346/api/v1';
 		const wsUrl = apiBase.replace(/^http/, 'ws') + '/ws';
 
 		logDev('[WebSocket] Connecting to:', wsUrl);

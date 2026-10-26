@@ -6,7 +6,7 @@ export function generateEnv(c) {
 APP_ENV=production
 APP_MODE=selfhosted
 PUBLIC_APP_MODE=selfhosted
-PORT=8080
+PORT=27346
 
 # Security
 JWT_SECRET=${c.jwtSecret}
@@ -96,9 +96,9 @@ services:
     env_file:
       - .env
     ports:
-      - "\${HOST_PORT:-8080}:8080"
+      - "\${HOST_PORT:-27346}:27346"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/healthz || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:27346/healthz || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3

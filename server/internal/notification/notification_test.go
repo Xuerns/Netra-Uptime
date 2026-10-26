@@ -139,7 +139,7 @@ func TestValidateConfig_Slack_PrivateIP_10x(t *testing.T) {
 
 func TestValidateConfig_Slack_Localhost(t *testing.T) {
 	err := validateConfig("slack", map[string]string{
-		"webhook_url": "https://localhost:8080/hook",
+		"webhook_url": "https://localhost:27346/hook",
 	})
 	if err == nil {
 		t.Fatal("expected SSRF error for localhost, got nil")
