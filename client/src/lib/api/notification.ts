@@ -1,19 +1,9 @@
-import { apiFetch } from '../helper/api.ts';
+import { apiFetch } from './client';
 import { env } from '$env/dynamic/public';
 
 const API = `${env.PUBLIC_API_URL}`;
 
 export type ChannelType = 'email' | 'slack' | 'webhook' | 'discord';
-
-export interface ChannelConfig {
-	// email
-	email?: string;
-	// slack
-	webhook_url?: string;
-	// webhook
-	url?: string;
-	[key: string]: string | undefined;
-}
 
 export interface CreateChannelPayload {
 	name: string;

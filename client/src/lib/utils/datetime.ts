@@ -1,18 +1,25 @@
 /**
- * Utilitas format tanggal/waktu yang timezone-aware.
- * Semua fungsi menggunakan Intl.DateTimeFormat (native) — zero dependency.
- *
- * Gunakan fungsi ini di seluruh app, bukan toLocaleDateString() inline.
+ * Timezone-aware date and time formatting utilities.
+ * All functions use native Intl.DateTimeFormat (zero-dependency).
  */
 
-// ── Core formatter ────────────────────────────────────────────────────────────
+export type DateInput = string | number | Date | undefined | null;
+
+function toDate(input: DateInput): Date | null {
+	if (!input) return null;
+	const d = input instanceof Date ? input : new Date(input);
+	return isNaN(d.getTime()) ? null : d;
+}
+
+// ── Core formatters ──────────────────────────────────────────────────────────
 
 /**
- * Format tanggal + waktu lengkap.
- * Contoh output: "Aug 20, 2026, 14:35"
+ * Format full date and time.
+ * Example output: "Aug 20, 2026, 14:35"
  */
-export function formatDateTime(dateStr: string | undefined | null, timezone = 'UTC'): string {
-	if (!dateStr) return '—';
+export function formatDateTime(dateStr: DateInput, timezone = 'UTC'): string {
+	const d = toDate(dateStr);
+	if (!d) return '—';
 	try {
 		return new Intl.DateTimeFormat('en-US', {
 			year: 'numeric',
@@ -21,66 +28,105 @@ export function formatDateTime(dateStr: string | undefined | null, timezone = 'U
 			hour: '2-digit',
 			minute: '2-digit',
 			timeZone: timezone
-		}).format(new Date(dateStr));
+		}).format(d);
 	} catch {
-		return dateStr;
+		return String(dateStr);
 	}
 }
 
 /**
- * Format tanggal saja (tanpa jam).
- * Contoh output: "Aug 20, 2026"
+ * Format short date and time without year.
+ * Example output: "Aug 20, 14:35"
  */
-export function formatDateOnly(dateStr: string | undefined | null, timezone = 'UTC'): string {
-	if (!dateStr) return '—';
+export function formatDateTimeShort(dateStr: DateInput, timezone = 'UTC'): string {
+	const d = toDate(dateStr);
+	if (!d) return '—';
+	try {
+		return new Intl.DateTimeFormat('en-US', {
+			month: 'short',
+			day: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit',
+			timeZone: timezone
+		}).format(d);
+	} catch {
+		return String(dateStr);
+	}
+}
+
+/**
+ * Format date only (no time).
+ * Example output: "Aug 20, 2026"
+ */
+export function formatDateOnly(dateStr: DateInput, timezone = 'UTC'): string {
+	const d = toDate(dateStr);
+	if (!d) return '—';
 	try {
 		return new Intl.DateTimeFormat('en-US', {
 			year: 'numeric',
 			month: 'short',
 			day: 'numeric',
 			timeZone: timezone
-		}).format(new Date(dateStr));
+		}).format(d);
 	} catch {
-		return dateStr;
+		return String(dateStr);
 	}
 }
 
 /**
- * Format waktu saja dengan label timezone singkat.
- * Contoh output: "14:35 WIB"
+ * Format month and day only.
+ * Example output: "Aug 20"
  */
-export function formatTimeOnly(dateStr: string | undefined | null, timezone = 'UTC'): string {
-	if (!dateStr) return '—';
+export function formatDateMonthDay(dateStr: DateInput, timezone = 'UTC'): string {
+	const d = toDate(dateStr);
+	if (!d) return '—';
+	try {
+		return new Intl.DateTimeFormat('en-US', {
+			month: 'short',
+			day: 'numeric',
+			timeZone: timezone
+		}).format(d);
+	} catch {
+		return String(dateStr);
+	}
+}
+
+/**
+ * Format time only with timezone abbreviation.
+ * Example output: "14:35 WIB"
+ */
+export function formatTimeOnly(dateStr: DateInput, timezone = 'UTC'): string {
+	const d = toDate(dateStr);
+	if (!d) return '—';
 	try {
 		const time = new Intl.DateTimeFormat('en-US', {
 			hour: '2-digit',
 			minute: '2-digit',
 			timeZone: timezone
-		}).format(new Date(dateStr));
+		}).format(d);
 
-		// Ambil abbreviasi timezone (misal "WIB", "EST", "UTC")
 		const tzAbbr =
 			new Intl.DateTimeFormat('en-US', {
 				timeZoneName: 'short',
 				timeZone: timezone
 			})
-				.formatToParts(new Date(dateStr))
+				.formatToParts(d)
 				.find((p) => p.type === 'timeZoneName')?.value ?? timezone;
 
 		return `${time} ${tzAbbr}`;
 	} catch {
-		return dateStr;
+		return String(dateStr);
 	}
 }
 
 /**
- * Format waktu relatif (tidak perlu timezone — selalu relatif ke "sekarang").
- * Contoh output: "just now", "5m ago", "3h ago", "2d ago"
+ * Format relative time (relative to current time).
+ * Example output: "just now", "5m ago", "3h ago", "2d ago"
  */
-export function formatTimeAgo(dateStr: string | undefined | null): string {
-	if (!dateStr) return '—';
+export function formatTimeAgo(dateStr: DateInput): string {
+	const date = toDate(dateStr);
+	if (!date) return '—';
 	try {
-		const date = new Date(dateStr);
 		const now = new Date();
 		const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
@@ -96,18 +142,18 @@ export function formatTimeAgo(dateStr: string | undefined | null): string {
 		if (months < 12) return `${months}mo ago`;
 		return `${Math.floor(months / 12)}y ago`;
 	} catch {
-		return dateStr;
+		return String(dateStr);
 	}
 }
 
 /**
  * Format incident relative time: "just now", "5m ago", "11h 1m ago", "2d 4h ago"
  */
-export function formatIncidentTimeAgo(dateStr: string | undefined | null): string {
-	if (!dateStr) return '—';
+export function formatIncidentTimeAgo(dateStr: DateInput): string {
+	const d = toDate(dateStr);
+	if (!d) return '—';
 	try {
-		const parsed = new Date(dateStr).getTime();
-		if (isNaN(parsed)) return dateStr;
+		const parsed = d.getTime();
 		const diff = Math.max(0, Date.now() - parsed);
 		const seconds = Math.floor(diff / 1000);
 		if (seconds < 5) return 'just now';
@@ -128,36 +174,47 @@ export function formatIncidentTimeAgo(dateStr: string | undefined | null): strin
 		if (months < 12) return `${months}mo ago`;
 		return `${Math.floor(months / 12)}y ago`;
 	} catch {
-		return dateStr;
+		return String(dateStr);
 	}
 }
 
 /**
- * Format header tanggal arsip (misal: "August 20, 2026") dari string "YYYY-MM-DD".
+ * Format archive date header (e.g. "August 20, 2026") from a "YYYY-MM-DD" string or date.
  */
 export function formatDateHeader(dateStr?: string | null): string {
 	if (!dateStr) return '';
 	const parts = dateStr.split('-');
-	if (parts.length !== 3) return dateStr;
-	const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-	return d.toLocaleDateString('en-US', {
-		month: 'long',
-		day: 'numeric',
-		year: 'numeric'
-	});
+	if (parts.length === 3) {
+		const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+		if (!isNaN(d.getTime())) {
+			return new Intl.DateTimeFormat('en-US', {
+				month: 'long',
+				day: 'numeric',
+				year: 'numeric'
+			}).format(d);
+		}
+	}
+	const d = toDate(dateStr);
+	if (d) {
+		return new Intl.DateTimeFormat('en-US', {
+			month: 'long',
+			day: 'numeric',
+			year: 'numeric'
+		}).format(d);
+	}
+	return dateStr;
 }
 
 /**
- * Format durasi antara waktu mulai dan waktu selesai insiden (misal: "45m", "2h 15m").
- * Jika resolvedAt tidak ada (masih ongoing), menghitung durasi dari waktu mulai hingga sekarang.
+ * Format duration between start and resolved time of an incident (e.g., "45m", "2h 15m").
+ * If resolvedAt is missing (ongoing), calculates duration from start to now.
  */
-export function formatDuration(startedAt?: string | null, resolvedAt?: string | null): string {
-	if (!startedAt) return '—';
+export function formatDuration(startedAt?: DateInput, resolvedAt?: DateInput): string {
+	const start = toDate(startedAt);
+	if (!start) return '—';
 	try {
-		const start = new Date(startedAt).getTime();
-		if (isNaN(start)) return '—';
-		const end = resolvedAt ? new Date(resolvedAt).getTime() : Date.now();
-		const diffMins = Math.max(1, Math.round((end - start) / 60000));
+		const end = toDate(resolvedAt) ?? new Date();
+		const diffMins = Math.max(1, Math.round((end.getTime() - start.getTime()) / 60000));
 		if (diffMins < 60) return `${diffMins}m`;
 		const hours = Math.floor(diffMins / 60);
 		const remainingMins = diffMins % 60;

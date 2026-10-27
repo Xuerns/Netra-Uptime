@@ -1,36 +1,49 @@
-import { writable, derived } from 'svelte/store';
+import { writable, type Writable } from 'svelte/store';
 import { browser } from '$app/environment';
 
 export interface Organization {
 	id: string;
 	name: string;
 	slug: string;
-	role?: string; // Role dari user pada organisasi ini (owner, admin, member)
+	role?: string;
 }
 
 // Menyimpan daftar seluruh organisasi milik user
 export const organizations = writable<Organization[]>([]);
 
-const initialOrgId = browser ? localStorage.getItem('netra_last_org') : null;
-// Menyimpan ID organisasi yang saat ini sedang aktif (dipilih) di sidebar/dashboard
-export const activeOrgId = writable<string | null>(initialOrgId);
+function createActiveOrgIdStore(): Writable<string | null> {
+	const initialOrgId = browser ? localStorage.getItem('netra_last_org') : null;
+	const { subscribe, set: internalSet, update } = writable<string | null>(initialOrgId);
 
-if (browser) {
-	activeOrgId.subscribe((value) => {
-		if (value) {
-			localStorage.setItem('netra_last_org', value);
-		} else {
-			localStorage.removeItem('netra_last_org');
+	function persist(value: string | null) {
+		if (browser) {
+			try {
+				if (value) {
+					localStorage.setItem('netra_last_org', value);
+				} else {
+					localStorage.removeItem('netra_last_org');
+				}
+			} catch {
+				// Ignore storage errors
+			}
 		}
-	});
+	}
+
+	return {
+		subscribe,
+		set(value: string | null) {
+			persist(value);
+			internalSet(value);
+		},
+		update(fn: (value: string | null) => string | null) {
+			update((curr) => {
+				const next = fn(curr);
+				persist(next);
+				return next;
+			});
+		}
+	};
 }
 
-// Store turunan (derived) yang secara otomatis akan mengembalikan objek Organization
-// secara penuh berdasarkan activeOrgId yang sedang terpilih.
-export const activeOrganization = derived(
-	[organizations, activeOrgId],
-	([$organizations, $activeOrgId]) => {
-		if (!$activeOrgId) return null;
-		return $organizations.find((org) => org.id === $activeOrgId) || null;
-	}
-);
+// Menyimpan ID organisasi yang saat ini sedang aktif (dipilih) di sidebar/dashboard
+export const activeOrgId = createActiveOrgIdStore();

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Component, Snippet } from 'svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { cn } from '$lib/helper/utils';
+	import { cn } from '$lib/utils';
 
 	interface Props {
 		icon?: Component | any;
@@ -28,13 +28,13 @@
 
 <div
 	class={cn(
-		'p-12 text-center flex flex-col items-center justify-center gap-3 bg-card border border-border shadow-xs rounded-xl transition-all',
+		'p-12 text-center flex flex-col items-center justify-center gap-3 bg-card border border-border rounded-xl transition-all',
 		className
 	)}
 >
 	{#if Icon}
 		<div
-			class="size-12 rounded-2xl bg-white/5 border border-border flex items-center justify-center text-muted-foreground mb-1 shadow-sm"
+			class="size-12 rounded-2xl bg-white/5 border border-border flex items-center justify-center text-muted-foreground mb-1"
 		>
 			<Icon class="size-6 text-foreground/80" />
 		</div>
@@ -50,8 +50,9 @@
 	{#if actionText && onAction}
 		<div class="pt-2">
 			<Button
+				variant={actionVariant === 'primary' ? 'default' : (actionVariant ?? 'default')}
 				onclick={onAction}
-				class="h-9 px-4 text-xs font-medium bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 shadow-sm cursor-pointer"
+				class="h-9 px-4 text-xs font-medium cursor-pointer"
 			>
 				{actionText}
 			</Button>

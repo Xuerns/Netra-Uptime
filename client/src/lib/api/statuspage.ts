@@ -1,4 +1,4 @@
-import { apiFetch } from '../helper/api.ts';
+import { apiFetch } from './client';
 import { env } from '$env/dynamic/public';
 
 const API_Route = `${env.PUBLIC_API_URL}`;
@@ -25,13 +25,6 @@ export interface UpdateStatusPageRequest {
 	theme_color?: string;
 	custom_css?: string;
 	monitor_id?: string[];
-}
-
-export interface StatusPageMonitor {
-	ID: string;
-	StatusPageID: string;
-	MonitorID: string;
-	DisplayOrder: number;
 }
 
 export interface PublicIncidentUpdate {
@@ -108,6 +101,11 @@ export interface PublicStatusPage {
 	incident_history?: PublicIncidentDayGroup[];
 	upcoming_maintenances?: PublicMaintenance[];
 	ongoing_maintenances?: PublicMaintenance[];
+}
+
+export interface StatusPagePublicData {
+	status: string;
+	data: PublicStatusPage;
 }
 
 export interface Maintenance {
@@ -228,6 +226,22 @@ function mapStatusPage(sp: any): StatusPage {
 }
 
 export const StatusPageAPI = {
+	getPublic: async (
+		subdomain: string,
+		customFetch?: typeof fetch
+	): Promise<StatusPagePublicData> => {
+		const res = await apiFetch(
+			`${API_Route}/public/statuspage/${subdomain}`,
+			{ redirectOnFail: false },
+			customFetch
+		);
+		if (!res.ok) {
+			const err = await res.json().catch(() => ({}));
+			throw new Error(err.error || 'Failed to fetch public status page');
+		}
+		return res.json();
+	},
+
 	getAll: async (orgId: string) => {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/statuspage`, { method: 'GET' });
 		if (!res.ok) throw new Error('Failed to fetch status pages');

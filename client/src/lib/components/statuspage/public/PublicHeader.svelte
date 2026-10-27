@@ -81,7 +81,7 @@
 			>
 				<span
 					style={statusConfig.isThemed ? statusConfig.dotStyle : ''}
-					class="size-2 rounded-full {statusConfig.dotClass} animate-pulse"
+					class="size-2 rounded-full {statusConfig.dotClass}"
 				></span>
 				<span class="font-mono">{secondsUntilRefresh}s</span>
 			</span>

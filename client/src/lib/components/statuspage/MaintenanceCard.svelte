@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PublicMaintenance } from '$lib/api/statuspage';
-	import { Wrench, Calendar, Clock, AlertCircle } from 'lucide-svelte';
+	import { Wrench, Calendar, Clock } from 'lucide-svelte';
+	import { formatDateTimeShort } from '$lib/utils/datetime';
 
 	let { maintenance, isOngoing = false } = $props<{
 		maintenance: PublicMaintenance;
@@ -9,27 +10,9 @@
 
 	function formatDateTimeRange(startStr: string, endStr: string): string {
 		if (!startStr) return '';
-		const start = new Date(startStr);
-		const end = endStr ? new Date(endStr) : null;
-
-		const startFmt = start.toLocaleDateString('en-US', {
-			month: 'short',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit',
-			hour12: false
-		});
-
-		if (!end) return startFmt;
-
-		const endFmt = end.toLocaleDateString('en-US', {
-			month: 'short',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit',
-			hour12: false
-		});
-
+		const startFmt = formatDateTimeShort(startStr);
+		if (!endStr) return startFmt;
+		const endFmt = formatDateTimeShort(endStr);
 		return `${startFmt} – ${endFmt}`;
 	}
 
@@ -54,7 +37,7 @@
 
 <div
 	class="rounded-xl border transition-all duration-200 backdrop-blur-md overflow-hidden p-5 sm:p-6 space-y-3 {isOngoing
-		? 'bg-blue-500/10 border-blue-500/30 text-blue-300 shadow-[0_0_20px_rgba(59,130,246,0.1)]'
+		? 'bg-blue-500/10 border-blue-500/30 text-blue-300'
 		: 'bg-indigo-500/5 border-indigo-500/20 text-indigo-300'}"
 >
 	<!-- Card Top -->
@@ -64,7 +47,7 @@
 				<span
 					class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30"
 				>
-					<span class="size-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+					<span class="size-1.5 rounded-full bg-blue-400"></span>
 					In Progress
 				</span>
 			{:else}

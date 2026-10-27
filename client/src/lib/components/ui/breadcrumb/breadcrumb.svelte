@@ -1,6 +1,6 @@
-<script lang="ts">
-	import type { WithElementRef } from '$lib/helper/utils.js';
-	import { cn } from '$lib/helper/utils.js';
+﻿<script lang="ts">
+	import type { WithElementRef } from '$lib/utils';
+	import { cn } from '$lib/utils';
 	import type { HTMLAttributes } from 'svelte/elements';
 
 	let {

@@ -117,9 +117,9 @@
 							<Command.Input placeholder="Search timezone..." />
 							<Command.List class="max-h-56 overflow-y-auto">
 								<Command.Empty>No timezone found.</Command.Empty>
-								{#each regions as region}
+								{#each regions as region (region)}
 									<Command.Group heading={region}>
-										{#each byRegion(region) as tz}
+										{#each byRegion(region) as tz (tz.value)}
 											<Command.Item
 												value="{tz.label} {tz.value} {region}"
 												onSelect={() => {

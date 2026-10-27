@@ -1,6 +1,6 @@
 import { Globe, Server, Wifi } from 'lucide-svelte';
 import type { Monitor } from '$lib/api/monitor';
-import { formatTimeAgo } from './datetime';
+import { formatTimeAgo, formatDateOnly } from './datetime';
 
 export function typeIcon(type: Monitor['Type']) {
 	switch (type) {
@@ -75,9 +75,7 @@ export function formatSSLBadge(
 		return {
 			label: `SSL: ${daysLeft}d`,
 			badgeClass: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
-			tooltip: expiresAt
-				? `SSL Expires: ${new Date(expiresAt).toLocaleDateString()}`
-				: 'SSL Certificate is valid',
+			tooltip: expiresAt ? `SSL Expires: ${formatDateOnly(expiresAt)}` : 'SSL Certificate is valid',
 			isAvailable: true
 		};
 	}
@@ -87,7 +85,7 @@ export function formatSSLBadge(
 			label: `SSL: ${daysLeft}d left`,
 			badgeClass: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
 			tooltip: expiresAt
-				? `SSL Expiring Soon: ${new Date(expiresAt).toLocaleDateString()}`
+				? `SSL Expiring Soon: ${formatDateOnly(expiresAt)}`
 				: 'SSL Certificate expiring soon',
 			isAvailable: true
 		};
@@ -121,7 +119,7 @@ export function formatDomainBadge(
 			label: `Domain: ${daysLeft}d`,
 			badgeClass: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
 			tooltip: expiresAt
-				? `Domain Expires: ${new Date(expiresAt).toLocaleDateString()}`
+				? `Domain Expires: ${formatDateOnly(expiresAt)}`
 				: 'Domain registration is valid',
 			isAvailable: true
 		};
@@ -132,7 +130,7 @@ export function formatDomainBadge(
 			label: `Domain: ${daysLeft}d left`,
 			badgeClass: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
 			tooltip: expiresAt
-				? `Domain Expiring Soon: ${new Date(expiresAt).toLocaleDateString()}`
+				? `Domain Expiring Soon: ${formatDateOnly(expiresAt)}`
 				: 'Domain registration expiring soon',
 			isAvailable: true
 		};

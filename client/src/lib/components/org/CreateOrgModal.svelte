@@ -1,10 +1,10 @@
-<script lang="ts">
+﻿<script lang="ts">
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Search, UserPlus, X, TriangleAlert } from 'lucide-svelte';
 	import { OrgAPI } from '$lib/api/organization';
-	import { debounce } from '$lib/helper/utils';
+	import { debounce } from '$lib/utils';
 	import { validateOrgName, validateOrgSlug } from '$lib/utils/validation';
 	import { slugify, getInitials as initials } from '$lib/utils/string';
 	import { parseApiError } from '$lib/utils/parseApiError';

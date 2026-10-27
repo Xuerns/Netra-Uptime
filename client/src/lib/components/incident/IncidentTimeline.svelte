@@ -3,8 +3,13 @@
 	import { formatDateTime } from '$lib/utils/datetime';
 	import { Clock, Loader2, User } from 'lucide-svelte';
 
+	interface IncidentUpdateItem extends IncidentUpdateResponse {
+		ID?: string;
+		id?: string;
+	}
+
 	interface Props {
-		updates: IncidentUpdateResponse[];
+		updates: IncidentUpdateItem[];
 		isLoading: boolean;
 		tz: string;
 	}
@@ -40,7 +45,7 @@
 		</div>
 	{:else}
 		<div class="relative pt-2">
-			{#each updates as update, idx}
+			{#each updates as update, idx (update.ID ?? update.id ?? `${update.createAt}-${idx}`)}
 				{@const isLast = idx === updates.length - 1}
 				<div class="relative pl-7 pb-6 last:pb-1">
 					<!-- Timeline vertical line connecting events -->

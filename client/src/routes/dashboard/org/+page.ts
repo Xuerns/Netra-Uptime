@@ -6,7 +6,7 @@ export const load: PageLoad = async () => {
 		const res = await OrgAPI.getAll();
 		const orgs = res.data ?? [];
 		return { orgs };
-	} catch (err: any) {
+	} catch {
 		return { orgs: [] };
 	}
 };

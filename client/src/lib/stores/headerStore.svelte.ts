@@ -1,11 +1,11 @@
-export interface HeaderBadge {
+interface HeaderBadge {
 	text: string;
 	variant?: 'emerald' | 'amber' | 'rose' | 'slate' | 'blue';
 }
 
-export type HeaderActionType = 'monitor' | 'member' | 'button' | 'custom' | null;
+type HeaderActionType = 'monitor' | 'member' | 'button' | 'custom' | null;
 
-export interface HeaderConfig {
+interface HeaderConfig {
 	title?: string;
 	badge?: HeaderBadge | null;
 	showSearch?: boolean;

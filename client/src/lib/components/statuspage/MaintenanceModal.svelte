@@ -20,6 +20,7 @@
 		Pencil
 	} from 'lucide-svelte';
 	import { parseApiError } from '$lib/utils/parseApiError';
+	import { formatDateTimeShort } from '$lib/utils/datetime';
 
 	let {
 		isOpen = $bindable(false),
@@ -209,19 +210,13 @@
 
 	function formatDT(dtStr: string): string {
 		if (!dtStr) return '';
-		return new Date(dtStr).toLocaleDateString('en-US', {
-			month: 'short',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit',
-			hour12: false
-		});
+		return formatDateTimeShort(dtStr);
 	}
 </script>
 
 <Dialog.Root bind:open={isOpen}>
 	<Dialog.Content
-		class="sm:max-w-[620px] max-h-[85vh] flex flex-col bg-card border border-border rounded-2xl p-0 overflow-hidden shadow-2xl"
+		class="sm:max-w-[620px] max-h-[85vh] flex flex-col bg-card border border-border rounded-2xl p-0 overflow-hidden"
 	>
 		<!-- Header -->
 		<div class="p-6 border-b border-border/60 flex items-center justify-between">
@@ -418,7 +413,7 @@
 											<span
 												class="inline-flex items-center gap-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30"
 											>
-												<span class="size-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+												<span class="size-1.5 rounded-full bg-blue-400"></span>
 												In Progress
 											</span>
 										{:else if m.status === 'completed'}

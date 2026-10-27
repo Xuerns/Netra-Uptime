@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
-	import { cn } from '$lib/helper/utils.js';
+	import { cn } from '$lib/utils';
 
 	let {
 		currentPage = $bindable(1),
@@ -18,17 +18,11 @@
 		onPageChange?: (page: number) => void;
 	}>();
 
-	let lastPage = $state(currentPage);
-
-	$effect(() => {
-		lastPage = currentPage;
-	});
-
 	function handlePageChange(p: number) {
 		const target = Math.max(1, Math.min(totalPages, p));
-		if (target === lastPage) return;
-		lastPage = target;
-		currentPage = target;
+		if (target !== currentPage) {
+			currentPage = target;
+		}
 		onPageChange?.(target);
 	}
 </script>

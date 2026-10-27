@@ -1,4 +1,4 @@
-import { apiFetch } from '../helper/api';
+import { apiFetch } from './client';
 import { env } from '$env/dynamic/public';
 
 const API_Route = `${env.PUBLIC_API_URL}`;
@@ -41,8 +41,17 @@ export interface UserProfile {
 	created_at?: string;
 }
 
+export interface AuthMessageResponse {
+	message?: string;
+}
+
+export interface UpdateProfileResponse {
+	message?: string;
+	user?: UserProfile;
+}
+
 export const AuthAPI = {
-	async login(payload: LoginRequest): Promise<any> {
+	async login(payload: LoginRequest): Promise<AuthMessageResponse> {
 		const res = await fetch(`${API_Route}/auth/login`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -61,7 +70,7 @@ export const AuthAPI = {
 		return data;
 	},
 
-	async register(payload: RegisterRequest): Promise<any> {
+	async register(payload: RegisterRequest): Promise<AuthMessageResponse> {
 		const res = await fetch(`${API_Route}/auth/register`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -124,7 +133,10 @@ export const AuthAPI = {
 		}
 	},
 
-	async authenticateOAuth(payload: OAuthAuthRequest, signal?: AbortSignal): Promise<any> {
+	async authenticateOAuth(
+		payload: OAuthAuthRequest,
+		signal?: AbortSignal
+	): Promise<AuthMessageResponse> {
 		const res = await fetch(`${API_Route}/auth`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -149,7 +161,7 @@ export const AuthAPI = {
 		return data.user ?? data;
 	},
 
-	async updateProfile(payload: UpdateProfileRequest): Promise<any> {
+	async updateProfile(payload: UpdateProfileRequest): Promise<UpdateProfileResponse> {
 		const res = await apiFetch(`${API_Route}/auth/profile`, {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
@@ -162,7 +174,7 @@ export const AuthAPI = {
 		return res.json();
 	},
 
-	async initPasswordChange(payload: InitPasswordChangeRequest): Promise<any> {
+	async initPasswordChange(payload: InitPasswordChangeRequest): Promise<AuthMessageResponse> {
 		const res = await apiFetch(`${API_Route}/auth/password/change/init`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -175,7 +187,7 @@ export const AuthAPI = {
 		return res.json();
 	},
 
-	async verifyPasswordChange(payload: VerifyPasswordChangeRequest): Promise<any> {
+	async verifyPasswordChange(payload: VerifyPasswordChangeRequest): Promise<AuthMessageResponse> {
 		const res = await apiFetch(`${API_Route}/auth/password/change/verify`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -186,5 +198,31 @@ export const AuthAPI = {
 			throw new Error(err.error || 'Failed to verify password change');
 		}
 		return res.json();
+	},
+
+	async forgotPassword(email: string): Promise<{ message?: string }> {
+		const res = await fetch(`${API_Route}/auth/forgotpassword`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ email })
+		});
+		const data = await res.json();
+		if (!res.ok) {
+			throw new Error(data.error || data.message || 'Failed to send reset link.');
+		}
+		return data;
+	},
+
+	async resetPassword(token: string, password: string): Promise<{ message?: string }> {
+		const res = await fetch(`${API_Route}/auth/resetpassword`, {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ token, password })
+		});
+		const data = await res.json();
+		if (!res.ok) {
+			throw new Error(data.error || data.message || 'Failed to reset password.');
+		}
+		return data;
 	}
 };

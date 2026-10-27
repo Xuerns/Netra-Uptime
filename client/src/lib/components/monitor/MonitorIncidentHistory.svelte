@@ -41,7 +41,7 @@
 							<span
 								class="size-2 rounded-full shrink-0 mt-1.5 sm:mt-0 {inc.Status === 'resolved'
 									? 'bg-emerald-400'
-									: 'bg-rose-500 animate-pulse'}"
+									: 'bg-rose-500'}"
 							></span>
 							<span
 								class="text-sm font-medium text-foreground group-hover:text-primary transition-colors min-w-0 sm:truncate"

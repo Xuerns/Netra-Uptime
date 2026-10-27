@@ -1,4 +1,4 @@
-<script lang="ts" module>
+﻿<script lang="ts" module>
 	export type Side = 'top' | 'right' | 'bottom' | 'left';
 </script>
 
@@ -9,7 +9,7 @@
 	import SheetOverlay from './sheet-overlay.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { X as XIcon } from 'lucide-svelte';
-	import { cn, type WithoutChildrenOrChild } from '$lib/helper/utils.js';
+	import { cn, type WithoutChildrenOrChild } from '$lib/utils';
 	import type { ComponentProps } from 'svelte';
 
 	let {

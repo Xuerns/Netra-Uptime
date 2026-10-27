@@ -12,6 +12,7 @@
 	import MaintenanceModal from '$lib/components/statuspage/MaintenanceModal.svelte';
 	import ComponentGroupModal from '$lib/components/statuspage/ComponentGroupModal.svelte';
 	import EmbedBadgeModal from '$lib/components/statuspage/EmbedBadgeModal.svelte';
+	import ConfirmDialog from '$lib/components/common/ConfirmDialog.svelte';
 	import { headerStore } from '$lib/stores/headerStore.svelte';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
@@ -48,7 +49,6 @@
 	let embedStatusPage = $state<StatusPage | null>(null);
 
 	// Delete Confirmation
-	let isDeletingId = $state<string | null>(null);
 	let isDeleteConfirmOpen = $state(false);
 	let deletingStatusPage = $state<StatusPage | null>(null);
 
@@ -92,7 +92,7 @@
 			if (groupStatusPage) {
 				groupStatusPage = statusPages.find((s) => s.ID === groupStatusPage?.ID) || null;
 			}
-		} catch (err: any) {
+		} catch (err: unknown) {
 			fetchError = parseApiError(err, 'Failed to fetch status pages.');
 		} finally {
 			isLoading = false;
@@ -144,17 +144,14 @@
 
 	async function handleDelete() {
 		if (!deletingStatusPage || !orgId) return;
-		isDeletingId = deletingStatusPage.ID;
 		try {
 			await StatusPageAPI.delete(orgId, deletingStatusPage.ID);
 			toast.success('Status page deleted successfully');
 			isDeleteConfirmOpen = false;
 			deletingStatusPage = null;
 			await loadStatusPages(true);
-		} catch (err: any) {
+		} catch (err: unknown) {
 			toast.error(parseApiError(err, 'Failed to delete status page'));
-		} finally {
-			isDeletingId = null;
 		}
 	}
 
@@ -301,7 +298,7 @@
 
 			<!-- ── List view ─────────────────────────────────────────────────────── -->
 		{:else}
-			<div class="border border-border rounded-xl overflow-hidden shadow-sm">
+			<div class="border border-border rounded-xl overflow-hidden">
 				<div
 					class="hidden md:grid md:grid-cols-[minmax(160px,1.5fr)_minmax(180px,2fr)_1.2fr_90px_100px_80px] gap-4 px-5 py-2.5 border-b border-border bg-table-header text-[11px] font-semibold tracking-wider uppercase text-muted-foreground items-center"
 					aria-hidden="true"
@@ -365,49 +362,12 @@
 <EmbedBadgeModal bind:isOpen={isEmbedModalOpen} statusPage={embedStatusPage} />
 
 <!-- ── Delete Confirmation Dialog ──────────────────────────────────────────── -->
-{#if isDeleteConfirmOpen}
-	<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-	<div
-		class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm w-max-[400px]"
-		onclick={(e) => {
-			if (e.target === e.currentTarget) isDeleteConfirmOpen = false;
-		}}
-	>
-		<div
-			class="bg-card border border-border rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4 flex flex-col gap-4"
-		>
-			<div class="flex items-center gap-3">
-				<div>
-					<h2 class="text-base font-semibold text-foreground">Delete Status Page</h2>
-					<p class="text-[13px] text-muted-foreground">This action cannot be undone.</p>
-				</div>
-			</div>
-
-			<p class="text-[13px] text-muted-foreground leading-relaxed">
-				Are you sure you want to delete <strong class="text-foreground font-medium"
-					>"{deletingStatusPage?.Title}"</strong
-				>? The status page will be permanently removed.
-			</p>
-
-			<div class="flex items-center gap-2 justify-end">
-				<Button
-					type="button"
-					variant="ghost"
-					class="text-foreground h-9 px-4 hover:text-foreground hover:bg-accent"
-					onclick={() => (isDeleteConfirmOpen = false)}
-					disabled={isDeletingId !== null}
-				>
-					Cancel
-				</Button>
-				<Button
-					type="button"
-					class="h-9 px-4 bg-destructive/10 border border-destructive/20 text-destructive hover:bg-destructive hover:border-destructive hover:text-white active:scale-[0.98] transition-all duration-200 font-medium"
-					onclick={handleDelete}
-					disabled={isDeletingId !== null}
-				>
-					{isDeletingId !== null ? 'Deleting...' : 'Delete'}
-				</Button>
-			</div>
-		</div>
-	</div>
-{/if}
+<ConfirmDialog
+	bind:open={isDeleteConfirmOpen}
+	title="Delete Status Page"
+	description="Are you sure you want to delete '{deletingStatusPage?.Title}'? The status page will be permanently removed."
+	confirmText="Delete"
+	cancelText="Cancel"
+	destructive={true}
+	onConfirm={handleDelete}
+/>

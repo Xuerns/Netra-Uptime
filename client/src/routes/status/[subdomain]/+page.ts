@@ -1,16 +1,14 @@
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
-import { env } from '$env/dynamic/public';
+import { StatusPageAPI } from '$lib/api/statuspage';
 
 export const load: PageLoad = async ({ params, fetch }) => {
-	const res = await fetch(`${env.PUBLIC_API_URL}/public/statuspage/${params.subdomain}`);
-
-	if (!res.ok) {
+	try {
+		const res = await StatusPageAPI.getPublic(params.subdomain, fetch);
+		return {
+			statusPage: res.data
+		};
+	} catch {
 		throw error(404, 'Status Page not found');
 	}
-
-	const result = await res.json();
-	return {
-		statusPage: result.data
-	};
 };

@@ -25,11 +25,14 @@
 		getMemberRole,
 		canManageOrg
 	} from '$lib/utils/role';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 
 	const orgId = $derived($page.params.id as string);
 
 	type SubTab = 'channels' | 'history';
-	let activeSubTab = $state<string>('channels');
+	let activeSubTab = $state<SubTab>('channels');
 
 	// Channels state
 	let channels = $state<NotificationChannel[]>([]);
@@ -52,8 +55,10 @@
 	let logsOffset = $state(0);
 	const logsLimit = 20;
 
-	const currentUserId = $derived(getCurrentUserId($page.data?.user));
-	const currentMember = $derived(findMemberByUserId($page.data?.members, currentUserId));
+	const currentUserId = $derived(getCurrentUserId(data?.user ?? $page.data?.user));
+	const currentMember = $derived(
+		findMemberByUserId(data?.members ?? $page.data?.members, currentUserId)
+	);
 	const userRole = $derived(getMemberRole(currentMember, 'admin'));
 	const canManage = $derived(canManageOrg(userRole));
 

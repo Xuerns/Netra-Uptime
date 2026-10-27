@@ -1,21 +1,40 @@
-import { writable } from 'svelte/store';
+import { writable, type Writable } from 'svelte/store';
+import { browser } from '$app/environment';
 
 const STORAGE_KEY = 'netra_timezone';
 
-function getInitialTimezone(): string {
-	if (typeof localStorage === 'undefined') return 'UTC';
-	return localStorage.getItem(STORAGE_KEY) ?? 'UTC';
+function createUserTimezoneStore(): Writable<string> {
+	const initial = browser ? (localStorage.getItem(STORAGE_KEY) ?? 'UTC') : 'UTC';
+	const { subscribe, set: internalSet, update } = writable<string>(initial);
+
+	function persist(value: string) {
+		if (browser) {
+			try {
+				localStorage.setItem(STORAGE_KEY, value);
+			} catch {
+				// Ignore storage errors
+			}
+		}
+	}
+
+	return {
+		subscribe,
+		set(value: string) {
+			persist(value);
+			internalSet(value);
+		},
+		update(fn: (value: string) => string) {
+			update((curr) => {
+				const next = fn(curr);
+				persist(next);
+				return next;
+			});
+		}
+	};
 }
 
 /** Svelte store yang menyimpan timezone aktif user (IANA timezone name). */
-export const userTimezone = writable<string>(getInitialTimezone());
-
-// Persist ke localStorage setiap kali store berubah
-userTimezone.subscribe((tz) => {
-	if (typeof localStorage !== 'undefined') {
-		localStorage.setItem(STORAGE_KEY, tz);
-	}
-});
+export const userTimezone = createUserTimezoneStore();
 
 /**
  * Daftar timezone populer yang ditampilkan di User Settings.
@@ -78,5 +97,3 @@ export const POPULAR_TIMEZONES = [
 	{ value: 'Pacific/Auckland', label: 'Pacific/Auckland — NZST (UTC+12)', region: 'Pacific' },
 	{ value: 'Pacific/Honolulu', label: 'Pacific/Honolulu — HST (UTC−10)', region: 'Pacific' }
 ] as const;
-
-export type TimezoneValue = (typeof POPULAR_TIMEZONES)[number]['value'] | string;

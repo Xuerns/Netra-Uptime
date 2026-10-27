@@ -1,6 +1,6 @@
-<script lang="ts">
+﻿<script lang="ts">
 	import { Command as CommandPrimitive, useId } from 'bits-ui';
-	import { cn } from '$lib/helper/utils.js';
+	import { cn } from '$lib/utils';
 
 	let {
 		ref = $bindable(null),

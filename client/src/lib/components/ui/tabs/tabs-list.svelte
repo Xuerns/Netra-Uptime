@@ -1,4 +1,4 @@
-<script lang="ts" module>
+﻿<script lang="ts" module>
 	import { tv, type VariantProps } from 'tailwind-variants';
 
 	export const tabsListVariants = tv({
@@ -19,7 +19,7 @@
 
 <script lang="ts">
 	import { Tabs as TabsPrimitive } from 'bits-ui';
-	import { cn } from '$lib/helper/utils.js';
+	import { cn } from '$lib/utils';
 
 	let {
 		ref = $bindable(null),

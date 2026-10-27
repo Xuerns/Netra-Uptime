@@ -3,13 +3,17 @@
 	import { goto } from '$app/navigation';
 	import { AuthAPI } from '$lib/api/auth';
 	import { parseApiError } from '$lib/utils/parseApiError';
+	import type { PageData } from './$types';
+
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	let { data }: { data: PageData } = $props();
 
 	let error = $state('');
 
 	onMount(async () => {
 		const urlParams = new URLSearchParams(window.location.search);
 		const code = urlParams.get('code');
-		const provider = 'google'; // Currently only supporting Google
+		const provider = 'google';
 
 		if (!code) {
 			error = 'Authorization code not found in URL.';
@@ -33,12 +37,9 @@
 			await AuthAPI.authenticateOAuth({ provider, code, state }, controller.signal);
 			clearTimeout(timeout);
 			goto('/dashboard/org');
-		} catch (err: any) {
+		} catch (err: unknown) {
 			clearTimeout(timeout);
-			if (import.meta.env.DEV) {
-				console.error(err);
-			}
-			if (err?.name === 'AbortError') {
+			if (err instanceof Error && err.name === 'AbortError') {
 				error = 'Authentication timed out. Please try again.';
 			} else {
 				error = parseApiError(err, 'An error occurred during authentication');

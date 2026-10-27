@@ -24,7 +24,7 @@ const ACRONYMS: Record<string, string> = {
  * Humanizes camelCase, PascalCase, and snake_case field names into clean labels.
  * e.g., "MonitorPICs" -> "Monitor PICs", "subdomain" -> "Subdomain", "target_value" -> "Target Value"
  */
-export function humanizeField(field: string): string {
+function humanizeField(field: string): string {
 	if (!field) return 'Field';
 
 	if (field === 'MonitorPICs' || field === 'assignees') return 'Assignees';

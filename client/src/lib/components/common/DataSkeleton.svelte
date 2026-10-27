@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { cn } from '$lib/helper/utils';
+	import { cn } from '$lib/utils';
 
 	type SkeletonVariant =
 		'cards' | 'list' | 'table' | 'kpi' | 'detail' | 'form' | 'channel' | 'monitor';
@@ -110,7 +110,7 @@
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
 			{#each Array(count) as _}
 				<div
-					class="bg-card border border-border rounded-xl p-5 flex flex-col justify-between shadow-sm min-h-[190px] animate-pulse gap-3"
+					class="bg-card border border-border rounded-xl p-5 flex flex-col justify-between min-h-[190px] animate-pulse gap-3"
 				>
 					<div class="flex items-start justify-between gap-3">
 						<div class="flex items-center gap-3 min-w-0">

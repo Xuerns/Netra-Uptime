@@ -1,51 +1,29 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import {
-		Users,
-		MoreVertical,
-		ShieldCheck,
-		Shield,
-		Trash2,
-		ShieldAlert,
-		ShieldX,
-		TriangleAlert
-	} from 'lucide-svelte';
+	import { Users, TriangleAlert } from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { Badge } from '$lib/components/ui/badge/index.js';
-	import * as Tabs from '$lib/components/ui/tabs/index.js';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import InviteMemberModal from '$lib/components/InviteMemberModal.svelte';
+	import MemberListItem, { type Member } from '$lib/components/member/MemberListItem.svelte';
+	import MemberRoleFilter from '$lib/components/member/MemberRoleFilter.svelte';
 	import { OrgAPI } from '$lib/api/organization';
 	import { headerStore } from '$lib/stores/headerStore.svelte';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
 	import { DataSkeleton } from '$lib/components/common';
-	import { getInitials as initials, getAvatarColor as avatarColor } from '$lib/utils/string';
 	import {
 		getCurrentUserId,
 		findMemberByUserId,
 		getMemberRole,
 		canManageOrg
 	} from '$lib/utils/role';
+	import type { PageData } from './$types';
 
-	interface MemberUser {
-		ID: string;
-		Name: string;
-		AvatarURL?: string;
-	}
-
-	interface Member {
-		ID: string;
-		OrganizationID: string;
-		UserID: string;
-		Role: string;
-		User: MemberUser;
-	}
+	let { data }: { data: PageData } = $props();
 
 	const orgId = $derived(($page.params.id as string) || '');
-	const currentUserId = $derived(getCurrentUserId($page.data?.user));
+	const currentUserId = $derived(getCurrentUserId(data?.user ?? $page.data?.user));
 
 	let members = $state<Member[]>([]);
 	let isLoading = $state(true);
@@ -60,6 +38,13 @@
 	let owners = $derived(members.filter((m) => m.Role === 'owner'));
 	let admins = $derived(members.filter((m) => m.Role === 'admin'));
 	let regularMembers = $derived(members.filter((m) => m.Role === 'member'));
+
+	let roleCounts = $derived({
+		total: members.length,
+		owners: owners.length,
+		admins: admins.length,
+		members: regularMembers.length
+	});
 
 	const currentMember = $derived(findMemberByUserId(members, currentUserId));
 	const currentUserRole = $derived(getMemberRole(currentMember, 'member'));
@@ -101,7 +86,7 @@
 		try {
 			const res = await OrgAPI.getMembers(orgId);
 			members = res.data ?? [];
-		} catch (err: any) {
+		} catch (err: unknown) {
 			fetchError = parseApiError(err, 'Failed to load organization members.');
 		} finally {
 			isLoading = false;
@@ -114,7 +99,7 @@
 			await OrgAPI.promoteToAdmin(orgId, userId);
 			toast.success('Member promoted to admin');
 			await loadMembers(true);
-		} catch (err: any) {
+		} catch (err: unknown) {
 			toast.error(parseApiError(err, 'Failed to promote member'));
 		}
 	}
@@ -125,7 +110,7 @@
 			await OrgAPI.demoteToMember(orgId, userId);
 			toast.success('Admin demoted to member');
 			await loadMembers(true);
-		} catch (err: any) {
+		} catch (err: unknown) {
 			toast.error(parseApiError(err, 'Failed to demote admin'));
 		}
 	}
@@ -143,7 +128,7 @@
 			isKickConfirmOpen = false;
 			memberToKick = null;
 			await loadMembers(true);
-		} catch (err: any) {
+		} catch (err: unknown) {
 			toast.error(parseApiError(err, 'Failed to remove member'));
 		}
 	}
@@ -159,32 +144,11 @@
 
 <div class="members-page text-foreground antialiased space-y-6">
 	<!-- ── Subheader & Filter Tabs ─────────────────────────────────────────── -->
-	<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
-		<Tabs.Root bind:value={roleFilter}>
-			<Tabs.List class="h-9">
-				<Tabs.Trigger value="all" class="text-xs font-medium cursor-pointer">
-					All <span class="ml-1 text-[11px] font-mono text-muted-foreground"
-						>({members.length})</span
-					>
-				</Tabs.Trigger>
-				<Tabs.Trigger value="owner" class="text-xs font-medium cursor-pointer">
-					Owners <span class="ml-1 text-[11px] font-mono text-muted-foreground"
-						>({owners.length})</span
-					>
-				</Tabs.Trigger>
-				<Tabs.Trigger value="admin" class="text-xs font-medium cursor-pointer">
-					Admins <span class="ml-1 text-[11px] font-mono text-muted-foreground"
-						>({admins.length})</span
-					>
-				</Tabs.Trigger>
-				<Tabs.Trigger value="member" class="text-xs font-medium cursor-pointer">
-					Members <span class="ml-1 text-[11px] font-mono text-muted-foreground"
-						>({regularMembers.length})</span
-					>
-				</Tabs.Trigger>
-			</Tabs.List>
-		</Tabs.Root>
-	</div>
+	<MemberRoleFilter
+		bind:value={roleFilter}
+		counts={roleCounts}
+		onChange={(role) => (roleFilter = role)}
+	/>
 
 	<!-- ── Content Area ──────────────────────────────────────────────────────── -->
 	{#if isLoading}
@@ -218,112 +182,15 @@
 		<!-- Members List -->
 		<div class="border border-border rounded-lg bg-card divide-y divide-border">
 			{#each filteredMembers as m (m.ID)}
-				<div class="flex items-center justify-between p-4 hover:bg-muted/20 transition-colors">
-					<!-- User Info -->
-					<div class="flex items-center gap-3.5 min-w-0">
-						{#if m.User?.AvatarURL}
-							<img
-								src={m.User.AvatarURL}
-								alt={m.User?.Name || 'User'}
-								class="size-9 rounded-lg object-cover border border-border shrink-0"
-							/>
-						{:else}
-							<div
-								class="size-9 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 border border-border {avatarColor(
-									m.User?.Name || 'User'
-								)}"
-							>
-								{initials(m.User?.Name || 'User')}
-							</div>
-						{/if}
-
-						<div class="min-w-0">
-							<div class="flex items-center gap-2">
-								<span class="text-sm font-semibold text-foreground truncate">
-									{m.User?.Name || 'Unknown User'}
-								</span>
-								{#if m.UserID === currentUserId}
-									<Badge
-										variant="secondary"
-										class="h-4.5 px-1.5 py-0 text-[10px] font-mono text-muted-foreground"
-									>
-										You
-									</Badge>
-								{/if}
-							</div>
-							<div class="flex items-center gap-1.5 mt-0.5">
-								<span class="text-xs text-muted-foreground capitalize">{m.Role}</span>
-							</div>
-						</div>
-					</div>
-
-					<!-- Role Pill & Actions -->
-					<div class="flex items-center gap-3 shrink-0">
-						<!-- Role Indicator -->
-						{#if m.Role === 'owner'}
-							<Badge
-								variant="outline"
-								class="gap-1.5 px-2.5 py-1 text-xs font-medium text-amber-400 bg-amber-500/10 border-amber-500/20"
-							>
-								<ShieldCheck class="size-3.5" />
-								<span>Owner</span>
-							</Badge>
-						{:else if m.Role === 'admin'}
-							<Badge
-								variant="outline"
-								class="gap-1.5 px-2.5 py-1 text-xs font-medium text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
-							>
-								<Shield class="size-3.5" />
-								<span>Admin</span>
-							</Badge>
-						{:else}
-							<Badge
-								variant="secondary"
-								class="gap-1.5 px-2.5 py-1 text-xs font-medium text-muted-foreground border-border"
-							>
-								<span>Member</span>
-							</Badge>
-						{/if}
-
-						<!-- Member Action Menu -->
-						{#if canManage && m.UserID !== currentUserId && m.Role !== 'owner'}
-							<DropdownMenu.Root>
-								<DropdownMenu.Trigger
-									class="p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-secondary transition-colors focus:outline-none cursor-pointer"
-								>
-									<MoreVertical class="size-4" />
-								</DropdownMenu.Trigger>
-								<DropdownMenu.Content
-									align="end"
-									class="bg-card border-border text-foreground min-w-37.5 p-1 rounded-lg"
-								>
-									{#if m.Role === 'member' && isOwner}
-										<DropdownMenu.Item
-											class="hover:bg-white/10 cursor-pointer rounded-md p-2 text-xs"
-											onclick={() => handlePromote(m.UserID)}
-										>
-											<ShieldAlert class="mr-2 size-3.5 text-emerald-400" /> Make Admin
-										</DropdownMenu.Item>
-									{:else if m.Role === 'admin' && isOwner}
-										<DropdownMenu.Item
-											class="hover:bg-white/10 cursor-pointer rounded-md p-2 text-xs"
-											onclick={() => handleDemote(m.UserID)}
-										>
-											<ShieldX class="mr-2 size-3.5 text-amber-400" /> Demote to Member
-										</DropdownMenu.Item>
-									{/if}
-
-									<DropdownMenu.Item
-										class="hover:bg-destructive/10 text-destructive cursor-pointer rounded-md p-2 text-xs"
-										onclick={() => promptKick(m)}
-									>
-										<Trash2 class="mr-2 size-3.5" /> Remove from Org
-									</DropdownMenu.Item>
-								</DropdownMenu.Content>
-							</DropdownMenu.Root>
-						{/if}
-					</div>
-				</div>
+				<MemberListItem
+					member={m}
+					{currentUserId}
+					{isOwner}
+					{canManage}
+					onPromote={handlePromote}
+					onDemote={handleDemote}
+					onKick={promptKick}
+				/>
 			{/each}
 		</div>
 	{/if}

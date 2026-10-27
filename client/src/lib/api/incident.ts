@@ -1,4 +1,4 @@
-import { apiFetch } from '../helper/api';
+import { apiFetch } from './client';
 import { env } from '$env/dynamic/public';
 import type { Monitor } from './monitor';
 
@@ -48,7 +48,7 @@ export interface AddIncidentUpdateReq {
 	message: string;
 }
 
-export function mapSeverityFromBackend(severity?: string): {
+function mapSeverityFromBackend(severity?: string): {
 	code: 'sev1' | 'sev2' | 'sev3' | 'sev4';
 	label: string;
 } {
@@ -66,7 +66,7 @@ export function mapSeverityFromBackend(severity?: string): {
 	}
 }
 
-export function mapIncident(inc: any): Incident {
+function mapIncident(inc: any): Incident {
 	const rawSev = inc.severity ?? inc.Severity ?? 'medium';
 	const sevMeta = mapSeverityFromBackend(rawSev);
 

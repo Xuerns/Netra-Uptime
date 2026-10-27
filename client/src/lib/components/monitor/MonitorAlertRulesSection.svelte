@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { AlertTemplateAPI, type AlertTemplate } from '$lib/api/alertTemplate';
 	import { MonitorAPI } from '$lib/api/monitor';
 	import { ExternalLink } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
+	import { logger } from '$lib/utils/logger';
 
 	interface Props {
 		orgId: string;
@@ -18,7 +19,7 @@
 	let isHttp = $derived(monitorType?.toLowerCase() === 'http');
 
 	let availableTemplates = $state<AlertTemplate[]>([]);
-	let currentTemplateId = $state<string | null>(alertTemplateId);
+	let currentTemplateId = $state<string | null>(untrack(() => alertTemplateId));
 	let isApplyingTemplate = $state(false);
 	let isLoading = $state(true);
 
@@ -39,7 +40,8 @@
 				}
 			}
 		} catch (err: unknown) {
-			console.error('Failed to load alert templates', err);
+			logger.error('Failed to load alert templates', err);
+			toast.error(parseApiError(err, 'Failed to load alert templates'));
 		} finally {
 			isLoading = false;
 		}

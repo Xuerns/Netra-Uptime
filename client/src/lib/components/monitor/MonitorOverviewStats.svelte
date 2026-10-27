@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Monitor } from '$lib/api/monitor';
 	import { TrendingUp, AlertTriangle, Globe, Lock } from 'lucide-svelte';
+	import { formatTimeAgo } from '$lib/utils/datetime';
 
 	interface Props {
 		monitors: Monitor[];
@@ -57,10 +58,6 @@
 		return (sum / activeUptimeMonitors.length).toFixed(2);
 	});
 
-	let avgUptimeNum = $derived(
-		avgUptime !== null ? Math.min(100, Math.max(0, Number(avgUptime))) : 0
-	);
-
 	// ── 4. Certificates & DNS Notices ─────────────────────────────────────────
 	let dnsNoticeCount = $derived(
 		monitors.filter((m) => m.DomainStatus === 'warning' || m.DomainStatus === 'expired').length
@@ -86,14 +83,6 @@
 	);
 
 	// ── 5. Fleet Probe Time ───────────────────────────────────────────────────
-	function formatProbeTimeAgo(dateStr?: string): string {
-		if (!dateStr) return 'recently';
-		const diff = Math.max(0, Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000));
-		if (diff < 60) return `${diff}s ago`;
-		if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-		return `${Math.floor(diff / 3600)}h ago`;
-	}
-
 	let mostRecentCheck = $derived.by(() => {
 		const dates = monitors
 			.map((m) => m.LastCheckedAt)
@@ -103,7 +92,7 @@
 		return new Date(Math.max(...dates)).toISOString();
 	});
 
-	let lastProbeTimeAgo = $derived(formatProbeTimeAgo(mostRecentCheck ?? undefined));
+	let lastProbeTimeAgo = $derived(mostRecentCheck ? formatTimeAgo(mostRecentCheck) : 'recently');
 
 	// ── 6. Fleet status percentages ───────────────────────────────────────────
 	let fleetUpPct = $derived(totalCount > 0 ? (upCount / totalCount) * 100 : 0);
@@ -304,12 +293,9 @@
 
 <style>
 	.kpi-card {
-		transition:
-			border-color 200ms ease,
-			box-shadow 200ms ease;
+		transition: border-color 200ms ease;
 	}
 	.kpi-card:hover {
 		border-color: color-mix(in srgb, var(--primary) 35%, var(--color-border));
-		box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.06);
 	}
 </style>

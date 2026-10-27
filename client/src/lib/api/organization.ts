@@ -1,4 +1,4 @@
-import { apiFetch } from '../helper/api.ts';
+import { apiFetch } from './client';
 import { env } from '$env/dynamic/public';
 
 const API_Route = `${env.PUBLIC_API_URL}`;
@@ -20,7 +20,115 @@ export interface InviteMemberRequest {
 	role?: string;
 }
 
-function mapMember(m: any): any {
+export interface OrganizationUser {
+	ID: string;
+	Name: string;
+	AvatarURL?: string;
+}
+
+export interface OrganizationMember {
+	ID: string;
+	OrganizationID: string;
+	UserID: string;
+	Role: string;
+	User: OrganizationUser;
+}
+
+export interface OrganizationItem {
+	ID: string;
+	Name: string;
+	name?: string;
+	Slug: string;
+	slug?: string;
+	CreatedAt: string;
+	created_at?: string;
+	TotalMonitors?: number;
+	ActiveMonitors?: number;
+	TotalMember?: number;
+	OrganizationMembers?: Array<{
+		ID?: string;
+		UserID?: string;
+		Role?: string;
+		User?: {
+			ID?: string;
+			Name?: string;
+			AvatarURL?: string;
+		};
+	}>;
+	Monitors?: Array<{ Status: string }>;
+	role?: string;
+}
+
+export interface OrganizationInvitationItem {
+	id?: string;
+	ID?: string;
+	role?: string;
+	Role?: string;
+	status?: string;
+	Status?: string;
+	organization?: {
+		id?: string;
+		name?: string;
+		slug?: string;
+	};
+	Organization?: {
+		name?: string;
+		slug?: string;
+	};
+	inviter?: {
+		id?: string;
+		name?: string;
+		avatar_url?: string | null;
+	};
+	Inviter?: {
+		name?: string;
+		avatar_url?: string | null;
+	};
+}
+
+export interface SearchPersonResult {
+	id: string;
+	name: string;
+	avatar_url?: string | null;
+}
+
+export interface OrgActionResponse {
+	status: string;
+	message?: string;
+}
+
+export interface OrgListResponse {
+	status: string;
+	data: OrganizationItem[];
+}
+
+export interface OrgDetailResponse {
+	status: string;
+	data: OrganizationItem;
+}
+
+export interface OrgMembersResponse {
+	status: string;
+	data: OrganizationMember[];
+}
+
+export interface OrgInvitationsResponse {
+	status: string;
+	data: OrganizationInvitationItem[];
+}
+
+export interface OrgSearchPersonsResponse {
+	status?: string;
+	data: SearchPersonResult[];
+	pagination?: {
+		has_more?: boolean;
+		page?: number;
+		limit?: number;
+		total?: number;
+	};
+}
+
+function mapMember(m: any): OrganizationMember {
 	if (!m) return m;
 	const user = m.user ?? m.User ?? {};
 	return {
@@ -36,7 +144,7 @@ function mapMember(m: any): any {
 	};
 }
 
-function mapOrganization(org: any): any {
+function mapOrganization(org: any): OrganizationItem {
 	if (!org) return org;
 	return {
 		ID: org.id ?? org.ID,
@@ -61,7 +169,7 @@ function mapOrganization(org: any): any {
 }
 
 export const OrgAPI = {
-	getAll: async () => {
+	getAll: async (): Promise<OrgListResponse> => {
 		const res = await apiFetch(`${API_Route}/organization/all`, { method: 'GET' });
 		if (!res.ok) throw new Error('Failed to fetch organizations');
 		const json = await res.json();
@@ -71,7 +179,7 @@ export const OrgAPI = {
 		};
 	},
 
-	create: async (data: CreateOrgRequest) => {
+	create: async (data: CreateOrgRequest): Promise<OrgDetailResponse> => {
 		const res = await apiFetch(`${API_Route}/organization/create`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -85,7 +193,7 @@ export const OrgAPI = {
 		};
 	},
 
-	getMembers: async (orgId: string) => {
+	getMembers: async (orgId: string): Promise<OrgMembersResponse> => {
 		// organizationID diambil dari path `:orgId` dan divalidasi oleh tenant middleware
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/members`, {
 			method: 'GET'
@@ -98,7 +206,10 @@ export const OrgAPI = {
 		};
 	},
 
-	inviteMember: async (orgId: string, data: InviteMemberRequest | InviteMemberRequest[]) => {
+	inviteMember: async (
+		orgId: string,
+		data: InviteMemberRequest | InviteMemberRequest[]
+	): Promise<OrgActionResponse> => {
 		// Backend `InviteMember` (BulkInviteMemberRequest) expects: { invitations: [...] }
 		const invitations = Array.isArray(data) ? data : [data];
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/invite`, {
@@ -113,7 +224,7 @@ export const OrgAPI = {
 		return res.json();
 	},
 
-	kickMember: async (orgId: string, memberId: string) => {
+	kickMember: async (orgId: string, memberId: string): Promise<OrgActionResponse> => {
 		// Di backend `KickMember`, di-bind langsung ke `var memberId string` alih-alih `KickMemberRequest`
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/kick`, {
 			method: 'DELETE',
@@ -124,7 +235,7 @@ export const OrgAPI = {
 		return res.json();
 	},
 
-	update: async (orgId: string, data: UpdateOrgRequest) => {
+	update: async (orgId: string, data: UpdateOrgRequest): Promise<OrgDetailResponse> => {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/update`, {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
@@ -138,7 +249,7 @@ export const OrgAPI = {
 		};
 	},
 
-	disband: async (orgId: string) => {
+	disband: async (orgId: string): Promise<OrgActionResponse> => {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/disband`, {
 			method: 'DELETE'
 		});
@@ -146,7 +257,7 @@ export const OrgAPI = {
 		return res.json();
 	},
 
-	getInvitations: async () => {
+	getInvitations: async (): Promise<OrgInvitationsResponse> => {
 		const res = await apiFetch(`${API_Route}/invitation`, { method: 'GET' });
 		if (!res.ok) {
 			const errText = await res.text();
@@ -155,7 +266,10 @@ export const OrgAPI = {
 		return res.json();
 	},
 
-	actionInvitation: async (invitationId: string, action: 'accept' | 'reject') => {
+	actionInvitation: async (
+		invitationId: string,
+		action: 'accept' | 'reject'
+	): Promise<OrgActionResponse> => {
 		const res = await apiFetch(`${API_Route}/invitation/action`, {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
@@ -165,7 +279,11 @@ export const OrgAPI = {
 		return res.json();
 	},
 
-	searchPersons: async (name: string, page: number = 1, orgId?: string) => {
+	searchPersons: async (
+		name: string,
+		page: number = 1,
+		orgId?: string
+	): Promise<OrgSearchPersonsResponse> => {
 		let url = `${API_Route}/search/persons?name=${encodeURIComponent(name)}&page=${page}`;
 		if (orgId) {
 			url += `&orgId=${orgId}`;
@@ -179,7 +297,7 @@ export const OrgAPI = {
 		return res.json();
 	},
 
-	promoteToAdmin: async (orgId: string, userId: string) => {
+	promoteToAdmin: async (orgId: string, userId: string): Promise<OrgActionResponse> => {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/promote`, {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
@@ -189,7 +307,7 @@ export const OrgAPI = {
 		return res.json();
 	},
 
-	demoteToMember: async (orgId: string, userId: string) => {
+	demoteToMember: async (orgId: string, userId: string): Promise<OrgActionResponse> => {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/demote`, {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
@@ -199,7 +317,7 @@ export const OrgAPI = {
 		return res.json();
 	},
 
-	transferOwnership: async (orgId: string, userId: string) => {
+	transferOwnership: async (orgId: string, userId: string): Promise<OrgActionResponse> => {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/transfer`, {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
@@ -209,7 +327,7 @@ export const OrgAPI = {
 		return res.json();
 	},
 
-	leaveOrganization: async (orgId: string) => {
+	leaveOrganization: async (orgId: string): Promise<OrgActionResponse> => {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/leave`, {
 			method: 'PUT'
 		});

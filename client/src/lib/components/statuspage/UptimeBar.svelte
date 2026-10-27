@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PublicUptimeDay } from '$lib/api/statuspage';
+	import { formatDateOnly } from '$lib/utils/datetime';
 
 	let {
 		dailyStats = [],
@@ -48,28 +49,20 @@
 			return 'bg-white/10 hover:bg-white/20';
 		}
 		if (day.uptime_percentage >= 99.0) {
-			return accentColor
-				? ''
-				: 'bg-emerald-500 hover:bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.25)]';
+			return accentColor ? '' : 'bg-emerald-500 hover:bg-emerald-400';
 		}
 		if (day.uptime_percentage >= 95.0) {
-			return 'bg-amber-400 hover:bg-amber-300 shadow-[0_0_6px_rgba(251,191,36,0.3)]';
+			return 'bg-amber-400 hover:bg-amber-300';
 		}
 		if (day.uptime_percentage >= 90.0) {
-			return 'bg-orange-500 hover:bg-orange-400 shadow-[0_0_6px_rgba(249,115,22,0.3)]';
+			return 'bg-orange-500 hover:bg-orange-400';
 		}
-		return 'bg-red-500 hover:bg-red-400 shadow-[0_0_6px_rgba(239,68,68,0.3)]';
+		return 'bg-red-500 hover:bg-red-400';
 	}
 
 	function formatDate(dateStr: string): string {
 		if (!dateStr) return '';
-		const [year, month, day] = dateStr.split('-');
-		const d = new Date(Number(year), Number(month) - 1, Number(day));
-		return d.toLocaleDateString('en-US', {
-			month: 'short',
-			day: 'numeric',
-			year: 'numeric'
-		});
+		return formatDateOnly(dateStr);
 	}
 
 	function handleMouseEnter(index: number, event: MouseEvent) {
@@ -101,7 +94,7 @@
 				style="left: {Math.max(60, Math.min(tooltipPos.x, 700))}px"
 			>
 				<div
-					class="bg-card/95 backdrop-blur-md border border-border px-2.5 py-1.5 rounded-lg shadow-xl text-center text-xs whitespace-nowrap"
+					class="bg-card/95 backdrop-blur-md border border-border px-2.5 py-1.5 rounded-lg text-center text-xs whitespace-nowrap"
 				>
 					<div class="font-semibold text-foreground">{formatDate(day.date)}</div>
 					{#if day.has_data}
@@ -143,7 +136,7 @@
 					type="button"
 					aria-label={`Uptime for ${day.date}`}
 					style={day.has_data && day.uptime_percentage >= 99.0 && accentColor
-						? `background-color: ${accentColor}; box-shadow: 0 0 6px ${accentColor}40;`
+						? `background-color: ${accentColor};`
 						: ''}
 					class="flex-1 h-full rounded-[2px] sm:rounded-sm transition-all duration-150 {getBarColor(
 						day

@@ -22,10 +22,13 @@
 	import { userTimezone } from '$lib/stores/timezone';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 
 	// ── Params ────────────────────────────────────────────────────────────────
-	const orgId = $derived($page.params.id as string);
-	const monitorId = $derived($page.params.monitorId as string);
+	const orgId = $derived(data.orgId || ($page.params.id as string));
+	const monitorId = $derived(($page.params.monitorId as string) || '');
 
 	// ── State ─────────────────────────────────────────────────────────────────
 	let monitor = $state<Monitor | null>(null);
@@ -128,7 +131,7 @@
 	// Chart Data Points
 	let chartPoints = $derived.by<DataPoint[]>(() => {
 		if (activePeriod === '24h' && monitor?.recent_checks && monitor.recent_checks.length > 0) {
-			return [...monitor.recent_checks].reverse().map((c: any) => ({
+			return [...monitor.recent_checks].reverse().map((c) => ({
 				label: formatDateTime(c.CheckedAt, tz),
 				value: c.ResponseTimeMs,
 				status: c.Status,
@@ -137,7 +140,7 @@
 		}
 
 		if (stats.length === 0 && monitor?.recent_checks && monitor.recent_checks.length > 0) {
-			return [...monitor.recent_checks].reverse().map((c: any) => ({
+			return [...monitor.recent_checks].reverse().map((c) => ({
 				label: formatDateTime(c.CheckedAt, tz),
 				value: c.ResponseTimeMs,
 				status: c.Status,
@@ -326,7 +329,7 @@
 			} else {
 				fetchError = 'Monitor not found or access denied';
 			}
-		} catch (err: any) {
+		} catch (err: unknown) {
 			fetchError = parseApiError(err, 'Failed to load monitor data');
 		} finally {
 			isLoading = false;
@@ -362,7 +365,7 @@
 				toast.success('Check completed successfully');
 			}
 			await loadMonitorData(true);
-		} catch (err: any) {
+		} catch (err: unknown) {
 			toast.error(parseApiError(err, 'Failed to trigger check'));
 		} finally {
 			isTriggeringCheck = false;
@@ -378,7 +381,7 @@
 			});
 			toast.success(willResume ? 'Monitor resumed' : 'Monitor paused');
 			loadMonitorData(true);
-		} catch (err: any) {
+		} catch (err: unknown) {
 			toast.error(parseApiError(err, 'Failed to toggle monitor status'));
 		}
 	}
@@ -390,7 +393,7 @@
 			await MonitorAPI.delete(orgId, monitor.ID);
 			toast.success('Monitor deleted successfully');
 			goto(`/dashboard/org/${orgId}/monitors`);
-		} catch (err: any) {
+		} catch (err: unknown) {
 			toast.error(parseApiError(err, 'Failed to delete monitor'));
 		}
 	}

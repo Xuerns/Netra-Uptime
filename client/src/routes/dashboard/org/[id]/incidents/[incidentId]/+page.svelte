@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import type { PageData } from './$types';
 	import { IncidentAPI, type Incident, type IncidentUpdateResponse } from '$lib/api/incident';
 	import { userTimezone } from '$lib/stores/timezone';
 	import { toast } from 'svelte-sonner';
@@ -14,7 +15,9 @@
 	import IncidentUpdateForm from '$lib/components/incident/IncidentUpdateForm.svelte';
 	import { DataSkeleton } from '$lib/components/common';
 
-	const orgId = $derived($page.params.id as string);
+	let { data }: { data: PageData } = $props();
+
+	const orgId = $derived(data.orgId || ($page.params.id as string));
 	const incidentId = $derived($page.params.incidentId as string);
 
 	let incident = $state<Incident | null>(null);
@@ -25,7 +28,7 @@
 	let isPosting = $state(false);
 	let error = $state('');
 
-	let currentUserId = $derived($page.data?.user?.id || $page.data?.user?.ID || '');
+	let currentUserId = $derived(data.user?.id || $page.data?.user?.id || $page.data?.user?.ID || '');
 	let tz = $derived($userTimezone);
 
 	async function loadIncidentData() {
@@ -44,8 +47,8 @@
 			}
 
 			updates = updatesRes.data || [];
-		} catch (err: any) {
-			error = err.message || 'Failed to load incident details';
+		} catch (err: unknown) {
+			error = err instanceof Error ? err.message : 'Failed to load incident details';
 		} finally {
 			isLoading = false;
 			isLoadingUpdates = false;
@@ -61,7 +64,7 @@
 			// Refresh incident data
 			const res = await IncidentAPI.getById(orgId, incidentId);
 			if (res.data) incident = res.data;
-		} catch (err: any) {
+		} catch (err: unknown) {
 			toast.error(parseApiError(err, 'Failed to join incident bridge'));
 		} finally {
 			isJoining = false;
@@ -78,7 +81,7 @@
 			// Refresh updates list
 			const updatesRes = await IncidentAPI.getUpdates(orgId, incidentId);
 			updates = updatesRes.data || [];
-		} catch (err: any) {
+		} catch (err: unknown) {
 			toast.error(parseApiError(err, 'Failed to post update'));
 		} finally {
 			isPosting = false;

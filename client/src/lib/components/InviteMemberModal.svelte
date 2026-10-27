@@ -2,11 +2,12 @@
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { OrgAPI, type InviteMemberRequest } from '$lib/api/organization';
-	import { debounce } from '$lib/helper/utils';
+	import { debounce } from '$lib/utils';
 	import { toast } from 'svelte-sonner';
 	import { Search, X, TriangleAlert, Loader2 } from 'lucide-svelte';
 	import { parseApiError } from '$lib/utils/parseApiError';
 	import { getInitials as initials } from '$lib/utils/string';
+	import { logger } from '$lib/utils/logger';
 
 	interface UserResult {
 		id: string;
@@ -63,9 +64,7 @@
 				searchResults = [...searchResults, ...newResults];
 			}
 		} catch (error) {
-			if (import.meta.env.DEV) {
-				console.error('Failed to search users:', error);
-			}
+			logger.error('Failed to search users:', error);
 			if (pageNum === 1) searchResults = [];
 		} finally {
 			isSearching = false;
@@ -157,9 +156,7 @@
 </script>
 
 <Dialog.Root bind:open onOpenChange={(v) => (!v ? handleClose() : null)}>
-	<Dialog.Content
-		class="sm:max-w-120 bg-card border border-border shadow-lg text-foreground p-6 rounded-2xl"
-	>
+	<Dialog.Content class="sm:max-w-120 bg-card border border-border text-foreground p-6 rounded-2xl">
 		<Dialog.Header>
 			<div class="flex items-center gap-2.5">
 				<Dialog.Title class="text-xl font-semibold tracking-tight">Invite Members</Dialog.Title>
@@ -185,7 +182,9 @@
 
 			<!-- Search bar -->
 			<div class="space-y-1.5">
-				<label class="text-sm font-medium text-foreground">Search User</label>
+				<label for="search-user-input" class="text-sm font-medium text-foreground"
+					>Search User</label
+				>
 				<div class="relative">
 					<div
 						class="flex items-center h-10 rounded-lg border border-border bg-background overflow-hidden transition-colors focus-within:ring-1 focus-within:ring-primary focus-within:border-primary gap-2 px-3"
@@ -198,6 +197,7 @@
 							<Search class="size-4 text-muted-foreground/50 shrink-0" />
 						{/if}
 						<input
+							id="search-user-input"
 							type="text"
 							placeholder="Search user by name..."
 							autocomplete="off"
@@ -217,13 +217,13 @@
 					<!-- Search dropdown results -->
 					{#if showDropdown && searchQuery.trim()}
 						<div
-							class="absolute top-[calc(100%+4px)] left-0 right-0 rounded-lg border border-border bg-popover z-50 overflow-hidden shadow-xl"
+							class="absolute top-[calc(100%+4px)] left-0 right-0 rounded-lg border border-border bg-popover z-50 overflow-hidden"
 						>
 							{#if isSearching && searchResults.length === 0}
 								<div class="px-4 py-3 text-[13px] text-muted-foreground">Searching...</div>
 							{:else if filteredResults.length > 0}
 								<ul class="max-h-52 overflow-y-auto py-1" onscroll={handleScroll}>
-									{#each filteredResults as user}
+									{#each filteredResults as user (user.id)}
 										<li>
 											<button
 												type="button"

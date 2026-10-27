@@ -8,6 +8,9 @@
 	import { activeOrgId, organizations } from '$lib/stores/organization';
 	import { parseApiError } from '$lib/utils/parseApiError';
 	import { CreateOrgModal, OrgCard, OrgListItem } from '$lib/components/org';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 
 	// ── Types ────────────────────────────────────────────────────────────────────
 	interface Organization {
@@ -16,15 +19,22 @@
 		Slug: string;
 		CreatedAt: string;
 		Monitors?: Array<{ ID?: string; Status: string }>;
-		OrganizationMembers?: Array<any>;
+		OrganizationMembers?: Array<unknown>;
 	}
 
 	// ── State ────────────────────────────────────────────────────────────────────
 	let orgs = $state<Organization[]>([]);
-	let isLoading = $state(true);
+	let isLoading = $state(false);
 	let fetchError = $state('');
 	let viewMode = $state<'grid' | 'list'>('grid');
 	let dialogOpen = $state(false);
+
+	$effect(() => {
+		if (data?.orgs) {
+			orgs = data.orgs as Organization[];
+			organizations.set(orgs.map((o) => ({ id: o.ID, name: o.Name, slug: o.Slug })));
+		}
+	});
 
 	async function loadOrgs() {
 		isLoading = true;
@@ -35,7 +45,7 @@
 
 			// Update global store
 			organizations.set(orgs.map((o) => ({ id: o.ID, name: o.Name, slug: o.Slug })));
-		} catch (err: any) {
+		} catch (err: unknown) {
 			fetchError = parseApiError(err, 'Failed to load organizations.');
 		} finally {
 			isLoading = false;
@@ -46,7 +56,7 @@
 		dialogOpen = true;
 	}
 
-	async function handleOrgCreated(newOrg: any) {
+	async function handleOrgCreated(newOrg: { ID?: string } | null | undefined) {
 		await loadOrgs();
 		if (newOrg?.ID) {
 			selectOrg(newOrg.ID);
@@ -65,7 +75,6 @@
 	}
 
 	onMount(() => {
-		loadOrgs();
 		const savedMode = localStorage.getItem('orgViewMode');
 		if (savedMode === 'grid' || savedMode === 'list') {
 			viewMode = savedMode;

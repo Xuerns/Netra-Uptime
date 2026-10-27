@@ -13,12 +13,13 @@
 		validateMonitorInterval,
 		validateMonitorTimeout
 	} from '$lib/utils/validation';
-	import { debounce } from '$lib/helper/utils';
+	import { debounce } from '$lib/utils';
 	import MonitorTypeGuide from '$lib/components/monitor/MonitorTypeGuide.svelte';
 	import AssigneeGuide from '$lib/components/monitor/AssigneeGuide.svelte';
 	import { parseApiError } from '$lib/utils/parseApiError';
 	import { toast } from 'svelte-sonner';
 	import { getAvatarColor } from '$lib/utils/string';
+	import { logger } from '$lib/utils/logger';
 
 	interface Props {
 		isOpen?: boolean;
@@ -246,9 +247,7 @@
 						members = res.data ?? [];
 					})
 					.catch((err) => {
-						if (import.meta.env.DEV) {
-							console.error('Failed to load members', err);
-						}
+						logger.error('Failed to load members', err);
 					});
 
 				AlertTemplateAPI.list(orgId)
@@ -343,7 +342,7 @@
 
 <Dialog.Root bind:open={isOpen}>
 	<Dialog.Content
-		class="sm:max-w-187.5 bg-card border border-border shadow-lg text-foreground p-6 rounded-2xl"
+		class="sm:max-w-187.5 bg-card border border-border text-foreground p-6 rounded-2xl"
 	>
 		<Dialog.Header>
 			<div class="flex items-center gap-2">
@@ -660,7 +659,7 @@
 							<option value="">None (Use System Defaults)</option>
 							{#each alertTemplates as tmpl (tmpl.id)}
 								<option value={tmpl.id}>
-									{tmpl.name} ({tmpl.rules?.length || 0} rules) {tmpl.is_default ? '★ Default' : ''}
+									{tmpl.name} ({tmpl.rules?.length || 0} rules) {tmpl.is_default ? '(Default)' : ''}
 								</option>
 							{/each}
 						</select>
@@ -786,7 +785,7 @@
 				<button
 					type="submit"
 					disabled={loading || !canSubmit}
-					class="h-11 px-6 rounded-lg text-sm font-medium bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 shadow-sm disabled:opacity-50 cursor-pointer"
+					class="h-11 px-6 rounded-lg text-sm font-medium bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 disabled:opacity-50 cursor-pointer"
 				>
 					{loading
 						? isEdit

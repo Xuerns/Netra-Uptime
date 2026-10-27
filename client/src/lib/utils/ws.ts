@@ -1,33 +1,28 @@
 import { env } from '$env/dynamic/public';
 import { browser } from '$app/environment';
+import { logger } from './logger';
 
-export type WSMessage = {
-	Room: string;
-	Type: string;
-	Payload: any;
-};
+export type MonitorStatus = 'up' | 'down' | 'degraded' | 'paused' | 'pending';
 
-export type MonitorUpdatePayload = {
+export interface MonitorUpdatePayload {
 	id: string;
-	status: 'up' | 'down' | 'paused' | 'pending';
+	status: MonitorStatus;
 	response_time: number;
 	last_checked: string;
 	failure_count: number;
-};
+}
+
+export type WebSocketPayload = MonitorUpdatePayload | Record<string, unknown> | null;
+
+export interface WebSocketMessage<T = WebSocketPayload> {
+	Room: string;
+	Type: string;
+	Payload: T;
+}
+
+export type WSMessage<T = WebSocketPayload> = WebSocketMessage<T>;
 
 type Subscriber = (msg: WSMessage) => void;
-
-function logDev(...args: unknown[]) {
-	if (import.meta.env.DEV) {
-		console.log(...args);
-	}
-}
-
-function logDevError(...args: unknown[]) {
-	if (import.meta.env.DEV) {
-		console.error(...args);
-	}
-}
 
 class WebSocketClient {
 	private ws: WebSocket | null = null;
@@ -45,11 +40,11 @@ class WebSocketClient {
 		const apiBase = env.PUBLIC_API_URL || 'http://localhost:27346/api/v1';
 		const wsUrl = apiBase.replace(/^http/, 'ws') + '/ws';
 
-		logDev('[WebSocket] Connecting to:', wsUrl);
+		logger.info('[WebSocket] Connecting to:', wsUrl);
 		this.ws = new WebSocket(wsUrl);
 
 		this.ws.onopen = () => {
-			logDev('[WebSocket] Connected successfully');
+			logger.info('[WebSocket] Connected successfully');
 			this.isConnecting = false;
 			this.reconnectAttempts = 0;
 		};
@@ -59,19 +54,19 @@ class WebSocketClient {
 				const data: WSMessage = JSON.parse(event.data);
 				this.notifySubscribers(data);
 			} catch (err) {
-				logDevError('[WebSocket] Failed to parse message:', err);
+				logger.error('[WebSocket] Failed to parse message:', err);
 			}
 		};
 
 		this.ws.onclose = () => {
-			logDev('[WebSocket] Connection closed');
+			logger.info('[WebSocket] Connection closed');
 			this.isConnecting = false;
 			this.ws = null;
 			this.scheduleReconnect();
 		};
 
 		this.ws.onerror = (err) => {
-			logDevError('[WebSocket] Error:', err);
+			logger.error('[WebSocket] Error:', err);
 			this.ws?.close();
 		};
 	}
@@ -98,14 +93,14 @@ class WebSocketClient {
 
 	private scheduleReconnect() {
 		if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-			logDev('[WebSocket] Max reconnect attempts reached');
+			logger.info('[WebSocket] Max reconnect attempts reached');
 			return;
 		}
 
 		const delay = Math.min(1000 * 2 ** this.reconnectAttempts, 10000); // Exponential backoff
 		this.reconnectAttempts++;
 
-		logDev(`[WebSocket] Reconnecting in ${delay}ms... (Attempt ${this.reconnectAttempts})`);
+		logger.info(`[WebSocket] Reconnecting in ${delay}ms... (Attempt ${this.reconnectAttempts})`);
 		setTimeout(() => this.connect(), delay);
 	}
 

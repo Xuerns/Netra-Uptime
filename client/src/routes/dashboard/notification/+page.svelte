@@ -1,37 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { OrgAPI } from '$lib/api/organization';
-	import { Check, X, Mail } from 'lucide-svelte';
+	import { OrgAPI, type OrganizationInvitationItem } from '$lib/api/organization';
+	import { Mail } from 'lucide-svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { DataSkeleton } from '$lib/components/common';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
-	import { getInitials as initials, getAvatarColor as avatarColor } from '$lib/utils/string';
 	import { invitationStore } from '$lib/stores/invitation.svelte';
-
-	interface User {
-		id: string;
-		name: string;
-		email: string;
-		avatar_url: string;
-	}
-
-	interface Organization {
-		id: string;
-		name: string;
-		slug: string;
-	}
-
-	interface Invitation {
-		ID: string;
-		OrganizationID: string;
-		Role: string;
-		Status: string;
-		CreatedAt: string;
-		ExpiresAt: string;
-		Organization: Organization;
-		Inviter: User;
-	}
+	import InvitationCard, {
+		type Invitation
+	} from '$lib/components/notification/InvitationCard.svelte';
 
 	let invitations: Invitation[] = $state([]);
 	let isLoading = $state(true);
@@ -46,24 +24,25 @@
 		errorMsg = '';
 		try {
 			const res = await OrgAPI.getInvitations();
-			const raw = Array.isArray(res.data) ? res.data : Array.isArray(res) ? res : [];
-			invitations = raw.map((inv: any) => ({
-				ID: inv.id ?? inv.ID,
-				Role: inv.role ?? inv.Role,
-				Status: (inv.status ?? inv.Status ?? '').toLowerCase(),
+			const raw: OrganizationInvitationItem[] = Array.isArray(res.data)
+				? res.data
+				: Array.isArray(res)
+					? (res as OrganizationInvitationItem[])
+					: [];
+			invitations = raw.map((inv: OrganizationInvitationItem) => ({
+				ID: String(inv.id ?? inv.ID ?? ''),
+				Role: String(inv.role ?? inv.Role ?? 'member'),
+				Status: String(inv.status ?? inv.Status ?? '').toLowerCase(),
 				Organization: {
-					id: inv.organization?.id,
-					name: inv.organization?.name ?? inv.Organization?.name,
-					slug: inv.organization?.slug ?? inv.Organization?.slug
+					name: String(inv.organization?.name ?? inv.Organization?.name ?? 'Organization')
 				},
 				Inviter: {
-					id: inv.inviter?.id,
-					name: inv.inviter?.name ?? inv.Inviter?.name,
-					avatar_url: inv.inviter?.avatar_url ?? inv.Inviter?.avatar_url
+					name: String(inv.inviter?.name ?? inv.Inviter?.name ?? 'User'),
+					avatar_url: inv.inviter?.avatar_url ?? inv.Inviter?.avatar_url ?? undefined
 				}
 			}));
 			await invitationStore.fetch();
-		} catch (err: any) {
+		} catch (err: unknown) {
 			errorMsg = parseApiError(err, 'Failed to load invitations');
 		} finally {
 			isLoading = false;
@@ -83,7 +62,7 @@
 			} else {
 				toast.success('Invitation rejected');
 			}
-		} catch (err: any) {
+		} catch (err: unknown) {
 			errorMsg = parseApiError(err, `Failed to ${action} invitation`);
 			toast.error(errorMsg);
 		}
@@ -112,7 +91,7 @@
 			<DataSkeleton variant="list" count={3} />
 		{:else if !invitations || invitations.length === 0}
 			<div
-				class="flex flex-col items-center justify-center py-12 px-4 rounded-xl border border-border border-dashed bg-card shadow-xs"
+				class="flex flex-col items-center justify-center py-12 px-4 rounded-xl border border-border border-dashed bg-card"
 			>
 				<div
 					class="flex items-center justify-center size-12 rounded-full bg-white/5 text-muted-foreground/50 mb-4"
@@ -126,72 +105,11 @@
 			</div>
 		{:else}
 			{#each invitations as invite (invite.ID)}
-				<div
-					class="flex flex-wrap items-center justify-between gap-6 p-5 rounded-xl bg-card border border-border shadow-xs hover:border-primary/30 transition-colors"
-				>
-					<div class="flex items-center gap-4 min-w-0">
-						<!-- Inviter Avatar -->
-						{#if invite.Inviter?.avatar_url}
-							<img
-								src={invite.Inviter.avatar_url}
-								alt={invite.Inviter.name}
-								class="size-10 rounded-full object-cover shrink-0"
-							/>
-						{:else}
-							<div
-								class="size-10 rounded-full flex items-center justify-center font-semibold text-[14px] shrink-0 {avatarColor(
-									invite.Inviter?.name || 'U'
-								)}"
-							>
-								{initials(invite.Inviter?.name || 'U')}
-							</div>
-						{/if}
-
-						<div class="flex flex-col min-w-0">
-							<p class="text-[14.5px] text-foreground m-0 leading-snug">
-								<span class="font-semibold">{invite.Inviter?.name || 'Someone'}</span>
-								<span class="text-muted-foreground">invited you to join</span>
-								<span class="font-semibold text-primary"
-									>{invite.Organization?.name || 'an organization'}</span
-								>
-							</p>
-							<p class="text-[12.5px] text-muted-foreground m-0 mt-1">
-								Role: <span class="capitalize text-foreground">{invite.Role}</span>
-							</p>
-						</div>
-					</div>
-
-					{#if invite.Status === 'pending'}
-						<div class="flex items-center gap-2 shrink-0 ml-auto">
-							<button
-								class="flex items-center justify-center size-9 rounded-lg border border-border bg-white/2 text-muted-foreground hover:bg-destructive/15 hover:text-destructive hover:border-destructive/20 transition-all"
-								onclick={() => handleAction(invite.ID, 'reject')}
-								aria-label="Reject"
-								title="Reject invitation"
-							>
-								<X class="size-4.5" />
-							</button>
-							<button
-								class="flex items-center gap-2 h-9 px-4 rounded-lg bg-primary text-primary-foreground font-medium text-[13.5px] hover:bg-[#12c98d] transition-colors"
-								onclick={() => handleAction(invite.ID, 'accept')}
-							>
-								<Check class="size-4" />
-								<span>Accept</span>
-							</button>
-						</div>
-					{:else}
-						<div class="shrink-0 ml-auto">
-							<span
-								class="text-[12px] font-medium px-3 py-1 rounded-full uppercase tracking-wider
-								{invite.Status === 'accepted'
-									? 'bg-primary/10 text-primary'
-									: 'bg-destructive/10 text-destructive'}"
-							>
-								{invite.Status}
-							</span>
-						</div>
-					{/if}
-				</div>
+				<InvitationCard
+					invitation={invite}
+					onAccept={(id) => handleAction(id, 'accept')}
+					onReject={(id) => handleAction(id, 'reject')}
+				/>
 			{/each}
 		{/if}
 	</div>

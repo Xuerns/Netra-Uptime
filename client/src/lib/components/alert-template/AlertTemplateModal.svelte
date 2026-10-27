@@ -12,7 +12,6 @@
 	} from '$lib/api/alertTemplate';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
-	import { Layers, Pencil } from 'lucide-svelte';
 
 	interface Props {
 		open?: boolean;
@@ -87,7 +86,7 @@
 
 <Dialog.Root bind:open>
 	<Dialog.Content
-		class="w-[calc(100%-2rem)] sm:max-w-135! bg-card border border-border shadow-2xl p-6 rounded-2xl text-foreground"
+		class="w-[calc(100%-2rem)] sm:max-w-135! bg-card border border-border p-6 rounded-2xl text-foreground"
 	>
 		<Dialog.Header>
 			<div class="flex items-center gap-2.5">
@@ -156,7 +155,7 @@
 				<button
 					type="submit"
 					disabled={isSaving || !templateName.trim()}
-					class="inline-flex items-center justify-center h-9 px-4 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 disabled:opacity-50 cursor-pointer shadow-sm"
+					class="inline-flex items-center justify-center h-9 px-4 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 disabled:opacity-50 cursor-pointer"
 				>
 					{#if isSaving}
 						{isEdit ? 'Saving...' : 'Creating...'}

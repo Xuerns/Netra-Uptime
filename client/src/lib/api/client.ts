@@ -1,4 +1,5 @@
 import { env } from '$env/dynamic/public';
+import { logger } from '$lib/utils/logger';
 
 interface FetchOptions extends RequestInit {
 	redirectOnFail?: boolean;
@@ -20,9 +21,7 @@ async function executeRefresh(fetchFn: typeof fetch): Promise<RefreshResult> {
 		});
 		return { ok: refreshResponse.ok, status: refreshResponse.status };
 	} catch (error) {
-		if (import.meta.env.DEV) {
-			console.error('Failed to refresh token:', error);
-		}
+		logger.error('Failed to refresh token:', error);
 		return { ok: false, status: 0 };
 	}
 }

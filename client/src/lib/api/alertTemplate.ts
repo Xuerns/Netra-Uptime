@@ -1,4 +1,4 @@
-import { apiFetch } from '../helper/api.ts';
+import { apiFetch } from './client';
 import { env } from '$env/dynamic/public';
 import type { AlertRule, CreateAlertRuleRequest, UpdateAlertRuleRequest } from './alertRule';
 

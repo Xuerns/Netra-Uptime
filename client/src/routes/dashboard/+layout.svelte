@@ -7,8 +7,9 @@
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { invitationStore } from '$lib/stores/invitation.svelte';
+	import type { LayoutData } from './$types';
 
-	let { data, children } = $props();
+	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
 
 	const isOrgScoped = $derived(
 		$page.url.pathname.startsWith('/dashboard/org/') &&

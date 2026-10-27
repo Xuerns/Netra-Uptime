@@ -2,7 +2,7 @@
  * String and naming utilities for Netra Uptime.
  */
 
-export const DEFAULT_AVATAR_COLORS = [
+const DEFAULT_AVATAR_COLORS = [
 	'bg-emerald-500/20 text-emerald-400',
 	'bg-blue-500/20 text-blue-400',
 	'bg-violet-500/20 text-violet-400',

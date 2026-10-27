@@ -9,6 +9,7 @@
 		RefreshCw,
 		Pause,
 		Play,
+		Pencil,
 		Trash2
 	} from 'lucide-svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
@@ -135,6 +136,13 @@
 					<Pause class="size-3.5" />
 					<span>Pause</span>
 				{/if}
+			</Button>
+		{/if}
+
+		{#if onEdit}
+			<Button variant="outline" size="sm" onclick={onEdit} class="gap-1.5">
+				<Pencil class="size-3.5" />
+				<span>Edit</span>
 			</Button>
 		{/if}
 
