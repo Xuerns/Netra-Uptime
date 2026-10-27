@@ -66,13 +66,20 @@ export function validateMonitorTarget(target: string): string {
 }
 
 export function validateMonitorInterval(interval: number): string {
-	if (interval === undefined || interval === null) return 'Interval is required';
-	if (interval < 60) return 'Interval must be at least 60 seconds';
+	if (interval === undefined || interval === null || Number.isNaN(interval))
+		return 'Interval is required';
+	if (interval < 30) return 'Interval must be at least 30 seconds';
 	return '';
 }
 
-export function validateMonitorTimeout(timeout: number): string {
-	if (timeout === undefined || timeout === null) return 'Timeout is required';
+export function validateMonitorTimeout(timeout: number, interval?: number): string {
+	if (timeout === undefined || timeout === null || Number.isNaN(timeout))
+		return 'Timeout is required';
 	if (timeout < 1) return 'Timeout must be at least 1 second';
+	if (timeout > 20) return 'Timeout cannot exceed 20 seconds';
+	if (interval !== undefined && interval !== null && interval > 0) {
+		if (timeout >= interval) return 'Timeout must be strictly less than interval';
+		if (timeout > interval - 5) return 'Timeout cannot exceed ' + (interval - 5) + ' seconds';
+	}
 	return '';
 }

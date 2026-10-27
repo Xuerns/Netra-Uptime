@@ -12,6 +12,7 @@ type Monitor struct {
 	Name               string    `gorm:"not null"`
 	Type               string    `gorm:"not null"` // http | tcp | ping
 	Target             string    `gorm:"not null"`
+	TargetDomain       string    `gorm:"index;size:255" json:"target_domain"`
 	IntervalSeconds    int       `gorm:"not null;default:60"`
 	TimeoutSeconds     int       `gorm:"not null;default:30"`
 	ExpectedStatusCode int       `gorm:"default:200"`

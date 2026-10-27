@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -40,7 +43,7 @@ jobs:
 
       - name: Run Gosec Security Scanner
         run: |
-          curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
+          go install github.com/securego/gosec/v2/cmd/gosec@v2.21.4
           gosec ./...
 
       - name: Run Unit & Integration Tests

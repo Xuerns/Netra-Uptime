@@ -77,8 +77,8 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 
 	protected.GET("/auth/profile", h.AuthHandler.GetProfile)
 	protected.PUT("/auth/profile", h.AuthHandler.UpdateProfile)
-	protected.POST("/auth/password/change/init", h.AuthHandler.InitPasswordChange)
-	protected.POST("/auth/password/change/verify", h.AuthHandler.VerifyPasswordChange)
+	protected.POST("/auth/password/change/init", authLimiter, h.AuthHandler.InitPasswordChange)
+	protected.POST("/auth/password/change/verify", authLimiter, h.AuthHandler.VerifyPasswordChange)
 
 	// Organization
 	protected.GET("/organization/all", h.OrganizationHandler.GetAllOrganization)
@@ -105,7 +105,8 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 	orgRoutes.GET("/monitors", h.MonitorHandler.GetAllMonitor)
 	orgRoutes.GET("/monitors/:monitorId", h.MonitorHandler.GetById)
 	orgRoutes.GET("/monitors/:monitorId/stats", h.MonitorHandler.GetDailyStats)
-	orgRoutes.POST("/monitors/:monitorId/check", h.MonitorHandler.TriggerCheck)
+	checkLimiter := middleware.RateLimiter(redis, 10, 1*time.Minute)
+	orgRoutes.POST("/monitors/:monitorId/check", checkLimiter, h.MonitorHandler.TriggerCheck)
 	orgRoutes.PUT("/monitors/:monitorId", middleware.RequireRole("owner", "admin"), h.MonitorHandler.UpdateMonitor)
 	orgRoutes.DELETE("/monitors/:monitorId", middleware.RequireRole("owner", "admin"), h.MonitorHandler.DeleteMonitor)
 

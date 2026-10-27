@@ -218,6 +218,13 @@ func (h *AuthHandler) OauthLoginAndRegister(c *gin.Context) {
 		return
 	}
 
+	if cookieState, err := c.Cookie("oauth_state"); err == nil && cookieState != "" {
+		if cookieState != req.State {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid OAuth state"})
+			return
+		}
+	}
+
 	response, err := h.service.OauthLoginAndRegister(req)
 
 	if err != nil {
@@ -238,6 +245,7 @@ func (h *AuthHandler) OauthLoginAndRegister(c *gin.Context) {
 	isProduction := strings.EqualFold(os.Getenv("APP_ENV"), "production")
 
 	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("oauth_state", "", -1, "/api/v1/auth", "", isProduction, true)
 	c.SetCookie("access_token", response.AccessToken, int(expiryAccess.Seconds()), "/", "", isProduction, true)
 	c.SetCookie("refresh_token", response.RefreshToken, int(expiryRefresh.Seconds()), "/api/v1/auth", "", isProduction, true)
 
@@ -250,6 +258,11 @@ func (h *AuthHandler) GetOAuthState(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate oauth state"})
 		return
 	}
+
+	isProduction := strings.EqualFold(os.Getenv("APP_ENV"), "production")
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("oauth_state", state, 600, "/api/v1/auth", "", isProduction, true)
+
 	c.JSON(http.StatusOK, gin.H{"state": state})
 }
 

@@ -29,6 +29,9 @@ type Config struct {
 	SelfHostedMinInterval int
 	SelfHostedMaxTimeout  int
 
+	MinMonitorIntervalSeconds     int
+	DefaultMonitorIntervalSeconds int
+
 	DBHost     string
 	DBPort     string
 	DBUser     string
@@ -101,6 +104,9 @@ func loadConfig() *Config {
 		SelfHostedMinInterval: minInterval,
 		SelfHostedMaxTimeout:  parseIntEnv("SELFHOSTED_MAX_TIMEOUT", 60),
 
+		MinMonitorIntervalSeconds:     parseIntEnv("MIN_MONITOR_INTERVAL_SECONDS", 30),
+		DefaultMonitorIntervalSeconds: parseIntEnv("DEFAULT_MONITOR_INTERVAL_SECONDS", 60),
+
 		DBHost:     os.Getenv("DB_HOST"),
 		DBPort:     os.Getenv("DB_PORT"),
 		DBUser:     os.Getenv("DB_USER"),
@@ -113,6 +119,18 @@ func loadConfig() *Config {
 		RedisPassword: os.Getenv("REDIS_PASSWORD"),
 
 		JwtSecret: os.Getenv("JWT_SECRET"),
+	}
+
+	const AbsoluteMinimumInterval = 10
+	if cfg.MinMonitorIntervalSeconds < AbsoluteMinimumInterval {
+		log.Printf("WARNING: MIN_MONITOR_INTERVAL_SECONDS (%d) below safety floor (%d). Enforcing %d seconds.",
+			cfg.MinMonitorIntervalSeconds, AbsoluteMinimumInterval, AbsoluteMinimumInterval)
+		cfg.MinMonitorIntervalSeconds = AbsoluteMinimumInterval
+	}
+	if cfg.DefaultMonitorIntervalSeconds < cfg.MinMonitorIntervalSeconds {
+		log.Printf("NOTICE: DEFAULT_MONITOR_INTERVAL_SECONDS (%d) is lower than min interval (%d). Adjusting default to %d.",
+			cfg.DefaultMonitorIntervalSeconds, cfg.MinMonitorIntervalSeconds, cfg.MinMonitorIntervalSeconds)
+		cfg.DefaultMonitorIntervalSeconds = cfg.MinMonitorIntervalSeconds
 	}
 
 	if strings.EqualFold(cfg.AppEnv, "production") {

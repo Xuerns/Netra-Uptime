@@ -8,11 +8,14 @@ import (
 	"netra-uptime/config"
 	"netra-uptime/internal/audit"
 	"netra-uptime/internal/model"
+	"netra-uptime/pkg/cache"
 	"netra-uptime/pkg/utils"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
+	"golang.org/x/sync/singleflight"
+	"gorm.io/gorm"
 )
 
 type MonitorService interface {
@@ -40,17 +43,32 @@ type MonitorServiceImpl struct {
 	auditService     audit.AuditService
 	immediateChecker ImmediateChecker
 	cfg              *config.Config
+	db               *gorm.DB
+	sfGroup          singleflight.Group
 }
 
 func NewMonitorService(repo MonitorRepository, rdb *redis.Client, checker SubscriptionChecker, auditService audit.AuditService, opts ...interface{}) MonitorService {
 	var ic ImmediateChecker
 	var cfg *config.Config
+	var db *gorm.DB
 	for _, opt := range opts {
 		switch v := opt.(type) {
 		case ImmediateChecker:
 			ic = v
 		case *config.Config:
 			cfg = v
+		case *gorm.DB:
+			db = v
+		}
+	}
+	if db == nil && ic != nil {
+		if dbGetter, ok := ic.(interface{ GetDB() *gorm.DB }); ok {
+			db = dbGetter.GetDB()
+		}
+	}
+	if db == nil && repo != nil {
+		if dbGetter, ok := repo.(interface{ GetDB() *gorm.DB }); ok {
+			db = dbGetter.GetDB()
 		}
 	}
 	return &MonitorServiceImpl{
@@ -60,6 +78,7 @@ func NewMonitorService(repo MonitorRepository, rdb *redis.Client, checker Subscr
 		auditService:     auditService,
 		immediateChecker: ic,
 		cfg:              cfg,
+		db:               db,
 	}
 }
 
@@ -131,6 +150,10 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 		return nil, errors.New("You have reach max assignee limit for this monitor")
 	}
 
+	if req.IntervalSeconds < 10 {
+		return nil, errors.New("interval must be at least 10 seconds")
+	}
+
 	if req.IntervalSeconds < maxInterval {
 		return nil, errors.New("You have reach max interval limit for your plan")
 	}
@@ -143,6 +166,28 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 		return nil, errors.New("Invalid timeout seconds")
 	}
 
+	if req.TimeoutSeconds >= req.IntervalSeconds {
+		return nil, errors.New("timeout must be strictly less than interval")
+	}
+	if req.TimeoutSeconds > (req.IntervalSeconds - 5) {
+		return nil, fmt.Errorf("timeout cannot exceed %d seconds for interval of %d seconds", req.IntervalSeconds-5, req.IntervalSeconds)
+	}
+
+	rootDomain, err := utils.ExtractRootDomain(req.Target)
+	if err != nil {
+		return nil, fmt.Errorf("Invalid target domain: %w", err)
+	}
+
+	if s.db != nil {
+		var count int64
+		if err := s.db.Model(&model.Monitor{}).Where("organization_id = ? AND is_active = true AND target_domain = ?", parceUUID, rootDomain).Count(&count).Error; err != nil {
+			return nil, err
+		}
+		if count >= 5 {
+			return nil, fmt.Errorf("domain quota exceeded: maximum of 5 active monitors allowed for domain %s in this organization", rootDomain)
+		}
+	}
+
 	enableCheck := true
 	if req.EnableSSLDomainCheck != nil {
 		enableCheck = *req.EnableSSLDomainCheck
@@ -152,6 +197,7 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 		Name:                 req.Name,
 		Type:                 req.Type,
 		Target:               req.Target,
+		TargetDomain:         rootDomain,
 		IntervalSeconds:      req.IntervalSeconds,
 		TimeoutSeconds:       req.TimeoutSeconds,
 		ExpectedStatusCode:   req.ExpectedStatusCode,
@@ -161,9 +207,20 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 	}
 
 	if req.AlertTemplateID != nil && *req.AlertTemplateID != "" {
-		if parsed, err := uuid.Parse(*req.AlertTemplateID); err == nil {
-			monitor.AlertTemplateID = &parsed
+		parsed, err := uuid.Parse(*req.AlertTemplateID)
+		if err != nil {
+			return nil, errors.New("invalid alert template UUID format")
 		}
+		if s.db != nil {
+			var count int64
+			if err := s.db.Model(&model.AlertRuleTemplate{}).Where("id = ? AND organization_id = ?", parsed, parceUUID).Count(&count).Error; err != nil {
+				return nil, err
+			}
+			if count == 0 {
+				return nil, errors.New("alert template not found or access denied")
+			}
+		}
+		monitor.AlertTemplateID = &parsed
 	}
 
 	if len(assignees) > 0 {
@@ -188,7 +245,7 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 	}
 
 	if s.rdb != nil {
-		s.rdb.Del(context.Background(), "monitors:org:"+orgId)
+		s.rdb.Del(context.Background(), cache.MonitorListKey(orgId))
 	}
 
 	if s.auditService != nil {
@@ -310,7 +367,7 @@ func mapMonitorToResponse(m model.Monitor) MonitorResponse {
 
 func (s *MonitorServiceImpl) GetById(orgId, monitorId string) (*MonitorResponse, error) {
 	ctx := context.Background()
-	cacheKey := "monitor:org:" + orgId + ":" + monitorId
+	cacheKey := cache.MonitorDetailKey(orgId, monitorId)
 
 	if s.rdb != nil {
 		cacheData, err := s.rdb.Get(ctx, cacheKey).Result()
@@ -326,26 +383,45 @@ func (s *MonitorServiceImpl) GetById(orgId, monitorId string) (*MonitorResponse,
 		}
 	}
 
-	monitor, err := s.repo.GetById(orgId, monitorId)
+	res, err, _ := s.sfGroup.Do(cacheKey, func() (interface{}, error) {
+		if s.rdb != nil {
+			if cacheData, err := s.rdb.Get(ctx, cacheKey).Result(); err == nil && cacheData != "" {
+				var monitorResponse MonitorResponse
+				if err := json.Unmarshal([]byte(cacheData), &monitorResponse); err == nil {
+					if monitorResponse.OrganizationID == orgId {
+						return &monitorResponse, nil
+					}
+					return nil, errors.New("Failed to get Monitor")
+				}
+			}
+		}
+
+		monitor, err := s.repo.GetById(orgId, monitorId)
+		if err != nil {
+			return nil, errors.New("Failed to get Monitor")
+		}
+
+		response := mapMonitorToResponse(*monitor)
+
+		if s.rdb != nil {
+			if jsonData, err := json.Marshal(response); err == nil {
+				s.rdb.Set(ctx, cacheKey, jsonData, 15*time.Second)
+			}
+		}
+
+		return &response, nil
+	})
 
 	if err != nil {
-		return nil, errors.New("Failed to get Monitor")
+		return nil, err
 	}
 
-	response := mapMonitorToResponse(*monitor)
-
-	if s.rdb != nil {
-		if jsonData, err := json.Marshal(response); err == nil {
-			s.rdb.Set(ctx, cacheKey, jsonData, 60*time.Second)
-		}
-	}
-
-	return &response, nil
+	return res.(*MonitorResponse), nil
 }
 
 func (s *MonitorServiceImpl) GetAllMonitor(orgId string) ([]MonitorResponse, error) {
 	ctx := context.Background()
-	cacheKey := "monitors:org:" + orgId
+	cacheKey := cache.MonitorListKey(orgId)
 
 	if s.rdb != nil {
 		cacheData, err := s.rdb.Get(ctx, cacheKey).Result()
@@ -358,26 +434,52 @@ func (s *MonitorServiceImpl) GetAllMonitor(orgId string) ([]MonitorResponse, err
 		}
 	}
 
-	monitors, err := s.repo.GetAllByOrg(orgId)
-	if err != nil {
-		return nil, errors.New("Failed to get All monitor in organization")
-	}
-
-	var response []MonitorResponse
-	for _, m := range monitors {
-		response = append(response, mapMonitorToResponse(m))
-	}
-
-	if s.rdb != nil {
-		if jsonData, err := json.Marshal(response); err == nil {
-			s.rdb.Set(ctx, cacheKey, jsonData, 60*time.Second)
+	res, err, _ := s.sfGroup.Do(cacheKey, func() (interface{}, error) {
+		if s.rdb != nil {
+			if cacheData, err := s.rdb.Get(ctx, cacheKey).Result(); err == nil && cacheData != "" {
+				var monitorsResponse []MonitorResponse
+				if err := json.Unmarshal([]byte(cacheData), &monitorsResponse); err == nil {
+					return monitorsResponse, nil
+				}
+			}
 		}
+
+		monitors, err := s.repo.GetAllByOrg(orgId)
+		if err != nil {
+			return nil, errors.New("Failed to get All monitor in organization")
+		}
+
+		var response []MonitorResponse
+		for _, m := range monitors {
+			response = append(response, mapMonitorToResponse(m))
+		}
+
+		if s.rdb != nil {
+			if jsonData, err := json.Marshal(response); err == nil {
+				s.rdb.Set(ctx, cacheKey, jsonData, 15*time.Second)
+			}
+		}
+
+		return response, nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
-	return response, nil
+	return res.([]MonitorResponse), nil
 }
 
 func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId string, req UpdatedMonitorRequest) (*model.Monitor, error) {
+	parceOrgUUID, err := uuid.Parse(orgId)
+	if err != nil {
+		return nil, errors.New("invalid organization UUID format")
+	}
+	parceUUID, err := uuid.Parse(monitorId)
+	if err != nil {
+		return nil, errors.New("invalid monitor UUID format")
+	}
+
 	subs, err := s.subsChecker.GetOrganizationPlan(orgId)
 	if err != nil {
 		return nil, errors.New("Failed to get organization subscription")
@@ -406,15 +508,17 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 		return nil, errors.New("Failed to get monitor")
 	}
 
-	if req.Name != nil {
-		updatedMonitor.Name = *req.Name
+	effectiveInterval := updatedMonitor.IntervalSeconds
+	if req.IntervalSeconds != nil {
+		effectiveInterval = *req.IntervalSeconds
+	}
+	effectiveTimeout := updatedMonitor.TimeoutSeconds
+	if req.TimeoutSeconds != nil {
+		effectiveTimeout = *req.TimeoutSeconds
 	}
 
-	if req.Target != nil {
-		if err := utils.ValidateTargetHost(*req.Target); err != nil {
-			return nil, fmt.Errorf("Invalid target: %w", err)
-		}
-		updatedMonitor.Target = *req.Target
+	if effectiveInterval < 10 {
+		return nil, errors.New("interval must be at least 10 seconds")
 	}
 
 	if req.IntervalSeconds != nil {
@@ -434,16 +538,55 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 		updatedMonitor.TimeoutSeconds = *req.TimeoutSeconds
 	}
 
+	if effectiveTimeout >= effectiveInterval {
+		return nil, errors.New("timeout must be strictly less than interval")
+	}
+	if effectiveTimeout > (effectiveInterval - 5) {
+		return nil, fmt.Errorf("timeout cannot exceed %d seconds for interval of %d seconds", effectiveInterval-5, effectiveInterval)
+	}
+
+	if req.Name != nil {
+		updatedMonitor.Name = *req.Name
+	}
+
+	if req.Target != nil {
+		if err := utils.ValidateTargetHost(*req.Target); err != nil {
+			return nil, fmt.Errorf("Invalid target: %w", err)
+		}
+		updatedMonitor.Target = *req.Target
+		rootDomain, err := utils.ExtractRootDomain(*req.Target)
+		if err != nil {
+			return nil, fmt.Errorf("Invalid target domain: %w", err)
+		}
+		updatedMonitor.TargetDomain = rootDomain
+	} else if updatedMonitor.TargetDomain == "" && updatedMonitor.Target != "" {
+		if rootDomain, err := utils.ExtractRootDomain(updatedMonitor.Target); err == nil {
+			updatedMonitor.TargetDomain = rootDomain
+		}
+	}
+
 	if req.ExpectedStatusCode != nil {
 		updatedMonitor.ExpectedStatusCode = *req.ExpectedStatusCode
 	}
 
+	isActive := updatedMonitor.IsActive
 	if req.IsActive != nil {
-		updatedMonitor.IsActive = *req.IsActive
-		if !*req.IsActive {
+		isActive = *req.IsActive
+		updatedMonitor.IsActive = isActive
+		if !isActive {
 			updatedMonitor.Status = "paused"
 		} else if updatedMonitor.Status == "paused" {
 			updatedMonitor.Status = "up"
+		}
+	}
+
+	if s.db != nil && isActive && updatedMonitor.TargetDomain != "" {
+		var count int64
+		if err := s.db.Model(&model.Monitor{}).Where("organization_id = ? AND is_active = true AND target_domain = ? AND id != ?", parceOrgUUID, updatedMonitor.TargetDomain, parceUUID).Count(&count).Error; err != nil {
+			return nil, err
+		}
+		if count >= 5 {
+			return nil, fmt.Errorf("domain quota exceeded: maximum of 5 active monitors allowed for domain %s in this organization", updatedMonitor.TargetDomain)
 		}
 	}
 
@@ -458,7 +601,20 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 	if req.AlertTemplateID != nil {
 		if *req.AlertTemplateID == "" {
 			updatedMonitor.AlertTemplateID = nil
-		} else if parsed, err := uuid.Parse(*req.AlertTemplateID); err == nil {
+		} else {
+			parsed, err := uuid.Parse(*req.AlertTemplateID)
+			if err != nil {
+				return nil, errors.New("invalid alert template UUID format")
+			}
+			if s.db != nil {
+				var count int64
+				if err := s.db.Model(&model.AlertRuleTemplate{}).Where("id = ? AND organization_id = ?", parsed, parceOrgUUID).Count(&count).Error; err != nil {
+					return nil, err
+				}
+				if count == 0 {
+					return nil, errors.New("alert template not found or access denied")
+				}
+			}
 			updatedMonitor.AlertTemplateID = &parsed
 		}
 	}
@@ -499,8 +655,8 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 	}
 
 	if s.rdb != nil {
-		s.rdb.Del(context.Background(), "monitors:org:"+orgId)
-		s.rdb.Del(context.Background(), "monitor:org:"+orgId+":"+monitorId)
+		s.rdb.Del(context.Background(), cache.MonitorListKey(orgId))
+		s.rdb.Del(context.Background(), cache.MonitorDetailKey(orgId, monitorId))
 	}
 
 	if s.auditService != nil {
@@ -524,8 +680,8 @@ func (s *MonitorServiceImpl) DeleteMonitor(orgId, userId, ipAddress, monitorId s
 	}
 
 	if s.rdb != nil {
-		s.rdb.Del(context.Background(), "monitors:org:"+orgId)
-		s.rdb.Del(context.Background(), "monitor:org:"+orgId+":"+monitorId)
+		s.rdb.Del(context.Background(), cache.MonitorListKey(orgId))
+		s.rdb.Del(context.Background(), cache.MonitorDetailKey(orgId, monitorId))
 	}
 
 	if s.auditService != nil {
@@ -562,6 +718,19 @@ func (s *MonitorServiceImpl) TriggerCheck(orgId, monitorId string) (*RecentCheck
 		return nil, errors.New("Monitor not found or access denied")
 	}
 
+	if !mon.IsActive {
+		return nil, errors.New("cannot trigger check on inactive monitor")
+	}
+
+	ctx := context.Background()
+	cooldownKey := fmt.Sprintf("check_cooldown:monitor:%s", monitorId)
+	if s.rdb != nil {
+		if s.rdb.Get(ctx, cooldownKey).Err() == nil {
+			return nil, errors.New("check cooldown active, please wait 10 seconds before triggering again")
+		}
+		s.rdb.Set(ctx, cooldownKey, "1", 10*time.Second)
+	}
+
 	if s.immediateChecker == nil {
 		return nil, errors.New("Checker engine is not available")
 	}
@@ -569,6 +738,11 @@ func (s *MonitorServiceImpl) TriggerCheck(orgId, monitorId string) (*RecentCheck
 	check, err := s.immediateChecker.ProcessImmediate(mon.ID)
 	if err != nil {
 		return nil, err
+	}
+
+	if s.rdb != nil {
+		s.rdb.Del(ctx, cache.MonitorDetailKey(orgId, monitorId))
+		s.rdb.Del(ctx, cache.MonitorListKey(orgId))
 	}
 
 	var errMsg *string

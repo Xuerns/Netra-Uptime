@@ -3,6 +3,7 @@ package email
 import (
 	"errors"
 	"fmt"
+	"html"
 	"os"
 	"strconv"
 	"strings"
@@ -111,6 +112,12 @@ func (s *SMTPSender) SendExpiryReminder(to []string, monitorName, target, expiry
 	}
 
 	subject := fmt.Sprintf("Warning: %s for %s expires in %d days!", expiryType, monitorName, daysRemaining)
+
+	safeExpiryType := html.EscapeString(expiryType)
+	safeMonitorName := html.EscapeString(monitorName)
+	safeTarget := html.EscapeString(target)
+	safeExpiresAt := html.EscapeString(expiresAt)
+
 	htmlBody := fmt.Sprintf(`<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -161,7 +168,7 @@ func (s *SMTPSender) SendExpiryReminder(to []string, monitorName, target, expiry
     </td></tr>
   </table>
 </body>
-</html>`, badgeColor, badgeColor, badgeColor, daysRemaining, expiryType, monitorName, target, strings.ToLower(expiryType), target, badgeColor, expiresAt, badgeColor, daysRemaining, strings.ToLower(expiryType))
+</html>`, badgeColor, badgeColor, badgeColor, daysRemaining, safeExpiryType, safeMonitorName, safeTarget, strings.ToLower(safeExpiryType), safeTarget, badgeColor, safeExpiresAt, badgeColor, daysRemaining, strings.ToLower(safeExpiryType))
 
 	return s.SendEmail(to, subject, htmlBody)
 }
@@ -192,6 +199,8 @@ func MailSender(to, link string) error {
 
 	message.Subject("Reset your Netra Uptime password")
 
+	safeLink := html.EscapeString(link)
+
 	htmlBody := `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -215,7 +224,7 @@ func MailSender(to, link string) error {
         </td></tr>
 
         <tr><td align="center" style="padding-bottom:24px;">
-          <a href="` + link + `" target="_blank" style="display:inline-block;background-color:#10b981;color:#003824;font-size:15px;font-weight:600;text-decoration:none;padding:12px 32px;border-radius:8px;">
+          <a href="` + safeLink + `" target="_blank" style="display:inline-block;background-color:#10b981;color:#003824;font-size:15px;font-weight:600;text-decoration:none;padding:12px 32px;border-radius:8px;">
             Reset Password
           </a>
         </td></tr>
@@ -233,7 +242,7 @@ func MailSender(to, link string) error {
         <tr><td>
           <p style="margin:0 0 8px;font-size:12px;color:#86948a;">If the button doesn't work, copy and paste this link into your browser:</p>
           <p style="margin:0;font-size:12px;word-break:break-all;">
-            <a href="` + link + `" style="color:#4edea3;text-decoration:underline;">` + link + `</a>
+            <a href="` + safeLink + `" style="color:#4edea3;text-decoration:underline;">` + safeLink + `</a>
           </p>
         </td></tr>
       </table>
@@ -282,6 +291,8 @@ func SendVerificationCodeEmail(to, code string) error {
 
 	message.Subject("Your Verification Code")
 
+	safeCode := html.EscapeString(code)
+
 	htmlBody := `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -306,7 +317,7 @@ func SendVerificationCodeEmail(to, code string) error {
 
         <tr><td align="center" style="padding-bottom:24px;">
           <div style="display:inline-block;background-color:#1A1A1B;border:1px solid #2A2A2B;color:#4edea3;font-size:28px;letter-spacing:6px;font-weight:700;padding:16px 32px;border-radius:8px;">
-            ` + code + `
+            ` + safeCode + `
           </div>
         </td></tr>
 

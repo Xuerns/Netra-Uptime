@@ -1,20 +1,25 @@
 package worker
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"html"
 	"log"
 	"netra-uptime/internal/model"
 	"netra-uptime/internal/notification"
 	"netra-uptime/internal/websocket"
 	"netra-uptime/internal/worker/checker"
+	"netra-uptime/pkg/cache"
 	"netra-uptime/pkg/email"
 	"strings"
+	"sync"
 	"time"
 
 	"gorm.io/gorm"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 )
 
 type Job struct {
@@ -22,18 +27,21 @@ type Job struct {
 }
 
 type WorkerPool struct {
-	db          *gorm.DB
-	jobQueue    chan Job
-	numWorkers  int
-	emailSender email.EmailSender
-	hub         *websocket.WsHandler
-	dispatcher  *notification.Dispatcher
-	notifySem   chan struct{}
+	db               *gorm.DB
+	rdb              *redis.Client
+	jobQueue         chan Job
+	numWorkers       int
+	emailSender      email.EmailSender
+	hub              *websocket.WsHandler
+	dispatcher       *notification.Dispatcher
+	notifySem        chan struct{}
+	inFlightMonitors sync.Map
 }
 
-func NewWorkerPool(db *gorm.DB, numWorkers int, sender email.EmailSender, hub *websocket.WsHandler) *WorkerPool {
+func NewWorkerPool(db *gorm.DB, rdb *redis.Client, numWorkers int, sender email.EmailSender, hub *websocket.WsHandler) *WorkerPool {
 	return &WorkerPool{
 		db:          db,
+		rdb:         rdb,
 		jobQueue:    make(chan Job, 1000),
 		numWorkers:  numWorkers,
 		emailSender: sender,
@@ -41,6 +49,10 @@ func NewWorkerPool(db *gorm.DB, numWorkers int, sender email.EmailSender, hub *w
 		dispatcher:  notification.NewDispatcher(db, sender),
 		notifySem:   make(chan struct{}, 50), // max 50 concurrent notification goroutines
 	}
+}
+
+func (wp *WorkerPool) GetDB() *gorm.DB {
+	return wp.db
 }
 
 func (wp *WorkerPool) safeGoNotify(fn func()) {
@@ -114,6 +126,12 @@ func (wp *WorkerPool) ProcessImmediate(monitorID uuid.UUID) (*model.Check, error
 }
 
 func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
+	monID := monitor.ID.String()
+	if _, loaded := wp.inFlightMonitors.LoadOrStore(monID, struct{}{}); loaded {
+		return nil
+	}
+	defer wp.inFlightMonitors.Delete(monID)
+
 	timeout := time.Duration(monitor.TimeoutSeconds) * time.Second
 	if timeout <= 0 {
 		timeout = 10 * time.Second
@@ -193,7 +211,7 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 			dbMonitor.FailureCount = 0
 
 			subject := fmt.Sprintf("[Netra Uptime] Resolved: %s is back UP", monitor.Name)
-			message := fmt.Sprintf("<h3>Service Restored</h3><p>Your monitor <b>%s</b> (%s) has returned to healthy state (previously %s).</p>", dbMonitor.Name, dbMonitor.Target, prevStatus)
+			message := fmt.Sprintf("<h3>Service Restored</h3><p>Your monitor <b>%s</b> (%s) has returned to healthy state (previously %s).</p>", html.EscapeString(dbMonitor.Name), html.EscapeString(dbMonitor.Target), html.EscapeString(prevStatus))
 
 			wp.safeGoNotify(func() {
 				wp.sendNotification(&dbMonitor, subject, message)
@@ -227,7 +245,7 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 				dbMonitor.Status = "down"
 
 				subject := fmt.Sprintf("[Netra Uptime] ALERT: %s is DOWN (%s)", monitor.Name, eval.RuleName)
-				message := fmt.Sprintf("<h3>Service Down Alert</h3><p>Your monitor <b>%s</b> (%s) triggered alert rule <b>%s</b>.<br>Reason: <i>%s</i> (breached %d consecutive times)</p>", dbMonitor.Name, dbMonitor.Target, eval.RuleName, eval.Reason, eval.RequiredBreaches)
+				message := fmt.Sprintf("<h3>Service Down Alert</h3><p>Your monitor <b>%s</b> (%s) triggered alert rule <b>%s</b>.<br>Reason: <i>%s</i> (breached %d consecutive times)</p>", html.EscapeString(dbMonitor.Name), html.EscapeString(dbMonitor.Target), html.EscapeString(eval.RuleName), html.EscapeString(eval.Reason), eval.RequiredBreaches)
 
 				go wp.sendNotification(&dbMonitor, subject, message)
 
@@ -270,10 +288,10 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 				var subject, message string
 				if isTimeout {
 					subject = fmt.Sprintf("[Netra Uptime] UNRESPONSIVE: %s is not responding in time (%s)", monitor.Name, eval.RuleName)
-					message = fmt.Sprintf("<h3>Service Unresponsive</h3><p>Your monitor <b>%s</b> (%s) did not respond within the expected timeout limit.<br>Reason: <i>%s</i> (breached %d consecutive times)</p><p style=\"color: #6B7280; font-size: 13px;\">Note: The service may be experiencing high traffic, slow queries, or cold starts rather than a complete outage.</p>", dbMonitor.Name, dbMonitor.Target, eval.Reason, eval.RequiredBreaches)
+					message = fmt.Sprintf("<h3>Service Unresponsive</h3><p>Your monitor <b>%s</b> (%s) did not respond within the expected timeout limit.<br>Reason: <i>%s</i> (breached %d consecutive times)</p><p style=\"color: #6B7280; font-size: 13px;\">Note: The service may be experiencing high traffic, slow queries, or cold starts rather than a complete outage.</p>", html.EscapeString(dbMonitor.Name), html.EscapeString(dbMonitor.Target), html.EscapeString(eval.Reason), eval.RequiredBreaches)
 				} else {
 					subject = fmt.Sprintf("[Netra Uptime] WARNING: %s is DEGRADED (%s)", monitor.Name, eval.RuleName)
-					message = fmt.Sprintf("<h3>Service Degraded Warning</h3><p>Your monitor <b>%s</b> (%s) is experiencing degraded performance.<br>Rule: <b>%s</b><br>Reason: <i>%s</i> (breached %d consecutive times)</p>", dbMonitor.Name, dbMonitor.Target, eval.RuleName, eval.Reason, eval.RequiredBreaches)
+					message = fmt.Sprintf("<h3>Service Degraded Warning</h3><p>Your monitor <b>%s</b> (%s) is experiencing degraded performance.<br>Rule: <b>%s</b><br>Reason: <i>%s</i> (breached %d consecutive times)</p>", html.EscapeString(dbMonitor.Name), html.EscapeString(dbMonitor.Target), html.EscapeString(eval.RuleName), html.EscapeString(eval.Reason), eval.RequiredBreaches)
 				}
 
 				wp.safeGoNotify(func() {
@@ -316,6 +334,16 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 		log.Printf("Failed to update monitor state in DB: %v\n", err)
 	} else if dbMonitor.Status != prevStatus || dbMonitor.FailureCount != prevFailureCount {
 		log.Printf("[Check] %s | State Changed: %s -> %s (Fail Count: %d)\n", dbMonitor.Name, prevStatus, dbMonitor.Status, dbMonitor.FailureCount)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	if wp.rdb != nil {
+		wp.rdb.Del(ctx, cache.MonitorDetailKey(dbMonitor.OrganizationID.String(), dbMonitor.ID.String()))
+		if dbMonitor.Status != prevStatus {
+			wp.rdb.Del(ctx, cache.MonitorListKey(dbMonitor.OrganizationID.String()))
+		}
 	}
 
 	if wp.hub != nil {

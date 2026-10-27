@@ -930,6 +930,12 @@ func (s *StatusPageServiceImpl) UpdateComponentGroup(orgID, statusPageID, groupI
 		return nil, errors.New("You're not member of this organization")
 	}
 
+	sp, err := s.repo.GetById(statusPageID, orgID)
+	if err != nil {
+		return nil, errors.New("Status page not found")
+	}
+	_ = sp
+
 	group, err := s.repo.GetComponentGroupByID(groupID, statusPageID)
 	if err != nil {
 		return nil, errors.New("Component group not found")
@@ -971,6 +977,12 @@ func (s *StatusPageServiceImpl) DeleteComponentGroup(orgID, statusPageID, groupI
 	if err != nil || member == nil {
 		return errors.New("You're not member of this organization")
 	}
+
+	sp, err := s.repo.GetById(statusPageID, orgID)
+	if err != nil {
+		return errors.New("Status page not found")
+	}
+	_ = sp
 
 	group, err := s.repo.GetComponentGroupByID(groupID, statusPageID)
 	if err != nil {

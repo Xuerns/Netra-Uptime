@@ -45,7 +45,9 @@ func main() {
 	go wsHub.Run()
 	wsHandler := websocket.NewWsHandler(wsHub, db)
 
-	wp := worker.NewWorkerPool(db, 10, sender, wsHandler)
+	rdb := cache.NewRedisClient(config)
+
+	wp := worker.NewWorkerPool(db, rdb, 10, sender, wsHandler)
 	wp.Start()
 
 	monitorRepo := monitor.NewMonitorRepository(db, config)
@@ -76,8 +78,6 @@ func main() {
 
 	r.Use(middleware.SetupCORS())
 	r.Use(middleware.SecurityHeaders())
-
-	rdb := cache.NewRedisClient(config)
 
 	handlers := BuildHandler(db, rdb, wp, config, wsHub)
 	router.SetupRouter(r, db, rdb, handlers, wsHandler)

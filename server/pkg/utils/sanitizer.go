@@ -7,7 +7,7 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 )
 
-var htmlRegex = regexp.MustCompile(`<.*>`)
+var htmlRegex = regexp.MustCompile(`(?s)<.*?>`)
 
 var NoHTMLValidator validator.Func = func(fl validator.FieldLevel) bool {
 	input := fl.Field().String()

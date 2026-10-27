@@ -39,10 +39,44 @@
 	const isEdit = $derived(!!monitor);
 	const effectiveType = $derived<string>(monitor?.Type || monitorType || 'http');
 
+	const INTERVAL_OPTIONS = [
+		{ value: '30', label: '30s' },
+		{ value: '60', label: '1m' },
+		{ value: '120', label: '2m' },
+		{ value: '300', label: '5m' },
+		{ value: '600', label: '10m' },
+		{ value: '1800', label: '30m' },
+		{ value: '3600', label: '1h' }
+	];
+
+	const TIMEOUT_OPTIONS = [
+		{ value: '2', label: '2s' },
+		{ value: '5', label: '5s' },
+		{ value: '10', label: '10s' },
+		{ value: '15', label: '15s' },
+		{ value: '20', label: '20s' }
+	];
+
+	function formatIntervalLabel(seconds: number): string {
+		const match = INTERVAL_OPTIONS.find((opt) => opt.value === seconds.toString());
+		if (match) return match.label;
+		if (seconds % 3600 === 0) return `${seconds / 3600}h`;
+		if (seconds % 60 === 0) return `${seconds / 60}m`;
+		return `${seconds}s`;
+	}
+
+	function formatTimeoutLabel(seconds: number): string {
+		const match = TIMEOUT_OPTIONS.find((opt) => opt.value === seconds.toString());
+		if (match) return match.label;
+		return `${seconds}s`;
+	}
+
 	let name = $state('');
 	let target = $state('');
 	let intervalSeconds = $state<number>(60);
+	let intervalSecondsStr = $state<string>('60');
 	let timeoutSeconds = $state<number>(10);
+	let timeoutSecondsStr = $state<string>('10');
 	let alertTemplates = $state<AlertTemplate[]>([]);
 	let selectedTemplateId = $state<string>('');
 	let expectedStatusCodeStr = $state<string>('200');
@@ -92,10 +126,20 @@
 			fieldErrors.intervalSeconds = '';
 			shake.intervalSeconds = false;
 		}
+
+		const timeoutErr = validateMonitorTimeout(timeoutSeconds, val);
+		if (timeoutErr) {
+			fieldErrors.timeoutSeconds = timeoutErr;
+			shake.timeoutSeconds = false;
+			setTimeout(() => (shake.timeoutSeconds = true), 10);
+		} else {
+			fieldErrors.timeoutSeconds = '';
+			shake.timeoutSeconds = false;
+		}
 	}, 500);
 
 	const handleTimeoutValidation = debounce((val: number) => {
-		const err = validateMonitorTimeout(val);
+		const err = validateMonitorTimeout(val, intervalSeconds);
 		if (err) {
 			fieldErrors.timeoutSeconds = err;
 			shake.timeoutSeconds = false;
@@ -105,6 +149,32 @@
 			shake.timeoutSeconds = false;
 		}
 	}, 500);
+
+	function handleIntervalSelect(val: string) {
+		intervalSecondsStr = val;
+		const num = parseInt(val, 10) || 60;
+		intervalSeconds = num;
+		handleIntervalValidation(num);
+
+		// Clamp timeout if it exceeds interval - 5 or exceeds max 20s
+		const maxValid = Math.min(20, Math.max(1, num - 5));
+		if (timeoutSeconds > maxValid) {
+			const validPresets = TIMEOUT_OPTIONS.map((o) => parseInt(o.value, 10)).filter(
+				(v) => v <= maxValid
+			);
+			const newTimeout = validPresets.length > 0 ? Math.max(...validPresets) : maxValid;
+			timeoutSeconds = newTimeout;
+			timeoutSecondsStr = newTimeout.toString();
+			handleTimeoutValidation(newTimeout);
+		}
+	}
+
+	function handleTimeoutSelect(val: string) {
+		timeoutSecondsStr = val;
+		const num = parseInt(val, 10) || 10;
+		timeoutSeconds = num;
+		handleTimeoutValidation(num);
+	}
 
 	let canSubmit = $derived(
 		!loading &&
@@ -126,7 +196,9 @@
 				name = monitor.Name || '';
 				target = monitor.Target || '';
 				intervalSeconds = monitor.IntervalSeconds || 60;
-				timeoutSeconds = monitor.TimeoutSeconds || 10;
+				intervalSecondsStr = intervalSeconds.toString();
+				timeoutSeconds = Math.min(20, monitor.TimeoutSeconds || 10);
+				timeoutSecondsStr = timeoutSeconds.toString();
 				expectedStatusCodeStr = monitor.ExpectedStatusCode
 					? monitor.ExpectedStatusCode.toString()
 					: '200';
@@ -157,7 +229,9 @@
 				name = '';
 				target = '';
 				intervalSeconds = 60;
+				intervalSecondsStr = '60';
 				timeoutSeconds = 10;
+				timeoutSecondsStr = '10';
 				expectedStatusCodeStr = '200';
 				isActive = true;
 				criticality = 'medium';
@@ -464,12 +538,12 @@
 						</label>
 					{/if}
 
-					<div class="grid grid-cols-2 gap-4">
-						<!-- Interval -->
+					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+						<!-- Interval Dropdown -->
 						<div class="space-y-2">
 							<div class="flex items-center gap-3">
-								<Label for="monitor-interval" class="text-sm font-medium text-foreground">
-									Check Interval (sec) <span class="text-destructive font-bold">*</span>
+								<Label class="text-sm font-medium text-foreground">
+									Check Interval <span class="text-destructive font-bold">*</span>
 								</Label>
 								{#if fieldErrors.intervalSeconds}
 									<span class="text-[10px] text-destructive font-medium"
@@ -477,24 +551,48 @@
 									>
 								{/if}
 							</div>
-							<Input
-								id="monitor-interval"
-								type="number"
-								min="60"
-								bind:value={intervalSeconds}
-								oninput={() => handleIntervalValidation(intervalSeconds)}
-								required
-								class="bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none {fieldErrors.intervalSeconds
-									? 'border-destructive/70 focus-visible:border-destructive focus-visible:ring-error'
-									: ''} {shake.intervalSeconds ? 'animate-shake' : ''}"
-							/>
+							<Select.Root
+								type="single"
+								bind:value={intervalSecondsStr}
+								onValueChange={(val) => {
+									if (val) handleIntervalSelect(val);
+								}}
+							>
+								<Select.Trigger
+									class="bg-background border-border text-foreground focus:ring-1 focus:ring-primary focus:border-primary rounded-lg h-10 w-full font-mono {fieldErrors.intervalSeconds
+										? 'border-destructive/70 focus-visible:border-destructive focus-visible:ring-error'
+										: ''} {shake.intervalSeconds ? 'animate-shake' : ''}"
+								>
+									{formatIntervalLabel(intervalSeconds)}
+								</Select.Trigger>
+								<Select.Content class="bg-card border-border text-foreground">
+									{#each INTERVAL_OPTIONS as opt (opt.value)}
+										<Select.Item
+											value={opt.value}
+											label={opt.label}
+											class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer font-mono"
+										>
+											{opt.label}
+										</Select.Item>
+									{/each}
+									{#if !INTERVAL_OPTIONS.some((opt) => opt.value === intervalSecondsStr)}
+										<Select.Item
+											value={intervalSecondsStr}
+											label={formatIntervalLabel(intervalSeconds)}
+											class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer font-mono"
+										>
+											{formatIntervalLabel(intervalSeconds)}
+										</Select.Item>
+									{/if}
+								</Select.Content>
+							</Select.Root>
 						</div>
 
-						<!-- Timeout -->
+						<!-- Timeout Dropdown (Max 20s) -->
 						<div class="space-y-2">
 							<div class="flex items-center gap-3">
-								<Label for="monitor-timeout" class="text-sm font-medium text-foreground">
-									Timeout (sec) <span class="text-destructive font-bold">*</span>
+								<Label class="text-sm font-medium text-foreground">
+									Timeout <span class="text-destructive font-bold">*</span>
 								</Label>
 								{#if fieldErrors.timeoutSeconds}
 									<span class="text-[10px] text-destructive font-medium"
@@ -502,18 +600,46 @@
 									>
 								{/if}
 							</div>
-							<Input
-								id="monitor-timeout"
-								type="number"
-								min="1"
-								max="60"
-								bind:value={timeoutSeconds}
-								oninput={() => handleTimeoutValidation(timeoutSeconds)}
-								required
-								class="bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary rounded-lg h-10 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none {fieldErrors.timeoutSeconds
-									? 'border-destructive/70 focus-visible:border-destructive focus-visible:ring-error'
-									: ''} {shake.timeoutSeconds ? 'animate-shake' : ''}"
-							/>
+							<Select.Root
+								type="single"
+								bind:value={timeoutSecondsStr}
+								onValueChange={(val) => {
+									if (val) handleTimeoutSelect(val);
+								}}
+							>
+								<Select.Trigger
+									class="bg-background border-border text-foreground focus:ring-1 focus:ring-primary focus:border-primary rounded-lg h-10 w-full font-mono {fieldErrors.timeoutSeconds
+										? 'border-destructive/70 focus-visible:border-destructive focus-visible:ring-error'
+										: ''} {shake.timeoutSeconds ? 'animate-shake' : ''}"
+								>
+									{formatTimeoutLabel(timeoutSeconds)}
+								</Select.Trigger>
+								<Select.Content class="bg-card border-border text-foreground">
+									{#each TIMEOUT_OPTIONS as opt (opt.value)}
+										{@const optNum = parseInt(opt.value, 10)}
+										{@const isExceeding = optNum > intervalSeconds - 5 || optNum > 20}
+										<Select.Item
+											value={opt.value}
+											label={opt.label}
+											disabled={isExceeding}
+											class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer font-mono {isExceeding
+												? 'opacity-40 cursor-not-allowed pointer-events-none'
+												: ''}"
+										>
+											{opt.label}
+										</Select.Item>
+									{/each}
+									{#if !TIMEOUT_OPTIONS.some((opt) => opt.value === timeoutSecondsStr)}
+										<Select.Item
+											value={timeoutSecondsStr}
+											label={formatTimeoutLabel(timeoutSeconds)}
+											class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer font-mono"
+										>
+											{formatTimeoutLabel(timeoutSeconds)}
+										</Select.Item>
+									{/if}
+								</Select.Content>
+							</Select.Root>
 						</div>
 					</div>
 

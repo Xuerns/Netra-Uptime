@@ -208,7 +208,10 @@ func (s *AuthServiceImpl) GenerateOAuthState() (string, error) {
 }
 
 func (s *AuthServiceImpl) OauthLoginAndRegister(req OAuthRequest) (*LoginResponse, error) {
-	if s.rdb != nil && req.State != "" {
+	if s.rdb != nil {
+		if req.State == "" {
+			return nil, errors.New("Invalid or expired OAuth state")
+		}
 		ctx := context.Background()
 		stateKey := fmt.Sprintf("oauth_state:%s", req.State)
 		val, err := s.rdb.Get(ctx, stateKey).Result()
@@ -591,14 +594,38 @@ func (s *AuthServiceImpl) InitPasswordChange(userId string, req InitPasswordChan
 
 func (s *AuthServiceImpl) VerifyPasswordChange(userId string, req VerifyPasswordChangeRequest) error {
 	ctx := context.Background()
-	key := fmt.Sprintf("password_change_code:%s", userId)
+	codeKey := fmt.Sprintf("password_change_code:%s", userId)
+	attemptsKey := fmt.Sprintf("password_change_attempts:%s", userId)
 
-	hashedCode, err := s.rdb.Get(ctx, key).Result()
+	if s.rdb != nil {
+		attemptsVal, err := s.rdb.Get(ctx, attemptsKey).Result()
+		if err == nil {
+			if attempts, err := strconv.Atoi(attemptsVal); err == nil && attempts >= 5 {
+				return errors.New("Too many failed attempts. Verification code invalidated.")
+			}
+		}
+	}
+
+	if s.rdb == nil {
+		return errors.New("Verification code expired or not found")
+	}
+
+	hashedCode, err := s.rdb.Get(ctx, codeKey).Result()
 	if err != nil {
 		return errors.New("Verification code expired or not found")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(hashedCode), []byte(req.Code)); err != nil {
+		if s.rdb != nil {
+			attempts, incrErr := s.rdb.Incr(ctx, attemptsKey).Result()
+			if incrErr == nil {
+				s.rdb.Expire(ctx, attemptsKey, 15*time.Minute)
+				if attempts >= 5 {
+					s.rdb.Del(ctx, codeKey, attemptsKey)
+					return errors.New("Too many failed attempts. Verification code invalidated.")
+				}
+			}
+		}
 		return errors.New("Invalid verification code")
 	}
 
@@ -610,7 +637,10 @@ func (s *AuthServiceImpl) VerifyPasswordChange(userId string, req VerifyPassword
 	if err := s.repo.CreateNewPassword(userId, string(hashedPassword)); err != nil {
 		return errors.New("Failed to change password")
 	}
-	s.rdb.Del(ctx, key)
+
+	if s.rdb != nil {
+		s.rdb.Del(ctx, attemptsKey, codeKey)
+	}
 
 	// Revoke all existing sessions for this user (VULN-05)
 	_ = s.repo.RevokeAllRefreshTokensByUserID(userId)

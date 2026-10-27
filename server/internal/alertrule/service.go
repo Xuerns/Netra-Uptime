@@ -25,11 +25,12 @@ func NewService(repo Repository) Service {
 }
 
 func (s *serviceImpl) Create(orgID, monitorID uuid.UUID, req *CreateAlertRuleRequest) (*AlertRuleResponse, error) {
-	if strings.ToLower(req.Metric) == "status_code" {
-		monType, err := s.repo.GetMonitorType(orgID, monitorID)
-		if err == nil && strings.ToLower(monType) != "http" {
-			return nil, errors.New("metric 'status_code' is only valid for HTTP monitors")
-		}
+	monType, err := s.repo.GetMonitorType(orgID, monitorID)
+	if err != nil {
+		return nil, errors.New("Monitor not found in organization")
+	}
+	if strings.ToLower(req.Metric) == "status_code" && strings.ToLower(monType) != "http" {
+		return nil, errors.New("metric 'status_code' is only valid for HTTP monitors")
 	}
 
 	isActive := true

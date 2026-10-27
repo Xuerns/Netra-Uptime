@@ -11,13 +11,14 @@ type CreateAlertTemplateRequest struct {
 	Name        string                             `json:"name" binding:"required,min=2,max=100,nohtml"`
 	Description string                             `json:"description" binding:"omitempty,max=255,nohtml"`
 	IsDefault   bool                               `json:"is_default"`
-	Rules       []alertrule.CreateAlertRuleRequest `json:"rules"`
+	Rules       []alertrule.CreateAlertRuleRequest `json:"rules" binding:"dive"`
 }
 
 type UpdateAlertTemplateRequest struct {
-	Name        *string `json:"name" binding:"omitempty,min=2,max=100,nohtml"`
-	Description *string `json:"description" binding:"omitempty,max=255,nohtml"`
-	IsDefault   *bool   `json:"is_default"`
+	Name        *string                            `json:"name" binding:"omitempty,min=2,max=100,nohtml"`
+	Description *string                            `json:"description" binding:"omitempty,max=255,nohtml"`
+	IsDefault   *bool                              `json:"is_default"`
+	Rules       []alertrule.CreateAlertRuleRequest `json:"rules" binding:"dive"`
 }
 
 type ApplyTemplateRequest struct {

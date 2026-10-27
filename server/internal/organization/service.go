@@ -540,6 +540,18 @@ func (s *OrganizationServiceImpl) UpdateOrganization(req *UpdateOrganizationRequ
 }
 
 func (s *OrganizationServiceImpl) SearchPersons(name string, excludeUserId string, page int, orgId string) ([]SearchResponse, error) {
+	if orgId != "" {
+		isMember := false
+		if member, err := s.repo.GetMemberById(orgId, excludeUserId); err == nil && member != nil {
+			isMember = true
+		} else if err := s.repo.GetOrganizationMember(orgId, excludeUserId); err == nil {
+			isMember = true
+		}
+		if !isMember {
+			return nil, errors.New("You are not a member of this organization")
+		}
+	}
+
 	limit := 10
 	offset := (page - 1) * limit
 	users, err := s.repo.SearchPersons(name, excludeUserId, limit, offset, orgId)

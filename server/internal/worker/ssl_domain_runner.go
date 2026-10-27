@@ -2,6 +2,7 @@ package worker
 
 import (
 	"fmt"
+	"html"
 	"log"
 	"netra-uptime/internal/model"
 	"netra-uptime/internal/notification"
@@ -112,8 +113,12 @@ func sendExpiryNotification(db *gorm.DB, emailSender email.EmailSender, dispatch
 	// Also dispatch to org NotificationChannels (slack, webhook, email channels)
 	if dispatcher != nil {
 		subject := fmt.Sprintf("[Netra Uptime] %s Expiry Warning: %s (%d days left)", expiryType, monitor.Name, daysLeft)
+		safeExpiryType := html.EscapeString(expiryType)
+		safeName := html.EscapeString(monitor.Name)
+		safeTarget := html.EscapeString(monitor.Target)
+		safeExpiresStr := html.EscapeString(expiresStr)
 		body := fmt.Sprintf("<h3>%s Expiry Warning</h3><p>Monitor <b>%s</b> (%s): %s expires in <b>%d days</b> on %s.</p>",
-			expiryType, monitor.Name, monitor.Target, expiryType, daysLeft, expiresStr)
+			safeExpiryType, safeName, safeTarget, safeExpiryType, daysLeft, safeExpiresStr)
 		go dispatcher.Dispatch(monitor, nil, "expiry.warning", subject, body)
 	}
 }

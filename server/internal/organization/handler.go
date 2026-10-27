@@ -268,6 +268,8 @@ func (h *OrganizationHandler) SearchPersons(c *gin.Context) {
 	if err != nil {
 		if err.Error() == "No users found" {
 			c.JSON(http.StatusOK, gin.H{"status": "success", "data": []interface{}{}})
+		} else if err.Error() == "You are not a member of this organization" {
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
 		}
