@@ -9,7 +9,7 @@
 		viewMode = 'grid',
 		count = 4,
 		class: className = ''
-	} : {
+	}: {
 		variant?: SkeletonVariant;
 		viewMode?: 'grid' | 'list';
 		count?: number;

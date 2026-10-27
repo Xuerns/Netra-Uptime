@@ -2,7 +2,9 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { HelpCircle } from 'lucide-svelte';
 
-	let { monitorType }: {
+	let {
+		monitorType
+	}: {
 		monitorType: 'http' | 'ping' | 'tcp' | null;
 	} = $props();
 </script>

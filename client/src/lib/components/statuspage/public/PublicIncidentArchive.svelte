@@ -94,9 +94,7 @@
 						<h3 class="text-xs sm:text-sm font-semibold text-foreground font-mono">
 							{formatDateHeader(dayGroup.date)}
 						</h3>
-						<span
-							class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30"
-						>
+						<span class="text-xs font-mono text-muted-foreground">
 							{dayGroup.incidents.length} incident{dayGroup.incidents.length > 1 ? 's' : ''}
 						</span>
 					</div>

@@ -74,7 +74,6 @@
 						gInfo.group.is_expanded,
 						gInfo.status
 					)}
-					{@const gBadge = getGroupStatusBadge(gInfo.status)}
 
 					<Collapsible.Root
 						open={!isCollapsed}
@@ -101,13 +100,6 @@
 										{gInfo.monitors.length}
 									</span>
 								</div>
-							</div>
-
-							<div
-								class="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 border border-border/60 shrink-0"
-							>
-								<span style={gBadge.dotStyle} class="size-2 rounded-full {gBadge.dotClass}"></span>
-								<span style={gBadge.textStyle} class={gBadge.textClass}>{gBadge.label}</span>
 							</div>
 						</Collapsible.Trigger>
 

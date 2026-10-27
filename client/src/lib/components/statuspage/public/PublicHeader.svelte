@@ -6,8 +6,6 @@
 
 	let {
 		statusPage,
-		themeColor,
-		statusConfig,
 		lastUpdated,
 		secondsUntilRefresh,
 		isRefreshing,
@@ -42,12 +40,6 @@
 					<span class="font-headline-md text-headline-md font-bold text-foreground">
 						{statusPage.title}
 					</span>
-					<span
-						style="border-color: color-mix(in srgb, {themeColor} 35%, transparent); color: {themeColor};"
-						class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-surface-dim border"
-					>
-						STATUS
-					</span>
 				</div>
 				{#if statusPage.description}
 					<span class="text-xs sm:text-sm text-muted-foreground font-body-md mt-0.5 line-clamp-1">
@@ -79,10 +71,6 @@
 				class="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-white/5 border border-border/80 px-2.5 py-1 rounded-full"
 				title={`Auto-refresh in ${secondsUntilRefresh}s`}
 			>
-				<span
-					style={statusConfig.isThemed ? statusConfig.dotStyle : ''}
-					class="size-2 rounded-full {statusConfig.dotClass}"
-				></span>
 				<span class="font-mono">{secondsUntilRefresh}s</span>
 			</span>
 		</div>

@@ -23,16 +23,7 @@
 >
 	<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 		<div class="flex items-center gap-4">
-			<div class="relative flex items-center justify-center">
-				<span
-					style={statusConfig.isThemed ? statusConfig.dotStyle : ''}
-					class="size-3.5 rounded-full {statusConfig.dotClass} animate-ping absolute opacity-75"
-				></span>
-				<span
-					style={statusConfig.isThemed ? statusConfig.dotStyle : ''}
-					class="size-3.5 rounded-full {statusConfig.dotClass} relative"
-				></span>
-			</div>
+			<div class="relative flex items-center justify-center"></div>
 			<div>
 				<h1
 					class="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5"
