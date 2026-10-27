@@ -9,12 +9,12 @@
 		viewMode = 'grid',
 		count = 4,
 		class: className = ''
-	} = $props<{
+	} : {
 		variant?: SkeletonVariant;
 		viewMode?: 'grid' | 'list';
 		count?: number;
 		class?: string;
-	}>();
+	} = $props();
 
 	// Resolve variant if viewMode is specified on a list/grid component
 	const effectiveVariant = $derived(

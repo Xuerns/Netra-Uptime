@@ -27,12 +27,12 @@
 		orgId,
 		statusPage,
 		monitors = []
-	} = $props<{
+	}: {
 		isOpen: boolean;
 		orgId: string;
 		statusPage: StatusPage | null;
 		monitors: Monitor[];
-	}>();
+	} = $props();
 
 	let maintenances = $state<Maintenance[]>([]);
 	let isLoading = $state(false);

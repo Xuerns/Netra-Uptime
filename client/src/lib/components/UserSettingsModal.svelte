@@ -12,7 +12,6 @@
 	let { open = $bindable(false) } = $props();
 
 	let theme = $state(mode.current === 'light' ? 'light' : 'dark');
-	let language = $state('en');
 	let timezone = $state($userTimezone);
 
 	// ── Timezone Combobox state ───────────────────────────────────────────────
@@ -38,7 +37,7 @@
 		<Dialog.Header>
 			<Dialog.Title class="text-xl">User Settings</Dialog.Title>
 			<Dialog.Description class="text-muted-foreground">
-				Manage your app preferences like theme, language, and timezone.
+				Manage your app preferences like theme and timezone.
 			</Dialog.Description>
 		</Dialog.Header>
 
@@ -67,30 +66,6 @@
 							value="system"
 							class="text-foreground data-highlighted:bg-accent data-selected:bg-primary/10 data-selected:text-primary"
 							>System (Default)</Select.Item
-						>
-					</Select.Content>
-				</Select.Root>
-			</div>
-
-			<!-- Language -->
-			<div class="space-y-3">
-				<Label class="text-muted-foreground font-medium">Language</Label>
-				<Select.Root type="single" bind:value={language}>
-					<Select.Trigger
-						class="w-full bg-secondary border-border text-foreground h-11 focus:ring-primary"
-					>
-						{language === 'en' ? 'English (US)' : 'Bahasa Indonesia'}
-					</Select.Trigger>
-					<Select.Content class="bg-popover border-border text-foreground">
-						<Select.Item
-							value="en"
-							class="text-foreground data-highlighted:bg-accent data-selected:bg-primary/10 data-selected:text-primary"
-							>English (US)</Select.Item
-						>
-						<Select.Item
-							value="id"
-							class="text-foreground data-highlighted:bg-accent data-selected:bg-primary/10 data-selected:text-primary"
-							>Bahasa Indonesia</Select.Item
 						>
 					</Select.Content>
 				</Select.Root>

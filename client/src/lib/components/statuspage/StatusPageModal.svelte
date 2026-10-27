@@ -19,13 +19,13 @@
 		monitors,
 		statusPage = null,
 		onSuccess
-	} = $props<{
+	}: {
 		isOpen: boolean;
 		orgId: string;
 		monitors: Monitor[];
 		statusPage?: StatusPage | null;
 		onSuccess: () => void;
-	}>();
+	} = $props();
 
 	const isEdit = $derived(!!statusPage);
 

@@ -2,10 +2,10 @@
 	import { Wrench, Calendar } from 'lucide-svelte';
 	import MaintenanceCard from '$lib/components/statuspage/MaintenanceCard.svelte';
 
-	let { ongoingMaintenances = [], upcomingMaintenances = [] } = $props<{
+	let { ongoingMaintenances = [], upcomingMaintenances = [] }: {
 		ongoingMaintenances?: any[];
 		upcomingMaintenances?: any[];
-	}>();
+	} = $props();
 </script>
 
 {#if ongoingMaintenances.length > 0}

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { Building2, Plus, TriangleAlert, LayoutGrid, List } from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -31,8 +31,11 @@
 
 	$effect(() => {
 		if (data?.orgs) {
-			orgs = data.orgs as Organization[];
-			organizations.set(orgs.map((o) => ({ id: o.ID, name: o.Name, slug: o.Slug })));
+			const list = data.orgs as Organization[];
+			untrack(() => {
+				orgs = list;
+			});
+			organizations.set(list.map((o) => ({ id: o.ID, name: o.Name, slug: o.Slug })));
 		}
 	});
 

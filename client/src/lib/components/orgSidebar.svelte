@@ -52,12 +52,12 @@
 		org,
 		allOrgs = [],
 		hasUnreadNotifications = false
-	} = $props<{
+	}: {
 		user: { name: string; email: string; avatar?: string };
 		org: OrgItem;
 		allOrgs: OrgItem[];
 		hasUnreadNotifications?: boolean;
-	}>();
+	} = $props();
 
 	const orgId = $derived($page.params.id);
 

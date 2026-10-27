@@ -9,14 +9,14 @@
 		itemName = 'items',
 		class: className = '',
 		onPageChange
-	} = $props<{
+	}: {
 		currentPage: number;
 		totalPages: number;
 		totalItems?: number;
 		itemName?: string;
 		class?: string;
 		onPageChange?: (page: number) => void;
-	}>();
+	} = $props();
 
 	function handlePageChange(p: number) {
 		const target = Math.max(1, Math.min(totalPages, p));

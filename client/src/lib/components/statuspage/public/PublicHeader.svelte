@@ -12,7 +12,7 @@
 		secondsUntilRefresh,
 		isRefreshing,
 		onRefresh
-	} = $props<{
+	}: {
 		statusPage: PublicStatusPage;
 		themeColor: string;
 		statusConfig: any;
@@ -20,7 +20,7 @@
 		secondsUntilRefresh: number;
 		isRefreshing: boolean;
 		onRefresh: () => void;
-	}>();
+	} = $props();
 </script>
 
 <header

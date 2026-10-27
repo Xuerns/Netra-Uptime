@@ -6,11 +6,11 @@
 		dailyStats = [],
 		overallUptime = null,
 		accentColor = null
-	} = $props<{
+	}: {
 		dailyStats?: PublicUptimeDay[];
 		overallUptime?: number | null;
 		accentColor?: string | null;
-	}>();
+	} = $props();
 
 	let hoveredIndex = $state<number | null>(null);
 	let tooltipPos = $state<{ x: number } | null>(null);

@@ -32,13 +32,13 @@
 		handleDeleteMonitor,
 		handleEditMonitor,
 		handleTogglePause
-	} = $props<{
+	}: {
 		monitor: Monitor;
 		viewMode?: 'grid' | 'list';
 		handleDeleteMonitor?: (id: string) => Promise<void>;
 		handleEditMonitor?: (monitor: Monitor) => void;
 		handleTogglePause?: (monitor: Monitor) => Promise<void>;
-	}>();
+	} = $props();
 
 	let isConfirmDeleteOpen = $state(false);
 	let isMenuOpen = $state(false);
@@ -280,7 +280,7 @@
 				class="w-full max-w-[160px] h-6 flex items-center opacity-70 group-hover:opacity-100 transition-opacity"
 				title="Recent latency trend"
 			>
-				<Sparkline data={sparkData} color={sparkColor} height={22} width="100%" />
+				<Sparkline data={sparkData} color={sparkColor} height={22} width={100} />
 			</div>
 		</div>
 

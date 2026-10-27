@@ -3,10 +3,13 @@
 	import { Wrench, Calendar, Clock } from 'lucide-svelte';
 	import { formatDateTimeShort } from '$lib/utils/datetime';
 
-	let { maintenance, isOngoing = false } = $props<{
+	let {
+		maintenance,
+		isOngoing = false
+	}: {
 		maintenance: PublicMaintenance;
 		isOngoing?: boolean;
-	}>();
+	} = $props();
 
 	function formatDateTimeRange(startStr: string, endStr: string): string {
 		if (!startStr) return '';

@@ -1,10 +1,13 @@
 <script lang="ts">
 	import logo from '$lib/assets/Logo.svg';
 
-	let { title, overallStatus } = $props<{
+	let {
+		title,
+		overallStatus
+	}: {
 		title: string;
 		overallStatus: string;
-	}>();
+	} = $props();
 </script>
 
 <footer class="w-full mt-auto border-t border-border/60 bg-background/50 backdrop-blur-sm">

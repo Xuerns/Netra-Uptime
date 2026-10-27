@@ -5,10 +5,13 @@
 	import { Copy, Check, ExternalLink, Code2, FileJson, Sparkles } from 'lucide-svelte';
 	import { env } from '$env/dynamic/public';
 
-	let { isOpen = $bindable(false), statusPage } = $props<{
+	let {
+		isOpen = $bindable(false),
+		statusPage
+	}: {
 		isOpen: boolean;
 		statusPage: StatusPage | null;
-	}>();
+	} = $props();
 
 	let copiedType = $state<string | null>(null);
 
@@ -84,12 +87,6 @@
 			<div
 				class="p-5 rounded-xl border border-border/70 bg-white/3 flex flex-col items-center justify-center gap-3 text-center"
 			>
-				<span
-					class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5"
-				>
-					<Sparkles class="size-3 text-primary" />
-					Live Badge Preview
-				</span>
 				{#if statusPage}
 					<div
 						class="p-3 bg-black/40 rounded-lg border border-border/40 inline-flex items-center justify-center"

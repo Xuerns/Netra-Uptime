@@ -4,12 +4,12 @@
 		color = '#4edea3',
 		width = 50,
 		height = 32
-	} = $props<{
+	}: {
 		data: number[];
 		color?: string;
 		width?: number | string;
 		height?: number;
-	}>();
+	} = $props();
 
 	// Calculate points for the SVG based on data
 	let min = $derived(data.length ? Math.min(...data) : 0);
