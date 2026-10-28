@@ -55,7 +55,8 @@
 		{ value: '5', label: '5s' },
 		{ value: '10', label: '10s' },
 		{ value: '15', label: '15s' },
-		{ value: '20', label: '20s' }
+		{ value: '20', label: '20s' },
+		{ value: '30', label: '30s' }
 	];
 
 	function formatIntervalLabel(seconds: number): string {
@@ -155,19 +156,21 @@
 		intervalSecondsStr = val;
 		const num = parseInt(val, 10) || 60;
 		intervalSeconds = num;
-		handleIntervalValidation(num);
 
-		// Clamp timeout if it exceeds interval - 5 or exceeds max 20s
-		const maxValid = Math.min(20, Math.max(1, num - 5));
-		if (timeoutSeconds > maxValid) {
-			const validPresets = TIMEOUT_OPTIONS.map((o) => parseInt(o.value, 10)).filter(
-				(v) => v <= maxValid
-			);
-			const newTimeout = validPresets.length > 0 ? Math.max(...validPresets) : maxValid;
+		// When user selects a smaller interval such that current timeout is >= intervalSeconds,
+		// automatically clamp/adjust timeoutSeconds to a valid timeout option (< intervalSeconds, max 30s)
+		if (timeoutSeconds >= num || timeoutSeconds > 30) {
+			const validPresets = TIMEOUT_OPTIONS.map((o) => parseInt(o.value, 10)).filter((v) => v < num);
+			const newTimeout =
+				validPresets.length > 0
+					? Math.max(...validPresets)
+					: Math.max(1, Math.min(timeoutSeconds, Math.min(num - 1, 30)));
 			timeoutSeconds = newTimeout;
 			timeoutSecondsStr = newTimeout.toString();
 			handleTimeoutValidation(newTimeout);
 		}
+
+		handleIntervalValidation(num);
 	}
 
 	function handleTimeoutSelect(val: string) {
@@ -198,7 +201,17 @@
 				target = monitor.Target || '';
 				intervalSeconds = monitor.IntervalSeconds || 60;
 				intervalSecondsStr = intervalSeconds.toString();
-				timeoutSeconds = Math.min(20, monitor.TimeoutSeconds || 10);
+				let initialTimeout = monitor.TimeoutSeconds || 10;
+				if (initialTimeout > 30 || initialTimeout >= intervalSeconds) {
+					const validPresets = TIMEOUT_OPTIONS.map((o) => parseInt(o.value, 10)).filter(
+						(v) => v < intervalSeconds
+					);
+					initialTimeout =
+						validPresets.length > 0
+							? Math.max(...validPresets)
+							: Math.max(1, Math.min(initialTimeout, Math.min(intervalSeconds - 1, 30)));
+				}
+				timeoutSeconds = initialTimeout;
 				timeoutSecondsStr = timeoutSeconds.toString();
 				expectedStatusCodeStr = monitor.ExpectedStatusCode
 					? monitor.ExpectedStatusCode.toString()
@@ -224,6 +237,7 @@
 								typeof pic === 'string' ? pic : pic?.UserID || pic?.user_id || pic?.id
 							)
 							.filter(Boolean)
+							.slice(0, 50)
 					: [];
 			} else {
 				// Create mode: defaults
@@ -587,7 +601,7 @@
 							</Select.Root>
 						</div>
 
-						<!-- Timeout Dropdown (Max 20s) -->
+						<!-- Timeout Dropdown -->
 						<div class="space-y-2">
 							<div class="flex items-center gap-3">
 								<Label class="text-sm font-medium text-foreground">
@@ -616,7 +630,7 @@
 								<Select.Content class="bg-card border-border text-foreground">
 									{#each TIMEOUT_OPTIONS as opt (opt.value)}
 										{@const optNum = parseInt(opt.value, 10)}
-										{@const isExceeding = optNum > intervalSeconds - 5 || optNum > 20}
+										{@const isExceeding = optNum >= intervalSeconds}
 										<Select.Item
 											value={opt.value}
 											label={opt.label}
@@ -674,7 +688,7 @@
 							<AssigneeGuide />
 						</div>
 						<span class="text-xs text-foreground/40 font-mono"
-							>{selectedAssignees.length}/5 selected</span
+							>{selectedAssignees.length}/50 selected</span
 						>
 					</div>
 
@@ -682,17 +696,18 @@
 						data-lenis-prevent
 						class="flex-1 min-h-62.5 overflow-y-auto bg-background border border-border rounded-lg p-2 space-y-1"
 					>
-						{#each members as member (member.User.ID || member.ID)}
-							{@const isSelected = selectedAssignees.includes(member.User.ID)}
-							{@const isDisabled = !isSelected && selectedAssignees.length >= 5}
+						{#each members as member (member.User?.ID || member.ID)}
+							{@const memberId = member.User?.ID || member.ID}
+							{@const isSelected = selectedAssignees.includes(memberId)}
+							{@const isDisabled = !isSelected && selectedAssignees.length >= 50}
 
 							<label
-								class="flex items-center justify-between p-2 hover:bg-white/5 rounded-md cursor-pointer transition-colors {isDisabled
-									? 'opacity-50 cursor-not-allowed'
-									: ''}"
+								class="flex items-center justify-between p-2 rounded-md transition-colors {isDisabled
+									? 'opacity-40 cursor-not-allowed'
+									: 'hover:bg-white/5 cursor-pointer'}"
 							>
 								<div class="flex items-center gap-3 overflow-hidden">
-									{#if member.User.AvatarURL}
+									{#if member.User?.AvatarURL}
 										<img
 											src={member.User.AvatarURL}
 											alt={member.User.Name}
@@ -701,15 +716,15 @@
 									{:else}
 										<div
 											class="size-8 rounded-full flex items-center justify-center font-semibold text-[12.5px] shrink-0 border {avatarColor(
-												member.User.Name
+												member.User?.Name || ''
 											)}"
 										>
-											{member.User.Name?.charAt(0).toUpperCase() || '?'}
+											{member.User?.Name?.charAt(0).toUpperCase() || '?'}
 										</div>
 									{/if}
 
 									<span class="text-[13px] font-medium text-foreground truncate"
-										>{member.User.Name}</span
+										>{member.User?.Name || 'Unknown User'}</span
 									>
 								</div>
 
@@ -720,20 +735,20 @@
 									disabled={isDisabled}
 									onchange={(e) => {
 										if (e.currentTarget.checked) {
-											if (selectedAssignees.length < 5) {
-												selectedAssignees = [...selectedAssignees, member.User.ID];
-											} else {
-												e.currentTarget.checked = false;
+											if (selectedAssignees.length < 50) {
+												selectedAssignees = [...selectedAssignees, memberId];
 											}
 										} else {
-											selectedAssignees = selectedAssignees.filter((id) => id !== member.User.ID);
+											selectedAssignees = selectedAssignees.filter((id) => id !== memberId);
 										}
 									}}
 								/>
 								<div
 									class="w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all {isSelected
 										? 'bg-primary border-primary'
-										: 'bg-white/5 border-border'} {isDisabled ? 'opacity-50' : ''}"
+										: isDisabled
+											? 'bg-white/5 border-border/40'
+											: 'bg-white/5 border-border'}"
 								>
 									{#if isSelected}
 										<svg
@@ -760,9 +775,9 @@
 						{/each}
 					</div>
 
-					{#if selectedAssignees.length === 5}
-						<span class="text-[11px] text-primary font-medium block"
-							>Maximum 5 assignees selected.</span
+					{#if selectedAssignees.length === 50}
+						<span class="text-[11px] text-amber-500 font-medium block"
+							>Maximum 50 assignees reached for this monitor</span
 						>
 					{:else if selectedAssignees.length === 0}
 						<span class="text-[11px] text-muted-foreground/60 block"

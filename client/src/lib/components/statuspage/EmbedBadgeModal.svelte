@@ -2,7 +2,7 @@
 	import type { StatusPage } from '$lib/api/statuspage';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { toast } from 'svelte-sonner';
-	import { Copy, Check, ExternalLink, Code2, FileJson, Sparkles } from 'lucide-svelte';
+	import { Copy, Check, ExternalLink, Code2, FileJson } from 'lucide-svelte';
 	import { env } from '$env/dynamic/public';
 
 	let {

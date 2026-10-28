@@ -35,7 +35,6 @@ type OrganizationService interface {
 	DemotedToMember(userId, orgId, actorId, ipAddress string) (string, error)
 	TransferOwnership(ownerId, userId, orgId, ipAddress string) (string, error)
 	LeaveOrganization(userId, orgId, ipAddress string) (string, error)
-	GetOrganizationPlan(orgId string) (*model.Subscription, error)
 	SetWebSocketEvicter(evicter WebSocketEvicter)
 	SetAPIKeyRevoker(revoker APIKeyRevoker)
 }
@@ -142,19 +141,19 @@ func (s *OrganizationServiceImpl) CreateOrganization(req *CreateOrganizationRequ
 		return "", err
 	}
 
-	maxOrgs := 7
-	maxMembers := 20
+	maxOrgs := 10
+	maxMembers := 100
 	cfg := s.getConfig()
-	if cfg.AppMode == "selfhosted" {
-		if cfg.SelfHostedMaxOrgs > 0 {
+	if cfg != nil {
+		if cfg.MaxOrgsPerUser > 0 {
+			maxOrgs = cfg.MaxOrgsPerUser
+		} else if cfg.SelfHostedMaxOrgs > 0 {
 			maxOrgs = cfg.SelfHostedMaxOrgs
-		} else {
-			maxOrgs = 999999
 		}
-		if cfg.SelfHostedMaxMembers > 0 {
+		if cfg.MaxMembersPerOrg > 0 {
+			maxMembers = cfg.MaxMembersPerOrg
+		} else if cfg.SelfHostedMaxMembers > 0 {
 			maxMembers = cfg.SelfHostedMaxMembers
-		} else {
-			maxMembers = 999999
 		}
 	}
 
@@ -211,12 +210,7 @@ func (s *OrganizationServiceImpl) CreateOrganization(req *CreateOrganizationRequ
 		}
 	}
 
-	hobbySubs := model.Subscription{
-		Plan:   "hobby",
-		Status: "active",
-	}
-
-	if err := s.repo.CreateOrganization(&organization, &owner, &invitations, &hobbySubs); err != nil {
+	if err := s.repo.CreateOrganization(&organization, &owner, &invitations); err != nil {
 		return "", err
 	}
 
@@ -313,19 +307,19 @@ func (s *OrganizationServiceImpl) InvitationAction(req *InvitationActionRequest,
 		if err != nil {
 			return "", err
 		}
-		maxOrgs := 7
-		maxMembers := 20
+		maxOrgs := 10
+		maxMembers := 100
 		cfg := s.getConfig()
-		if cfg.AppMode == "selfhosted" {
-			if cfg.SelfHostedMaxOrgs > 0 {
+		if cfg != nil {
+			if cfg.MaxOrgsPerUser > 0 {
+				maxOrgs = cfg.MaxOrgsPerUser
+			} else if cfg.SelfHostedMaxOrgs > 0 {
 				maxOrgs = cfg.SelfHostedMaxOrgs
-			} else {
-				maxOrgs = 999999
 			}
-			if cfg.SelfHostedMaxMembers > 0 {
+			if cfg.MaxMembersPerOrg > 0 {
+				maxMembers = cfg.MaxMembersPerOrg
+			} else if cfg.SelfHostedMaxMembers > 0 {
 				maxMembers = cfg.SelfHostedMaxMembers
-			} else {
-				maxMembers = 999999
 			}
 		}
 
@@ -401,13 +395,13 @@ func (s *OrganizationServiceImpl) InviteMember(orgId, ownerId, ipAddress string,
 		return "", err
 	}
 
-	maxMembers := 20
+	maxMembers := 100
 	cfg := s.getConfig()
-	if cfg.AppMode == "selfhosted" {
-		if cfg.SelfHostedMaxMembers > 0 {
+	if cfg != nil {
+		if cfg.MaxMembersPerOrg > 0 {
+			maxMembers = cfg.MaxMembersPerOrg
+		} else if cfg.SelfHostedMaxMembers > 0 {
 			maxMembers = cfg.SelfHostedMaxMembers
-		} else {
-			maxMembers = 999999
 		}
 	}
 
@@ -709,8 +703,4 @@ func (s *OrganizationServiceImpl) LeaveOrganization(userId, orgId, ipAddress str
 	}
 
 	return "User left organization successfully", nil
-}
-
-func (s *OrganizationServiceImpl) GetOrganizationPlan(orgId string) (*model.Subscription, error) {
-	return s.repo.GetOrganizationPlan(orgId)
 }

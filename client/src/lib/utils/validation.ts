@@ -76,10 +76,12 @@ export function validateMonitorTimeout(timeout: number, interval?: number): stri
 	if (timeout === undefined || timeout === null || Number.isNaN(timeout))
 		return 'Timeout is required';
 	if (timeout < 1) return 'Timeout must be at least 1 second';
-	if (timeout > 20) return 'Timeout cannot exceed 20 seconds';
+	if (timeout > 30) return 'Timeout cannot exceed 30 seconds';
 	if (interval !== undefined && interval !== null && interval > 0) {
-		if (timeout >= interval) return 'Timeout must be strictly less than interval';
-		if (timeout > interval - 5) return 'Timeout cannot exceed ' + (interval - 5) + ' seconds';
+		if (timeout >= interval)
+			return (
+				'Timeout must be strictly less than check interval (maximum ' + (interval - 1) + ' seconds)'
+			);
 	}
 	return '';
 }

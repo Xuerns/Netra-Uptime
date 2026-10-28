@@ -5,11 +5,11 @@ type CreateMonitorRequest struct {
 	Type                 string   `json:"type" binding:"required,oneof=http tcp ping"`
 	Target               string   `json:"target" binding:"required,max=100,min=4,nohtml"`
 	IntervalSeconds      int      `json:"interval_seconds" binding:"required,min=10"`
-	TimeoutSeconds       int      `json:"timeout_seconds" binding:"required,min=1"`
+	TimeoutSeconds       int      `json:"timeout_seconds" binding:"required,min=1,max=30"`
 	ExpectedStatusCode   int      `json:"expectation_status_code" binding:"omitempty"`
 	Criticality          string   `json:"criticality" binding:"required,oneof=extreme high medium low"`
-	MonitorPICs          []string `json:"MonitorPICs" binding:"omitempty,max=5,dive,uuid"`
-	Assignees            []string `json:"assignees" binding:"omitempty,max=5,dive,uuid"`
+	MonitorPICs          []string `json:"MonitorPICs" binding:"omitempty,max=50,dive,uuid"`
+	Assignees            []string `json:"assignees" binding:"omitempty,max=50,dive,uuid"`
 	EnableSSLDomainCheck *bool    `json:"enable_ssl_domain_check" binding:"omitempty"`
 	AlertTemplateID      *string  `json:"alert_template_id" binding:"omitempty"`
 }
@@ -18,12 +18,12 @@ type UpdatedMonitorRequest struct {
 	Name                 *string   `json:"name" binding:"omitempty,max=100,min=4,nohtml"`
 	Target               *string   `json:"target" binding:"omitempty,max=100,min=4,nohtml"`
 	IntervalSeconds      *int      `json:"interval_seconds" binding:"omitempty,min=10"`
-	TimeoutSeconds       *int      `json:"timeout_seconds" binding:"omitempty,min=1"`
+	TimeoutSeconds       *int      `json:"timeout_seconds" binding:"omitempty,min=1,max=30"`
 	ExpectedStatusCode   *int      `json:"expectation_status_code" binding:"omitempty"`
 	IsActive             *bool     `json:"is_active"`
 	Criticality          *string   `json:"criticality" binding:"omitempty,oneof=extreme high medium low"`
-	MonitorPICs          *[]string `json:"MonitorPICs" binding:"omitempty,dive,uuid"`
-	Assignees            *[]string `json:"assignees" binding:"omitempty,dive,uuid"`
+	MonitorPICs          *[]string `json:"MonitorPICs" binding:"omitempty,max=50,dive,uuid"`
+	Assignees            *[]string `json:"assignees" binding:"omitempty,max=50,dive,uuid"`
 	EnableSSLDomainCheck *bool     `json:"enable_ssl_domain_check" binding:"omitempty"`
 	AlertTemplateID      *string   `json:"alert_template_id" binding:"omitempty"`
 }

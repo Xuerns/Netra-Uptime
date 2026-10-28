@@ -45,7 +45,7 @@ import (
 
 func init() {
 	gin.SetMode(gin.TestMode)
-	os.Setenv("APP_MODE", "saas")
+	os.Setenv("APP_MODE", "selfhosted")
 	if os.Getenv("JWT_SECRET") == "" {
 		os.Setenv("JWT_SECRET", "super-secret-key-for-test-purposes-123456")
 	}
@@ -444,9 +444,6 @@ func (m *mockOrgService) TransferOwnership(ownerId, userId, orgId, ipAddress str
 }
 func (m *mockOrgService) LeaveOrganization(userId, orgId, ipAddress string) (string, error) {
 	return "ok", nil
-}
-func (m *mockOrgService) GetOrganizationPlan(orgId string) (*model.Subscription, error) {
-	return &model.Subscription{Plan: "hobby"}, nil
 }
 func (m *mockOrgService) SetWebSocketEvicter(evicter organization.WebSocketEvicter) {}
 func (m *mockOrgService) SetAPIKeyRevoker(revoker organization.APIKeyRevoker)       {}

@@ -162,7 +162,7 @@ func (s *SMTPSender) SendExpiryReminder(to []string, monitorName, target, expiry
         </td></tr>
 
         <tr><td align="center">
-          <p style="margin:0;font-size:12px;color:#86948a;">© 2026 Netra Uptime SaaS. Automated Monitoring Alert.</p>
+          <p style="margin:0;font-size:12px;color:#86948a;">© 2026 Netra Uptime. Automated Monitoring Alert.</p>
         </td></tr>
       </table>
     </td></tr>

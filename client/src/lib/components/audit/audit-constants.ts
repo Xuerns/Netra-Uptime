@@ -164,12 +164,7 @@ export const AUDIT_ACTION_GROUPS: ActionFilterGroup[] = [
 
 export function getActionStyle(action: string): string {
 	const act = action.toUpperCase();
-	if (
-		act.includes('CREATE') ||
-		act.includes('JOIN') ||
-		act.includes('UPGRADE') ||
-		act.includes('ACCEPT')
-	) {
+	if (act.includes('CREATE') || act.includes('JOIN') || act.includes('ACCEPT')) {
 		return 'text-emerald-400';
 	}
 	if (

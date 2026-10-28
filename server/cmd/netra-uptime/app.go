@@ -23,7 +23,7 @@ import (
 
 func BuildHandler(db *gorm.DB, rdb *redis.Client, wp *worker.WorkerPool, cfg *config.Config, wsEvicter ...organization.WebSocketEvicter) router.Handlers {
 	authRepo := auth.NewAuthRepository(db)
-	authService := auth.NewAuthService(authRepo, rdb)
+	authService := auth.NewAuthService(authRepo, rdb, cfg)
 	authHandler := auth.NewAuthHandler(authService)
 
 	auditRepo := audit.NewAuditRepository(db)
@@ -38,7 +38,7 @@ func BuildHandler(db *gorm.DB, rdb *redis.Client, wp *worker.WorkerPool, cfg *co
 	organizationHandler := organization.NewOrganizationHandler(organizationService)
 
 	monitorRepo := monitor.NewMonitorRepository(db, cfg)
-	monitorServise := monitor.NewMonitorService(monitorRepo, rdb, organizationService, auditService, wp, cfg)
+	monitorServise := monitor.NewMonitorService(monitorRepo, rdb, auditService, wp, cfg)
 	monitorHandler := monitor.NewMonitorHandler(monitorServise)
 
 	incidentRepo := incident.NewMonitorRepository(db)

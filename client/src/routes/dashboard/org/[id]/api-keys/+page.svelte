@@ -182,14 +182,3 @@
 	destructive={true}
 	onConfirm={confirmRevokeKey}
 />
-
-<!-- Modal 3: Revoke Confirm -->
-<ConfirmDialog
-	bind:open={isRevokeOpen}
-	title="Revoke API Key?"
-	description="Are you sure you want to revoke '{keyToRevoke?.name}'? Any scripts or integrations using this key will immediately lose access to the Netra Uptime API."
-	confirmText={isRevoking ? 'Revoking...' : 'Revoke Key'}
-	cancelText="Cancel"
-	destructive={true}
-	onConfirm={confirmRevokeKey}
-/>

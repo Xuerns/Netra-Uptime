@@ -16,7 +16,6 @@ type Organization struct {
 	Monitors             []Monitor             `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
 	StatusPages          []StatusPage          `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
 	NotificationChannels []NotificationChannel `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
-	Subscription         *Subscription         `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
 	AuditLogs            []AuditLog            `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
 	APIKeys              []APIKey              `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
 }

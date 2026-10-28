@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"netra-uptime/config"
 	"netra-uptime/internal/model"
 	"netra-uptime/pkg/utils"
 	"os"
@@ -36,7 +37,7 @@ type mockAuthRepo struct {
 	createRefreshTokenFunc             func(refreshToken *model.RefreshToken) error
 	revokeRefreshTokenFunc             func(hashedToken string) error
 	findRefreshTokenByTokenFunc        func(hashedToken string) (*model.RefreshToken, error)
-	createUserWithDefaultOrgFunc       func(user *model.User, org *model.Organization, orgMember *model.OrganizationMember, subscription *model.Subscription) error
+	createUserWithDefaultOrgFunc       func(user *model.User, org *model.Organization, orgMember *model.OrganizationMember) error
 	getUserByIdFunc                    func(userId string) (*model.User, error)
 	updateProfileFunc                  func(userId string, name string) (*model.User, error)
 	createResetTokenFunc               func(token *model.PasswordResetToken) error
@@ -45,6 +46,14 @@ type mockAuthRepo struct {
 	getUserByResetTokenFunc            func(token string) (string, error)
 	revokeAllRefreshTokensByUserIDFunc func(userId string) error
 	limitActiveRefreshTokensFunc       func(userId string, maxTokens int) error
+	countUsersFunc                     func() (int64, error)
+}
+
+func (m *mockAuthRepo) CountUsers() (int64, error) {
+	if m.countUsersFunc != nil {
+		return m.countUsersFunc()
+	}
+	return 1, nil
 }
 
 func (m *mockAuthRepo) FindUserByEmail(email string) (*model.User, error) {
@@ -75,9 +84,9 @@ func (m *mockAuthRepo) FindRefreshTokenByToken(hashedToken string) (*model.Refre
 	return nil, errors.New("token not found")
 }
 
-func (m *mockAuthRepo) CreateUserWithDefaultOrg(user *model.User, org *model.Organization, orgMember *model.OrganizationMember, subscription *model.Subscription) error {
+func (m *mockAuthRepo) CreateUserWithDefaultOrg(user *model.User, org *model.Organization, orgMember *model.OrganizationMember) error {
 	if m.createUserWithDefaultOrgFunc != nil {
-		return m.createUserWithDefaultOrgFunc(user, org, orgMember, subscription)
+		return m.createUserWithDefaultOrgFunc(user, org, orgMember)
 	}
 	return nil
 }
@@ -146,7 +155,7 @@ func TestRegister_Success(t *testing.T) {
 		findUserByEmailFunc: func(email string) (*model.User, error) {
 			return nil, errors.New("not found")
 		},
-		createUserWithDefaultOrgFunc: func(u *model.User, o *model.Organization, m *model.OrganizationMember, s *model.Subscription) error {
+		createUserWithDefaultOrgFunc: func(u *model.User, o *model.Organization, m *model.OrganizationMember) error {
 			created = true
 			return nil
 		},
@@ -187,6 +196,65 @@ func TestRegister_UserAlreadyExist(t *testing.T) {
 	}
 	if err.Error() != "User Already Exist" {
 		t.Errorf("unexpected error message: %v", err)
+	}
+}
+
+func TestRegister_PublicRegistrationDisabled(t *testing.T) {
+	repo := &mockAuthRepo{
+		countUsersFunc: func() (int64, error) {
+			return 1, nil
+		},
+	}
+	cfg := &config.Config{
+		AllowRegistration: false,
+	}
+	svc := NewAuthService(repo, nil, cfg)
+
+	_, err := svc.Register(RegisterRequest{
+		Name:     "Alice Doe",
+		Email:    "alice@example.com",
+		Password: "password123",
+	})
+	if err == nil {
+		t.Fatal("expected error when registration is disabled, got nil")
+	}
+	if err.Error() != "Public registration is disabled on this instance" {
+		t.Errorf("unexpected error message: %v", err)
+	}
+}
+
+func TestRegister_PublicRegistrationDisabled_FirstUserAllowed(t *testing.T) {
+	created := false
+	repo := &mockAuthRepo{
+		countUsersFunc: func() (int64, error) {
+			return 0, nil
+		},
+		findUserByEmailFunc: func(email string) (*model.User, error) {
+			return nil, errors.New("not found")
+		},
+		createUserWithDefaultOrgFunc: func(u *model.User, o *model.Organization, m *model.OrganizationMember) error {
+			created = true
+			return nil
+		},
+	}
+	cfg := &config.Config{
+		AllowRegistration: false,
+	}
+	svc := NewAuthService(repo, nil, cfg)
+
+	msg, err := svc.Register(RegisterRequest{
+		Name:     "Initial Admin",
+		Email:    "admin@example.com",
+		Password: "password123",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !created {
+		t.Fatal("expected first user to be created")
+	}
+	if msg != "User registered successfully" {
+		t.Errorf("unexpected message: %s", msg)
 	}
 }
 
@@ -583,7 +651,7 @@ func TestAuthHandler_Register_Success(t *testing.T) {
 		findUserByEmailFunc: func(email string) (*model.User, error) {
 			return nil, errors.New("not found")
 		},
-		createUserWithDefaultOrgFunc: func(u *model.User, o *model.Organization, m *model.OrganizationMember, s *model.Subscription) error {
+		createUserWithDefaultOrgFunc: func(u *model.User, o *model.Organization, m *model.OrganizationMember) error {
 			return nil
 		},
 	}

@@ -32,6 +32,13 @@ type Config struct {
 	MinMonitorIntervalSeconds     int
 	DefaultMonitorIntervalSeconds int
 
+	MaxMonitorsPerOrg      int
+	MaxStatusPagesPerOrg   int
+	MaxOrgsPerUser         int
+	MaxMembersPerOrg       int
+	MaxAssigneesPerMonitor int
+	AllowRegistration      bool
+
 	DBHost     string
 	DBPort     string
 	DBUser     string
@@ -48,7 +55,16 @@ type Config struct {
 
 func parseIntEnv(key string, defaultVal int) int {
 	if valStr := os.Getenv(key); valStr != "" {
-		if val, err := strconv.Atoi(valStr); err == nil {
+		if val, err := strconv.Atoi(strings.TrimSpace(valStr)); err == nil {
+			return val
+		}
+	}
+	return defaultVal
+}
+
+func parseBoolEnv(key string, defaultVal bool) bool {
+	if valStr := os.Getenv(key); valStr != "" {
+		if val, err := strconv.ParseBool(strings.TrimSpace(valStr)); err == nil {
 			return val
 		}
 	}
@@ -86,9 +102,9 @@ func loadConfig() *Config {
 		dbSSLMode = "disable"
 	}
 
-	minInterval := parseIntEnv("SELFHOSTED_MIN_INTERVAL", 10)
-	if minInterval < 10 {
-		minInterval = 10
+	minInterval := parseIntEnv("SELFHOSTED_MIN_INTERVAL", 30)
+	if minInterval < 30 {
+		minInterval = 30
 	}
 
 	cfg := &Config{
@@ -102,10 +118,17 @@ func loadConfig() *Config {
 		SelfHostedMaxMembers:  parseIntEnv("SELFHOSTED_MAX_MEMBERS", 0),
 		SelfHostedMaxPIC:      parseIntEnv("SELFHOSTED_MAX_PIC", 10),
 		SelfHostedMinInterval: minInterval,
-		SelfHostedMaxTimeout:  parseIntEnv("SELFHOSTED_MAX_TIMEOUT", 60),
+		SelfHostedMaxTimeout:  parseIntEnv("SELFHOSTED_MAX_TIMEOUT", 30),
 
 		MinMonitorIntervalSeconds:     parseIntEnv("MIN_MONITOR_INTERVAL_SECONDS", 30),
 		DefaultMonitorIntervalSeconds: parseIntEnv("DEFAULT_MONITOR_INTERVAL_SECONDS", 60),
+
+		MaxMonitorsPerOrg:      parseIntEnv("MAX_MONITORS_PER_ORG", 200),
+		MaxStatusPagesPerOrg:   parseIntEnv("MAX_STATUS_PAGES_PER_ORG", 10),
+		MaxOrgsPerUser:         parseIntEnv("MAX_ORGS_PER_USER", 10),
+		MaxMembersPerOrg:       parseIntEnv("MAX_MEMBERS_PER_ORG", 100),
+		MaxAssigneesPerMonitor: parseIntEnv("MAX_ASSIGNEES_PER_MONITOR", 50),
+		AllowRegistration:      parseBoolEnv("ALLOW_REGISTRATION", true),
 
 		DBHost:     os.Getenv("DB_HOST"),
 		DBPort:     os.Getenv("DB_PORT"),
@@ -121,7 +144,7 @@ func loadConfig() *Config {
 		JwtSecret: os.Getenv("JWT_SECRET"),
 	}
 
-	const AbsoluteMinimumInterval = 10
+	const AbsoluteMinimumInterval = 30
 	if cfg.MinMonitorIntervalSeconds < AbsoluteMinimumInterval {
 		log.Printf("WARNING: MIN_MONITOR_INTERVAL_SECONDS (%d) below safety floor (%d). Enforcing %d seconds.",
 			cfg.MinMonitorIntervalSeconds, AbsoluteMinimumInterval, AbsoluteMinimumInterval)

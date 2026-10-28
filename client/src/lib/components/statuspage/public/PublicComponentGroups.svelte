@@ -130,7 +130,6 @@
 						true,
 						monitorGrouping.ungroupedStatus
 					)}
-					{@const uBadge = getGroupStatusBadge(monitorGrouping.ungroupedStatus)}
 
 					<Collapsible.Root
 						open={!isUngroupedCollapsed}

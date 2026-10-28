@@ -31,25 +31,24 @@ type StatusPageService interface {
 	AssignMonitorToGroup(orgID, statusPageID, monitorID, userID, ipAddress string, req *AssignMonitorGroupRequest) error
 }
 
-type SubscriptionChecker interface {
-	GetOrganizationPlan(orgId string) (*model.Subscription, error)
+type OrganizationMemberChecker interface {
 	GetMemberById(orgId, userId string) (*model.OrganizationMember, error)
 }
 
 type StatusPageServiceImpl struct {
-	repo         StatusPageRepository
-	Subchecker   SubscriptionChecker
-	rdb          *redis.Client
-	auditService audit.AuditService
-	cfg          *config.Config
+	repo          StatusPageRepository
+	memberChecker OrganizationMemberChecker
+	rdb           *redis.Client
+	auditService  audit.AuditService
+	cfg           *config.Config
 }
 
-func NewStatusPageService(repo StatusPageRepository, checker SubscriptionChecker, rdb *redis.Client, auditService audit.AuditService, cfg ...*config.Config) StatusPageService {
+func NewStatusPageService(repo StatusPageRepository, checker OrganizationMemberChecker, rdb *redis.Client, auditService audit.AuditService, cfg ...*config.Config) StatusPageService {
 	var c *config.Config
 	if len(cfg) > 0 && cfg[0] != nil {
 		c = cfg[0]
 	}
-	return &StatusPageServiceImpl{repo: repo, Subchecker: checker, rdb: rdb, auditService: auditService, cfg: c}
+	return &StatusPageServiceImpl{repo: repo, memberChecker: checker, rdb: rdb, auditService: auditService, cfg: c}
 }
 
 func (s *StatusPageServiceImpl) getConfig() *config.Config {
@@ -65,29 +64,17 @@ func (s *StatusPageServiceImpl) Create(orgID, userID, ipAddress string, req *Cre
 		return nil, errors.New("Something wrong, please try again")
 	}
 
-	subs, err := s.Subchecker.GetOrganizationPlan(orgID)
-	if err != nil {
-		return nil, errors.New("Failed to get organization subscription")
-	}
-
-	maxStatusPage := 1
+	maxStatusPage := 10
 	cfg := s.getConfig()
-	if cfg.AppMode == "selfhosted" {
-		maxStatusPage = 999999 // no limit in selfhosted
-	} else {
-		switch subs.Plan {
-		case "pro":
-			maxStatusPage = 3
-		case "max":
-			maxStatusPage = 5
-		}
+	if cfg != nil && cfg.MaxStatusPagesPerOrg > 0 {
+		maxStatusPage = cfg.MaxStatusPagesPerOrg
 	}
 
 	if totalStatuspage >= int64(maxStatusPage) {
-		return nil, errors.New("You have reach max status page limit for your plan")
+		return nil, errors.New("Maximum status page limit reached for this organization")
 	}
 
-	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	member, err := s.memberChecker.GetMemberById(orgID, userID)
 
 	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
@@ -226,7 +213,7 @@ func toStatusPageResponse(sp model.StatusPage) StatusPageResponse {
 }
 
 func (s *StatusPageServiceImpl) GetAllByOrganizationID(orgID, userID string) ([]StatusPageResponse, error) {
-	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	member, err := s.memberChecker.GetMemberById(orgID, userID)
 
 	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
@@ -246,7 +233,7 @@ func (s *StatusPageServiceImpl) GetAllByOrganizationID(orgID, userID string) ([]
 }
 
 func (s *StatusPageServiceImpl) Delete(statusPageID, orgID, userID, ipAddress string) error {
-	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	member, err := s.memberChecker.GetMemberById(orgID, userID)
 
 	if err != nil || member == nil {
 		return errors.New("You're not member of this organization")
@@ -272,7 +259,7 @@ func (s *StatusPageServiceImpl) Delete(statusPageID, orgID, userID, ipAddress st
 }
 
 func (s *StatusPageServiceImpl) Update(statuspageID, orgID, userID, ipAddress string, req *UpdateStatusPageRequest) (*model.StatusPage, error) {
-	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	member, err := s.memberChecker.GetMemberById(orgID, userID)
 
 	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
@@ -368,7 +355,7 @@ func (s *StatusPageServiceImpl) GetStatusPageMonitor(statusPageID, orgID string)
 }
 
 func (s *StatusPageServiceImpl) GetById(statusPageID, orgID, userID string) (*StatusPageResponse, error) {
-	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	member, err := s.memberChecker.GetMemberById(orgID, userID)
 
 	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
@@ -625,7 +612,7 @@ func mapMaintenancesToPublicResponse(maintenances []model.ScheduledMaintenance) 
 }
 
 func (s *StatusPageServiceImpl) CreateMaintenance(orgID, statusPageID, userID, ipAddress string, req *CreateMaintenanceRequest) (*model.ScheduledMaintenance, error) {
-	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	member, err := s.memberChecker.GetMemberById(orgID, userID)
 	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
 	}
@@ -678,7 +665,7 @@ func (s *StatusPageServiceImpl) CreateMaintenance(orgID, statusPageID, userID, i
 }
 
 func (s *StatusPageServiceImpl) GetMaintenances(orgID, statusPageID, userID string) ([]MaintenanceResponse, error) {
-	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	member, err := s.memberChecker.GetMemberById(orgID, userID)
 	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
 	}
@@ -718,7 +705,7 @@ func (s *StatusPageServiceImpl) GetMaintenances(orgID, statusPageID, userID stri
 }
 
 func (s *StatusPageServiceImpl) UpdateMaintenance(orgID, statusPageID, maintenanceID, userID, ipAddress string, req *UpdateMaintenanceRequest) (*model.ScheduledMaintenance, error) {
-	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	member, err := s.memberChecker.GetMemberById(orgID, userID)
 	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
 	}
@@ -779,7 +766,7 @@ func (s *StatusPageServiceImpl) UpdateMaintenance(orgID, statusPageID, maintenan
 }
 
 func (s *StatusPageServiceImpl) DeleteMaintenance(orgID, statusPageID, maintenanceID, userID, ipAddress string) error {
-	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	member, err := s.memberChecker.GetMemberById(orgID, userID)
 	if err != nil || member == nil {
 		return errors.New("You're not member of this organization")
 	}
@@ -844,7 +831,7 @@ func groupIncidentsByDay(incidents []model.Incident, continuousDays int) []Publi
 }
 
 func (s *StatusPageServiceImpl) CreateComponentGroup(orgID, statusPageID, userID, ipAddress string, req *CreateComponentGroupRequest) (*model.ComponentGroup, error) {
-	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	member, err := s.memberChecker.GetMemberById(orgID, userID)
 	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
 	}
@@ -888,7 +875,7 @@ func (s *StatusPageServiceImpl) CreateComponentGroup(orgID, statusPageID, userID
 }
 
 func (s *StatusPageServiceImpl) GetComponentGroups(orgID, statusPageID, userID string) ([]ComponentGroupResponse, error) {
-	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	member, err := s.memberChecker.GetMemberById(orgID, userID)
 	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
 	}
@@ -925,7 +912,7 @@ func (s *StatusPageServiceImpl) GetComponentGroups(orgID, statusPageID, userID s
 }
 
 func (s *StatusPageServiceImpl) UpdateComponentGroup(orgID, statusPageID, groupID, userID, ipAddress string, req *UpdateComponentGroupRequest) (*model.ComponentGroup, error) {
-	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	member, err := s.memberChecker.GetMemberById(orgID, userID)
 	if err != nil || member == nil {
 		return nil, errors.New("You're not member of this organization")
 	}
@@ -973,7 +960,7 @@ func (s *StatusPageServiceImpl) UpdateComponentGroup(orgID, statusPageID, groupI
 }
 
 func (s *StatusPageServiceImpl) DeleteComponentGroup(orgID, statusPageID, groupID, userID, ipAddress string) error {
-	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	member, err := s.memberChecker.GetMemberById(orgID, userID)
 	if err != nil || member == nil {
 		return errors.New("You're not member of this organization")
 	}
@@ -1010,7 +997,7 @@ func (s *StatusPageServiceImpl) DeleteComponentGroup(orgID, statusPageID, groupI
 }
 
 func (s *StatusPageServiceImpl) AssignMonitorToGroup(orgID, statusPageID, monitorID, userID, ipAddress string, req *AssignMonitorGroupRequest) error {
-	member, err := s.Subchecker.GetMemberById(orgID, userID)
+	member, err := s.memberChecker.GetMemberById(orgID, userID)
 	if err != nil || member == nil {
 		return errors.New("You're not member of this organization")
 	}

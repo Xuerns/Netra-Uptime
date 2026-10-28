@@ -11,7 +11,7 @@ type AuthRepository interface {
 	CreateRefreshToken(refreshToken *model.RefreshToken) error
 	RevokeRefreshToken(hashedToken string) error
 	FindRefreshTokenByToken(hashedToken string) (*model.RefreshToken, error)
-	CreateUserWithDefaultOrg(user *model.User, org *model.Organization, orgMember *model.OrganizationMember, subscription *model.Subscription) error
+	CreateUserWithDefaultOrg(user *model.User, org *model.Organization, orgMember *model.OrganizationMember) error
 	GetUserById(userId string) (*model.User, error)
 	UpdateProfile(userId string, name string) (*model.User, error)
 	CreateResetToken(token *model.PasswordResetToken) error
@@ -56,7 +56,7 @@ func (r *AuthRepositoryImpl) FindRefreshTokenByToken(hashedToken string) (*model
 	return &refreshToken, nil
 }
 
-func (r *AuthRepositoryImpl) CreateUserWithDefaultOrg(user *model.User, org *model.Organization, orgMember *model.OrganizationMember, subscription *model.Subscription) error {
+func (r *AuthRepositoryImpl) CreateUserWithDefaultOrg(user *model.User, org *model.Organization, orgMember *model.OrganizationMember) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(user).Error; err != nil {
 			return err
@@ -71,11 +71,6 @@ func (r *AuthRepositoryImpl) CreateUserWithDefaultOrg(user *model.User, org *mod
 		orgMember.OrganizationID = org.ID
 
 		if err := tx.Create(orgMember).Error; err != nil {
-			return err
-		}
-
-		subscription.OrganizationID = org.ID
-		if err := tx.Create(subscription).Error; err != nil {
 			return err
 		}
 

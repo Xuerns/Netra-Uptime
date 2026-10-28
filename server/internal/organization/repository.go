@@ -14,7 +14,7 @@ type OrganizationRepository interface {
 	GetOrganizationMember(orgId, memberId string) error
 	GetOrganizationAllMember(orgId string) (*[]model.OrganizationMember, error)
 	GetAllOrganizationByUserId(userId string) (*[]model.Organization, error)
-	CreateOrganization(org *model.Organization, ownerMember *model.OrganizationMember, invitations *[]model.OrganizationInvitation, subscription *model.Subscription) error
+	CreateOrganization(org *model.Organization, ownerMember *model.OrganizationMember, invitations *[]model.OrganizationInvitation) error
 	AcceptInvitation(invitation *model.OrganizationInvitation, member *model.OrganizationMember) error
 	RejectInvitation(invitation *model.OrganizationInvitation) error
 	KickMember(orgId, memberId string) error
@@ -30,7 +30,6 @@ type OrganizationRepository interface {
 	LeaveOrganization(userId, orgId string) error
 	TotalOrganizationUser(useId string) (int64, error)
 	TotalOrganizationMember(orgId string) (int64, error)
-	GetOrganizationPlan(orgId string) (*model.Subscription, error)
 	RevokeAPIKeysByMember(orgId, memberId string) error
 }
 
@@ -107,7 +106,7 @@ func (r *OrganizationRepositoryImpl) GetAllOrganizationByUserId(userId string) (
 	return &organizations, nil
 }
 
-func (r *OrganizationRepositoryImpl) CreateOrganization(org *model.Organization, ownerMember *model.OrganizationMember, invitations *[]model.OrganizationInvitation, subscription *model.Subscription) error {
+func (r *OrganizationRepositoryImpl) CreateOrganization(org *model.Organization, ownerMember *model.OrganizationMember, invitations *[]model.OrganizationInvitation) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(org).Error; err != nil {
 			return err
@@ -129,11 +128,6 @@ func (r *OrganizationRepositoryImpl) CreateOrganization(org *model.Organization,
 			if err := tx.Create(invitations).Error; err != nil {
 				return err
 			}
-		}
-
-		subscription.OrganizationID = org.ID
-		if err := tx.Create(subscription).Error; err != nil {
-			return err
 		}
 
 		return nil
@@ -294,14 +288,6 @@ func (r *OrganizationRepositoryImpl) TotalOrganizationMember(orgId string) (int6
 		return 0, err
 	}
 	return totalOrganizationMember, nil
-}
-
-func (r *OrganizationRepositoryImpl) GetOrganizationPlan(orgId string) (*model.Subscription, error) {
-	var subscription model.Subscription
-	if err := r.db.Where("organization_id = ?", orgId).First(&subscription).Error; err != nil {
-		return nil, err
-	}
-	return &subscription, nil
 }
 
 func (r *OrganizationRepositoryImpl) RevokeAPIKeysByMember(orgId, memberId string) error {

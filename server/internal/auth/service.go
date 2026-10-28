@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"netra-uptime/config"
 	"netra-uptime/internal/model"
 	"netra-uptime/pkg/jwt"
 	"os"
@@ -70,13 +71,29 @@ var oauthHTTPClient = &http.Client{
 type AuthServiceImpl struct {
 	repo AuthRepository
 	rdb  *redis.Client
+	cfg  *config.Config
 }
 
-func NewAuthService(repo AuthRepository, rdb *redis.Client) AuthService {
-	return &AuthServiceImpl{repo: repo, rdb: rdb}
+func NewAuthService(repo AuthRepository, rdb *redis.Client, cfg ...*config.Config) AuthService {
+	var c *config.Config
+	if len(cfg) > 0 {
+		c = cfg[0]
+	}
+	return &AuthServiceImpl{repo: repo, rdb: rdb, cfg: c}
 }
 
 func (s *AuthServiceImpl) Register(req RegisterRequest) (string, error) {
+	if s.cfg != nil && !s.cfg.AllowRegistration {
+		if userCounter, ok := s.repo.(interface{ CountUsers() (int64, error) }); ok {
+			count, err := userCounter.CountUsers()
+			if err != nil || count > 0 {
+				return "", errors.New("Public registration is disabled on this instance")
+			}
+		} else {
+			return "", errors.New("Public registration is disabled on this instance")
+		}
+	}
+
 	var newUser = model.User{}
 
 	user, _ := s.repo.FindUserByEmail(req.Email)
@@ -114,12 +131,7 @@ func (s *AuthServiceImpl) Register(req RegisterRequest) (string, error) {
 		Role: "owner",
 	}
 
-	subscription := model.Subscription{
-		Plan:   "hobby",
-		Status: "active",
-	}
-
-	if err := s.repo.CreateUserWithDefaultOrg(&newUser, &newOrg, &orgOwner, &subscription); err != nil {
+	if err := s.repo.CreateUserWithDefaultOrg(&newUser, &newOrg, &orgOwner); err != nil {
 		return "", errors.New("Failed to register")
 	}
 
@@ -287,6 +299,10 @@ func (s *AuthServiceImpl) OauthLoginAndRegister(req OAuthRequest) (*LoginRespons
 
 	// If user not registered yet
 	if err != nil {
+		if s.cfg != nil && !s.cfg.AllowRegistration {
+			return nil, errors.New("Public registration is disabled on this instance")
+		}
+
 		name, _ := userInfo["name"].(string)
 		picture, _ := userInfo["picture"].(string)
 
@@ -312,12 +328,7 @@ func (s *AuthServiceImpl) OauthLoginAndRegister(req OAuthRequest) (*LoginRespons
 			Role: "owner",
 		}
 
-		subscription := model.Subscription{
-			Plan:   "hobby",
-			Status: "active",
-		}
-
-		if err := s.repo.CreateUserWithDefaultOrg(&newUser, &newOrg, &orgOwner, &subscription); err != nil {
+		if err := s.repo.CreateUserWithDefaultOrg(&newUser, &newOrg, &orgOwner); err != nil {
 			return nil, errors.New("Failed to register user")
 		}
 

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"netra-uptime/config"
 	"netra-uptime/internal/model"
 	"netra-uptime/pkg/utils"
 	"os"
@@ -21,7 +22,7 @@ import (
 
 func init() {
 	gin.SetMode(gin.TestMode)
-	os.Setenv("APP_MODE", "saas")
+	os.Setenv("APP_MODE", "selfhosted")
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterValidation("nohtml", utils.NoHTMLValidator)
 	}
@@ -190,19 +191,10 @@ func (m *mockStatusPageRepo) ValidateMonitorsBelongToOrg(orgID string, monitorID
 	return nil
 }
 
-// Mock SubscriptionChecker
+// Mock OrganizationMemberChecker
 type mockStatusPageChecker struct {
-	plan      string
 	member    *model.OrganizationMember
 	notMember bool
-}
-
-func (m *mockStatusPageChecker) GetOrganizationPlan(orgId string) (*model.Subscription, error) {
-	plan := m.plan
-	if plan == "" {
-		plan = "hobby"
-	}
-	return &model.Subscription{Plan: plan, Status: "active"}, nil
 }
 
 func (m *mockStatusPageChecker) GetMemberById(orgId, userId string) (*model.OrganizationMember, error) {
@@ -219,7 +211,7 @@ func (m *mockStatusPageChecker) GetMemberById(orgId, userId string) (*model.Orga
 
 func TestCreate_Success(t *testing.T) {
 	repo := &mockStatusPageRepo{}
-	checker := &mockStatusPageChecker{plan: "hobby"}
+	checker := &mockStatusPageChecker{}
 	svc := NewStatusPageService(repo, checker, nil, nil)
 
 	orgID := uuid.New().String()
@@ -246,10 +238,10 @@ func TestCreate_Success(t *testing.T) {
 func TestCreate_ExceedsLimit(t *testing.T) {
 	repo := &mockStatusPageRepo{
 		totalOrganizationStatusPageFunc: func(orgId string) (int64, error) {
-			return 1, nil // Hobby allows max 1 status page
+			return 10, nil // Default limit fallback is 10
 		},
 	}
-	checker := &mockStatusPageChecker{plan: "hobby"}
+	checker := &mockStatusPageChecker{}
 	svc := NewStatusPageService(repo, checker, nil, nil)
 
 	_, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateStatusPageRequest{
@@ -258,14 +250,34 @@ func TestCreate_ExceedsLimit(t *testing.T) {
 		IsPublic:  true,
 	})
 
-	if err == nil {
-		t.Fatal("expected error for exceeding status page limit, got nil")
+	if err == nil || err.Error() != "Maximum status page limit reached for this organization" {
+		t.Fatalf("expected error 'Maximum status page limit reached for this organization', got %v", err)
+	}
+}
+
+func TestCreate_MaxStatusPagesPerOrg(t *testing.T) {
+	repo := &mockStatusPageRepo{
+		totalOrganizationStatusPageFunc: func(orgId string) (int64, error) {
+			return 3, nil
+		},
+	}
+	checker := &mockStatusPageChecker{}
+	svc := NewStatusPageService(repo, checker, nil, nil, &config.Config{MaxStatusPagesPerOrg: 3})
+
+	_, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateStatusPageRequest{
+		Title:     "Fourth Page",
+		Subdomain: "fourth",
+		IsPublic:  true,
+	})
+
+	if err == nil || err.Error() != "Maximum status page limit reached for this organization" {
+		t.Fatalf("expected error 'Maximum status page limit reached for this organization', got %v", err)
 	}
 }
 
 func TestCreate_InvalidMonitorUUID(t *testing.T) {
 	repo := &mockStatusPageRepo{}
-	checker := &mockStatusPageChecker{plan: "hobby"}
+	checker := &mockStatusPageChecker{}
 	svc := NewStatusPageService(repo, checker, nil, nil)
 
 	_, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateStatusPageRequest{
@@ -997,7 +1009,7 @@ func TestStatusPageService_MaintenanceCRUD(t *testing.T) {
 
 func TestComponentGroupCRUDAndIncidentHistory(t *testing.T) {
 	repo := &mockStatusPageRepo{}
-	checker := &mockStatusPageChecker{plan: "pro"}
+	checker := &mockStatusPageChecker{}
 	svc := NewStatusPageService(repo, checker, nil, nil)
 
 	orgID := uuid.New()
@@ -1179,7 +1191,7 @@ func TestStatusPageService_CrossTenantMonitorRejected(t *testing.T) {
 				return nil
 			},
 		}
-		checker := &mockStatusPageChecker{plan: "hobby"}
+		checker := &mockStatusPageChecker{}
 		svc := NewStatusPageService(repo, checker, nil, nil)
 
 		_, err := svc.Create(orgID, userID, "127.0.0.1", &CreateStatusPageRequest{

@@ -28,10 +28,6 @@ type MonitorService interface {
 	TriggerCheck(orgId, monitorId string) (*RecentCheck, error)
 }
 
-type SubscriptionChecker interface {
-	GetOrganizationPlan(orgId string) (*model.Subscription, error)
-}
-
 type ImmediateChecker interface {
 	ProcessImmediate(monitorID uuid.UUID) (*model.Check, error)
 }
@@ -39,7 +35,6 @@ type ImmediateChecker interface {
 type MonitorServiceImpl struct {
 	repo             MonitorRepository
 	rdb              *redis.Client
-	subsChecker      SubscriptionChecker
 	auditService     audit.AuditService
 	immediateChecker ImmediateChecker
 	cfg              *config.Config
@@ -47,7 +42,7 @@ type MonitorServiceImpl struct {
 	sfGroup          singleflight.Group
 }
 
-func NewMonitorService(repo MonitorRepository, rdb *redis.Client, checker SubscriptionChecker, auditService audit.AuditService, opts ...interface{}) MonitorService {
+func NewMonitorService(repo MonitorRepository, rdb *redis.Client, auditService audit.AuditService, opts ...interface{}) MonitorService {
 	var ic ImmediateChecker
 	var cfg *config.Config
 	var db *gorm.DB
@@ -74,7 +69,6 @@ func NewMonitorService(repo MonitorRepository, rdb *redis.Client, checker Subscr
 	return &MonitorServiceImpl{
 		repo:             repo,
 		rdb:              rdb,
-		subsChecker:      checker,
 		auditService:     auditService,
 		immediateChecker: ic,
 		cfg:              cfg,
@@ -100,36 +94,35 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 		return nil, fmt.Errorf("Invalid target: %w", err)
 	}
 
-	subs, err := s.subsChecker.GetOrganizationPlan(orgId)
-	if err != nil {
-		return nil, errors.New("Failed to get organization subscription")
-	}
-
-	maxMonitors := 5
-	maxAssignees := 5
-	maxInterval := 300
-	maxTimeout := 10
+	maxMonitors := 200
+	maxAssignees := 50
+	minInterval := 30
+	maxTimeout := 30
 
 	cfg := s.getConfig()
-	if cfg.AppMode == "selfhosted" {
-		if cfg.SelfHostedMaxMonitors > 0 {
+	if cfg != nil {
+		if cfg.MaxMonitorsPerOrg > 0 {
+			maxMonitors = cfg.MaxMonitorsPerOrg
+		} else if cfg.SelfHostedMaxMonitors > 0 {
 			maxMonitors = cfg.SelfHostedMaxMonitors
-		} else {
-			maxMonitors = 999999
 		}
-		if cfg.SelfHostedMaxPIC > 0 {
+		if cfg.MaxAssigneesPerMonitor > 0 {
+			maxAssignees = cfg.MaxAssigneesPerMonitor
+		} else if cfg.SelfHostedMaxPIC > 0 {
 			maxAssignees = cfg.SelfHostedMaxPIC
 		}
-		maxInterval = cfg.SelfHostedMinInterval
-		if maxInterval < 10 {
-			maxInterval = 10
+		if cfg.SelfHostedMinInterval > 0 {
+			minInterval = cfg.SelfHostedMinInterval
 		}
-		maxTimeout = cfg.SelfHostedMaxTimeout
-	} else if subs.Plan != "free" && subs.Plan != "hobby" {
-		maxMonitors = 20
-		maxAssignees = 10
-		maxInterval = 60
-		maxTimeout = 20
+		if cfg.SelfHostedMaxTimeout > 0 {
+			maxTimeout = cfg.SelfHostedMaxTimeout
+		}
+	}
+	if minInterval < 30 {
+		minInterval = 30
+	}
+	if maxTimeout > 30 {
+		maxTimeout = 30
 	}
 
 	totalMonitorHave, err := s.repo.TotalOrganizationMonitor(orgId)
@@ -138,7 +131,7 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 	}
 
 	if totalMonitorHave >= int64(maxMonitors) {
-		return nil, errors.New("You have reach max monitor limit for your plan")
+		return nil, errors.New("Maximum monitor limit reached for this organization")
 	}
 
 	assignees := req.Assignees
@@ -150,27 +143,20 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 		return nil, errors.New("You have reach max assignee limit for this monitor")
 	}
 
-	if req.IntervalSeconds < 10 {
-		return nil, errors.New("interval must be at least 10 seconds")
+	if req.IntervalSeconds < 30 || req.IntervalSeconds < minInterval {
+		return nil, errors.New("Check interval is below the minimum allowed frequency (minimum 30 seconds)")
 	}
 
-	if req.IntervalSeconds < maxInterval {
-		return nil, errors.New("You have reach max interval limit for your plan")
-	}
-
-	if req.TimeoutSeconds > maxTimeout {
-		return nil, errors.New("You have reach max timeout limit for your plan")
-	}
-
-	if req.TimeoutSeconds < 10 {
+	if req.TimeoutSeconds < 1 {
 		return nil, errors.New("Invalid timeout seconds")
 	}
 
-	if req.TimeoutSeconds >= req.IntervalSeconds {
-		return nil, errors.New("timeout must be strictly less than interval")
+	if req.TimeoutSeconds > 30 || req.TimeoutSeconds > maxTimeout {
+		return nil, errors.New("Request timeout exceeds the maximum allowed timeout (maximum 30 seconds)")
 	}
-	if req.TimeoutSeconds > (req.IntervalSeconds - 5) {
-		return nil, fmt.Errorf("timeout cannot exceed %d seconds for interval of %d seconds", req.IntervalSeconds-5, req.IntervalSeconds)
+
+	if req.TimeoutSeconds >= req.IntervalSeconds {
+		return nil, errors.New("monitor timeout must be strictly less than check interval to prevent overlapping checks")
 	}
 
 	rootDomain, err := utils.ExtractRootDomain(req.Target)
@@ -480,26 +466,29 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 		return nil, errors.New("invalid monitor UUID format")
 	}
 
-	subs, err := s.subsChecker.GetOrganizationPlan(orgId)
-	if err != nil {
-		return nil, errors.New("Failed to get organization subscription")
-	}
-
-	maxAssignees := 5
-	maxInterval := 300
-	maxTimeout := 10
+	maxAssignees := 50
+	minInterval := 30
+	maxTimeout := 30
 
 	cfg := s.getConfig()
-	if cfg.AppMode == "selfhosted" {
-		if cfg.SelfHostedMaxPIC > 0 {
+	if cfg != nil {
+		if cfg.MaxAssigneesPerMonitor > 0 {
+			maxAssignees = cfg.MaxAssigneesPerMonitor
+		} else if cfg.SelfHostedMaxPIC > 0 {
 			maxAssignees = cfg.SelfHostedMaxPIC
 		}
-		maxInterval = cfg.SelfHostedMinInterval
-		maxTimeout = cfg.SelfHostedMaxTimeout
-	} else if subs.Plan != "free" && subs.Plan != "hobby" {
-		maxAssignees = 10
-		maxInterval = 60
-		maxTimeout = 20
+		if cfg.SelfHostedMinInterval > 0 {
+			minInterval = cfg.SelfHostedMinInterval
+		}
+		if cfg.SelfHostedMaxTimeout > 0 {
+			maxTimeout = cfg.SelfHostedMaxTimeout
+		}
+	}
+	if minInterval < 30 {
+		minInterval = 30
+	}
+	if maxTimeout > 30 {
+		maxTimeout = 30
 	}
 
 	updatedMonitor, err := s.repo.GetById(orgId, monitorId)
@@ -517,32 +506,37 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 		effectiveTimeout = *req.TimeoutSeconds
 	}
 
-	if effectiveInterval < 10 {
-		return nil, errors.New("interval must be at least 10 seconds")
-	}
-
 	if req.IntervalSeconds != nil {
-		if *req.IntervalSeconds < maxInterval {
-			return nil, errors.New("You have reach max interval limit for your plan")
+		if *req.IntervalSeconds < 30 || *req.IntervalSeconds < minInterval {
+			return nil, errors.New("Check interval is below the minimum allowed frequency (minimum 30 seconds)")
 		}
 		updatedMonitor.IntervalSeconds = *req.IntervalSeconds
 	}
 
+	if effectiveInterval < 30 || effectiveInterval < minInterval {
+		return nil, errors.New("Check interval is below the minimum allowed frequency (minimum 30 seconds)")
+	}
+
 	if req.TimeoutSeconds != nil {
-		if *req.TimeoutSeconds > maxTimeout {
-			return nil, errors.New("You have reach max timeout limit for your plan")
-		}
 		if *req.TimeoutSeconds < 1 {
 			return nil, errors.New("Invalid timeout seconds")
+		}
+		if *req.TimeoutSeconds > 30 || *req.TimeoutSeconds > maxTimeout {
+			return nil, errors.New("Request timeout exceeds the maximum allowed timeout (maximum 30 seconds)")
 		}
 		updatedMonitor.TimeoutSeconds = *req.TimeoutSeconds
 	}
 
-	if effectiveTimeout >= effectiveInterval {
-		return nil, errors.New("timeout must be strictly less than interval")
+	if effectiveTimeout < 1 {
+		return nil, errors.New("Invalid timeout seconds")
 	}
-	if effectiveTimeout > (effectiveInterval - 5) {
-		return nil, fmt.Errorf("timeout cannot exceed %d seconds for interval of %d seconds", effectiveInterval-5, effectiveInterval)
+
+	if effectiveTimeout > 30 || effectiveTimeout > maxTimeout {
+		return nil, errors.New("Request timeout exceeds the maximum allowed timeout (maximum 30 seconds)")
+	}
+
+	if effectiveTimeout >= effectiveInterval {
+		return nil, errors.New("monitor timeout must be strictly less than check interval to prevent overlapping checks")
 	}
 
 	if req.Name != nil {

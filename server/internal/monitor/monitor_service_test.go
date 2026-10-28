@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"netra-uptime/config"
 	"netra-uptime/internal/model"
 	"netra-uptime/pkg/utils"
 	"os"
@@ -29,7 +30,7 @@ import (
 
 func init() {
 	gin.SetMode(gin.TestMode)
-	os.Setenv("APP_MODE", "saas")
+	os.Setenv("APP_MODE", "selfhosted")
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterValidation("nohtml", utils.NoHTMLValidator)
 	}
@@ -233,22 +234,9 @@ func (m *mockMonitorRepo) Get30DayUptimeMap(monitorIDs []string) (map[string]flo
 	return nil, nil
 }
 
-// Mock SubscriptionChecker
-type mockSubsChecker struct {
-	plan string
-}
-
-func (m *mockSubsChecker) GetOrganizationPlan(orgId string) (*model.Subscription, error) {
-	plan := m.plan
-	if plan == "" {
-		plan = "hobby"
-	}
-	return &model.Subscription{Plan: plan, Status: "active"}, nil
-}
-
 // ====================== SERVICE TESTS ======================
 
-func TestCreate_Success_HobbyPlan(t *testing.T) {
+func TestCreate_Success(t *testing.T) {
 	rdb, cleanup := newMockRedisClient(t)
 	defer cleanup()
 
@@ -257,7 +245,7 @@ func TestCreate_Success_HobbyPlan(t *testing.T) {
 			return 2, nil
 		},
 	}
-	svc := NewMonitorService(repo, rdb, &mockSubsChecker{plan: "hobby"}, nil)
+	svc := NewMonitorService(repo, rdb, nil)
 
 	mon, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
 		Name:            "My API",
@@ -281,10 +269,10 @@ func TestCreate_ExceedsMonitorLimit(t *testing.T) {
 
 	repo := &mockMonitorRepo{
 		totalOrganizationMonitorFunc: func(orgId string) (int64, error) {
-			return 5, nil // Hobby max is 5
+			return 5, nil
 		},
 	}
-	svc := NewMonitorService(repo, rdb, &mockSubsChecker{plan: "hobby"}, nil)
+	svc := NewMonitorService(repo, rdb, nil, &config.Config{SelfHostedMaxMonitors: 5})
 
 	_, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
 		Name:            "My API",
@@ -303,7 +291,7 @@ func TestCreate_ExceedsPICLimit(t *testing.T) {
 	rdb, cleanup := newMockRedisClient(t)
 	defer cleanup()
 
-	svc := NewMonitorService(&mockMonitorRepo{}, rdb, &mockSubsChecker{plan: "hobby"}, nil)
+	svc := NewMonitorService(&mockMonitorRepo{}, rdb, nil, &config.Config{SelfHostedMaxPIC: 5})
 
 	_, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
 		Name:            "My API",
@@ -323,7 +311,7 @@ func TestCreate_ZeroAssignees_Success(t *testing.T) {
 	rdb, cleanup := newMockRedisClient(t)
 	defer cleanup()
 
-	svc := NewMonitorService(&mockMonitorRepo{}, rdb, &mockSubsChecker{plan: "hobby"}, nil)
+	svc := NewMonitorService(&mockMonitorRepo{}, rdb, nil)
 
 	_, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
 		Name:            "My API",
@@ -339,22 +327,37 @@ func TestCreate_ZeroAssignees_Success(t *testing.T) {
 	}
 }
 
-func TestCreate_InvalidIntervalForPlan(t *testing.T) {
+func TestCreate_InvalidIntervalBelowMinimum(t *testing.T) {
 	rdb, cleanup := newMockRedisClient(t)
 	defer cleanup()
 
-	svc := NewMonitorService(&mockMonitorRepo{}, rdb, &mockSubsChecker{plan: "hobby"}, nil)
+	svc := NewMonitorService(&mockMonitorRepo{}, rdb, nil)
 
+	// Check interval below default minimum (30 seconds)
 	_, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
 		Name:            "My API",
 		Type:            "http",
 		Target:          "https://1.1.1.1",
-		IntervalSeconds: 60, // Hobby min is 300
+		IntervalSeconds: 20, // Min is 30
 		TimeoutSeconds:  10,
 	})
 
-	if err == nil {
-		t.Fatal("expected error for interval below plan minimum, got nil")
+	if err == nil || err.Error() != "Check interval is below the minimum allowed frequency (minimum 30 seconds)" {
+		t.Fatalf("expected 'Check interval is below the minimum allowed frequency (minimum 30 seconds)', got: %v", err)
+	}
+
+	// Check interval below custom SelfHostedMinInterval
+	svcCustom := NewMonitorService(&mockMonitorRepo{}, rdb, nil, &config.Config{SelfHostedMinInterval: 120})
+	_, err = svcCustom.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
+		Name:            "My API",
+		Type:            "http",
+		Target:          "https://1.1.1.1",
+		IntervalSeconds: 60, // Min is 120
+		TimeoutSeconds:  10,
+	})
+
+	if err == nil || err.Error() != "Check interval is below the minimum allowed frequency (minimum 30 seconds)" {
+		t.Fatalf("expected error for interval below custom minimum, got: %v", err)
 	}
 }
 
@@ -362,18 +365,33 @@ func TestCreate_TimeoutTooHigh(t *testing.T) {
 	rdb, cleanup := newMockRedisClient(t)
 	defer cleanup()
 
-	svc := NewMonitorService(&mockMonitorRepo{}, rdb, &mockSubsChecker{plan: "hobby"}, nil)
+	svc := NewMonitorService(&mockMonitorRepo{}, rdb, nil)
 
+	// Timeout exceeds default maximum (30 seconds)
 	_, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
 		Name:            "My API",
 		Type:            "http",
 		Target:          "https://1.1.1.1",
 		IntervalSeconds: 300,
-		TimeoutSeconds:  25, // Hobby max timeout is 10
+		TimeoutSeconds:  35, // Max timeout is 30
 	})
 
-	if err == nil {
-		t.Fatal("expected error for timeout too high, got nil")
+	if err == nil || err.Error() != "Request timeout exceeds the maximum allowed timeout (maximum 30 seconds)" {
+		t.Fatalf("expected 'Request timeout exceeds the maximum allowed timeout (maximum 30 seconds)', got: %v", err)
+	}
+
+	// Timeout exceeds custom SelfHostedMaxTimeout
+	svcCustom := NewMonitorService(&mockMonitorRepo{}, rdb, nil, &config.Config{SelfHostedMaxTimeout: 20})
+	_, err = svcCustom.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
+		Name:            "My API",
+		Type:            "http",
+		Target:          "https://1.1.1.1",
+		IntervalSeconds: 300,
+		TimeoutSeconds:  25, // Max timeout is 20
+	})
+
+	if err == nil || err.Error() != "Request timeout exceeds the maximum allowed timeout (maximum 30 seconds)" {
+		t.Fatalf("expected error for timeout exceeding custom limit, got: %v", err)
 	}
 }
 
@@ -381,42 +399,215 @@ func TestCreate_TimeoutTooLow(t *testing.T) {
 	rdb, cleanup := newMockRedisClient(t)
 	defer cleanup()
 
-	svc := NewMonitorService(&mockMonitorRepo{}, rdb, &mockSubsChecker{plan: "hobby"}, nil)
+	svc := NewMonitorService(&mockMonitorRepo{}, rdb, nil)
 
 	_, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
 		Name:            "My API",
 		Type:            "http",
 		Target:          "https://1.1.1.1",
 		IntervalSeconds: 300,
-		TimeoutSeconds:  5, // < 10
+		TimeoutSeconds:  0, // < 1
 	})
 
 	if err == nil {
-		t.Fatal("expected error for timeout < 10, got nil")
+		t.Fatal("expected error for timeout < 1, got nil")
 	}
 }
 
-func TestCreate_ProPlan_HigherLimits(t *testing.T) {
+func TestCreate_TimeoutGreaterOrEqualInterval(t *testing.T) {
+	rdb, cleanup := newMockRedisClient(t)
+	defer cleanup()
+
+	svc := NewMonitorService(&mockMonitorRepo{}, rdb, nil)
+
+	// Equal: 30s timeout >= 30s interval
+	_, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
+		Name:            "My API",
+		Type:            "http",
+		Target:          "https://1.1.1.1",
+		IntervalSeconds: 30,
+		TimeoutSeconds:  30,
+	})
+	if err == nil || err.Error() != "monitor timeout must be strictly less than check interval to prevent overlapping checks" {
+		t.Fatalf("expected overlapping checks error for timeout == interval, got: %v", err)
+	}
+}
+
+func TestUpdateMonitor_TimeoutGreaterOrEqualInterval(t *testing.T) {
+	rdb, cleanup := newMockRedisClient(t)
+	defer cleanup()
+
+	orgID := uuid.New().String()
+	monitorID := uuid.New().String()
+
+	repo := &mockMonitorRepo{
+		getByIdFunc: func(o, m string) (*model.Monitor, error) {
+			return &model.Monitor{
+				ID:              uuid.MustParse(monitorID),
+				OrganizationID:  uuid.MustParse(orgID),
+				IntervalSeconds: 30,
+				TimeoutSeconds:  10,
+			}, nil
+		},
+	}
+
+	svc := NewMonitorService(repo, rdb, nil)
+
+	// Update timeout to 30 (equal to current interval 30)
+	t30 := 30
+	_, err := svc.UpdateMonitor(orgID, uuid.New().String(), "127.0.0.1", monitorID, UpdatedMonitorRequest{
+		TimeoutSeconds: &t30,
+	})
+	if err == nil || err.Error() != "monitor timeout must be strictly less than check interval to prevent overlapping checks" {
+		t.Fatalf("expected overlapping checks error on update, got: %v", err)
+	}
+
+	// Update interval to 30 when current timeout is 30 (equal to timeout 30)
+	repo30 := &mockMonitorRepo{
+		getByIdFunc: func(o, m string) (*model.Monitor, error) {
+			return &model.Monitor{
+				ID:              uuid.MustParse(monitorID),
+				OrganizationID:  uuid.MustParse(orgID),
+				IntervalSeconds: 60,
+				TimeoutSeconds:  30,
+			}, nil
+		},
+	}
+	svc30 := NewMonitorService(repo30, rdb, nil)
+	i30 := 30
+	_, err = svc30.UpdateMonitor(orgID, uuid.New().String(), "127.0.0.1", monitorID, UpdatedMonitorRequest{
+		IntervalSeconds: &i30,
+	})
+	if err == nil || err.Error() != "monitor timeout must be strictly less than check interval to prevent overlapping checks" {
+		t.Fatalf("expected overlapping checks error on update interval <= timeout, got: %v", err)
+	}
+}
+
+func TestUpdateMonitor_IntervalBelowMinimum(t *testing.T) {
+	rdb, cleanup := newMockRedisClient(t)
+	defer cleanup()
+
+	orgID := uuid.New().String()
+	monitorID := uuid.New().String()
+
+	repo := &mockMonitorRepo{
+		getByIdFunc: func(o, m string) (*model.Monitor, error) {
+			return &model.Monitor{
+				ID:              uuid.MustParse(monitorID),
+				OrganizationID:  uuid.MustParse(orgID),
+				IntervalSeconds: 60,
+				TimeoutSeconds:  10,
+			}, nil
+		},
+	}
+
+	svc := NewMonitorService(repo, rdb, nil)
+
+	i20 := 20
+	_, err := svc.UpdateMonitor(orgID, uuid.New().String(), "127.0.0.1", monitorID, UpdatedMonitorRequest{
+		IntervalSeconds: &i20,
+	})
+	if err == nil || err.Error() != "Check interval is below the minimum allowed frequency (minimum 30 seconds)" {
+		t.Fatalf("expected interval below minimum error on update, got: %v", err)
+	}
+}
+
+func TestUpdateMonitor_TimeoutTooHigh(t *testing.T) {
+	rdb, cleanup := newMockRedisClient(t)
+	defer cleanup()
+
+	orgID := uuid.New().String()
+	monitorID := uuid.New().String()
+
+	repo := &mockMonitorRepo{
+		getByIdFunc: func(o, m string) (*model.Monitor, error) {
+			return &model.Monitor{
+				ID:              uuid.MustParse(monitorID),
+				OrganizationID:  uuid.MustParse(orgID),
+				IntervalSeconds: 300,
+				TimeoutSeconds:  10,
+			}, nil
+		},
+	}
+
+	svc := NewMonitorService(repo, rdb, nil)
+
+	t35 := 35
+	_, err := svc.UpdateMonitor(orgID, uuid.New().String(), "127.0.0.1", monitorID, UpdatedMonitorRequest{
+		TimeoutSeconds: &t35,
+	})
+	if err == nil || err.Error() != "Request timeout exceeds the maximum allowed timeout (maximum 30 seconds)" {
+		t.Fatalf("expected timeout exceeds maximum error on update, got: %v", err)
+	}
+}
+
+func TestCreate_MaxMonitorsPerOrg(t *testing.T) {
+	rdb, cleanup := newMockRedisClient(t)
+	defer cleanup()
+
+	// Case 1: Reaching custom MaxMonitorsPerOrg
+	repo := &mockMonitorRepo{
+		totalOrganizationMonitorFunc: func(orgId string) (int64, error) {
+			return 5, nil
+		},
+	}
+	svc := NewMonitorService(repo, rdb, nil, &config.Config{MaxMonitorsPerOrg: 5})
+
+	_, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
+		Name:            "My API",
+		Type:            "http",
+		Target:          "https://1.1.1.1/health",
+		IntervalSeconds: 300,
+		TimeoutSeconds:  10,
+	})
+	if err == nil || err.Error() != "Maximum monitor limit reached for this organization" {
+		t.Fatalf("expected 'Maximum monitor limit reached for this organization', got: %v", err)
+	}
+
+	// Case 2: Reaching default MaxMonitorsPerOrg fallback (200)
+	repoDefault := &mockMonitorRepo{
+		totalOrganizationMonitorFunc: func(orgId string) (int64, error) {
+			return 200, nil
+		},
+	}
+	svcDefault := NewMonitorService(repoDefault, rdb, nil, &config.Config{MaxMonitorsPerOrg: 0})
+	_, err = svcDefault.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
+		Name:            "My API",
+		Type:            "http",
+		Target:          "https://1.1.1.1/health",
+		IntervalSeconds: 300,
+		TimeoutSeconds:  10,
+	})
+	if err == nil || err.Error() != "Maximum monitor limit reached for this organization" {
+		t.Fatalf("expected 'Maximum monitor limit reached for this organization' on fallback 200, got: %v", err)
+	}
+}
+
+func TestCreate_CustomConfigLimits(t *testing.T) {
 	rdb, cleanup := newMockRedisClient(t)
 	defer cleanup()
 
 	repo := &mockMonitorRepo{
 		totalOrganizationMonitorFunc: func(orgId string) (int64, error) {
-			return 7, nil // 7 < 10 pro limit
+			return 7, nil
 		},
 	}
-	svc := NewMonitorService(repo, rdb, &mockSubsChecker{plan: "pro"}, nil)
+	svc := NewMonitorService(repo, rdb, nil, &config.Config{
+		SelfHostedMaxMonitors: 20,
+		SelfHostedMinInterval: 60,
+		SelfHostedMaxTimeout:  60,
+	})
 
 	mon, err := svc.Create(uuid.New().String(), uuid.New().String(), "127.0.0.1", &CreateMonitorRequest{
-		Name:            "Pro Monitor",
+		Name:            "Custom Monitor",
 		Type:            "http",
 		Target:          "https://1.1.1.1",
-		IntervalSeconds: 180, // Pro allowed 180
-		TimeoutSeconds:  15,  // Pro allowed 15
+		IntervalSeconds: 180,
+		TimeoutSeconds:  15,
 	})
 
 	if err != nil {
-		t.Fatalf("unexpected error on pro plan: %v", err)
+		t.Fatalf("unexpected error with custom config: %v", err)
 	}
 	if mon == nil {
 		t.Fatal("expected monitor, got nil")
@@ -442,7 +633,7 @@ func TestGetById_CacheMiss_ThenCacheSet(t *testing.T) {
 			}, nil
 		},
 	}
-	svc := NewMonitorService(repo, rdb, &mockSubsChecker{}, nil)
+	svc := NewMonitorService(repo, rdb, nil)
 
 	// First call: cache miss
 	resp1, err := svc.GetById(orgID.String(), monID.String())
@@ -507,7 +698,7 @@ func TestGetById_CrossTenantCacheIsolation(t *testing.T) {
 			return nil, errors.New("monitor not found")
 		},
 	}
-	svc := NewMonitorService(repo, rdb, &mockSubsChecker{}, nil)
+	svc := NewMonitorService(repo, rdb, nil)
 
 	// Tenant A reads their monitor -> populates cache under "monitor:org:orgA:monID"
 	respA, err := svc.GetById(orgA, monID)
@@ -554,7 +745,7 @@ func TestGetAllMonitor_Success(t *testing.T) {
 			}, nil
 		},
 	}
-	svc := NewMonitorService(repo, rdb, &mockSubsChecker{}, nil)
+	svc := NewMonitorService(repo, rdb, nil)
 
 	monitors, err := svc.GetAllMonitor(orgID.String())
 	if err != nil {
@@ -589,7 +780,7 @@ func TestUpdateMonitor_PauseAndResume(t *testing.T) {
 			return nil
 		},
 	}
-	svc := NewMonitorService(repo, rdb, &mockSubsChecker{}, nil)
+	svc := NewMonitorService(repo, rdb, nil)
 
 	// Pause monitor
 	pause := false
@@ -627,7 +818,7 @@ func TestDeleteMonitor_Success(t *testing.T) {
 			return nil
 		},
 	}
-	svc := NewMonitorService(repo, rdb, &mockSubsChecker{}, nil)
+	svc := NewMonitorService(repo, rdb, nil)
 
 	err := svc.DeleteMonitor(uuid.New().String(), "user-1", "127.0.0.1", uuid.New().String())
 	if err != nil {
@@ -662,7 +853,7 @@ func TestUpdateMonitor_InvalidatesOrgScopedCache(t *testing.T) {
 			return nil
 		},
 	}
-	svc := NewMonitorService(repo, rdb, &mockSubsChecker{}, nil)
+	svc := NewMonitorService(repo, rdb, nil)
 
 	ctx := context.Background()
 	monitorKey := "monitor:org:" + orgID.String() + ":" + monID.String()
@@ -700,7 +891,7 @@ func TestDeleteMonitor_InvalidatesOrgScopedCache(t *testing.T) {
 			return nil
 		},
 	}
-	svc := NewMonitorService(repo, rdb, &mockSubsChecker{}, nil)
+	svc := NewMonitorService(repo, rdb, nil)
 
 	ctx := context.Background()
 	monitorKey := "monitor:org:" + orgID + ":" + monID
@@ -734,7 +925,7 @@ func TestGetDailyStats_DefaultDays(t *testing.T) {
 			return []model.MonitorDailyStat{}, nil
 		},
 	}
-	svc := NewMonitorService(repo, nil, &mockSubsChecker{}, nil)
+	svc := NewMonitorService(repo, nil, nil)
 
 	_, err := svc.GetDailyStats("org-1", "mon-1", 0) // <= 0 should default to 30
 	if err != nil {
@@ -782,7 +973,7 @@ func TestMonitorHandler_Create_Success(t *testing.T) {
 			return 1, nil
 		},
 	}
-	svc := NewMonitorService(repo, rdb, &mockSubsChecker{}, nil)
+	svc := NewMonitorService(repo, rdb, nil)
 	handler := NewMonitorHandler(svc)
 
 	r := gin.New()
@@ -796,7 +987,7 @@ func TestMonitorHandler_Create_Success(t *testing.T) {
 	body := CreateMonitorRequest{
 		Name:            "Dashboard Web",
 		Type:            "http",
-		Target:          "https://example.com",
+		Target:          "https://1.1.1.1",
 		IntervalSeconds: 300,
 		TimeoutSeconds:  10,
 		Criticality:     "high",
@@ -831,7 +1022,7 @@ func TestMonitorHandler_GetById(t *testing.T) {
 			}, nil
 		},
 	}
-	svc := NewMonitorService(repo, rdb, &mockSubsChecker{}, nil)
+	svc := NewMonitorService(repo, rdb, nil)
 	handler := NewMonitorHandler(svc)
 
 	r := gin.New()

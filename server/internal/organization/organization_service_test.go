@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"netra-uptime/config"
 	"netra-uptime/internal/model"
 	"netra-uptime/pkg/utils"
 	"os"
@@ -20,7 +21,7 @@ import (
 
 func init() {
 	gin.SetMode(gin.TestMode)
-	os.Setenv("APP_MODE", "saas")
+	os.Setenv("APP_MODE", "selfhosted")
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterValidation("nohtml", utils.NoHTMLValidator)
 	}
@@ -33,7 +34,7 @@ type mockOrgRepo struct {
 	getOrgMemberFunc          func(orgId, memberId string) error
 	getOrgAllMemberFunc       func(orgId string) (*[]model.OrganizationMember, error)
 	getAllOrgByUserIdFunc     func(userId string) (*[]model.Organization, error)
-	createOrgFunc             func(org *model.Organization, ownerMember *model.OrganizationMember, invitations *[]model.OrganizationInvitation, subscription *model.Subscription) error
+	createOrgFunc             func(org *model.Organization, ownerMember *model.OrganizationMember, invitations *[]model.OrganizationInvitation) error
 	acceptInvitationFunc      func(invitation *model.OrganizationInvitation, member *model.OrganizationMember) error
 	rejectInvitationFunc      func(invitation *model.OrganizationInvitation) error
 	kickMemberFunc            func(orgId, memberId string) error
@@ -49,7 +50,6 @@ type mockOrgRepo struct {
 	leaveOrgFunc              func(userId, orgId string) error
 	totalOrgUserFunc          func(userId string) (int64, error)
 	totalOrgMemberFunc        func(orgId string) (int64, error)
-	getOrgPlanFunc            func(orgId string) (*model.Subscription, error)
 	revokeAPIKeysByMemberFunc func(orgId, memberId string) error
 }
 
@@ -83,9 +83,9 @@ func (m *mockOrgRepo) GetAllOrganizationByUserId(userId string) (*[]model.Organi
 	}
 	return nil, nil
 }
-func (m *mockOrgRepo) CreateOrganization(org *model.Organization, ownerMember *model.OrganizationMember, invitations *[]model.OrganizationInvitation, subscription *model.Subscription) error {
+func (m *mockOrgRepo) CreateOrganization(org *model.Organization, ownerMember *model.OrganizationMember, invitations *[]model.OrganizationInvitation) error {
 	if m.createOrgFunc != nil {
-		return m.createOrgFunc(org, ownerMember, invitations, subscription)
+		return m.createOrgFunc(org, ownerMember, invitations)
 	}
 	return nil
 }
@@ -179,12 +179,6 @@ func (m *mockOrgRepo) TotalOrganizationMember(orgId string) (int64, error) {
 	}
 	return 0, nil
 }
-func (m *mockOrgRepo) GetOrganizationPlan(orgId string) (*model.Subscription, error) {
-	if m.getOrgPlanFunc != nil {
-		return m.getOrgPlanFunc(orgId)
-	}
-	return nil, nil
-}
 func (m *mockOrgRepo) RevokeAPIKeysByMember(orgId, memberId string) error {
 	if m.revokeAPIKeysByMemberFunc != nil {
 		return m.revokeAPIKeysByMemberFunc(orgId, memberId)
@@ -239,7 +233,7 @@ func TestCreateOrganization_Success(t *testing.T) {
 		getAllSlugOrgFunc: func(slug string) (*[]model.Organization, error) {
 			return nil, nil
 		},
-		createOrgFunc: func(org *model.Organization, owner *model.OrganizationMember, inv *[]model.OrganizationInvitation, sub *model.Subscription) error {
+		createOrgFunc: func(org *model.Organization, owner *model.OrganizationMember, inv *[]model.OrganizationInvitation) error {
 			created = true
 			return nil
 		},
@@ -284,20 +278,37 @@ func TestCreateOrganization_SlugAlreadyTaken(t *testing.T) {
 }
 
 func TestCreateOrganization_MaxOrgsReached(t *testing.T) {
+	// Case 1: Configured MaxOrgsPerUser
 	repo := &mockOrgRepo{
 		totalOrgUserFunc: func(userId string) (int64, error) {
-			return 7, nil // max is 7
+			return 5, nil
 		},
 	}
-	svc := NewOrganizationService(repo, nil)
+	svc := NewOrganizationService(repo, nil, &config.Config{MaxOrgsPerUser: 5})
 
 	_, err := svc.CreateOrganization(&CreateOrganizationRequest{
 		Name: "Limit Org",
 		Slug: "limit-org",
 	}, uuid.New().String())
 
-	if err == nil {
-		t.Fatal("expected error for reaching max orgs, got nil")
+	if err == nil || err.Error() != "You have reach max organization limit" {
+		t.Fatalf("expected error 'You have reach max organization limit', got: %v", err)
+	}
+
+	// Case 2: Default MaxOrgsPerUser fallback (10)
+	repoDefault := &mockOrgRepo{
+		totalOrgUserFunc: func(userId string) (int64, error) {
+			return 10, nil
+		},
+	}
+	svcDefault := NewOrganizationService(repoDefault, nil, &config.Config{MaxOrgsPerUser: 0})
+	_, err = svcDefault.CreateOrganization(&CreateOrganizationRequest{
+		Name: "Limit Org 2",
+		Slug: "limit-org-2",
+	}, uuid.New().String())
+
+	if err == nil || err.Error() != "You have reach max organization limit" {
+		t.Fatalf("expected error on fallback 10 orgs, got: %v", err)
 	}
 }
 
@@ -592,19 +603,35 @@ func TestInviteMember_PendingInviteExists(t *testing.T) {
 
 func TestInviteMember_ExceedsMemberLimit(t *testing.T) {
 	orgID := uuid.New()
+
+	// Case 1: Configured MaxMembersPerOrg
 	repo := &mockOrgRepo{
 		totalOrgMemberFunc: func(orgId string) (int64, error) {
-			return 20, nil // max is 20
+			return 10, nil
 		},
 	}
-	svc := NewOrganizationService(repo, nil)
+	svc := NewOrganizationService(repo, nil, &config.Config{MaxMembersPerOrg: 10})
 
 	_, err := svc.InviteMember(orgID.String(), uuid.New().String(), "127.0.0.1", BulkInviteMemberRequest{
 		Invitations: []InviteMemberRequest{{InviteeID: uuid.New().String()}},
 	})
 
-	if err == nil {
-		t.Fatal("expected error when exceeding member limit, got nil")
+	if err == nil || err.Error() != "Exceeded total organization member limit (max 10)" {
+		t.Fatalf("expected 'Exceeded total organization member limit (max 10)', got: %v", err)
+	}
+
+	// Case 2: Default MaxMembersPerOrg fallback (100)
+	repoDefault := &mockOrgRepo{
+		totalOrgMemberFunc: func(orgId string) (int64, error) {
+			return 100, nil
+		},
+	}
+	svcDefault := NewOrganizationService(repoDefault, nil, &config.Config{MaxMembersPerOrg: 0})
+	_, err = svcDefault.InviteMember(orgID.String(), uuid.New().String(), "127.0.0.1", BulkInviteMemberRequest{
+		Invitations: []InviteMemberRequest{{InviteeID: uuid.New().String()}},
+	})
+	if err == nil || err.Error() != "Exceeded total organization member limit (max 100)" {
+		t.Fatalf("expected 'Exceeded total organization member limit (max 100)', got: %v", err)
 	}
 }
 
@@ -945,7 +972,7 @@ func TestOrganizationHandler_Create(t *testing.T) {
 		getAllSlugOrgFunc: func(slug string) (*[]model.Organization, error) {
 			return nil, nil
 		},
-		createOrgFunc: func(org *model.Organization, owner *model.OrganizationMember, inv *[]model.OrganizationInvitation, sub *model.Subscription) error {
+		createOrgFunc: func(org *model.Organization, owner *model.OrganizationMember, inv *[]model.OrganizationInvitation) error {
 			return nil
 		},
 	}
