@@ -156,13 +156,6 @@
 									</span>
 								</div>
 							</div>
-
-							<div
-								class="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 border border-border/60 shrink-0"
-							>
-								<span style={uBadge.dotStyle} class="size-2 rounded-full {uBadge.dotClass}"></span>
-								<span style={uBadge.textStyle} class={uBadge.textClass}>{uBadge.label}</span>
-							</div>
 						</Collapsible.Trigger>
 
 						<Collapsible.Content

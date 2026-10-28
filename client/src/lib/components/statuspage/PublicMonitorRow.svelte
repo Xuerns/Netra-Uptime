@@ -101,6 +101,7 @@
 			<div
 				class="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 border border-border/60"
 			>
+				<span style={statusInfo.dotStyle} class="size-2 rounded-full {statusInfo.dotClass}"></span>
 				<span style={statusInfo.textStyle} class={statusInfo.textClass}>{statusInfo.label}</span>
 			</div>
 		</div>
