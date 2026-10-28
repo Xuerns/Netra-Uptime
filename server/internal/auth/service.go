@@ -5,35 +5,25 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net"
-	"net/http"
 	"net/url"
 	"netra-uptime/config"
 	"netra-uptime/internal/model"
+	"netra-uptime/pkg/email"
 	"netra-uptime/pkg/jwt"
 	"os"
-
-	"netra-uptime/pkg/email"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 )
 
 type AuthService interface {
 	Register(req RegisterRequest) (string, error)
 	Login(req LoginRequest) (*LoginResponse, error)
-	GenerateOAuthState() (string, error)
-	OauthLoginAndRegister(req OAuthRequest) (*LoginResponse, error)
 	Logout(refreshToken string) error
 	RefreshAccessToken(token string) (*LoginResponse, error)
 	GetProfile(userId string) (*ProfileResponse, error)
@@ -42,30 +32,6 @@ type AuthService interface {
 	ResetPassword(newPassword, resetToken string) error
 	InitPasswordChange(userId string, req InitPasswordChangeRequest) error
 	VerifyPasswordChange(userId string, req VerifyPasswordChangeRequest) error
-}
-
-var oauthHTTPClient = &http.Client{
-	Timeout: 30 * time.Second,
-	Transport: &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			dialer := &net.Dialer{
-				Timeout:   10 * time.Second,
-				KeepAlive: 30 * time.Second,
-			}
-			// Prefer IPv4 (tcp4) to prevent "network is unreachable" on systems/containers without an IPv6 route
-			conn, err := dialer.DialContext(ctx, "tcp4", addr)
-			if err == nil {
-				return conn, nil
-			}
-			return dialer.DialContext(ctx, network, addr)
-		},
-		ForceAttemptHTTP2:     true,
-		MaxIdleConns:          100,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-	},
 }
 
 type AuthServiceImpl struct {
@@ -112,7 +78,6 @@ func (s *AuthServiceImpl) Register(req RegisterRequest) (string, error) {
 	newUser.Email = req.Email
 	hashedPaswordStr := string(hashedPasword)
 	newUser.PasswordHash = &hashedPaswordStr
-	newUser.AuthProvider = "local"
 	colors := "10b981,3b82f6,4edea3,adc6ff,ffb4ab"
 	newUser.AvatarURL = "https://api.dicebear.com/9.x/shapes/svg?seed=" + url.QueryEscape(req.Email) + "&backgroundColor=131314&shape1Color=" + colors + "&shape2Color=" + colors + "&shape3Color=" + colors
 
@@ -146,7 +111,7 @@ func (s *AuthServiceImpl) Login(req LoginRequest) (*LoginResponse, error) {
 	}
 
 	// Validation for Login method
-	if user.PasswordHash == nil && user.AuthProvider != "local" {
+	if user.PasswordHash == nil {
 		return nil, errors.New("Invalid email or password")
 	}
 
@@ -200,177 +165,6 @@ func (s *AuthServiceImpl) Login(req LoginRequest) (*LoginResponse, error) {
 
 	if err := s.repo.CreateRefreshToken(&createRefreshToken); err != nil {
 		return nil, errors.New("Failed to store refresh token")
-	}
-
-	return &LoginResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	}, nil
-}
-
-func (s *AuthServiceImpl) GenerateOAuthState() (string, error) {
-	state := uuid.NewString()
-	if s.rdb != nil {
-		ctx := context.Background()
-		if err := s.rdb.Set(ctx, fmt.Sprintf("oauth_state:%s", state), "valid", 10*time.Minute).Err(); err != nil {
-			return "", errors.New("failed to store oauth state")
-		}
-	}
-	return state, nil
-}
-
-func (s *AuthServiceImpl) OauthLoginAndRegister(req OAuthRequest) (*LoginResponse, error) {
-	if s.rdb != nil {
-		if req.State == "" {
-			return nil, errors.New("Invalid or expired OAuth state")
-		}
-		ctx := context.Background()
-		stateKey := fmt.Sprintf("oauth_state:%s", req.State)
-		val, err := s.rdb.Get(ctx, stateKey).Result()
-		if err != nil || val == "" {
-			return nil, errors.New("Invalid or expired OAuth state")
-		}
-		s.rdb.Del(ctx, stateKey)
-	}
-
-	var conf *oauth2.Config
-	var userInfoURL string
-
-	if req.Provider == "google" {
-		clientID := os.Getenv("PUBLIC_GOOGLE_CLIENT_ID")
-		clientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
-		redirectURL := os.Getenv("PUBLIC_GOOGLE_REDIRECT_URL")
-
-		if clientID == "" || clientSecret == "" {
-			return nil, errors.New("Google OAuth is not configured: missing client ID or client secret")
-		}
-
-		conf = &oauth2.Config{
-			ClientID:     clientID,
-			ClientSecret: clientSecret,
-			RedirectURL:  redirectURL,
-			Scopes: []string{
-				"https://www.googleapis.com/auth/userinfo.email",
-				"https://www.googleapis.com/auth/userinfo.profile",
-			},
-			Endpoint: google.Endpoint,
-		}
-
-		userInfoURL = "https://www.googleapis.com/oauth2/v2/userinfo?access_token="
-	} else {
-		return nil, errors.New("Unsupported Provider")
-	}
-
-	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, oauthHTTPClient)
-
-	// Trade Authorization code with Token
-	token, err := conf.Exchange(ctx, req.Code)
-
-	if err != nil {
-		return nil, errors.New("Failed to exchange token: " + err.Error())
-	}
-
-	// Get profile data from user
-	response, err := oauthHTTPClient.Get(userInfoURL + token.AccessToken)
-
-	if err != nil {
-		return nil, errors.New("Failed to get user info")
-	}
-	defer func() {
-		_ = response.Body.Close()
-	}()
-
-	userData, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, errors.New("Failed to read user data")
-	}
-
-	var userInfo map[string]interface{}
-	if err := json.Unmarshal(userData, &userInfo); err != nil {
-		return nil, errors.New("Failed to parce user data")
-	}
-
-	email, ok := userInfo["email"].(string)
-	if !ok {
-		return nil, errors.New("Email not found")
-	}
-
-	user, err := s.repo.FindUserByEmail(email)
-
-	// If user not registered yet
-	if err != nil {
-		if s.cfg != nil && !s.cfg.AllowRegistration {
-			return nil, errors.New("Public registration is disabled on this instance")
-		}
-
-		name, _ := userInfo["name"].(string)
-		picture, _ := userInfo["picture"].(string)
-
-		newUser := model.User{
-			Name:         name,
-			Email:        email,
-			AuthProvider: req.Provider,
-			AvatarURL:    picture,
-		}
-
-		orgName := name + "Workspace"
-
-		slug := strings.ToLower(name)
-		uniqueSuffix := strconv.FormatInt(time.Now().UnixNano()%10000, 10)
-		orgSlug := slug + "-workspace-" + uniqueSuffix
-
-		newOrg := model.Organization{
-			Name: orgName,
-			Slug: orgSlug,
-		}
-
-		orgOwner := model.OrganizationMember{
-			Role: "owner",
-		}
-
-		if err := s.repo.CreateUserWithDefaultOrg(&newUser, &newOrg, &orgOwner); err != nil {
-			return nil, errors.New("Failed to register user")
-		}
-
-		user = &newUser
-	}
-
-	// Generate token
-	expiryAccess, err := time.ParseDuration(os.Getenv("JWT_ACCESS_EXPIRY"))
-	if err != nil {
-		expiryAccess = 15 * time.Minute
-	}
-
-	expiryRefresh, err := time.ParseDuration(os.Getenv("JWT_REFRESH_EXPIRY"))
-	if err != nil {
-		expiryRefresh = 168 * time.Hour
-	}
-
-	accessToken, err := jwt.GenerateToken(user.ID.String(), jwt.TokenTypeAccess, expiryAccess)
-	if err != nil {
-		return nil, errors.New("Something went wrong, please try again")
-	}
-
-	refreshToken, err := jwt.GenerateToken(user.ID.String(), jwt.TokenTypeRefresh, expiryRefresh)
-	if err != nil {
-		return nil, errors.New("Something went wrong, please try again")
-	}
-
-	hash := sha256.New()
-	hash.Write([]byte(refreshToken))
-	hashedRefreshToken := hex.EncodeToString(hash.Sum(nil))
-
-	createRefreshToken := model.RefreshToken{
-		UserID:    user.ID,
-		Token:     string(hashedRefreshToken),
-		ExpiresAt: time.Now().Add(expiryRefresh),
-	}
-
-	// Enforce session limit per user (VULN-04)
-	_ = s.repo.LimitActiveRefreshTokens(user.ID.String(), 5)
-
-	if err := s.repo.CreateRefreshToken(&createRefreshToken); err != nil {
-		return nil, errors.New("Something went wrong, please try again")
 	}
 
 	return &LoginResponse{
@@ -458,11 +252,10 @@ func (s *AuthServiceImpl) GetProfile(userId string) (*ProfileResponse, error) {
 	}
 
 	response := ProfileResponse{
-		ID:           user.ID.String(),
-		Name:         user.Name,
-		Email:        user.Email,
-		AvatarURL:    user.AvatarURL,
-		AuthProvider: user.AuthProvider,
+		ID:        user.ID.String(),
+		Name:      user.Name,
+		Email:     user.Email,
+		AvatarURL: user.AvatarURL,
 	}
 
 	return &response, nil
@@ -475,11 +268,10 @@ func (s *AuthServiceImpl) UpdateProfile(userId string, req UpdateProfileRequest)
 	}
 
 	response := ProfileResponse{
-		ID:           user.ID.String(),
-		Name:         user.Name,
-		Email:        user.Email,
-		AvatarURL:    user.AvatarURL,
-		AuthProvider: user.AuthProvider,
+		ID:        user.ID.String(),
+		Name:      user.Name,
+		Email:     user.Email,
+		AvatarURL: user.AvatarURL,
 	}
 
 	return &response, nil
@@ -567,7 +359,7 @@ func (s *AuthServiceImpl) InitPasswordChange(userId string, req InitPasswordChan
 	}
 
 	if user.PasswordHash == nil {
-		return errors.New("Cannot change password for OAuth user")
+		return errors.New("Password not set for user")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(*user.PasswordHash), []byte(req.CurrentPassword)); err != nil {

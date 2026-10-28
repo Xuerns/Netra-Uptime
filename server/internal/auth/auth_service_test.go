@@ -265,7 +265,6 @@ func TestLogin_Success(t *testing.T) {
 		ID:           uuid.New(),
 		Email:        "user@example.com",
 		PasswordHash: &hashedPassStr,
-		AuthProvider: "local",
 	}
 
 	repo := &mockAuthRepo{
@@ -314,7 +313,6 @@ func TestLogin_WrongPassword(t *testing.T) {
 		ID:           uuid.New(),
 		Email:        "user@example.com",
 		PasswordHash: &hashedPassStr,
-		AuthProvider: "local",
 	}
 
 	repo := &mockAuthRepo{
@@ -330,30 +328,6 @@ func TestLogin_WrongPassword(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatal("expected error for wrong password, got nil")
-	}
-}
-
-func TestLogin_OAuthUser_NoPassword(t *testing.T) {
-	user := &model.User{
-		ID:           uuid.New(),
-		Email:        "oauth@example.com",
-		PasswordHash: nil,
-		AuthProvider: "google",
-	}
-
-	repo := &mockAuthRepo{
-		findUserByEmailFunc: func(email string) (*model.User, error) {
-			return user, nil
-		},
-	}
-	svc := NewAuthService(repo, nil)
-
-	_, err := svc.Login(LoginRequest{
-		Email:    "oauth@example.com",
-		Password: "some-password",
-	})
-	if err == nil {
-		t.Fatal("expected error for OAuth user logging in with password, got nil")
 	}
 }
 
@@ -427,10 +401,9 @@ func TestGetProfile_Success(t *testing.T) {
 	repo := &mockAuthRepo{
 		getUserByIdFunc: func(id string) (*model.User, error) {
 			return &model.User{
-				ID:           userID,
-				Name:         "John Doe",
-				Email:        "john@example.com",
-				AuthProvider: "local",
+				ID:    userID,
+				Name:  "John Doe",
+				Email: "john@example.com",
 			}, nil
 		},
 	}
@@ -464,10 +437,9 @@ func TestUpdateProfile_Success(t *testing.T) {
 	repo := &mockAuthRepo{
 		updateProfileFunc: func(id string, name string) (*model.User, error) {
 			return &model.User{
-				ID:           userID,
-				Name:         name,
-				Email:        "john@example.com",
-				AuthProvider: "local",
+				ID:    userID,
+				Name:  name,
+				Email: "john@example.com",
 			}, nil
 		},
 	}
@@ -598,28 +570,6 @@ func TestResetPassword_ExpiredToken(t *testing.T) {
 	}
 }
 
-func TestInitPasswordChange_OAuthUser(t *testing.T) {
-	repo := &mockAuthRepo{
-		getUserByIdFunc: func(id string) (*model.User, error) {
-			return &model.User{
-				ID:           uuid.New(),
-				PasswordHash: nil, // OAuth user has no password
-			}, nil
-		},
-	}
-	svc := NewAuthService(repo, nil)
-
-	err := svc.InitPasswordChange(uuid.New().String(), InitPasswordChangeRequest{
-		CurrentPassword: "password",
-	})
-	if err == nil {
-		t.Fatal("expected error for OAuth user changing password, got nil")
-	}
-	if err.Error() != "Cannot change password for OAuth user" {
-		t.Errorf("unexpected error: %v", err)
-	}
-}
-
 func TestInitPasswordChange_WrongCurrentPassword(t *testing.T) {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("correct-pass"), 10)
 	hStr := string(hashedPassword)
@@ -687,7 +637,6 @@ func TestAuthHandler_Login_Success(t *testing.T) {
 				ID:           uuid.New(),
 				Email:        email,
 				PasswordHash: &hStr,
-				AuthProvider: "local",
 			}, nil
 		},
 		createRefreshTokenFunc: func(refreshToken *model.RefreshToken) error {
@@ -732,10 +681,9 @@ func TestAuthHandler_GetProfile_Success(t *testing.T) {
 	repo := &mockAuthRepo{
 		getUserByIdFunc: func(id string) (*model.User, error) {
 			return &model.User{
-				ID:           userID,
-				Name:         "John Profile",
-				Email:        "john@profile.com",
-				AuthProvider: "local",
+				ID:    userID,
+				Name:  "John Profile",
+				Email: "john@profile.com",
 			}, nil
 		},
 	}
@@ -763,10 +711,9 @@ func TestAuthHandler_UpdateProfile_Success(t *testing.T) {
 	repo := &mockAuthRepo{
 		updateProfileFunc: func(id string, name string) (*model.User, error) {
 			return &model.User{
-				ID:           userID,
-				Name:         name,
-				Email:        "john@profile.com",
-				AuthProvider: "local",
+				ID:    userID,
+				Name:  name,
+				Email: "john@profile.com",
 			}, nil
 		},
 	}

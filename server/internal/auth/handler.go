@@ -210,62 +210,6 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Password reset successfully"})
 }
 
-func (h *AuthHandler) OauthLoginAndRegister(c *gin.Context) {
-	var req OAuthRequest
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": apierror.FormatValidationError(err)})
-		return
-	}
-
-	if cookieState, err := c.Cookie("oauth_state"); err == nil && cookieState != "" {
-		if cookieState != req.State {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid OAuth state"})
-			return
-		}
-	}
-
-	response, err := h.service.OauthLoginAndRegister(req)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
-		return
-	}
-
-	expiryAccess, err := time.ParseDuration(os.Getenv("JWT_ACCESS_EXPIRY"))
-	if err != nil {
-		expiryAccess = 15 * time.Minute
-	}
-
-	expiryRefresh, err := time.ParseDuration(os.Getenv("JWT_REFRESH_EXPIRY"))
-	if err != nil {
-		expiryRefresh = 168 * time.Hour
-	}
-
-	isProduction := strings.EqualFold(os.Getenv("APP_ENV"), "production")
-
-	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("oauth_state", "", -1, "/api/v1/auth", "", isProduction, true)
-	c.SetCookie("access_token", response.AccessToken, int(expiryAccess.Seconds()), "/", "", isProduction, true)
-	c.SetCookie("refresh_token", response.RefreshToken, int(expiryRefresh.Seconds()), "/api/v1/auth", "", isProduction, true)
-
-	c.JSON(http.StatusOK, gin.H{"message": "Login successfully"})
-}
-
-func (h *AuthHandler) GetOAuthState(c *gin.Context) {
-	state, err := h.service.GenerateOAuthState()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate oauth state"})
-		return
-	}
-
-	isProduction := strings.EqualFold(os.Getenv("APP_ENV"), "production")
-	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("oauth_state", state, 600, "/api/v1/auth", "", isProduction, true)
-
-	c.JSON(http.StatusOK, gin.H{"state": state})
-}
-
 func (h AuthHandler) InitPasswordChange(c *gin.Context) {
 	userId, exist := c.Get("userID")
 	if !exist {

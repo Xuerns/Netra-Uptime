@@ -15,7 +15,7 @@ func TestHealthCheck_DegradedWhenNil(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
 
-	h := NewHealthHandler(nil, nil, &config.Config{AppMode: "selfhosted"})
+	h := NewHealthHandler(nil, nil, &config.Config{})
 	r.GET("/healthz", h.Check)
 
 	w := httptest.NewRecorder()

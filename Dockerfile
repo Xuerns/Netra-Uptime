@@ -39,6 +39,5 @@ EXPOSE 27346
 
 ENV PORT=27346
 ENV APP_ENV=production
-ENV APP_MODE=selfhosted
 
 CMD ["./netra-uptime"]

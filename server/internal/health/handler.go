@@ -64,16 +64,11 @@ func (h *HealthHandler) Check(c *gin.Context) {
 		httpCode = http.StatusServiceUnavailable
 	}
 
-	appMode := "selfhosted"
-	if h.cfg != nil && h.cfg.AppMode != "" {
-		appMode = h.cfg.AppMode
-	}
-
 	c.JSON(httpCode, HealthResponse{
 		Status:    status,
 		Database:  dbStatus,
 		Redis:     redisStatus,
-		AppMode:   appMode,
+		AppMode:   "selfhosted",
 		Timestamp: time.Now().UTC(),
 	})
 }

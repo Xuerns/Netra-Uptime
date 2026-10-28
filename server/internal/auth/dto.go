@@ -11,23 +11,16 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required,min=8,max=50"`
 }
 
-type OAuthRequest struct {
-	Provider string `json:"provider" binding:"required,eq=google|eq=github"`
-	Code     string `json:"code" binding:"required"`
-	State    string `json:"state" binding:"required"`
-}
-
 type LoginResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 }
 
 type ProfileResponse struct {
-	ID           string `json:"id"`
-	Name         string `json:"name"`
-	Email        string `json:"email"`
-	AvatarURL    string `json:"avatar"`
-	AuthProvider string `json:"auth_provider"`
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	AvatarURL string `json:"avatar"`
 }
 
 type UpdateProfileRequest struct {

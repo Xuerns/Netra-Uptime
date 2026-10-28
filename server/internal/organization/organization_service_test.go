@@ -9,7 +9,6 @@ import (
 	"netra-uptime/config"
 	"netra-uptime/internal/model"
 	"netra-uptime/pkg/utils"
-	"os"
 	"testing"
 	"time"
 
@@ -21,7 +20,6 @@ import (
 
 func init() {
 	gin.SetMode(gin.TestMode)
-	os.Setenv("APP_MODE", "selfhosted")
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterValidation("nohtml", utils.NoHTMLValidator)
 	}

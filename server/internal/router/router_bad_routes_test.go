@@ -45,7 +45,6 @@ import (
 
 func init() {
 	gin.SetMode(gin.TestMode)
-	os.Setenv("APP_MODE", "selfhosted")
 	if os.Getenv("JWT_SECRET") == "" {
 		os.Setenv("JWT_SECRET", "super-secret-key-for-test-purposes-123456")
 	}
@@ -375,12 +374,6 @@ type mockAuthService struct{}
 func (m *mockAuthService) Register(req auth.RegisterRequest) (string, error) { return "ok", nil }
 func (m *mockAuthService) Login(req auth.LoginRequest) (*auth.LoginResponse, error) {
 	return &auth.LoginResponse{AccessToken: "at", RefreshToken: "rt"}, nil
-}
-func (m *mockAuthService) GenerateOAuthState() (string, error) {
-	return "mock-state-uuid", nil
-}
-func (m *mockAuthService) OauthLoginAndRegister(req auth.OAuthRequest) (*auth.LoginResponse, error) {
-	return nil, nil
 }
 func (m *mockAuthService) Logout(refreshToken string) error { return nil }
 func (m *mockAuthService) RefreshAccessToken(token string) (*auth.LoginResponse, error) {

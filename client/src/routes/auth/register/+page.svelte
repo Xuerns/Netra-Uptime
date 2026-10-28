@@ -9,9 +9,8 @@
 		validateConfirmPassword
 	} from '$lib/utils/validation';
 	import { debounce } from '$lib/utils';
-	import { isSelfHosted } from '$lib/utils/appMode';
 	import { parseApiError } from '$lib/utils/parseApiError';
-	import { OAuthButton, PasswordInput } from '$lib/components/auth';
+	import { PasswordInput } from '$lib/components/auth';
 	import type { PageData } from './$types';
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -105,14 +104,6 @@
 			error = parseApiError(err, 'Registration failed');
 		} finally {
 			loading = false;
-		}
-	}
-
-	async function loginWithGoogle() {
-		try {
-			await AuthAPI.startGoogleOAuth();
-		} catch (err: unknown) {
-			error = parseApiError(err, 'Failed to start Google login');
 		}
 	}
 </script>
@@ -229,10 +220,6 @@
 					{#if loading}Loading...{:else}Create Account{/if}
 				</button>
 			</div>
-
-			{#if !isSelfHosted()}
-				<OAuthButton onclick={loginWithGoogle} />
-			{/if}
 		</form>
 
 		<p class="mt-lg text-center font-body-md text-sm text-muted-foreground">

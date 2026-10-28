@@ -20,7 +20,6 @@ type Config struct {
 	AppEnv string
 	Port   string
 
-	AppMode               string
 	RecentChecksLimit     int
 	SelfHostedMaxMonitors int
 	SelfHostedMaxOrgs     int
@@ -92,11 +91,6 @@ func loadConfig() *Config {
 		}
 	}
 
-	appMode := strings.ToLower(strings.TrimSpace(os.Getenv("APP_MODE")))
-	if appMode == "" || strings.HasPrefix(appMode, "selfhost") {
-		appMode = "selfhosted"
-	}
-
 	dbSSLMode := os.Getenv("DB_SSLMODE")
 	if dbSSLMode == "" {
 		dbSSLMode = "disable"
@@ -111,7 +105,6 @@ func loadConfig() *Config {
 		AppEnv: os.Getenv("APP_ENV"),
 		Port:   os.Getenv("PORT"),
 
-		AppMode:               appMode,
 		RecentChecksLimit:     parseIntEnv("RECENT_CHECKS_LIMIT", 60),
 		SelfHostedMaxMonitors: parseIntEnv("SELFHOSTED_MAX_MONITORS", 0),
 		SelfHostedMaxOrgs:     parseIntEnv("SELFHOSTED_MAX_ORGS", 0),

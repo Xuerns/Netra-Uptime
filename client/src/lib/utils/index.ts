@@ -34,4 +34,3 @@ export * from './role';
 export * from './string';
 export * from './validation';
 export * from './ws';
-export * from './appMode';

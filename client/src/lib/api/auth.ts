@@ -27,12 +27,6 @@ export interface VerifyPasswordChangeRequest {
 	new_password: string;
 }
 
-export interface OAuthAuthRequest {
-	provider: string;
-	code: string;
-	state?: string;
-}
-
 export interface UserProfile {
 	id: string;
 	name: string;
@@ -98,57 +92,6 @@ export const AuthAPI = {
 			const data = await res.json().catch(() => ({}));
 			throw new Error(data.error || data.message || 'Failed to logout');
 		}
-	},
-
-	async getOAuthState(): Promise<string> {
-		try {
-			const res = await fetch(`${API_Route}/auth/oauth/state`);
-			if (res.ok) {
-				const data = await res.json();
-				if (data.state) return data.state;
-			}
-		} catch {
-			// Fallback
-		}
-		return crypto.randomUUID();
-	},
-
-	async startGoogleOAuth(): Promise<void> {
-		const clientId = env.PUBLIC_GOOGLE_CLIENT_ID ?? '';
-		const redirectUri = env.PUBLIC_GOOGLE_REDIRECT_URL ?? '';
-		const state = await this.getOAuthState();
-		if (typeof sessionStorage !== 'undefined') {
-			sessionStorage.setItem('oauth_state', state);
-		}
-		const params = new URLSearchParams({
-			client_id: clientId,
-			redirect_uri: redirectUri,
-			response_type: 'code',
-			scope: 'openid email profile',
-			state: state,
-			prompt: 'select_account'
-		});
-		if (typeof window !== 'undefined') {
-			window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
-		}
-	},
-
-	async authenticateOAuth(
-		payload: OAuthAuthRequest,
-		signal?: AbortSignal
-	): Promise<AuthMessageResponse> {
-		const res = await fetch(`${API_Route}/auth`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(payload),
-			credentials: 'include',
-			signal
-		});
-		const data = await res.json();
-		if (!res.ok) {
-			throw new Error(data.error || data.message || 'Failed to authenticate with provider');
-		}
-		return data;
 	},
 
 	async getProfile(): Promise<UserProfile> {

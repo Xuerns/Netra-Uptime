@@ -76,10 +76,6 @@ services:
       - SELFHOSTED_MIN_INTERVAL
       - SELFHOSTED_MAX_TIMEOUT
       - PUBLIC_API_URL
-      - PUBLIC_APP_MODE
-      - PUBLIC_GOOGLE_CLIENT_ID
-      - PUBLIC_GOOGLE_REDIRECT_URL
-      - GOOGLE_CLIENT_SECRET
     ports:
       - "${PORT:-27346}:27346"
     healthcheck:
