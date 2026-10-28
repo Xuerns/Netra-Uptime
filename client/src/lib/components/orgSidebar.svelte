@@ -54,7 +54,7 @@
 		hasUnreadNotifications = false
 	}: {
 		user: { name: string; email: string; avatar?: string };
-		org: OrgItem;
+		org: { Name: string; Slug: string };
 		allOrgs: OrgItem[];
 		hasUnreadNotifications?: boolean;
 	} = $props();

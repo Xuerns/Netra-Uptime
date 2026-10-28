@@ -19,23 +19,9 @@
 		};
 		collapsedGroups: Record<string, boolean>;
 		onToggleGroup: (groupId: string, currentlyCollapsed?: boolean) => void;
-		getGroupStatusBadge: (status: string) => {
-			label: string;
-			dotClass: string;
-			dotStyle: string;
-			textClass: string;
-			textStyle: string;
-		};
 	}
 
-	let {
-		statusPage,
-		themeColor,
-		monitorGrouping,
-		collapsedGroups,
-		onToggleGroup,
-		getGroupStatusBadge
-	}: Props = $props();
+	let { statusPage, themeColor, monitorGrouping, collapsedGroups, onToggleGroup }: Props = $props();
 
 	function isGroupCollapsed(
 		groupId: string,

@@ -14,7 +14,6 @@
 		getStatusConfig,
 		computeMonitorGrouping,
 		filterIncidentHistory,
-		getGroupStatusBadge,
 		getSeverityBadge,
 		sanitizeCustomCss
 	} from '$lib/components/statuspage/public';
@@ -117,8 +116,6 @@
 	<!-- Top Navigation Bar Component -->
 	<PublicHeader
 		{statusPage}
-		{themeColor}
-		{statusConfig}
 		{lastUpdated}
 		{secondsUntilRefresh}
 		{isRefreshing}
@@ -151,7 +148,6 @@
 			{monitorGrouping}
 			{collapsedGroups}
 			onToggleGroup={toggleGroupCollapse}
-			getGroupStatusBadge={(st) => getGroupStatusBadge(st, themeColor)}
 		/>
 
 		<!-- 5. Incident History Archive Component -->

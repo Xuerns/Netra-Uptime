@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { flip } from 'svelte/animate';
-	import { Globe, Plus, TriangleAlert, Search, LayoutGrid, List } from 'lucide-svelte';
+	import { Globe, Plus, TriangleAlert, Search } from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { StatusPageAPI, type StatusPage } from '$lib/api/statuspage';
 	import { MonitorAPI, type Monitor } from '$lib/api/monitor';
@@ -17,16 +16,12 @@
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
 
-	// ── Types ─────────────────────────────────────────────────────────────────
-	type ViewMode = 'grid' | 'list';
-
 	const orgId = $derived(($page.params.id as string) || '');
 
 	// ── State ─────────────────────────────────────────────────────────────────
 	let statusPages = $state<StatusPage[]>([]);
 	let isLoading = $state(true);
 	let fetchError = $state('');
-	let viewMode = $state<ViewMode>('grid');
 
 	// Add Modal
 	let isAddModalOpen = $state(false);
@@ -155,15 +150,8 @@
 		}
 	}
 
-	function setViewMode(mode: ViewMode) {
-		viewMode = mode;
-		localStorage.setItem('statusPageViewMode', mode);
-	}
-
 	onMount(() => {
 		loadStatusPages();
-		const saved = localStorage.getItem('statusPageViewMode');
-		if (saved === 'grid' || saved === 'list') viewMode = saved;
 	});
 </script>
 
@@ -182,41 +170,11 @@
 				Manage and monitor status pages for this organization.
 			</p>
 		</div>
-
-		<div class="flex items-center gap-3">
-			<!-- View toggle -->
-			{#if statusPages.length > 0}
-				<div
-					class="flex items-center bg-foreground/10 border border-border rounded-lg p-0.5"
-					role="group"
-					aria-label="View mode"
-				>
-					<button
-						class="p-1.5 rounded-md transition-colors {viewMode === 'grid'
-							? 'bg-white/10 text-foreground'
-							: 'text-muted-foreground hover:text-foreground hover:bg-white/5'}"
-						onclick={() => setViewMode('grid')}
-						aria-label="Grid view"
-					>
-						<LayoutGrid class="size-4" />
-					</button>
-					<button
-						class="p-1.5 rounded-md transition-colors {viewMode === 'list'
-							? 'bg-white/10 text-foreground'
-							: 'text-muted-foreground hover:text-foreground hover:bg-white/5'}"
-						onclick={() => setViewMode('list')}
-						aria-label="List view"
-					>
-						<List class="size-4" />
-					</button>
-				</div>
-			{/if}
-		</div>
 	</header>
 
 	<!-- ── Loading ──────────────────────────────────────────────────────────── -->
 	{#if isLoading}
-		<DataSkeleton variant="cards" {viewMode} count={6} />
+		<DataSkeleton variant="list" count={6} />
 		<!-- ── Error state ──────────────────────────────────────────────────────── -->
 	{:else if fetchError}
 		<div
@@ -278,23 +236,6 @@
 					Clear filters
 				</button>
 			</div>
-			<!-- ── Grid view ─────────────────────────────────────────────────────── -->
-		{:else if viewMode === 'grid'}
-			<div class="grid grid-cols-[repeat(auto-fill,minmax(450px,1fr))] gap-6">
-				{#each filtered as sp (sp.ID)}
-					<div animate:flip={{ duration: 250 }} class="flex w-full h-full">
-						<StatusPageItem
-							{sp}
-							viewMode="grid"
-							onEdit={openEditModal}
-							onDelete={openDeleteConfirm}
-							onMaintenance={openMaintenanceModal}
-							onGroups={openGroupModal}
-							onEmbedBadge={openEmbedModal}
-						/>
-					</div>
-				{/each}
-			</div>
 
 			<!-- ── List view ─────────────────────────────────────────────────────── -->
 		{:else}
@@ -315,7 +256,6 @@
 					{#each filtered as sp (sp.ID)}
 						<StatusPageItem
 							{sp}
-							viewMode="list"
 							onEdit={openEditModal}
 							onDelete={openDeleteConfirm}
 							onMaintenance={openMaintenanceModal}

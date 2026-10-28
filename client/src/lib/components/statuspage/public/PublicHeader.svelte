@@ -12,8 +12,6 @@
 		onRefresh
 	}: {
 		statusPage: PublicStatusPage;
-		themeColor: string;
-		statusConfig: any;
 		lastUpdated: Date;
 		secondsUntilRefresh: number;
 		isRefreshing: boolean;

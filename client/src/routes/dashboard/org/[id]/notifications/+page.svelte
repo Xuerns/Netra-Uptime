@@ -230,16 +230,28 @@
 					{/if}
 				</div>
 			{:else}
-				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-					{#each channels as ch (ch.id)}
-						<ChannelCard
-							channel={ch}
-							{canManage}
-							isToggling={togglingId === ch.id}
-							onToggle={handleToggleChannel}
-							onDelete={openDeleteConfirm}
-						/>
-					{/each}
+				<div class="border border-border rounded-xl overflow-hidden">
+					<div
+						class="hidden md:grid md:grid-cols-[minmax(180px,1.5fr)_110px_minmax(200px,2fr)_120px_80px] gap-4 px-5 py-2.5 border-b border-border bg-table-header text-[11px] font-semibold tracking-wider uppercase text-muted-foreground items-center"
+						aria-hidden="true"
+					>
+						<div>Channel</div>
+						<div>Type</div>
+						<div>Target / Config</div>
+						<div>Status</div>
+						<div class="text-right">Actions</div>
+					</div>
+					<div class="divide-y divide-border/60 bg-card">
+						{#each channels as ch (ch.id)}
+							<ChannelCard
+								channel={ch}
+								{canManage}
+								isToggling={togglingId === ch.id}
+								onToggle={handleToggleChannel}
+								onDelete={openDeleteConfirm}
+							/>
+						{/each}
+					</div>
 				</div>
 			{/if}
 		</Tabs.Content>

@@ -7,8 +7,6 @@
 			description: string;
 			bannerClass: string;
 			bannerStyle: string;
-			dotClass: string;
-			dotStyle: string;
 			isThemed: boolean;
 		};
 		lastUpdated: Date;
