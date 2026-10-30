@@ -50,7 +50,7 @@
 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
 	<div class="flex items-start gap-4 min-w-0">
 		<!-- Monitor Icon -->
-		<div class="size-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+		<div class="size-11 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
 			<Globe class="size-5 text-primary" />
 		</div>
 

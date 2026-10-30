@@ -39,7 +39,7 @@
 </script>
 
 <div
-	class="rounded-xl border transition-all duration-200 backdrop-blur-md overflow-hidden p-5 sm:p-6 space-y-3 {isOngoing
+	class="rounded-md border transition-all duration-200 backdrop-blur-md overflow-hidden p-5 sm:p-6 space-y-3 {isOngoing
 		? 'bg-blue-500/10 border-blue-500/30 text-blue-300'
 		: 'bg-indigo-500/5 border-indigo-500/20 text-indigo-300'}"
 >

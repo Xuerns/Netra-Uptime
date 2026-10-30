@@ -17,7 +17,7 @@
 
 <section
 	style={statusConfig.isThemed ? statusConfig.bannerStyle : ''}
-	class="rounded-xl border p-6 sm:p-7 backdrop-blur-md transition-all duration-300 {statusConfig.bannerClass}"
+	class="rounded-md border p-6 sm:p-7 backdrop-blur-md transition-all duration-300 {statusConfig.bannerClass}"
 >
 	<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 		<div class="flex items-center gap-4">

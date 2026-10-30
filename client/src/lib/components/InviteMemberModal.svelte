@@ -156,7 +156,7 @@
 </script>
 
 <Dialog.Root bind:open onOpenChange={(v) => (!v ? handleClose() : null)}>
-	<Dialog.Content class="sm:max-w-120 bg-card border border-border text-foreground p-6 rounded-2xl">
+	<Dialog.Content class="sm:max-w-120 bg-card border border-border text-foreground p-6 rounded-lg">
 		<Dialog.Header>
 			<div class="flex items-center gap-2.5">
 				<Dialog.Title class="text-xl font-semibold tracking-tight">Invite Members</Dialog.Title>

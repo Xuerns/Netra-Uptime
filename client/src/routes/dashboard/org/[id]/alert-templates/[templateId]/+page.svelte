@@ -109,7 +109,7 @@
 		<DataSkeleton count={3} />
 	{:else if errorMsg}
 		<div
-			class="rounded-xl border border-destructive/20 bg-destructive/10 p-8 text-center text-destructive"
+			class="rounded-lg border border-destructive/20 bg-destructive/10 p-8 text-center text-destructive"
 		>
 			<AlertTriangle class="h-8 w-8 mx-auto mb-2 opacity-80" />
 			<p class="font-medium">{errorMsg}</p>

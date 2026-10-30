@@ -80,7 +80,7 @@
 {#if viewMode === 'grid'}
 	<!-- Grid / Card View Mode -->
 	<article class="monitor-card group w-full" data-status={monitor.Status}>
-		<div class="p-4 flex flex-col gap-3">
+		<div class="p-3.5 flex flex-col gap-2.5">
 			<!-- Row 1: type icon + name + status badge -->
 			<div class="flex items-start gap-3">
 				<div class="type-icon shrink-0" aria-hidden="true">
@@ -88,7 +88,7 @@
 				</div>
 
 				<div class="min-w-0 flex-1">
-					<h3 class="text-[15px] font-semibold text-foreground leading-tight truncate mb-0.5">
+					<h3 class="text-sm font-medium text-foreground leading-tight truncate mb-0.5">
 						<a
 							href="/dashboard/org/{monitor.OrganizationID}/monitors/{monitor.ID}"
 							class="hover:text-primary transition-colors"
@@ -197,7 +197,7 @@
 				<div class="flex items-center gap-2 pt-1 border-t border-white/4 flex-wrap">
 					{#if monitor.SSLStatus && monitor.SSLStatus !== 'none'}
 						<div
-							class="flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded border {sslBadge.badgeClass}"
+							class="flex items-center gap-1 text-[11px] font-mono px-1.5 py-px rounded-sm border {sslBadge.badgeClass}"
 							title={sslBadge.tooltip}
 						>
 							<ShieldCheck class="size-3" />
@@ -207,7 +207,7 @@
 
 					{#if monitor.DomainStatus && monitor.DomainStatus !== 'none'}
 						<div
-							class="flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded border {domainBadge.badgeClass}"
+							class="flex items-center gap-1 text-[11px] font-mono px-1.5 py-px rounded-sm border {domainBadge.badgeClass}"
 							title={domainBadge.tooltip}
 						>
 							<Globe class="size-3" />
@@ -240,18 +240,18 @@
 {:else}
 	<!-- List / Row View Mode -->
 	<div
-		class="grid grid-cols-[minmax(220px,1.6fr)_minmax(130px,1fr)_90px_85px_85px_75px_100px_70px] gap-3 px-5 py-3 items-center hover:bg-white/3 transition-colors group relative"
+		class="grid grid-cols-[minmax(220px,1.6fr)_minmax(130px,1fr)_90px_85px_85px_75px_100px_70px] gap-3 px-4 py-2 items-center hover:bg-white/3 transition-colors group relative"
 		data-status={monitor.Status}
 	>
 		<!-- 1. Name + target -->
-		<div class="flex items-center gap-3 min-w-0">
+		<div class="flex items-center gap-2.5 min-w-0">
 			<div class="type-icon shrink-0" aria-hidden="true">
 				<TypeIcon class="size-3.5" />
 			</div>
 			<div class="min-w-0 flex-1">
 				<a
 					href="/dashboard/org/{monitor.OrganizationID}/monitors/{monitor.ID}"
-					class="text-[13.5px] font-semibold text-foreground hover:text-primary transition-colors truncate block"
+					class="text-[13px] font-medium text-foreground hover:text-primary transition-colors truncate block"
 				>
 					{monitor.Name}
 				</a>
@@ -264,7 +264,7 @@
 					</p>
 					{#if monitor.Type === 'http' && monitor.SSLStatus && monitor.SSLStatus !== 'none'}
 						<span
-							class="text-[10px] font-mono px-1.5 py-0.2 rounded border {sslBadge.badgeClass}"
+							class="text-[10px] font-mono px-1 rounded-sm border {sslBadge.badgeClass}"
 							title={sslBadge.tooltip}
 						>
 							{sslBadge.label}
@@ -314,7 +314,7 @@
 		<div class="flex items-center justify-end gap-1 shrink-0">
 			<a
 				href="/dashboard/org/{monitor.OrganizationID}/monitors/{monitor.ID}"
-				class="flex items-center justify-center size-7 rounded-md text-muted-foreground hover:bg-white/10 hover:text-primary transition-colors cursor-pointer"
+				class="flex items-center justify-center size-7 rounded-sm text-muted-foreground hover:bg-white/10 hover:text-primary transition-colors cursor-pointer"
 				title="View details"
 				aria-label="View {monitor.Name} details"
 			>
@@ -387,29 +387,22 @@
 	.monitor-card {
 		background: var(--card);
 		border: 1px solid var(--color-border);
-		border-radius: 12px;
-		transition:
-			border-color 0.2s ease,
-			box-shadow 0.2s ease,
-			transform 0.15s ease;
-		box-shadow: var(--shadow-sm);
+		border-radius: var(--radius);
+		transition: border-color 0.2s ease;
 	}
 
 	.monitor-card:hover {
 		border-color: color-mix(in srgb, var(--primary) 35%, var(--color-border));
-		box-shadow: 0 2px 10px -2px rgba(15, 23, 42, 0.08);
-		transform: translateY(-1px);
 	}
 
 	.type-icon {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 32px;
-		height: 32px;
-		border-radius: 8px;
+		width: 26px;
+		height: 26px;
+		border-radius: 4px;
 		background: var(--surface-sidebar);
-		border: 1px solid var(--color-border);
 		color: var(--color-muted-foreground);
 		flex-shrink: 0;
 	}

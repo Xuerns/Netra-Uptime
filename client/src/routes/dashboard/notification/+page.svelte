@@ -91,7 +91,7 @@
 			<DataSkeleton variant="list" count={3} />
 		{:else if !invitations || invitations.length === 0}
 			<div
-				class="flex flex-col items-center justify-center py-12 px-4 rounded-xl border border-border border-dashed bg-card"
+				class="flex flex-col items-center justify-center py-12 px-4 rounded-lg border border-border border-dashed bg-card"
 			>
 				<div
 					class="flex items-center justify-center size-12 rounded-full bg-white/5 text-muted-foreground/50 mb-4"

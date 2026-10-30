@@ -105,7 +105,7 @@
 
 <Dialog.Root bind:open>
 	<Dialog.Content
-		class="w-[calc(100%-2rem)] sm:max-w-155! bg-card border border-border shadow-2xl p-6 rounded-2xl text-foreground"
+		class="w-[calc(100%-2rem)] sm:max-w-155! bg-card border border-border shadow-2xl p-6 rounded-lg text-foreground"
 	>
 		<Dialog.Header>
 			<div class="flex items-center gap-2.5">

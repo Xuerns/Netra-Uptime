@@ -115,7 +115,7 @@
 	</div>
 {:else}
 	<!-- GitHub Style Table List Box -->
-	<div class="bg-card border border-border rounded-lg overflow-hidden">
+	<div class="bg-card border border-border rounded-md overflow-hidden">
 		<!-- Table Header Bar with GitHub-Style Active/Resolved Toggles -->
 		<IncidentToolbar
 			{activeFilter}

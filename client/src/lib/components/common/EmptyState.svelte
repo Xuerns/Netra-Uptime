@@ -28,13 +28,13 @@
 
 <div
 	class={cn(
-		'p-12 text-center flex flex-col items-center justify-center gap-3 bg-card border border-border rounded-xl transition-all',
+		'p-12 text-center flex flex-col items-center justify-center gap-3 bg-card border border-border rounded-md transition-all',
 		className
 	)}
 >
 	{#if Icon}
 		<div
-			class="size-12 rounded-2xl bg-white/5 border border-border flex items-center justify-center text-muted-foreground mb-1"
+			class="size-12 rounded-lg bg-white/5 border border-border flex items-center justify-center text-muted-foreground mb-1"
 		>
 			<Icon class="size-6 text-foreground/80" />
 		</div>

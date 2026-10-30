@@ -32,7 +32,7 @@
 </script>
 
 <div
-	class="flex flex-wrap items-center justify-between gap-6 p-5 rounded-xl bg-card border border-border hover:border-primary/30 transition-colors"
+	class="flex flex-wrap items-center justify-between gap-6 p-5 rounded-md bg-card border border-border hover:border-primary/30 transition-colors"
 >
 	<div class="flex items-center gap-4 min-w-0">
 		<!-- Inviter Avatar -->

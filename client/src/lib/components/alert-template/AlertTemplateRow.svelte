@@ -15,21 +15,21 @@
 </script>
 
 <div
-	class="group flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-4 px-5 py-4 items-start md:items-center bg-card hover:bg-white/4 transition-colors"
+	class="group flex flex-col md:grid md:grid-cols-12 gap-2 md:gap-4 px-4 py-2.5 items-start md:items-center bg-card hover:bg-white/3 transition-colors"
 >
 	<!-- Column 1: Template Name & Description -->
-	<div class="col-span-5 min-w-0 w-full space-y-1">
+	<div class="col-span-5 min-w-0 w-full space-y-0.5">
 		<div class="flex items-center gap-2 flex-wrap">
 			<a
 				href={`/dashboard/org/${orgId}/alert-templates/${template.id}`}
-				class="text-[14.5px] font-semibold text-foreground hover:text-primary transition-colors truncate"
+				class="text-sm font-medium text-foreground hover:text-primary transition-colors truncate"
 			>
 				{template.name}
 			</a>
 			{#if template.is_default}
 				<Badge
 					variant="outline"
-					class="px-2 py-0.5 text-[10.5px] font-medium bg-primary/10 border-primary/20 text-primary"
+					class="h-4 px-1.5 text-[10px] font-medium bg-primary/10 border-transparent text-primary"
 				>
 					Default
 				</Badge>

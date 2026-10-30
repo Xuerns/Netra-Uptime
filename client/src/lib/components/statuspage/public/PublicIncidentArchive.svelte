@@ -88,7 +88,7 @@
 		<div class="space-y-3">
 			{#each visibleDays as dayGroup (dayGroup.date)}
 				<div
-					class="rounded-xl border border-border/70 bg-card p-4 sm:p-5 transition-all duration-200"
+					class="rounded-md border border-border/70 bg-card p-4 sm:p-5 transition-all duration-200"
 				>
 					<div class="flex items-center justify-between pb-3 border-b border-border/40 mb-3">
 						<h3 class="text-xs sm:text-sm font-semibold text-foreground font-mono">
@@ -157,7 +157,7 @@
 				<button
 					type="button"
 					onclick={() => (showAllDays = !showAllDays)}
-					class="w-full py-2.5 px-4 rounded-xl border border-border/60 bg-white/3 hover:bg-white/6 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+					class="w-full py-2.5 px-4 rounded-md border border-border/60 bg-white/3 hover:bg-white/6 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
 				>
 					<span>
 						{showAllDays
@@ -172,7 +172,7 @@
 		</div>
 	{:else}
 		<div
-			class="rounded-xl border border-border/60 bg-card px-5 py-4 flex items-center justify-between gap-4 text-muted-foreground"
+			class="rounded-md border border-border/60 bg-card px-5 py-4 flex items-center justify-between gap-4 text-muted-foreground"
 		>
 			<div class="flex items-center gap-3.5">
 				<div

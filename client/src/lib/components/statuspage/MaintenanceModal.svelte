@@ -216,7 +216,7 @@
 
 <Dialog.Root bind:open={isOpen}>
 	<Dialog.Content
-		class="sm:max-w-[620px] max-h-[85vh] flex flex-col bg-card border border-border rounded-2xl p-0 overflow-hidden"
+		class="sm:max-w-[620px] max-h-[85vh] flex flex-col bg-card border border-border rounded-lg p-0 overflow-hidden"
 	>
 		<!-- Header -->
 		<div class="p-6 border-b border-border/60 flex items-center justify-between">
@@ -249,7 +249,7 @@
 		<div class="flex-1 overflow-y-auto p-6 space-y-5">
 			{#if isFormOpen}
 				<!-- Create / Edit Form -->
-				<div class="rounded-xl border border-border/80 bg-white/3 p-5 space-y-4">
+				<div class="rounded-md border border-border/80 bg-white/3 p-5 space-y-4">
 					<div class="flex items-center justify-between">
 						<h3 class="text-sm font-semibold text-foreground flex items-center gap-2">
 							<Calendar class="size-4 text-blue-400" />
@@ -392,7 +392,7 @@
 				<div class="py-8 text-center text-xs text-muted-foreground">Loading maintenances...</div>
 			{:else if maintenances.length === 0 && !isFormOpen}
 				<div
-					class="py-10 text-center space-y-2 border border-dashed border-border/80 rounded-xl p-6"
+					class="py-10 text-center space-y-2 border border-dashed border-border/80 rounded-md p-6"
 				>
 					<Wrench class="size-8 text-muted-foreground/40 mx-auto" />
 					<p class="text-xs font-medium text-foreground">No scheduled maintenances</p>
@@ -404,7 +404,7 @@
 				<div class="space-y-3">
 					{#each maintenances as m (m.id)}
 						<div
-							class="rounded-xl border border-border/70 bg-white/3 p-4 space-y-2.5 transition-colors"
+							class="rounded-md border border-border/70 bg-white/3 p-4 space-y-2.5 transition-colors"
 						>
 							<div class="flex items-start justify-between gap-3">
 								<div class="space-y-1 min-w-0">

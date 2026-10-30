@@ -64,7 +64,7 @@
 					<Collapsible.Root
 						open={!isCollapsed}
 						onOpenChange={() => onToggleGroup(gInfo.group.id, isCollapsed)}
-						class="rounded-xl border border-border/80 bg-card overflow-hidden shadow-sm"
+						class="rounded-md border border-border/80 bg-card overflow-hidden"
 					>
 						<!-- Group Header (Collapsible Trigger) -->
 						<Collapsible.Trigger
@@ -120,7 +120,7 @@
 					<Collapsible.Root
 						open={!isUngroupedCollapsed}
 						onOpenChange={() => onToggleGroup(ungroupedId, isUngroupedCollapsed)}
-						class="rounded-xl border border-border/80 bg-card overflow-hidden shadow-sm"
+						class="rounded-md border border-border/80 bg-card overflow-hidden"
 					>
 						<Collapsible.Trigger
 							class="w-full px-5 py-3.5 flex items-center justify-between gap-3 bg-white/2 hover:bg-white/5 transition-colors text-left cursor-pointer data-[state=open]:border-b data-[state=open]:border-border/50"
@@ -165,7 +165,7 @@
 		{/if}
 	{:else}
 		<div
-			class="bg-surface-container border-dashed border border-border rounded-xl p-8 text-center text-muted-foreground font-body-md"
+			class="bg-surface-container border-dashed border border-border rounded-md p-8 text-center text-muted-foreground font-body-md"
 		>
 			No services are currently being monitored for this status page.
 		</div>

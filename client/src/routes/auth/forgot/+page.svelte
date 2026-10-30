@@ -27,7 +27,7 @@
 		<span>Back to login</span>
 	</a>
 
-	<div class="w-full max-w-[448px] bg-card rounded-xl border border-border p-lg shadow-sm">
+	<div class="w-full max-w-[448px] bg-card rounded-lg border border-border p-lg">
 		{#if isResetMode && token}
 			<ResetPasswordCard {token} />
 		{:else}

@@ -29,7 +29,7 @@
 		<div class="space-y-4">
 			{#each incidents as incident (incident.id)}
 				<div
-					class="rounded-xl border border-border/80 bg-card overflow-hidden transition-all duration-200 hover:border-border"
+					class="rounded-md border border-border/80 bg-card overflow-hidden transition-all duration-200 hover:border-border"
 				>
 					<!-- Incident Header -->
 					<div class="p-5 sm:p-6 border-b border-border/40 space-y-3">

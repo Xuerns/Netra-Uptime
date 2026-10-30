@@ -18,7 +18,7 @@
 			side="top"
 			align="start"
 			sideOffset={8}
-			class="max-w-[300px] bg-card border border-border p-3.5 shadow-2xl z-[100] rounded-xl text-foreground text-left"
+			class="max-w-[300px] bg-card border border-border p-3.5 shadow-2xl z-[100] rounded-md text-foreground text-left"
 		>
 			<div class="space-y-2">
 				<div class="flex items-center gap-1.5 font-semibold text-xs text-primary">

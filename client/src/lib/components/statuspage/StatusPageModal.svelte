@@ -177,7 +177,7 @@
 
 <Dialog.Root bind:open={isOpen}>
 	<Dialog.Content
-		class="sm:max-w-[780px] max-h-[90vh] flex flex-col bg-card border border-border shadow-2xl text-foreground p-0 rounded-2xl overflow-hidden"
+		class="sm:max-w-[780px] max-h-[90vh] flex flex-col bg-card border border-border shadow-2xl text-foreground p-0 rounded-lg overflow-hidden"
 	>
 		<!-- Header -->
 		<div class="p-6 pb-4 border-b border-border/70 shrink-0">
@@ -281,7 +281,7 @@
 
 					<!-- Public Switch -->
 					<div
-						class="flex items-center justify-between p-4 rounded-xl bg-white/2 border border-border/80"
+						class="flex items-center justify-between p-4 rounded-md bg-white/2 border border-border/80"
 					>
 						<div class="space-y-0.5">
 							<div class="text-sm font-medium text-foreground">Public Availability</div>
@@ -304,7 +304,7 @@
 						</div>
 
 						<div
-							class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[220px] overflow-y-auto p-1 border border-border/60 rounded-xl bg-background/50"
+							class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[220px] overflow-y-auto p-1 border border-border/60 rounded-md bg-background/50"
 						>
 							{#each monitors as m (m.ID)}
 								{@const checked = selectedMonitors.includes(m.ID)}
@@ -397,7 +397,7 @@
 									<button
 										type="button"
 										onclick={() => (themeColor = preset.hex)}
-										class="size-6 rounded-full border border-white/20 transition-transform hover:scale-110 cursor-pointer shadow-sm relative"
+										class="size-6 rounded-full border border-white/20 transition-transform hover:scale-110 cursor-pointer relative"
 										style="background-color: {preset.hex};"
 										title={preset.name}
 									>
@@ -448,7 +448,7 @@
 				type="button"
 				onclick={handleSubmit}
 				disabled={loading}
-				class="h-9 px-5 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] transition-all cursor-pointer shadow-sm disabled:opacity-50"
+				class="h-9 px-5 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
 			>
 				{loading
 					? isEdit

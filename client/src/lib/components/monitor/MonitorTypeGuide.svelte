@@ -22,7 +22,7 @@
 		<Tooltip.Content
 			side="right"
 			sideOffset={12}
-			class="max-w-[320px] bg-card border border-border p-4 shadow-xl z-[100] rounded-xl"
+			class="max-w-[320px] bg-card border border-border p-4 shadow-xl z-[100] rounded-md"
 		>
 			<div class="space-y-4">
 				{#if monitorType === 'http' || !monitorType}

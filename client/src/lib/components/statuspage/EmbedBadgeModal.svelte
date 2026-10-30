@@ -63,7 +63,7 @@
 
 <Dialog.Root bind:open={isOpen}>
 	<Dialog.Content
-		class="sm:max-w-[600px] max-h-[90vh] flex flex-col bg-card border border-border rounded-2xl p-0 overflow-hidden shadow-2xl"
+		class="sm:max-w-[600px] max-h-[90vh] flex flex-col bg-card border border-border rounded-lg p-0 overflow-hidden shadow-2xl"
 	>
 		<!-- Header -->
 		<div class="p-6 border-b border-border/60 flex items-center justify-between">
@@ -85,7 +85,7 @@
 		<div class="flex-1 overflow-y-auto p-6 space-y-6">
 			<!-- Live Badge Preview -->
 			<div
-				class="p-5 rounded-xl border border-border/70 bg-white/3 flex flex-col items-center justify-center gap-3 text-center"
+				class="p-5 rounded-md border border-border/70 bg-white/3 flex flex-col items-center justify-center gap-3 text-center"
 			>
 				{#if statusPage}
 					<div
@@ -181,7 +181,7 @@
 			</div>
 
 			<!-- Public JSON API Links -->
-			<div class="p-4 rounded-xl border border-border/70 bg-white/2 space-y-2">
+			<div class="p-4 rounded-md border border-border/70 bg-white/2 space-y-2">
 				<div class="flex items-center gap-1.5 text-xs font-semibold text-foreground">
 					<FileJson class="size-4 text-primary" />
 					<span>Public Status JSON Endpoints</span>

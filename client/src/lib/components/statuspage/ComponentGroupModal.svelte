@@ -174,7 +174,7 @@
 
 <Dialog.Root bind:open={isOpen}>
 	<Dialog.Content
-		class="sm:max-w-[640px] max-h-[85vh] flex flex-col bg-card border border-border rounded-2xl p-0 overflow-hidden shadow-2xl"
+		class="sm:max-w-[640px] max-h-[85vh] flex flex-col bg-card border border-border rounded-lg p-0 overflow-hidden shadow-2xl"
 	>
 		<!-- Header -->
 		<div class="p-6 border-b border-border/60 flex items-center justify-between">
@@ -216,7 +216,7 @@
 		<div class="flex-1 overflow-y-auto p-6 space-y-5">
 			{#if activeTab === 'groups'}
 				<!-- Form for Add/Edit Group -->
-				<div class="rounded-xl border border-border/80 bg-white/3 p-4 space-y-3">
+				<div class="rounded-md border border-border/80 bg-white/3 p-4 space-y-3">
 					<h3 class="text-xs font-semibold text-foreground uppercase tracking-wider">
 						{isEditingGroup ? 'Edit Group' : 'Add New Group'}
 					</h3>
@@ -280,7 +280,7 @@
 					<div class="py-8 text-center text-xs text-muted-foreground">Loading groups...</div>
 				{:else if groups.length === 0}
 					<div
-						class="py-10 text-center space-y-2 border border-dashed border-border/80 rounded-xl p-6"
+						class="py-10 text-center space-y-2 border border-dashed border-border/80 rounded-md p-6"
 					>
 						<Layers class="size-8 text-muted-foreground/40 mx-auto" />
 						<p class="text-xs font-medium text-foreground">No component groups configured</p>
@@ -346,7 +346,7 @@
 
 					{#if pageMonitors.length === 0}
 						<div
-							class="py-8 text-center text-xs text-muted-foreground border border-dashed border-border rounded-xl"
+							class="py-8 text-center text-xs text-muted-foreground border border-dashed border-border rounded-md"
 						>
 							No monitors attached to this status page yet.
 						</div>

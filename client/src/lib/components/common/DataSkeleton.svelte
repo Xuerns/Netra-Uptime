@@ -34,7 +34,7 @@
 			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 				{#each Array(4) as _}
 					<div
-						class="p-4 rounded-xl bg-card border border-border flex flex-col justify-between h-[130px] animate-pulse"
+						class="p-4 rounded-md bg-card border border-border flex flex-col justify-between h-[130px] animate-pulse"
 					>
 						<div class="flex items-center justify-between">
 							<div class="h-3.5 w-24 bg-white/10 rounded"></div>
@@ -66,7 +66,7 @@
 				<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 min-[1400px]:grid-cols-4 gap-4">
 					{#each Array(count || 6) as _}
 						<div
-							class="p-4 rounded-xl bg-card border border-border flex flex-col justify-between h-[210px] animate-pulse gap-3"
+							class="p-4 rounded-md bg-card border border-border flex flex-col justify-between h-[210px] animate-pulse gap-3"
 						>
 							<div class="flex items-start gap-3">
 								<div class="size-8 rounded-lg bg-white/10 shrink-0"></div>
@@ -110,7 +110,7 @@
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
 			{#each Array(count) as _}
 				<div
-					class="bg-card border border-border rounded-xl p-5 flex flex-col justify-between min-h-[190px] animate-pulse gap-3"
+					class="bg-card border border-border rounded-md p-5 flex flex-col justify-between min-h-[190px] animate-pulse gap-3"
 				>
 					<div class="flex items-start justify-between gap-3">
 						<div class="flex items-center gap-3 min-w-0">
@@ -137,11 +137,11 @@
 		</div>
 	{:else if effectiveVariant === 'list'}
 		<!-- Standard List Rows Skeleton (used in Members, API Keys, Notifications) -->
-		<div class="border border-border rounded-xl bg-card divide-y divide-border overflow-hidden">
+		<div class="border border-border rounded-md bg-card divide-y divide-border overflow-hidden">
 			{#each Array(count) as _}
 				<div class="flex items-center justify-between p-4 animate-pulse gap-4">
 					<div class="flex items-center gap-3.5 min-w-0 flex-1">
-						<div class="size-9 rounded-xl bg-white/10 shrink-0"></div>
+						<div class="size-9 rounded-md bg-white/10 shrink-0"></div>
 						<div class="space-y-1.5 flex-1 min-w-0">
 							<div class="h-4 w-40 bg-white/10 rounded"></div>
 							<div class="h-3 w-28 bg-white/5 rounded font-mono"></div>
@@ -156,7 +156,7 @@
 		</div>
 	{:else if effectiveVariant === 'table'}
 		<!-- Table Skeleton (used in Audit Logs) -->
-		<div class="border border-border rounded-xl bg-card overflow-hidden">
+		<div class="border border-border rounded-md bg-card overflow-hidden">
 			<div
 				class="p-3.5 bg-table-header border-b border-border flex items-center justify-between gap-4"
 			>
@@ -184,7 +184,7 @@
 		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 			{#each Array(count || 4) as _}
 				<div
-					class="p-4 rounded-xl bg-card border border-border flex flex-col justify-between h-[120px] animate-pulse"
+					class="p-4 rounded-md bg-card border border-border flex flex-col justify-between h-[120px] animate-pulse"
 				>
 					<div class="h-3.5 w-24 bg-white/10 rounded"></div>
 					<div class="h-7 w-28 bg-white/10 rounded font-mono"></div>
@@ -196,10 +196,10 @@
 		<!-- Detail Page Skeleton (Incident Detail, Monitor Detail) -->
 		<div class="space-y-6 animate-pulse">
 			<div
-				class="bg-card border border-border rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4"
+				class="bg-card border border-border rounded-lg p-6 flex flex-col md:flex-row md:items-center justify-between gap-4"
 			>
 				<div class="flex items-center gap-4 flex-1">
-					<div class="size-12 rounded-xl bg-white/10 shrink-0"></div>
+					<div class="size-12 rounded-md bg-white/10 shrink-0"></div>
 					<div class="space-y-2 flex-1">
 						<div class="h-6 w-48 bg-white/10 rounded"></div>
 						<div class="h-3.5 w-64 bg-white/5 rounded"></div>
@@ -214,7 +214,7 @@
 			<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 				{#each Array(3) as _}
 					<div
-						class="p-4 rounded-xl bg-card border border-border h-24 flex flex-col justify-between"
+						class="p-4 rounded-md bg-card border border-border h-24 flex flex-col justify-between"
 					>
 						<div class="h-3.5 w-20 bg-white/10 rounded"></div>
 						<div class="h-6 w-24 bg-white/10 rounded"></div>
@@ -222,15 +222,15 @@
 				{/each}
 			</div>
 
-			<div class="bg-card border border-border rounded-2xl p-6 h-[280px]">
+			<div class="bg-card border border-border rounded-lg p-6 h-[280px]">
 				<div class="h-4 w-36 bg-white/10 rounded mb-4"></div>
-				<div class="h-full bg-white/5 rounded-xl"></div>
+				<div class="h-full bg-white/5 rounded-md"></div>
 			</div>
 		</div>
 	{:else if effectiveVariant === 'form'}
 		<!-- Form Page Skeleton (Settings) -->
 		<div class="space-y-6 animate-pulse">
-			<div class="bg-card border border-border rounded-xl p-6 space-y-5">
+			<div class="bg-card border border-border rounded-md p-6 space-y-5">
 				<div class="space-y-1.5 pb-4 border-b border-border">
 					<div class="h-5 w-44 bg-white/10 rounded"></div>
 					<div class="h-3.5 w-72 bg-white/5 rounded"></div>
@@ -252,10 +252,10 @@
 		<div class="flex flex-col gap-3">
 			{#each Array(count) as _}
 				<div
-					class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4.5 rounded-xl bg-card border border-border animate-pulse"
+					class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4.5 rounded-md bg-card border border-border animate-pulse"
 				>
 					<div class="flex items-center gap-3.5 flex-1 min-w-0">
-						<div class="size-10 rounded-xl bg-white/10 shrink-0"></div>
+						<div class="size-10 rounded-md bg-white/10 shrink-0"></div>
 						<div class="space-y-1.5 flex-1 min-w-0">
 							<div class="h-4 w-36 bg-white/10 rounded"></div>
 							<div class="h-3 w-48 bg-white/5 rounded font-mono"></div>

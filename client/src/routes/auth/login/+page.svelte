@@ -82,9 +82,7 @@
 <main
 	class="min-h-screen flex items-center justify-center p-sm md:p-md text-foreground antialiased w-full relative auth-bg"
 >
-	<div
-		class="w-full max-w-112 bg-card rounded-xl border border-border p-lg shadow-sm animate-fade-in"
-	>
+	<div class="w-full max-w-112 bg-card rounded-lg border border-border p-lg animate-fade-in">
 		<form class="space-y-md" onsubmit={handleLogin}>
 			<div class="flex flex-col items-center mb-lg">
 				<div class="mb-sm">

@@ -230,9 +230,9 @@
 					{/if}
 				</div>
 			{:else}
-				<div class="border border-border rounded-xl overflow-hidden">
+				<div class="border border-border rounded-md overflow-hidden">
 					<div
-						class="hidden md:grid md:grid-cols-[minmax(180px,1.5fr)_110px_minmax(200px,2fr)_120px_80px] gap-4 px-5 py-2.5 border-b border-border bg-table-header text-[11px] font-semibold tracking-wider uppercase text-muted-foreground items-center"
+						class="hidden md:grid md:grid-cols-[minmax(180px,1.5fr)_110px_minmax(200px,2fr)_120px_80px] gap-4 px-4 py-2 border-b border-border bg-table-header text-[11px] font-semibold tracking-wider uppercase text-muted-foreground items-center"
 						aria-hidden="true"
 					>
 						<div>Channel</div>

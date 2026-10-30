@@ -49,7 +49,7 @@
 </script>
 
 <div
-	class="grid grid-cols-1 md:grid-cols-[minmax(160px,1.5fr)_minmax(180px,2fr)_1.2fr_90px_100px_80px] gap-4 px-5 py-2.5 items-center hover:bg-white/3 transition-colors"
+	class="grid grid-cols-1 md:grid-cols-[minmax(160px,1.5fr)_minmax(180px,2fr)_1.2fr_90px_100px_80px] gap-4 px-4 py-2 items-center hover:bg-white/3 transition-colors"
 >
 	<!-- 1. Status Page Title -->
 	<div class="flex items-center min-w-0">
@@ -74,12 +74,12 @@
 	<div>
 		{#if sp.IsPublic}
 			<span
-				class="text-[10px] font-mono px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full uppercase tracking-wider font-medium"
+				class="text-[10px] font-mono px-1.5 py-px bg-emerald-500/10 text-emerald-400 rounded-sm uppercase tracking-wider font-medium"
 				>Public</span
 			>
 		{:else}
 			<span
-				class="text-[10px] font-mono px-2 py-0.5 bg-white/5 text-muted-foreground border border-border rounded-full uppercase tracking-wider font-medium"
+				class="text-[10px] font-mono px-1.5 py-px bg-white/5 text-muted-foreground rounded-sm uppercase tracking-wider font-medium"
 				>Private</span
 			>
 		{/if}
@@ -96,7 +96,7 @@
 			href={`/status/${sp.Subdomain}`}
 			target="_blank"
 			rel="noopener noreferrer"
-			class="flex items-center justify-center size-7 rounded bg-white/5 border border-border hover:bg-white/10 hover:text-primary transition-colors text-muted-foreground cursor-pointer"
+			class="flex items-center justify-center size-7 rounded-sm bg-white/5 hover:bg-white/10 hover:text-primary transition-colors text-muted-foreground cursor-pointer"
 			aria-label="View status page"
 		>
 			<ExternalLink class="size-3.5" />
@@ -105,7 +105,7 @@
 		{#if onEdit || onDelete || onMaintenance || onGroups || onEmbedBadge}
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger
-					class="flex items-center justify-center size-7 rounded bg-white/5 border border-border hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+					class="flex items-center justify-center size-7 rounded-sm bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
 					aria-label="More options"
 				>
 					<MoreVertical class="size-3.5" />

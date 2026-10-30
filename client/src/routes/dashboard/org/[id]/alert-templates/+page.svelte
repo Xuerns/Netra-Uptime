@@ -105,7 +105,7 @@
 		<DataSkeleton count={4} />
 	{:else if errorMsg}
 		<div
-			class="rounded-xl border border-destructive/20 bg-destructive/10 p-6 text-center text-destructive"
+			class="rounded-lg border border-destructive/20 bg-destructive/10 p-6 text-center text-destructive"
 		>
 			<AlertTriangle class="h-8 w-8 mx-auto mb-2 opacity-80" />
 			<p class="font-medium">{errorMsg}</p>
@@ -119,10 +119,10 @@
 	{:else if templates.length === 0}
 		<!-- Empty State with create action button -->
 		<div
-			class="flex flex-col items-center text-center py-20 px-4 border border-border rounded-xl bg-card"
+			class="flex flex-col items-center text-center py-20 px-4 border border-border rounded-lg bg-card"
 		>
 			<div
-				class="flex items-center justify-center size-14 rounded-xl bg-primary/10 border border-primary/20 mb-4 text-primary"
+				class="flex items-center justify-center size-14 rounded-lg bg-primary/10 border border-primary/20 mb-4 text-primary"
 			>
 				<Layers class="size-6" />
 			</div>
@@ -142,7 +142,7 @@
 	{:else if filteredTemplates.length === 0}
 		<!-- No Search Results -->
 		<div
-			class="flex flex-col items-center text-center py-16 px-4 border border-border rounded-xl bg-card"
+			class="flex flex-col items-center text-center py-16 px-4 border border-border rounded-lg bg-card"
 		>
 			<Search class="size-8 text-muted-foreground/60 mb-2" />
 			<h3 class="text-base font-semibold text-foreground mb-1">No templates found</h3>
@@ -152,10 +152,10 @@
 		</div>
 	{:else}
 		<!-- ── List / Table View ───────────────────────────────────────────────── -->
-		<div class="border border-border rounded-xl overflow-hidden shadow-sm">
+		<div class="border border-border rounded-md overflow-hidden">
 			<!-- Table Header -->
 			<div
-				class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-3 border-b border-border bg-table-header text-[11px] font-semibold tracking-wider uppercase text-muted-foreground"
+				class="hidden md:grid md:grid-cols-12 gap-4 px-4 py-2 border-b border-border bg-table-header text-[11px] font-semibold tracking-wider uppercase text-muted-foreground"
 			>
 				<div class="col-span-5">Template</div>
 				<div class="col-span-2">Rules</div>

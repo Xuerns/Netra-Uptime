@@ -47,7 +47,7 @@
 </script>
 
 <div
-	class="border border-border rounded-lg bg-card overflow-hidden flex flex-col max-h-[calc(100vh-16rem)] transition-opacity duration-200 {isFetching
+	class="border border-border rounded-md bg-card overflow-hidden flex flex-col max-h-[calc(100vh-16rem)] transition-opacity duration-200 {isFetching
 		? 'opacity-50 pointer-events-none'
 		: 'opacity-100'}"
 >
@@ -148,18 +148,18 @@
 		{#each logs as log (log.id)}
 			{@const actionStyle = getActionStyle(log.action)}
 			<div
-				class="log-table-row hover:bg-white/3 transition-colors text-xs py-3 px-4 flex flex-col md:grid md:grid-cols-[200px_160px_1fr_130px_140px] items-start md:items-center gap-2 md:gap-4"
+				class="log-table-row hover:bg-white/3 transition-colors text-xs py-2 px-4 flex flex-col md:grid md:grid-cols-[200px_160px_1fr_130px_140px] items-start md:items-center gap-2 md:gap-4"
 			>
 				<!-- Col 1: Actor -->
 				<div class="flex items-center gap-2.5 min-w-0 w-full md:w-auto">
 					<div
-						class="size-7 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-[11px] shrink-0"
+						class="size-6 rounded-sm overflow-hidden bg-primary/10 text-primary flex items-center justify-center font-bold text-[11px] shrink-0"
 					>
 						{#if log.user_avatar_url}
 							<img
 								src={log.user_avatar_url}
 								alt={log.user_name || 'User'}
-								class="size-full object-cover rounded-lg"
+								class="size-full object-cover"
 							/>
 						{:else}
 							{initials(log.user_name)}
@@ -177,9 +177,7 @@
 
 				<!-- Col 2: Action -->
 				<div class="w-full md:w-auto">
-					<span
-						class="inline-flex items-center px-2 py-0.5 rounded-md font-mono text-[11px] font-semibold {actionStyle} bg-white/5 border border-white/5"
-					>
+					<span class="inline-flex items-center font-mono text-[11px] font-medium {actionStyle}">
 						{log.action}
 					</span>
 				</div>
@@ -215,7 +213,7 @@
 <style>
 	.log-table-header {
 		display: none;
-		padding: 0.625rem 1rem;
+		padding: 0.5rem 1rem;
 		border-bottom: 1px solid var(--border);
 		font-size: 0.6875rem;
 		font-weight: 600;
