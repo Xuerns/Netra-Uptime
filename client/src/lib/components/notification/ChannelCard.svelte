@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Mail, Webhook, Trash2, ToggleRight, ToggleLeft } from 'lucide-svelte';
+	import { Mail, Webhook, Trash2 } from 'lucide-svelte';
 	import type { NotificationChannel } from '$lib/api/notification';
 
 	interface Props {
@@ -107,17 +107,34 @@
 		{#if canManage}
 			<button
 				type="button"
+				role="switch"
+				aria-checked={channel.is_active}
+				aria-label={channel.is_active
+					? `Disable channel ${channel.name}`
+					: `Enable channel ${channel.name}`}
 				onclick={() => onToggle(channel)}
 				disabled={isToggling}
-				class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-xs font-medium transition-colors cursor-pointer disabled:opacity-50 {channel.is_active
-					? 'bg-primary/10 text-primary hover:bg-primary/20'
-					: 'bg-white/5 text-muted-foreground hover:bg-white/10'}"
+				class="group inline-flex items-center gap-2 py-1 text-xs font-medium cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
 			>
-				{#if channel.is_active}
-					<ToggleRight class="size-4" /> Enabled
-				{:else}
-					<ToggleLeft class="size-4" /> Disabled
-				{/if}
+				<!-- Animated Toggle Track & Thumb -->
+				<span
+					class="relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out group-hover:opacity-90 {channel.is_active
+						? 'bg-primary'
+						: 'bg-muted-foreground/30'}"
+				>
+					<span
+						class="inline-block size-3 rounded-full transition-transform duration-200 ease-in-out will-change-transform {channel.is_active
+							? 'translate-x-3.5 bg-primary-foreground'
+							: 'translate-x-0.5 bg-white dark:bg-foreground'}"
+					></span>
+				</span>
+				<span
+					class="text-[11px] font-semibold leading-none transition-colors duration-150 {channel.is_active
+						? 'text-primary'
+						: 'text-muted-foreground group-hover:text-foreground/80'}"
+				>
+					{channel.is_active ? 'Enabled' : 'Disabled'}
+				</span>
 			</button>
 		{:else}
 			<span class="text-xs text-muted-foreground/60 flex items-center gap-1.5">

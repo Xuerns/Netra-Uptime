@@ -101,11 +101,14 @@
 	async function handleToggleChannel(ch: NotificationChannel) {
 		if (!orgId) return;
 		togglingId = ch.id;
+		const previousState = ch.is_active;
+		const nextState = !previousState;
+		ch.is_active = nextState;
 		try {
-			await NotificationAPI.updateChannel(orgId, ch.id, { is_active: !ch.is_active });
-			toast.success(ch.is_active ? 'Channel disabled' : 'Channel enabled');
-			await loadChannels();
+			await NotificationAPI.updateChannel(orgId, ch.id, { is_active: nextState });
+			toast.success(nextState ? 'Channel enabled' : 'Channel disabled');
 		} catch (err: unknown) {
+			ch.is_active = previousState;
 			toast.error(parseApiError(err, 'Failed to update channel'));
 		} finally {
 			togglingId = null;
