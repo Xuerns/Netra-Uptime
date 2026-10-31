@@ -12,14 +12,17 @@
 
 	// ── 1. Fleet & Target Counts ───────────────────────────────────────────────
 	let totalCount = $derived(overview?.fleet?.total_targets ?? monitors.length);
-	let downCount = $derived(
-		overview?.fleet?.down ??
-			monitors.filter((m) => m.Status === 'down' || m.Status === 'degraded').length
-	);
 	let upCount = $derived(overview?.fleet?.up ?? monitors.filter((m) => m.Status === 'up').length);
+	let degradedCount = $derived(
+		overview?.fleet?.degraded ?? monitors.filter((m) => m.Status === 'degraded').length
+	);
+	let downCount = $derived(
+		overview?.fleet?.down ?? monitors.filter((m) => m.Status === 'down').length
+	);
 	let pausedCount = $derived(
 		overview?.fleet?.paused ?? monitors.filter((m) => m.Status === 'paused').length
 	);
+	let aliveCount = $derived(upCount + degradedCount);
 
 	// ── 2. Response Time & Latency Metrics ─────────────────────────────────────
 	let activeLatencyMonitors = $derived(
@@ -128,6 +131,7 @@
 
 	// ── 6. Fleet status percentages ───────────────────────────────────────────
 	let fleetUpPct = $derived(totalCount > 0 ? (upCount / totalCount) * 100 : 0);
+	let fleetDegradedPct = $derived(totalCount > 0 ? (degradedCount / totalCount) * 100 : 0);
 	let fleetDownPct = $derived(totalCount > 0 ? (downCount / totalCount) * 100 : 0);
 	let fleetPausedPct = $derived(totalCount > 0 ? (pausedCount / totalCount) * 100 : 0);
 </script>
@@ -286,19 +290,26 @@
 	<div class="kpi-card p-4 rounded-lg bg-card border border-border flex flex-col justify-between">
 		<div class="flex items-center justify-between text-xs text-muted-foreground">
 			<span class="font-medium">Fleet Engine</span>
-			<span
-				class="flex items-center gap-1 text-[11px] {downCount > 0
-					? 'text-rose-400'
-					: 'text-emerald-400'} font-mono font-medium"
-			>
-				<span class="size-1.5 rounded-full {downCount > 0 ? 'bg-rose-400' : 'bg-emerald-400'}"
-				></span>
-				{downCount > 0 ? 'Degraded' : 'Synced'}
-			</span>
+			{#if downCount > 0}
+				<span class="flex items-center gap-1 text-[11px] text-rose-400 font-mono font-medium">
+					<span class="size-1.5 rounded-full bg-rose-400"></span>
+					Down
+				</span>
+			{:else if degradedCount > 0}
+				<span class="flex items-center gap-1 text-[11px] text-amber-400 font-mono font-medium">
+					<span class="size-1.5 rounded-full bg-amber-400"></span>
+					Degraded
+				</span>
+			{:else}
+				<span class="flex items-center gap-1 text-[11px] text-emerald-400 font-mono font-medium">
+					<span class="size-1.5 rounded-full bg-emerald-400"></span>
+					Synced
+				</span>
+			{/if}
 		</div>
 		<div class="mt-2 flex items-baseline gap-2">
 			<div class="text-2xl font-bold font-mono text-foreground tracking-tight">
-				{upCount} / {totalCount}
+				{aliveCount} / {totalCount}
 			</div>
 			<span class="text-xs text-muted-foreground">targets alive</span>
 		</div>
@@ -310,6 +321,12 @@
 					<div
 						class="h-full bg-emerald-500 transition-all duration-500"
 						style="width: {fleetUpPct}%"
+					></div>
+				{/if}
+				{#if fleetDegradedPct > 0}
+					<div
+						class="h-full bg-amber-500 transition-all duration-500"
+						style="width: {fleetDegradedPct}%"
 					></div>
 				{/if}
 				{#if fleetDownPct > 0}
@@ -325,11 +342,17 @@
 					></div>
 				{/if}
 			</div>
-			<div class="flex items-center gap-3 text-[11px] text-muted-foreground">
+			<div class="flex items-center gap-3 text-[11px] text-muted-foreground flex-wrap">
 				<span class="inline-flex items-center gap-1">
 					<span class="size-1.5 rounded-full bg-emerald-500"></span>
 					<span class="font-mono">{upCount}</span> up
 				</span>
+				{#if degradedCount > 0}
+					<span class="inline-flex items-center gap-1">
+						<span class="size-1.5 rounded-full bg-amber-500"></span>
+						<span class="font-mono text-amber-400">{degradedCount}</span> degraded
+					</span>
+				{/if}
 				{#if downCount > 0}
 					<span class="inline-flex items-center gap-1">
 						<span class="size-1.5 rounded-full bg-rose-500"></span>

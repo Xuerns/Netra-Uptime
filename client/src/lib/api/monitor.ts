@@ -75,6 +75,7 @@ export interface FleetOverviewResponse {
 	fleet: {
 		total_targets: number;
 		up: number;
+		degraded: number;
 		down: number;
 		paused: number;
 		intervals: {

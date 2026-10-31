@@ -51,7 +51,13 @@
 
 	let TypeIcon = $derived(typeIcon(monitor.Type));
 	let sparkColor = $derived(
-		monitor.Status === 'up' ? '#10b981' : monitor.Status === 'down' ? '#ef4444' : '#64748b'
+		monitor.Status === 'up'
+			? '#10b981'
+			: monitor.Status === 'degraded'
+				? '#f59e0b'
+				: monitor.Status === 'down'
+					? '#ef4444'
+					: '#71717a'
 	);
 
 	let sslBadge = $derived(
@@ -402,6 +408,22 @@
 
 	.monitor-card:hover {
 		border-color: color-mix(in srgb, var(--primary) 35%, var(--color-border));
+	}
+
+	.monitor-card[data-status='up']:hover {
+		border-color: color-mix(in srgb, #10b981 40%, var(--color-border));
+	}
+
+	.monitor-card[data-status='degraded']:hover {
+		border-color: color-mix(in srgb, #f59e0b 40%, var(--color-border));
+	}
+
+	.monitor-card[data-status='down']:hover {
+		border-color: color-mix(in srgb, #ef4444 40%, var(--color-border));
+	}
+
+	.monitor-card[data-status='paused']:hover {
+		border-color: color-mix(in srgb, #71717a 40%, var(--color-border));
 	}
 
 	.type-icon {

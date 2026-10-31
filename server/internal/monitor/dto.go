@@ -100,6 +100,7 @@ type FleetOverviewResponse struct {
 	Fleet struct {
 		TotalTargets int `json:"total_targets"`
 		Up           int `json:"up"`
+		Degraded     int `json:"degraded"`
 		Down         int `json:"down"`
 		Paused       int `json:"paused"`
 		Intervals    struct {

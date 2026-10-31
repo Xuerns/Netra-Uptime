@@ -494,6 +494,7 @@ func (r *MonitorRepositoryImpl) GetFleetOverview(orgId string, windowDays int) (
 
 	overview.Fleet.TotalTargets = len(monitors)
 	upCount := 0
+	degradedCount := 0
 	downCount := 0
 	pausedCount := 0
 
@@ -514,6 +515,8 @@ func (r *MonitorRepositoryImpl) GetFleetOverview(orgId string, windowDays int) (
 		switch effectiveStatus {
 		case "up":
 			upCount++
+		case "degraded":
+			degradedCount++
 		case "paused":
 			pausedCount++
 		case "down":
@@ -541,6 +544,7 @@ func (r *MonitorRepositoryImpl) GetFleetOverview(orgId string, windowDays int) (
 	}
 
 	overview.Fleet.Up = upCount
+	overview.Fleet.Degraded = degradedCount
 	overview.Fleet.Down = downCount
 	overview.Fleet.Paused = pausedCount
 
