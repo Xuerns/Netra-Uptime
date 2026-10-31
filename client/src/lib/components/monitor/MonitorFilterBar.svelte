@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { LayoutGrid, List } from 'lucide-svelte';
 
-	export type StatusFilter = 'all' | 'up' | 'down' | 'flagged' | 'paused';
+	export type StatusFilter = 'all' | 'up' | 'degraded' | 'down' | 'flagged' | 'paused';
 	export type ViewMode = 'grid' | 'list';
 
 	interface Props {
@@ -45,6 +45,17 @@
 			onclick={() => onFilterChange('up')}
 		>
 			Operational <span class="ml-1 text-emerald-400 font-mono text-[11px]">{counts.up ?? 0}</span>
+		</button>
+
+		<button
+			type="button"
+			class="px-3 py-1 font-medium rounded-md transition-colors cursor-pointer {statusFilter ===
+			'degraded'
+				? 'bg-muted text-foreground'
+				: 'text-muted-foreground hover:text-foreground'}"
+			onclick={() => onFilterChange('degraded')}
+		>
+			Degraded <span class="ml-1 text-amber-400 font-mono text-[11px]">{counts.degraded ?? 0}</span>
 		</button>
 
 		<button

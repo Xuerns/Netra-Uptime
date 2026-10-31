@@ -8,7 +8,10 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { MonitorAPI, type Monitor, type FleetOverviewResponse } from '$lib/api/monitor';
 	import MonitorItem from '$lib/components/monitor/MonitorItem.svelte';
-	import MonitorFilterBar from '$lib/components/monitor/MonitorFilterBar.svelte';
+	import MonitorFilterBar, {
+		type StatusFilter,
+		type ViewMode
+	} from '$lib/components/monitor/MonitorFilterBar.svelte';
 	import MonitorListTable from '$lib/components/monitor/MonitorListTable.svelte';
 	import { DataSkeleton } from '$lib/components/common';
 	import MonitorOverviewStats from '$lib/components/monitor/MonitorOverviewStats.svelte';
@@ -19,10 +22,6 @@
 	import { parseApiError } from '$lib/utils/parseApiError';
 
 	let { data }: { data: PageData } = $props();
-
-	// ── Types ─────────────────────────────────────────────────────────────────
-	type StatusFilter = 'all' | 'up' | 'down' | 'flagged' | 'paused';
-	type ViewMode = 'grid' | 'list';
 
 	// ── Route param & Organization ─────────────────────────────────────────────
 	const orgId = $derived(data.orgId || ($page.params.id as string) || '');
@@ -55,7 +54,8 @@
 	let counts = $derived({
 		total: monitors.length,
 		up: monitors.filter((m) => m.Status === 'up').length,
-		down: monitors.filter((m) => m.Status === 'down' || m.Status === 'degraded').length,
+		degraded: monitors.filter((m) => m.Status === 'degraded').length,
+		down: monitors.filter((m) => m.Status === 'down').length,
 		paused: monitors.filter((m) => m.Status === 'paused').length,
 		flagged: monitors.filter(
 			(m) =>
@@ -80,15 +80,20 @@
 					? { text: 'No monitors', variant: 'slate' }
 					: counts.down > 0
 						? {
-								text: `${counts.down} service${counts.down > 1 ? 's' : ''} degraded`,
+								text: `${counts.down} service${counts.down > 1 ? 's' : ''} down`,
 								variant: 'rose'
 							}
-						: counts.flagged > 0
+						: counts.degraded > 0
 							? {
-									text: `${counts.flagged} notice${counts.flagged > 1 ? 's' : ''}`,
+									text: `${counts.degraded} service${counts.degraded > 1 ? 's' : ''} degraded`,
 									variant: 'amber'
 								}
-							: { text: 'All systems monitored', variant: 'emerald' }
+							: counts.flagged > 0
+								? {
+										text: `${counts.flagged} notice${counts.flagged > 1 ? 's' : ''}`,
+										variant: 'amber'
+									}
+								: { text: 'All systems monitored', variant: 'emerald' }
 		});
 	});
 
@@ -97,8 +102,10 @@
 			let matchesStatus = true;
 			if (statusFilter === 'up') {
 				matchesStatus = m.Status === 'up';
+			} else if (statusFilter === 'degraded') {
+				matchesStatus = m.Status === 'degraded';
 			} else if (statusFilter === 'down') {
-				matchesStatus = m.Status === 'down' || m.Status === 'degraded';
+				matchesStatus = m.Status === 'down';
 			} else if (statusFilter === 'paused') {
 				matchesStatus = m.Status === 'paused';
 			} else if (statusFilter === 'flagged') {

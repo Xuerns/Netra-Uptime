@@ -118,6 +118,11 @@
 			return;
 		}
 
+		if (description.length > 255) {
+			error = 'Description must not exceed 255 characters';
+			return;
+		}
+
 		const subdomainRegex = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 		if (!subdomainRegex.test(subdomain)) {
 			error = 'Invalid subdomain format (letters, numbers, hyphens only).';
@@ -269,10 +274,20 @@
 
 					<!-- Description -->
 					<div class="space-y-1.5">
-						<Label for="sp-desc" class="text-xs font-medium text-foreground">Description</Label>
+						<div class="flex items-center justify-between">
+							<Label for="sp-desc" class="text-xs font-medium text-foreground">Description</Label>
+							<span
+								class="text-[11px] font-mono {description.length > 255
+									? 'text-destructive font-semibold'
+									: 'text-muted-foreground'}"
+							>
+								{description.length}/255 characters
+							</span>
+						</div>
 						<Textarea
 							id="sp-desc"
 							bind:value={description}
+							maxlength={255}
 							rows={2}
 							placeholder="Optional short description about this status page or team..."
 							class="bg-background border-border text-foreground resize-none"

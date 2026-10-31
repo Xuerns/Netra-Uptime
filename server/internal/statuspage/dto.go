@@ -5,7 +5,7 @@ import "time"
 type CreateStatusPageRequest struct {
 	Subdomain   string   `json:"subdomain" binding:"required,min=3,max=60"`
 	Title       string   `json:"title" binding:"required,max=60"`
-	Description *string  `json:"description" binding:"omitempty"`
+	Description *string  `json:"description" binding:"omitempty,max=255"`
 	IsPublic    bool     `json:"is_public" binding:"required"`
 	LogoURL     string   `json:"logo_url" binding:"omitempty"`
 	FaviconURL  string   `json:"favicon_url" binding:"omitempty"`
@@ -17,7 +17,7 @@ type CreateStatusPageRequest struct {
 type UpdateStatusPageRequest struct {
 	Subdomain   *string   `json:"subdomain" binding:"omitempty,min=3,max=60"`
 	Title       *string   `json:"title" binding:"omitempty,max=60"`
-	Description *string   `json:"description" binding:"omitempty"`
+	Description *string   `json:"description" binding:"omitempty,max=255"`
 	IsPublic    *bool     `json:"is_public" binding:"omitempty"`
 	LogoURL     *string   `json:"logo_url" binding:"omitempty"`
 	FaviconURL  *string   `json:"favicon_url" binding:"omitempty"`

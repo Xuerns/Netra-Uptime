@@ -109,17 +109,6 @@
 	>
 		<Dialog.Header>
 			<div class="flex items-center gap-2.5">
-				<div
-					class="size-8 rounded-lg {isEditing
-						? 'bg-amber-500/10 border-amber-500/20 text-amber-500'
-						: 'bg-primary/10 border-primary/20 text-primary'} border flex items-center justify-center shrink-0"
-				>
-					{#if isEditing}
-						<Pencil class="size-4" />
-					{:else}
-						<Plus class="size-4" />
-					{/if}
-				</div>
 				<Dialog.Title class="text-lg font-semibold tracking-tight text-foreground">
 					{isEditing ? 'Edit Alert Rule' : 'Add Alert Rule'}
 				</Dialog.Title>
