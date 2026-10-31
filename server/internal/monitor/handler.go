@@ -200,3 +200,26 @@ func (h *MonitorHandler) TriggerCheck(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"status": "success", "data": result})
 }
+
+func (h *MonitorHandler) GetFleetOverview(c *gin.Context) {
+	orgId, ok := middleware.GetOrganizationIDString(c)
+	if !ok {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Organization context missing"})
+		return
+	}
+
+	windowStr := c.DefaultQuery("window", "30")
+	windowDays, err := strconv.Atoi(windowStr)
+	if err != nil || windowDays <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "window must be a positive integer"})
+		return
+	}
+
+	overview, err := h.service.GetFleetOverview(orgId, windowDays)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": apierror.SanitizeServiceError(err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "data": overview})
+}

@@ -59,6 +59,40 @@ export interface MonitorDailyStat {
 	CountError?: number;
 }
 
+export interface FleetOverviewResponse {
+	window_days: number;
+	uptime: {
+		current_percent?: number | null;
+		previous_percent?: number | null;
+		trend_delta?: number | null;
+	};
+	latency: {
+		avg_ms?: number | null;
+		median_ms?: number | null;
+		p95_ms?: number | null;
+		fastest_ms?: number | null;
+	};
+	fleet: {
+		total_targets: number;
+		up: number;
+		down: number;
+		paused: number;
+		intervals: {
+			min_sec: number;
+			max_sec: number;
+			mode_sec: number;
+			is_uniform: boolean;
+		};
+	};
+	certificates_and_dns: {
+		ssl_healthy: number;
+		ssl_warnings: number;
+		dns_healthy: number;
+		dns_warnings: number;
+		total_notices: number;
+	};
+}
+
 export interface Monitor {
 	ID: string;
 	Name: string;
@@ -213,6 +247,15 @@ export const MonitorAPI = {
 		);
 		if (!res.ok) throw new Error('Failed to fetch monitor daily stats');
 		return res.json();
+	},
+
+	getFleetOverview: async (orgId: string, windowDays: number = 30) => {
+		const res = await apiFetch(
+			`${API_Route}/organization/${orgId}/monitors/overview?window=${windowDays}`,
+			{ method: 'GET' }
+		);
+		if (!res.ok) throw new Error('Failed to fetch fleet overview');
+		return await res.json();
 	},
 
 	triggerCheck: async (orgId: string, monitorId: string) => {

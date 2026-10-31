@@ -101,6 +101,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 	// Monitor
 	orgRoutes.POST("/monitors", middleware.RequireRole("owner"), h.MonitorHandler.CreateMonitor)
 	orgRoutes.GET("/monitors", h.MonitorHandler.GetAllMonitor)
+	orgRoutes.GET("/monitors/overview", h.MonitorHandler.GetFleetOverview)
 	orgRoutes.GET("/monitors/:monitorId", h.MonitorHandler.GetById)
 	orgRoutes.GET("/monitors/:monitorId/stats", h.MonitorHandler.GetDailyStats)
 	checkLimiter := middleware.RateLimiter(redis, 10, 1*time.Minute)

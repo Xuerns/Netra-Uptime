@@ -66,14 +66,11 @@
 		)
 	);
 
+	let hasCheckHistory = $derived(
+		Boolean(monitor.recent_checks && monitor.recent_checks.length > 0)
+	);
 	let sparkData = $derived(
-		monitor.recent_checks && monitor.recent_checks.length > 0
-			? [...monitor.recent_checks].reverse().map((c) => c.ResponseTimeMs)
-			: monitor.Status === 'up'
-				? [45, 52, 48, 42, 60, 55, 49, 44, 38, 41, 48, 42]
-				: monitor.Status === 'down'
-					? [45, 52, 98, 100, 100, 100]
-					: [45, 50, 48, 48, 48, 48]
+		hasCheckHistory ? [...monitor.recent_checks!].reverse().map((c) => c.ResponseTimeMs) : []
 	);
 </script>
 
@@ -166,9 +163,17 @@
 			<div class="h-px bg-white/6"></div>
 
 			<!-- Sparkline -->
-			<div class="w-full opacity-60 group-hover:opacity-100 transition-opacity -mt-1 -mb-1">
-				<Sparkline data={sparkData} color={sparkColor} height={32} />
-			</div>
+			{#if sparkData.length > 0}
+				<div class="w-full opacity-60 group-hover:opacity-100 transition-opacity -mt-1 -mb-1">
+					<Sparkline data={sparkData} color={sparkColor} height={32} />
+				</div>
+			{:else}
+				<div
+					class="h-8 flex items-center justify-center text-[11px] text-muted-foreground/40 font-mono border-b border-dashed border-white/5"
+				>
+					Awaiting probe...
+				</div>
+			{/if}
 
 			<!-- Row 2: metrics -->
 			<div class="flex items-center gap-4">
@@ -278,9 +283,13 @@
 		<div class="flex items-center min-w-0 pr-2">
 			<div
 				class="w-full max-w-[160px] h-6 flex items-center opacity-70 group-hover:opacity-100 transition-opacity"
-				title="Recent latency trend"
+				title={sparkData.length > 0 ? 'Recent latency trend' : 'No recent latency checks'}
 			>
-				<Sparkline data={sparkData} color={sparkColor} height={22} width={100} />
+				{#if sparkData.length > 0}
+					<Sparkline data={sparkData} color={sparkColor} height={22} width={100} />
+				{:else}
+					<span class="text-[11px] text-muted-foreground/40 font-mono">Awaiting probe...</span>
+				{/if}
 			</div>
 		</div>
 

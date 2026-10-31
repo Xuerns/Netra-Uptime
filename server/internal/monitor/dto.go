@@ -80,3 +80,41 @@ type RecentCheck struct {
 	ErrorMessage   *string `json:"error_message,omitempty"`
 	CheckedAt      string  `json:"checked_at"`
 }
+
+type FleetOverviewResponse struct {
+	WindowDays int `json:"window_days"`
+
+	Uptime struct {
+		CurrentPercent  *float64 `json:"current_percent"`  // null if no active monitors / 0 checks
+		PreviousPercent *float64 `json:"previous_percent"` // null if no prior window data
+		TrendDelta      *float64 `json:"trend_delta"`      // null if no prior data
+	} `json:"uptime"`
+
+	Latency struct {
+		AvgMs     *int `json:"avg_ms"`     // 24h mean of healthy checks
+		MedianMs  *int `json:"median_ms"`  // 24h P50
+		P95Ms     *int `json:"p95_ms"`     // 24h P95
+		FastestMs *int `json:"fastest_ms"` // 24h Min
+	} `json:"latency"`
+
+	Fleet struct {
+		TotalTargets int `json:"total_targets"`
+		Up           int `json:"up"`
+		Down         int `json:"down"`
+		Paused       int `json:"paused"`
+		Intervals    struct {
+			MinSec    int  `json:"min_sec"`
+			MaxSec    int  `json:"max_sec"`
+			ModeSec   int  `json:"mode_sec"`
+			IsUniform bool `json:"is_uniform"`
+		} `json:"intervals"`
+	} `json:"fleet"`
+
+	CertificatesAndDNS struct {
+		SSLHealthy   int `json:"ssl_healthy"`
+		SSLWarnings  int `json:"ssl_warnings"`
+		DNSHealthy   int `json:"dns_healthy"`
+		DNSWarnings  int `json:"dns_warnings"`
+		TotalNotices int `json:"total_notices"`
+	} `json:"certificates_and_dns"`
+}

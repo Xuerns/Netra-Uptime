@@ -1,19 +1,25 @@
 <script lang="ts">
-	import type { Monitor } from '$lib/api/monitor';
-	import { TrendingUp, AlertTriangle, Globe, Lock } from 'lucide-svelte';
+	import type { Monitor, FleetOverviewResponse } from '$lib/api/monitor';
+	import { TrendingUp, TrendingDown, Minus, AlertTriangle, Globe, Lock } from 'lucide-svelte';
 	import { formatTimeAgo } from '$lib/utils/datetime';
 
 	interface Props {
 		monitors: Monitor[];
+		overview?: FleetOverviewResponse | null;
 	}
 
-	let { monitors = [] }: Props = $props();
+	let { monitors = [], overview = null }: Props = $props();
 
 	// ── 1. Fleet & Target Counts ───────────────────────────────────────────────
-	let totalCount = $derived(monitors.length);
-	let downCount = $derived(monitors.filter((m) => m.Status === 'down').length);
-	let upCount = $derived(monitors.filter((m) => m.Status === 'up').length);
-	let pausedCount = $derived(monitors.filter((m) => m.Status === 'paused').length);
+	let totalCount = $derived(overview?.fleet?.total_targets ?? monitors.length);
+	let downCount = $derived(
+		overview?.fleet?.down ??
+			monitors.filter((m) => m.Status === 'down' || m.Status === 'degraded').length
+	);
+	let upCount = $derived(overview?.fleet?.up ?? monitors.filter((m) => m.Status === 'up').length);
+	let pausedCount = $derived(
+		overview?.fleet?.paused ?? monitors.filter((m) => m.Status === 'paused').length
+	);
 
 	// ── 2. Response Time & Latency Metrics ─────────────────────────────────────
 	let activeLatencyMonitors = $derived(
@@ -23,17 +29,20 @@
 	);
 
 	let avgLatency = $derived.by(() => {
+		if (overview?.latency?.avg_ms != null) return overview.latency.avg_ms;
 		if (activeLatencyMonitors.length === 0) return null;
 		const sum = activeLatencyMonitors.reduce((acc, m) => acc + (m.ResponseTimeMs ?? 0), 0);
 		return Math.round(sum / activeLatencyMonitors.length);
 	});
 
 	let fastestLatency = $derived.by(() => {
+		if (overview?.latency?.fastest_ms != null) return overview.latency.fastest_ms;
 		if (activeLatencyMonitors.length === 0) return null;
 		return Math.min(...activeLatencyMonitors.map((m) => m.ResponseTimeMs!));
 	});
 
 	let p95Latency = $derived.by(() => {
+		if (overview?.latency?.p95_ms != null) return overview.latency.p95_ms;
 		if (activeLatencyMonitors.length === 0) return null;
 		const sorted = [...activeLatencyMonitors.map((m) => m.ResponseTimeMs!)].sort((a, b) => a - b);
 		const index = Math.floor(sorted.length * 0.95);
@@ -42,9 +51,22 @@
 
 	let latencyRating = $derived.by(() => {
 		if (avgLatency === null) return 'No data';
-		if (avgLatency < 100) return `Fast (p95: ${p95Latency ?? avgLatency}ms)`;
-		if (avgLatency < 300) return `Moderate (p95: ${p95Latency ?? avgLatency}ms)`;
-		return `Elevated (p95: ${p95Latency ?? avgLatency}ms)`;
+		const p95 = p95Latency ?? avgLatency;
+		if (avgLatency < 100) return `Fast (p95: ${p95}ms)`;
+		if (avgLatency < 300) return `Moderate (p95: ${p95}ms)`;
+		return `Elevated (p95: ${p95}ms)`;
+	});
+
+	let checkInterval = $derived.by(() => {
+		if (overview?.fleet?.intervals) {
+			const { is_uniform, mode_sec, min_sec, max_sec } = overview.fleet.intervals;
+			return is_uniform ? `${mode_sec}s` : `${min_sec}s–${max_sec}s`;
+		}
+		const intervals = monitors.map((m) => m.IntervalSeconds).filter(Boolean);
+		if (intervals.length === 0) return '—';
+		const min = Math.min(...intervals);
+		const max = Math.max(...intervals);
+		return min === max ? `${min}s` : `${min}s–${max}s`;
 	});
 
 	// ── 3. 30-Day Uptime Metrics ──────────────────────────────────────────────
@@ -53,33 +75,43 @@
 	);
 
 	let avgUptime = $derived.by(() => {
+		if (overview?.uptime?.current_percent != null) {
+			return `${overview.uptime.current_percent.toFixed(2)}%`;
+		}
 		if (activeUptimeMonitors.length === 0) return null;
 		const sum = activeUptimeMonitors.reduce((acc, m) => acc + (m.UptimePercent ?? 0), 0);
-		return (sum / activeUptimeMonitors.length).toFixed(2);
+		return `${(sum / activeUptimeMonitors.length).toFixed(2)}%`;
 	});
 
 	// ── 4. Certificates & DNS Notices ─────────────────────────────────────────
 	let dnsNoticeCount = $derived(
-		monitors.filter((m) => m.DomainStatus === 'warning' || m.DomainStatus === 'expired').length
+		overview?.certificates_and_dns?.dns_warnings ??
+			monitors.filter((m) => m.DomainStatus === 'warning' || m.DomainStatus === 'expired').length
 	);
 
 	let sslNoticeCount = $derived(
-		monitors.filter(
-			(m) => m.SSLStatus === 'expired' || (m.SSLDaysLeft != null && m.SSLDaysLeft <= 30)
-		).length
+		overview?.certificates_and_dns?.ssl_warnings ??
+			monitors.filter(
+				(m) => m.SSLStatus === 'expired' || (m.SSLDaysLeft != null && m.SSLDaysLeft <= 30)
+			).length
 	);
 
-	let noticeCount = $derived(dnsNoticeCount + sslNoticeCount);
+	let noticeCount = $derived(
+		overview?.certificates_and_dns?.total_notices ?? dnsNoticeCount + sslNoticeCount
+	);
 
 	let healthySslCount = $derived(
-		monitors.filter((m) => m.SSLStatus === 'valid' && (m.SSLDaysLeft == null || m.SSLDaysLeft > 30))
-			.length
+		overview?.certificates_and_dns?.ssl_healthy ??
+			monitors.filter(
+				(m) => m.SSLStatus === 'valid' && (m.SSLDaysLeft == null || m.SSLDaysLeft > 30)
+			).length
 	);
 
 	let healthyDnsCount = $derived(
-		monitors.filter(
-			(m) => m.DomainStatus === 'valid' || (!m.DomainStatus && m.EnableSSLDomainCheck)
-		).length
+		overview?.certificates_and_dns?.dns_healthy ??
+			monitors.filter(
+				(m) => m.DomainStatus === 'valid' || (!m.DomainStatus && m.EnableSSLDomainCheck)
+			).length
 	);
 
 	// ── 5. Fleet Probe Time ───────────────────────────────────────────────────
@@ -104,25 +136,47 @@
 	class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
 	data-purpose="health-overview"
 >
-	<!-- KPI 1: Avg Uptime (30d) -->
+	<!-- KPI 1: Avg Uptime -->
 	<div class="kpi-card p-4 rounded-lg bg-card border border-border flex flex-col justify-between">
 		<div class="flex items-center justify-between text-xs text-muted-foreground">
-			<span class="font-medium">Avg Uptime (30d)</span>
-			<span class="inline-flex items-center text-emerald-400 text-[11px] font-mono font-medium">
-				<TrendingUp class="size-3 mr-0.5" />
-				+0.12%
-			</span>
+			<span class="font-medium">Avg Uptime ({overview?.window_days ?? 30}d)</span>
+			{#if overview?.uptime?.trend_delta != null}
+				{#if overview.uptime.trend_delta > 0}
+					<span class="inline-flex items-center text-emerald-400 text-[11px] font-mono font-medium">
+						<TrendingUp class="size-3 mr-0.5" />
+						+{overview.uptime.trend_delta.toFixed(2)}%
+					</span>
+				{:else if overview.uptime.trend_delta < 0}
+					<span class="inline-flex items-center text-rose-400 text-[11px] font-mono font-medium">
+						<TrendingDown class="size-3 mr-0.5" />
+						{overview.uptime.trend_delta.toFixed(2)}%
+					</span>
+				{:else}
+					<span
+						class="inline-flex items-center text-muted-foreground text-[11px] font-mono font-medium"
+					>
+						<Minus class="size-3 mr-0.5" />
+						0.00%
+					</span>
+				{/if}
+			{:else}
+				<span class="text-[10px] text-muted-foreground/70 font-mono">No prior period</span>
+			{/if}
 		</div>
 		<div class="mt-2 flex items-baseline gap-2">
 			<div class="text-2xl font-bold font-mono text-foreground tracking-tight">
-				{avgUptime !== null ? `${avgUptime}%` : '—'}
+				{avgUptime ?? '—'}
 			</div>
 			<span class="text-xs text-muted-foreground">across {totalCount} targets</span>
 		</div>
 
 		<!-- Summary Info -->
 		<div class="mt-3 text-[11px] text-muted-foreground flex items-center justify-between">
-			<span>Evaluation window: <strong class="text-foreground font-mono">30d</strong></span>
+			<span
+				>Evaluation window: <strong class="text-foreground font-mono"
+					>{overview?.window_days ?? 30}d</strong
+				></span
+			>
 			<span
 				>Healthy: <strong class="text-emerald-400 font-mono">{upCount}/{totalCount}</strong></span
 			>
@@ -133,27 +187,30 @@
 	<div class="kpi-card p-4 rounded-lg bg-card border border-border flex flex-col justify-between">
 		<div class="flex items-center justify-between text-xs text-muted-foreground">
 			<span class="font-medium">Global Avg Latency</span>
-			<span class="text-[11px] font-mono text-muted-foreground">Global median</span>
+			<span class="text-[11px] font-mono text-muted-foreground">24h P50 / P95 (Live)</span>
 		</div>
 		<div class="mt-2 flex items-baseline gap-2">
 			<div class="text-2xl font-bold font-mono text-foreground tracking-tight">
-				{avgLatency !== null ? avgLatency : '—'}<span
-					class="text-sm font-normal text-muted-foreground">ms</span
-				>
+				{#if avgLatency !== null}
+					{avgLatency}<span class="text-sm font-normal text-muted-foreground">ms</span>
+				{:else}
+					—
+				{/if}
 			</div>
 			<span class="text-xs text-emerald-400 font-mono">
 				{latencyRating}
 			</span>
 		</div>
 
-		<!-- Sparkline Area Chart: Latency trend -->
+		<!-- Latency Sub-metrics -->
 		<div class="mt-3 text-[11px] text-muted-foreground flex items-center justify-between">
 			<span
 				>Fastest: <strong class="text-foreground font-mono"
 					>{fastestLatency !== null ? `${fastestLatency}ms` : '—'}</strong
 				></span
 			>
-			<span>Check interval: <strong class="text-foreground font-mono">60s</strong></span>
+			<span>Check interval: <strong class="text-foreground font-mono">{checkInterval}</strong></span
+			>
 		</div>
 	</div>
 

@@ -150,6 +150,7 @@ type mockMonitorRepo struct {
 	totalOrganizationMonitorFunc func(orgId string) (int64, error)
 	getDailyStatsFunc            func(monitorId string, days int) ([]model.MonitorDailyStat, error)
 	get30DayUptimeMapFunc        func(monitorIDs []string) (map[string]float64, error)
+	getFleetOverviewFunc         func(orgId string, windowDays int) (*FleetOverviewResponse, error)
 }
 
 func (m *mockMonitorRepo) Create(monitor *model.Monitor) error {
@@ -230,6 +231,12 @@ func (m *mockMonitorRepo) Get30DayUptimeMap(monitorIDs []string) (map[string]flo
 		return m.get30DayUptimeMapFunc(monitorIDs)
 	}
 	return nil, nil
+}
+func (m *mockMonitorRepo) GetFleetOverview(orgId string, windowDays int) (*FleetOverviewResponse, error) {
+	if m.getFleetOverviewFunc != nil {
+		return m.getFleetOverviewFunc(orgId, windowDays)
+	}
+	return &FleetOverviewResponse{WindowDays: windowDays}, nil
 }
 
 // ====================== SERVICE TESTS ======================
@@ -1036,5 +1043,280 @@ func TestMonitorHandler_GetById(t *testing.T) {
 
 	if w.Code != http.StatusOK {
 		t.Errorf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestGetFleetOverview_ColdStart(t *testing.T) {
+	rdb, cleanup := newMockRedisClient(t)
+	defer cleanup()
+
+	orgID := uuid.New().String()
+	repo := &mockMonitorRepo{
+		getFleetOverviewFunc: func(orgId string, windowDays int) (*FleetOverviewResponse, error) {
+			resp := &FleetOverviewResponse{
+				WindowDays: windowDays,
+			}
+			resp.Fleet.Intervals.IsUniform = true
+			return resp, nil
+		},
+	}
+
+	svc := NewMonitorService(repo, rdb, nil)
+	overview, err := svc.GetFleetOverview(orgID, 30)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if overview.WindowDays != 30 {
+		t.Errorf("expected WindowDays 30, got %d", overview.WindowDays)
+	}
+	if overview.Uptime.CurrentPercent != nil {
+		t.Errorf("expected CurrentPercent nil, got %v", *overview.Uptime.CurrentPercent)
+	}
+	if overview.Uptime.PreviousPercent != nil {
+		t.Errorf("expected PreviousPercent nil, got %v", *overview.Uptime.PreviousPercent)
+	}
+	if overview.Uptime.TrendDelta != nil {
+		t.Errorf("expected TrendDelta nil, got %v", *overview.Uptime.TrendDelta)
+	}
+	if overview.Latency.AvgMs != nil {
+		t.Errorf("expected AvgMs nil, got %v", *overview.Latency.AvgMs)
+	}
+	if overview.Latency.MedianMs != nil {
+		t.Errorf("expected MedianMs nil, got %v", *overview.Latency.MedianMs)
+	}
+	if overview.Latency.P95Ms != nil {
+		t.Errorf("expected P95Ms nil, got %v", *overview.Latency.P95Ms)
+	}
+	if overview.Latency.FastestMs != nil {
+		t.Errorf("expected FastestMs nil, got %v", *overview.Latency.FastestMs)
+	}
+	if overview.Fleet.TotalTargets != 0 {
+		t.Errorf("expected TotalTargets 0, got %d", overview.Fleet.TotalTargets)
+	}
+}
+
+func TestGetFleetOverview_NewMonitor_NoPriorData(t *testing.T) {
+	rdb, cleanup := newMockRedisClient(t)
+	defer cleanup()
+
+	orgID := uuid.New().String()
+	currPct := 99.5
+	repo := &mockMonitorRepo{
+		getFleetOverviewFunc: func(orgId string, windowDays int) (*FleetOverviewResponse, error) {
+			resp := &FleetOverviewResponse{
+				WindowDays: windowDays,
+			}
+			resp.Uptime.CurrentPercent = &currPct
+			resp.Uptime.PreviousPercent = nil
+			return resp, nil
+		},
+	}
+
+	svc := NewMonitorService(repo, rdb, nil)
+	overview, err := svc.GetFleetOverview(orgID, 30)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if overview.Uptime.CurrentPercent == nil || *overview.Uptime.CurrentPercent != 99.5 {
+		t.Errorf("expected CurrentPercent 99.5, got %v", overview.Uptime.CurrentPercent)
+	}
+	if overview.Uptime.PreviousPercent != nil {
+		t.Errorf("expected PreviousPercent nil, got %v", *overview.Uptime.PreviousPercent)
+	}
+	if overview.Uptime.TrendDelta != nil {
+		t.Errorf("expected TrendDelta nil when prior data is missing, got %v", *overview.Uptime.TrendDelta)
+	}
+}
+
+func TestGetFleetOverview_EstablishedMonitor_PositiveDelta(t *testing.T) {
+	rdb, cleanup := newMockRedisClient(t)
+	defer cleanup()
+
+	orgID := uuid.New().String()
+	curr := 99.85
+	prev := 98.42
+	repo := &mockMonitorRepo{
+		getFleetOverviewFunc: func(orgId string, windowDays int) (*FleetOverviewResponse, error) {
+			resp := &FleetOverviewResponse{
+				WindowDays: windowDays,
+			}
+			resp.Uptime.CurrentPercent = &curr
+			resp.Uptime.PreviousPercent = &prev
+			return resp, nil
+		},
+	}
+
+	svc := NewMonitorService(repo, rdb, nil)
+	overview, err := svc.GetFleetOverview(orgID, 30)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if overview.Uptime.TrendDelta == nil {
+		t.Fatalf("expected TrendDelta not nil")
+	}
+	if *overview.Uptime.TrendDelta != 1.43 {
+		t.Errorf("expected TrendDelta 1.43, got %f", *overview.Uptime.TrendDelta)
+	}
+}
+
+func TestGetFleetOverview_EstablishedMonitor_NegativeDelta(t *testing.T) {
+	rdb, cleanup := newMockRedisClient(t)
+	defer cleanup()
+
+	orgID := uuid.New().String()
+	curr := 95.50
+	prev := 99.00
+	repo := &mockMonitorRepo{
+		getFleetOverviewFunc: func(orgId string, windowDays int) (*FleetOverviewResponse, error) {
+			resp := &FleetOverviewResponse{
+				WindowDays: windowDays,
+			}
+			resp.Uptime.CurrentPercent = &curr
+			resp.Uptime.PreviousPercent = &prev
+			return resp, nil
+		},
+	}
+
+	svc := NewMonitorService(repo, rdb, nil)
+	overview, err := svc.GetFleetOverview(orgID, 30)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if overview.Uptime.TrendDelta == nil {
+		t.Fatalf("expected TrendDelta not nil")
+	}
+	if *overview.Uptime.TrendDelta != -3.50 {
+		t.Errorf("expected TrendDelta -3.50, got %f", *overview.Uptime.TrendDelta)
+	}
+}
+
+func TestGetFleetOverview_FloatPrecisionRounding(t *testing.T) {
+	rdb, cleanup := newMockRedisClient(t)
+	defer cleanup()
+
+	orgID := uuid.New().String()
+	curr := 99.99
+	prev := 99.96
+	repo := &mockMonitorRepo{
+		getFleetOverviewFunc: func(orgId string, windowDays int) (*FleetOverviewResponse, error) {
+			resp := &FleetOverviewResponse{
+				WindowDays: windowDays,
+			}
+			resp.Uptime.CurrentPercent = &curr
+			resp.Uptime.PreviousPercent = &prev
+			return resp, nil
+		},
+	}
+
+	svc := NewMonitorService(repo, rdb, nil)
+	overview, err := svc.GetFleetOverview(orgID, 30)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if overview.Uptime.TrendDelta == nil {
+		t.Fatalf("expected TrendDelta not nil")
+	}
+	if *overview.Uptime.TrendDelta != 0.03 {
+		t.Errorf("expected TrendDelta 0.03, got %f", *overview.Uptime.TrendDelta)
+	}
+}
+
+func TestGetFleetOverview_RedisCache(t *testing.T) {
+	rdb, cleanup := newMockRedisClient(t)
+	defer cleanup()
+
+	orgID := uuid.New().String()
+	curr := 99.0
+	callCount := 0
+	repo := &mockMonitorRepo{
+		getFleetOverviewFunc: func(orgId string, windowDays int) (*FleetOverviewResponse, error) {
+			callCount++
+			resp := &FleetOverviewResponse{
+				WindowDays: windowDays,
+			}
+			resp.Uptime.CurrentPercent = &curr
+			return resp, nil
+		},
+	}
+
+	svc := NewMonitorService(repo, rdb, nil)
+	res1, err := svc.GetFleetOverview(orgID, 30)
+	if err != nil || res1 == nil {
+		t.Fatalf("first call failed: %v", err)
+	}
+	if callCount != 1 {
+		t.Errorf("expected 1 repo call, got %d", callCount)
+	}
+
+	res2, err := svc.GetFleetOverview(orgID, 30)
+	if err != nil || res2 == nil {
+		t.Fatalf("second call failed: %v", err)
+	}
+	if callCount != 1 {
+		t.Errorf("expected cached response with 1 repo call, got %d", callCount)
+	}
+}
+
+func TestMonitorHandler_GetFleetOverview(t *testing.T) {
+	rdb, cleanup := newMockRedisClient(t)
+	defer cleanup()
+
+	orgID := uuid.New()
+	curr := 98.5
+	repo := &mockMonitorRepo{
+		getFleetOverviewFunc: func(orgId string, windowDays int) (*FleetOverviewResponse, error) {
+			resp := &FleetOverviewResponse{
+				WindowDays: windowDays,
+			}
+			resp.Uptime.CurrentPercent = &curr
+			return resp, nil
+		},
+	}
+
+	svc := NewMonitorService(repo, rdb, nil)
+	handler := NewMonitorHandler(svc)
+
+	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		c.Set("organizationID", orgID)
+		c.Next()
+	})
+	r.GET("/organization/:orgId/monitors/overview", handler.GetFleetOverview)
+
+	// Valid with default window
+	req, _ := http.NewRequest(http.MethodGet, "/organization/"+orgID.String()+"/monitors/overview", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d. Body: %s", w.Code, w.Body.String())
+	}
+
+	// Valid with custom window
+	reqCustom, _ := http.NewRequest(http.MethodGet, "/organization/"+orgID.String()+"/monitors/overview?window=7", nil)
+	wCustom := httptest.NewRecorder()
+	r.ServeHTTP(wCustom, reqCustom)
+	if wCustom.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d. Body: %s", wCustom.Code, wCustom.Body.String())
+	}
+
+	// Invalid window param (negative)
+	reqBad, _ := http.NewRequest(http.MethodGet, "/organization/"+orgID.String()+"/monitors/overview?window=-5", nil)
+	wBad := httptest.NewRecorder()
+	r.ServeHTTP(wBad, reqBad)
+	if wBad.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for negative window, got %d", wBad.Code)
+	}
+
+	// Invalid window param (non-integer)
+	reqBad2, _ := http.NewRequest(http.MethodGet, "/organization/"+orgID.String()+"/monitors/overview?window=abc", nil)
+	wBad2 := httptest.NewRecorder()
+	r.ServeHTTP(wBad2, reqBad2)
+	if wBad2.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for non-numeric window, got %d", wBad2.Code)
 	}
 }

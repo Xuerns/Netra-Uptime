@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"netra-uptime/config"
 	"netra-uptime/internal/audit"
 	"netra-uptime/internal/model"
@@ -26,6 +27,7 @@ type MonitorService interface {
 	DeleteMonitor(orgId, userId, ipAddress, monitorId string) error
 	GetDailyStats(orgId, monitorId string, days int) ([]model.MonitorDailyStat, error)
 	TriggerCheck(orgId, monitorId string) (*RecentCheck, error)
+	GetFleetOverview(orgId string, windowDays int) (*FleetOverviewResponse, error)
 }
 
 type ImmediateChecker interface {
@@ -753,4 +755,62 @@ func (s *MonitorServiceImpl) TriggerCheck(orgId, monitorId string) (*RecentCheck
 		ErrorMessage:   errMsg,
 		CheckedAt:      check.CheckedAt.Format(time.RFC3339),
 	}, nil
+}
+
+func (s *MonitorServiceImpl) GetFleetOverview(orgId string, windowDays int) (*FleetOverviewResponse, error) {
+	if windowDays <= 0 {
+		windowDays = 30
+	}
+
+	ctx := context.Background()
+	cacheKey := cache.MonitorOverviewKey(orgId, windowDays)
+
+	// Check Redis cache first
+	if s.rdb != nil {
+		cacheData, err := s.rdb.Get(ctx, cacheKey).Result()
+		if err == nil && cacheData != "" {
+			var cachedOverview FleetOverviewResponse
+			if err := json.Unmarshal([]byte(cacheData), &cachedOverview); err == nil {
+				return &cachedOverview, nil
+			}
+		}
+	}
+
+	// Singleflight
+	res, err, _ := s.sfGroup.Do(cacheKey, func() (interface{}, error) {
+		// Re-check cache inside singleflight
+		if s.rdb != nil {
+			if cacheData, err := s.rdb.Get(ctx, cacheKey).Result(); err == nil && cacheData != "" {
+				var cachedOverview FleetOverviewResponse
+				if err := json.Unmarshal([]byte(cacheData), &cachedOverview); err == nil {
+					return &cachedOverview, nil
+				}
+			}
+		}
+
+		overview, err := s.repo.GetFleetOverview(orgId, windowDays)
+		if err != nil {
+			return nil, err
+		}
+
+		// Calculate trend_delta
+		if overview.Uptime.CurrentPercent != nil && overview.Uptime.PreviousPercent != nil {
+			delta := math.Round((*overview.Uptime.CurrentPercent-*overview.Uptime.PreviousPercent)*100) / 100
+			overview.Uptime.TrendDelta = &delta
+		}
+
+		if s.rdb != nil {
+			if jsonData, err := json.Marshal(overview); err == nil {
+				s.rdb.Set(ctx, cacheKey, jsonData, 30*time.Second)
+			}
+		}
+
+		return overview, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res.(*FleetOverviewResponse), nil
 }

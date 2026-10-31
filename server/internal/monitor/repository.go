@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"math"
 	"netra-uptime/config"
 	"netra-uptime/internal/model"
 	"sort"
@@ -24,6 +25,7 @@ type MonitorRepository interface {
 	TotalOrganizationMonitor(orgId string) (int64, error)
 	GetDailyStats(monitorId string, days int) ([]model.MonitorDailyStat, error)
 	Get30DayUptimeMap(monitorIDs []string) (map[string]float64, error)
+	GetFleetOverview(orgId string, windowDays int) (*FleetOverviewResponse, error)
 }
 
 type MonitorRepositoryImpl struct {
@@ -352,4 +354,232 @@ func (r *MonitorRepositoryImpl) Get30DayUptimeMap(monitorIDs []string) (map[stri
 	}
 
 	return result, nil
+}
+
+func (r *MonitorRepositoryImpl) GetFleetOverview(orgId string, windowDays int) (*FleetOverviewResponse, error) {
+	overview := &FleetOverviewResponse{
+		WindowDays: windowDays,
+	}
+
+	// 1. Argon Hybrid CTE with Mean of Ratios for Fleet Uptime
+	uptimeQuery := `
+		WITH period_bounds AS (
+			SELECT 
+				CURRENT_DATE - (($2::int - 1) * INTERVAL '1 day') AS p_curr_start,
+				CURRENT_DATE - (($2::int * 2 - 1) * INTERVAL '1 day') AS p_prev_start
+		),
+		historical_stats AS (
+			SELECT 
+				mds.monitor_id,
+				CASE 
+					WHEN mds.date >= (SELECT p_curr_start FROM period_bounds) THEN 'curr'
+					ELSE 'prev'
+				END AS period,
+				mds.total_checks,
+				mds.up_checks
+			FROM monitor_daily_stats mds
+			INNER JOIN monitors m ON m.id = mds.monitor_id
+			WHERE m.organization_id = $1
+			  AND mds.date >= (SELECT p_prev_start FROM period_bounds)
+		),
+		live_stats AS (
+			SELECT 
+				c.monitor_id,
+				CASE 
+					WHEN c.checked_at >= (SELECT p_curr_start FROM period_bounds) THEN 'curr'
+					ELSE 'prev'
+				END AS period,
+				COUNT(*) AS total_checks,
+				COUNT(*) FILTER (WHERE c.status = 'up') AS up_checks
+			FROM checks c
+			INNER JOIN monitors m ON m.id = c.monitor_id
+			WHERE m.organization_id = $1
+			  AND c.checked_at >= (SELECT p_prev_start FROM period_bounds)
+			GROUP BY c.monitor_id, period
+		),
+		combined_checks AS (
+			SELECT * FROM historical_stats
+			UNION ALL
+			SELECT * FROM live_stats
+		),
+		per_monitor_period AS (
+			SELECT 
+				monitor_id,
+				period,
+				SUM(total_checks) AS monitor_total_checks,
+				SUM(up_checks) AS monitor_up_checks
+			FROM combined_checks
+			GROUP BY monitor_id, period
+			HAVING SUM(total_checks) > 0
+		)
+		SELECT 
+			period,
+			COUNT(monitor_id) AS active_monitors_in_period,
+			ROUND(
+				AVG((monitor_up_checks::numeric / monitor_total_checks::numeric) * 100), 
+				2
+			) AS fleet_uptime_pct
+		FROM per_monitor_period
+		GROUP BY period;
+	`
+
+	type UptimeRow struct {
+		Period                 string   `gorm:"column:period"`
+		ActiveMonitorsInPeriod int      `gorm:"column:active_monitors_in_period"`
+		FleetUptimePct         *float64 `gorm:"column:fleet_uptime_pct"`
+	}
+
+	var uptimeRows []UptimeRow
+	if err := r.db.Raw(uptimeQuery, orgId, windowDays).Scan(&uptimeRows).Error; err != nil {
+		return nil, err
+	}
+
+	for _, row := range uptimeRows {
+		if row.Period == "curr" {
+			overview.Uptime.CurrentPercent = row.FleetUptimePct
+		} else if row.Period == "prev" {
+			overview.Uptime.PreviousPercent = row.FleetUptimePct
+		}
+	}
+
+	// 2. Live 24h Latency Snapshot on healthy checks in checks
+	latencyQuery := `
+		SELECT 
+			ROUND(AVG(c.response_time_ms)) AS avg_ms,
+			ROUND(PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY c.response_time_ms)) AS median_ms,
+			ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY c.response_time_ms)) AS p95_ms,
+			MIN(c.response_time_ms) AS fastest_ms
+		FROM checks c
+		INNER JOIN monitors m ON m.id = c.monitor_id
+		WHERE m.organization_id = $1
+		  AND c.status = 'up'
+		  AND c.response_time_ms > 0
+		  AND c.checked_at >= NOW() - INTERVAL '24 hours';
+	`
+
+	type RawLatencyRow struct {
+		AvgMs     *float64 `gorm:"column:avg_ms"`
+		MedianMs  *float64 `gorm:"column:median_ms"`
+		P95Ms     *float64 `gorm:"column:p95_ms"`
+		FastestMs *int     `gorm:"column:fastest_ms"`
+	}
+
+	var rawLat RawLatencyRow
+	if err := r.db.Raw(latencyQuery, orgId).Scan(&rawLat).Error; err != nil {
+		return nil, err
+	}
+
+	if rawLat.AvgMs != nil {
+		avg := int(math.Round(*rawLat.AvgMs))
+		overview.Latency.AvgMs = &avg
+	}
+	if rawLat.MedianMs != nil {
+		med := int(math.Round(*rawLat.MedianMs))
+		overview.Latency.MedianMs = &med
+	}
+	if rawLat.P95Ms != nil {
+		p95 := int(math.Round(*rawLat.P95Ms))
+		overview.Latency.P95Ms = &p95
+	}
+	if rawLat.FastestMs != nil {
+		fastest := *rawLat.FastestMs
+		overview.Latency.FastestMs = &fastest
+	}
+
+	// 3. Fleet counts, intervals, and SSL/DNS summary from monitors list
+	var monitors []model.Monitor
+	if err := r.db.Where("organization_id = ?", orgId).Find(&monitors).Error; err != nil {
+		return nil, err
+	}
+
+	overview.Fleet.TotalTargets = len(monitors)
+	upCount := 0
+	downCount := 0
+	pausedCount := 0
+
+	sslHealthy := 0
+	sslWarnings := 0
+	dnsHealthy := 0
+	dnsWarnings := 0
+
+	intervals := make([]int, 0, len(monitors))
+	intervalFreq := make(map[int]int)
+
+	for _, m := range monitors {
+		effectiveStatus := m.Status
+		if !m.IsActive {
+			effectiveStatus = "paused"
+		}
+
+		switch effectiveStatus {
+		case "up":
+			upCount++
+		case "paused":
+			pausedCount++
+		case "down":
+			downCount++
+		default:
+			downCount++
+		}
+
+		if m.IntervalSeconds > 0 {
+			intervals = append(intervals, m.IntervalSeconds)
+			intervalFreq[m.IntervalSeconds]++
+		}
+
+		if m.SSLStatus == "valid" {
+			sslHealthy++
+		} else if m.SSLStatus == "warning" || m.SSLStatus == "expired" || m.SSLStatus == "error" {
+			sslWarnings++
+		}
+
+		if m.DomainStatus == "valid" {
+			dnsHealthy++
+		} else if m.DomainStatus == "warning" || m.DomainStatus == "expired" || m.DomainStatus == "error" {
+			dnsWarnings++
+		}
+	}
+
+	overview.Fleet.Up = upCount
+	overview.Fleet.Down = downCount
+	overview.Fleet.Paused = pausedCount
+
+	if len(intervals) > 0 {
+		minSec := intervals[0]
+		maxSec := intervals[0]
+		for _, sec := range intervals {
+			if sec < minSec {
+				minSec = sec
+			}
+			if sec > maxSec {
+				maxSec = sec
+			}
+		}
+
+		modeSec := intervals[0]
+		maxFreq := 0
+		for sec, freq := range intervalFreq {
+			if freq > maxFreq {
+				maxFreq = freq
+				modeSec = sec
+			} else if freq == maxFreq && sec < modeSec {
+				modeSec = sec
+			}
+		}
+
+		overview.Fleet.Intervals.MinSec = minSec
+		overview.Fleet.Intervals.MaxSec = maxSec
+		overview.Fleet.Intervals.ModeSec = modeSec
+		overview.Fleet.Intervals.IsUniform = (minSec == maxSec)
+	} else {
+		overview.Fleet.Intervals.IsUniform = true
+	}
+
+	overview.CertificatesAndDNS.SSLHealthy = sslHealthy
+	overview.CertificatesAndDNS.SSLWarnings = sslWarnings
+	overview.CertificatesAndDNS.DNSHealthy = dnsHealthy
+	overview.CertificatesAndDNS.DNSWarnings = dnsWarnings
+	overview.CertificatesAndDNS.TotalNotices = sslWarnings + dnsWarnings
+
+	return overview, nil
 }

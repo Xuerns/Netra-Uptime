@@ -464,6 +464,9 @@ func (m *mockMonService) GetDailyStats(orgId, monitorId string, days int) ([]mod
 func (m *mockMonService) TriggerCheck(orgId, monitorId string) (*monitor.RecentCheck, error) {
 	return &monitor.RecentCheck{ID: "chk-1"}, nil
 }
+func (m *mockMonService) GetFleetOverview(orgId string, windowDays int) (*monitor.FleetOverviewResponse, error) {
+	return &monitor.FleetOverviewResponse{WindowDays: windowDays}, nil
+}
 
 type mockIncService struct{}
 
@@ -1347,5 +1350,20 @@ func TestBadRoute_PublicAPI_ExpiredKey(t *testing.T) {
 	})
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("expected 401 for expired api key, got %d", w.Code)
+	}
+}
+
+func TestRoute_MonitorsOverview(t *testing.T) {
+	env, cleanup := setupTestRouter(t)
+	defer cleanup()
+
+	userID := uuid.New().String()
+	orgID := uuid.New().String()
+	setMockMember(orgID, userID, "member")
+	token := createValidToken(userID)
+
+	w := executeRequest(env.router, http.MethodGet, "/api/v1/organization/"+orgID+"/monitors/overview", nil, token, nil)
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200 for monitors overview route, got %d. Body: %s", w.Code, w.Body.String())
 	}
 }

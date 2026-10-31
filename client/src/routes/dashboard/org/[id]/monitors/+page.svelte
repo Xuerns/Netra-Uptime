@@ -6,7 +6,7 @@
 	import { Activity, Plus, TriangleAlert, Globe, Radio, Cpu, Search } from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
-	import { MonitorAPI, type Monitor } from '$lib/api/monitor';
+	import { MonitorAPI, type Monitor, type FleetOverviewResponse } from '$lib/api/monitor';
 	import MonitorItem from '$lib/components/monitor/MonitorItem.svelte';
 	import MonitorFilterBar from '$lib/components/monitor/MonitorFilterBar.svelte';
 	import MonitorListTable from '$lib/components/monitor/MonitorListTable.svelte';
@@ -29,6 +29,7 @@
 
 	// ── State ─────────────────────────────────────────────────────────────────
 	let monitors = $state<Monitor[]>([]);
+	let overview = $state<FleetOverviewResponse | null>(null);
 	let isLoading = $state(true);
 	let fetchError = $state('');
 	let viewMode = $state<ViewMode>('grid');
@@ -148,8 +149,17 @@
 		if (!silent) isLoading = true;
 		fetchError = '';
 		try {
-			const res = await MonitorAPI.getAll(orgId);
-			monitors = res.data ?? [];
+			const [monitorsRes, overviewRes] = await Promise.all([
+				MonitorAPI.getAll(orgId),
+				MonitorAPI.getFleetOverview(orgId, 30).catch((err) => {
+					console.error('Failed to load fleet overview', err);
+					return null;
+				})
+			]);
+			monitors = monitorsRes.data ?? [];
+			if (overviewRes && overviewRes.data) {
+				overview = overviewRes.data;
+			}
 		} catch (err: unknown) {
 			fetchError = parseApiError(err, 'Failed to fetch monitors.');
 		} finally {
@@ -261,7 +271,7 @@
 			</div>
 		{:else}
 			<!-- BEGIN: OverviewHeroStrip -->
-			<MonitorOverviewStats {monitors} />
+			<MonitorOverviewStats {monitors} {overview} />
 
 			<!-- BEGIN: FilterToolbar -->
 			<MonitorFilterBar
