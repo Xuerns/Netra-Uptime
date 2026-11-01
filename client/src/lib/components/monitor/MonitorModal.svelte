@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { MonitorAPI, type Monitor } from '$lib/api/monitor';
 	import { OrgAPI } from '$lib/api/organization';
 	import { AlertTemplateAPI, type AlertTemplate } from '$lib/api/alertTemplate';
@@ -188,94 +189,108 @@
 			!fieldErrors.timeoutSeconds
 	);
 
+	let lastOpenedKey = $state<string | null>(null);
+
+	function initForm() {
+		error = '';
+		fieldErrors = { name: '', target: '', intervalSeconds: '', timeoutSeconds: '' };
+		shake = { name: false, target: false, intervalSeconds: false, timeoutSeconds: false };
+
+		if (monitor) {
+			// Edit mode: prefill from existing monitor
+			name = monitor.Name || '';
+			target = monitor.Target || '';
+			intervalSeconds = monitor.IntervalSeconds || 60;
+			intervalSecondsStr = intervalSeconds.toString();
+			let initialTimeout = monitor.TimeoutSeconds || 10;
+			if (initialTimeout > 30 || initialTimeout >= intervalSeconds) {
+				const validPresets = TIMEOUT_OPTIONS.map((o) => parseInt(o.value, 10)).filter(
+					(v) => v < intervalSeconds
+				);
+				initialTimeout =
+					validPresets.length > 0
+						? Math.max(...validPresets)
+						: Math.max(1, Math.min(initialTimeout, Math.min(intervalSeconds - 1, 30)));
+			}
+			timeoutSeconds = initialTimeout;
+			timeoutSecondsStr = timeoutSeconds.toString();
+			expectedStatusCodeStr = monitor.ExpectedStatusCode
+				? monitor.ExpectedStatusCode.toString()
+				: '200';
+			isActive = monitor.IsActive !== undefined ? monitor.IsActive : true;
+			criticality = (monitor.Criticality as any) || 'medium';
+			enableSSLDomainCheck =
+				(monitor as any).EnableSSLDomainCheck !== undefined
+					? (monitor as any).EnableSSLDomainCheck
+					: true;
+			selectedTemplateId =
+				(monitor as any).AlertTemplateID || (monitor as any).alert_template_id || '';
+
+			const rawAssignees =
+				(monitor as any).Assignees ||
+				(monitor as any).assignees ||
+				(monitor as any).MonitorPICs ||
+				(monitor as any).monitor_pics ||
+				[];
+			selectedAssignees = Array.isArray(rawAssignees)
+				? rawAssignees
+						.map((pic: any) =>
+							typeof pic === 'string' ? pic : pic?.UserID || pic?.user_id || pic?.id
+						)
+						.filter(Boolean)
+						.slice(0, 50)
+				: [];
+		} else {
+			// Create mode: defaults
+			name = '';
+			target = '';
+			intervalSeconds = 60;
+			intervalSecondsStr = '60';
+			timeoutSeconds = 10;
+			timeoutSecondsStr = '10';
+			expectedStatusCodeStr = '200';
+			isActive = true;
+			criticality = 'medium';
+			enableSSLDomainCheck = true;
+			selectedAssignees = [];
+			selectedTemplateId = '';
+		}
+
+		if (orgId) {
+			OrgAPI.getMembers(orgId)
+				.then((res) => {
+					members = res.data ?? [];
+				})
+				.catch((err) => {
+					logger.error('Failed to load members', err);
+				});
+
+			AlertTemplateAPI.list(orgId)
+				.then((res) => {
+					alertTemplates = res.data ?? [];
+					if (!monitor) {
+						const defaultTmpl = alertTemplates.find((t) => t.is_default);
+						if (defaultTmpl && !selectedTemplateId) {
+							selectedTemplateId = defaultTmpl.id;
+						}
+					}
+				})
+				.catch(() => {});
+		}
+	}
+
 	// Sync form state whenever dialog opens or monitor prop changes
 	$effect(() => {
 		if (isOpen) {
-			error = '';
-			fieldErrors = { name: '', target: '', intervalSeconds: '', timeoutSeconds: '' };
-			shake = { name: false, target: false, intervalSeconds: false, timeoutSeconds: false };
-
-			if (monitor) {
-				// Edit mode: prefill from existing monitor
-				name = monitor.Name || '';
-				target = monitor.Target || '';
-				intervalSeconds = monitor.IntervalSeconds || 60;
-				intervalSecondsStr = intervalSeconds.toString();
-				let initialTimeout = monitor.TimeoutSeconds || 10;
-				if (initialTimeout > 30 || initialTimeout >= intervalSeconds) {
-					const validPresets = TIMEOUT_OPTIONS.map((o) => parseInt(o.value, 10)).filter(
-						(v) => v < intervalSeconds
-					);
-					initialTimeout =
-						validPresets.length > 0
-							? Math.max(...validPresets)
-							: Math.max(1, Math.min(initialTimeout, Math.min(intervalSeconds - 1, 30)));
-				}
-				timeoutSeconds = initialTimeout;
-				timeoutSecondsStr = timeoutSeconds.toString();
-				expectedStatusCodeStr = monitor.ExpectedStatusCode
-					? monitor.ExpectedStatusCode.toString()
-					: '200';
-				isActive = monitor.IsActive !== undefined ? monitor.IsActive : true;
-				criticality = (monitor.Criticality as any) || 'medium';
-				enableSSLDomainCheck =
-					(monitor as any).EnableSSLDomainCheck !== undefined
-						? (monitor as any).EnableSSLDomainCheck
-						: true;
-				selectedTemplateId =
-					(monitor as any).AlertTemplateID || (monitor as any).alert_template_id || '';
-
-				const rawAssignees =
-					(monitor as any).Assignees ||
-					(monitor as any).assignees ||
-					(monitor as any).MonitorPICs ||
-					(monitor as any).monitor_pics ||
-					[];
-				selectedAssignees = Array.isArray(rawAssignees)
-					? rawAssignees
-							.map((pic: any) =>
-								typeof pic === 'string' ? pic : pic?.UserID || pic?.user_id || pic?.id
-							)
-							.filter(Boolean)
-							.slice(0, 50)
-					: [];
-			} else {
-				// Create mode: defaults
-				name = '';
-				target = '';
-				intervalSeconds = 60;
-				intervalSecondsStr = '60';
-				timeoutSeconds = 10;
-				timeoutSecondsStr = '10';
-				expectedStatusCodeStr = '200';
-				isActive = true;
-				criticality = 'medium';
-				enableSSLDomainCheck = true;
-				selectedAssignees = [];
-				selectedTemplateId = '';
+			const currentKey = monitor ? `edit-${monitor.ID}` : `create-${effectiveType}`;
+			if (lastOpenedKey !== currentKey) {
+				lastOpenedKey = currentKey;
+				untrack(() => {
+					initForm();
+				});
 			}
-
-			if (orgId) {
-				OrgAPI.getMembers(orgId)
-					.then((res) => {
-						members = res.data ?? [];
-					})
-					.catch((err) => {
-						logger.error('Failed to load members', err);
-					});
-
-				AlertTemplateAPI.list(orgId)
-					.then((res) => {
-						alertTemplates = res.data ?? [];
-						if (!monitor) {
-							const defaultTmpl = alertTemplates.find((t) => t.is_default);
-							if (defaultTmpl && !selectedTemplateId) {
-								selectedTemplateId = defaultTmpl.id;
-							}
-						}
-					})
-					.catch(() => {});
-			}
+		} else {
+			lastOpenedKey = null;
 		}
 	});
 
