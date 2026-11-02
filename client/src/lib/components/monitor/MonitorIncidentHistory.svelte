@@ -2,14 +2,30 @@
 	import type { Incident } from '$lib/api/incident';
 	import { CheckCircle2 } from 'lucide-svelte';
 	import { formatDateTime } from '$lib/utils/datetime';
+	import { Pagination } from '$lib/components/common';
 
 	interface Props {
 		orgId: string;
 		incidents: Incident[];
 		tz?: string;
+		itemsPerPage?: number;
 	}
 
-	let { orgId, incidents = [], tz = 'UTC' }: Props = $props();
+	let { orgId, incidents = [], tz = 'UTC', itemsPerPage = 6 }: Props = $props();
+
+	let currentPage = $state(1);
+	let totalPages = $derived(Math.max(1, Math.ceil(incidents.length / itemsPerPage)));
+	let safeCurrentPage = $derived(Math.min(Math.max(1, currentPage), totalPages));
+	let paginatedIncidents = $derived.by(() => {
+		const start = (safeCurrentPage - 1) * itemsPerPage;
+		return incidents.slice(start, start + itemsPerPage);
+	});
+
+	$effect(() => {
+		if (currentPage > totalPages) {
+			currentPage = totalPages;
+		}
+	});
 </script>
 
 <div class="flex flex-col gap-4 min-w-0">
@@ -31,7 +47,7 @@
 		</div>
 	{:else}
 		<ul class="divide-y divide-border/60">
-			{#each incidents as inc (inc.ID)}
+			{#each paginatedIncidents as inc (inc.ID)}
 				<li>
 					<a
 						href="/dashboard/org/{orgId}/incidents/{inc.ID}"
@@ -70,5 +86,7 @@
 				</li>
 			{/each}
 		</ul>
+
+		<Pagination bind:currentPage {totalPages} totalItems={incidents.length} itemName="incidents" />
 	{/if}
 </div>

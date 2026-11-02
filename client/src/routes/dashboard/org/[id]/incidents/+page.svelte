@@ -20,7 +20,17 @@
 	let activeFilter = $state<'active' | 'resolved'>('active');
 	let severityFilter = $state<'all' | 'sev1' | 'sev2' | 'sev3' | 'sev4'>('all');
 	let currentPage = $state(1);
-	let itemsPerPage = $state(10);
+
+	// Adaptive page size: fit as many rows as the available viewport height allows
+	const ESTIMATED_ROW_HEIGHT = 59;
+	const MIN_ITEMS_PER_PAGE = 6;
+	const DEFAULT_ITEMS_PER_PAGE = 10;
+	let listContainerHeight = $state(0);
+	let itemsPerPage = $derived(
+		listContainerHeight > 0
+			? Math.max(MIN_ITEMS_PER_PAGE, Math.floor(listContainerHeight / ESTIMATED_ROW_HEIGHT))
+			: DEFAULT_ITEMS_PER_PAGE
+	);
 
 	async function loadIncidents(orgId: string) {
 		const res = await IncidentAPI.getAll(orgId);
@@ -114,57 +124,67 @@
 		{error}
 	</div>
 {:else}
-	<!-- GitHub Style Table List Box -->
-	<div class="bg-card border border-border rounded-md overflow-hidden">
-		<!-- Table Header Bar with GitHub-Style Active/Resolved Toggles -->
-		<IncidentToolbar
-			{activeFilter}
-			{severityFilter}
-			{activeCount}
-			{resolvedCount}
-			totalFiltered={filteredIncidents.length}
-			onSelectActiveFilter={handleSelectActiveFilter}
-			onSelectSeverityFilter={handleSelectSeverityFilter}
-		/>
+	<!-- GitHub Style Table List Box (fills available viewport height) -->
+	<div class="flex flex-col h-[calc(100vh-6rem)] min-h-120">
+		<div
+			class="flex flex-col flex-1 min-h-0 bg-card border border-border rounded-md overflow-hidden"
+		>
+			<!-- Table Header Bar with GitHub-Style Active/Resolved Toggles -->
+			<div class="shrink-0">
+				<IncidentToolbar
+					{activeFilter}
+					{severityFilter}
+					{activeCount}
+					{resolvedCount}
+					totalFiltered={filteredIncidents.length}
+					onSelectActiveFilter={handleSelectActiveFilter}
+					onSelectSeverityFilter={handleSelectSeverityFilter}
+				/>
+			</div>
 
-		<!-- Incident Rows Container -->
-		<div class="divide-y divide-white/5">
-			{#each paginatedIncidents as incident (incident.ID)}
-				<IncidentListItem {incident} orgId={currentOrgId} timezone={tz} />
-			{/each}
+			<!-- Incident Rows Container -->
+			<div
+				bind:clientHeight={listContainerHeight}
+				data-lenis-prevent
+				class="divide-y divide-white/5 flex flex-col flex-1 min-h-0 overflow-y-auto"
+			>
+				{#each paginatedIncidents as incident (incident.ID)}
+					<IncidentListItem {incident} orgId={currentOrgId} timezone={tz} />
+				{/each}
 
-			<!-- Empty State when filter/search yields 0 results -->
-			{#if paginatedIncidents.length === 0}
-				<div class="p-12 text-center space-y-3">
-					{#if activeFilter === 'active' && activeCount === 0}
-						<CheckCircle2 class="size-10 text-emerald-400 mx-auto opacity-90" />
-						<h3 class="text-base font-semibold text-foreground">All Systems Operational</h3>
-						<p class="text-xs text-muted-foreground max-w-110 mx-auto">
-							No active incidents recorded at this time. All microservices are operating within
-							healthy metrics.
-						</p>
-					{:else}
-						<AlertTriangle class="size-10 text-muted-foreground mx-auto opacity-50" />
-						<h3 class="text-base font-semibold text-foreground">No Incidents Found</h3>
-						<p class="text-xs text-muted-foreground max-w-110 mx-auto">
-							No incident records match your current search query or filter criteria.
-						</p>
-					{/if}
+				<!-- Empty State when filter/search yields 0 results -->
+				{#if paginatedIncidents.length === 0}
+					<div class="flex-1 flex flex-col items-center justify-center p-12 text-center space-y-3">
+						{#if activeFilter === 'active' && activeCount === 0}
+							<CheckCircle2 class="size-10 text-emerald-400 mx-auto opacity-90" />
+							<h3 class="text-base font-semibold text-foreground">All Systems Operational</h3>
+							<p class="text-xs text-muted-foreground max-w-110 mx-auto">
+								No active incidents recorded at this time. All microservices are operating within
+								healthy metrics.
+							</p>
+						{:else}
+							<AlertTriangle class="size-10 text-muted-foreground mx-auto opacity-50" />
+							<h3 class="text-base font-semibold text-foreground">No Incidents Found</h3>
+							<p class="text-xs text-muted-foreground max-w-110 mx-auto">
+								No incident records match your current search query or filter criteria.
+							</p>
+						{/if}
+					</div>
+				{/if}
+			</div>
+
+			<!-- Pagination Footer Bar -->
+			{#if filteredIncidents.length > 0}
+				<div class="shrink-0 mt-auto bg-white/3 border-t border-border px-5 py-3">
+					<Pagination
+						bind:currentPage
+						{totalPages}
+						totalItems={filteredIncidents.length}
+						itemName="incidents"
+						class="pt-0 border-t-0"
+					/>
 				</div>
 			{/if}
 		</div>
-
-		<!-- Pagination Footer Bar -->
-		{#if filteredIncidents.length > 0}
-			<div class="bg-white/3 border-t border-border px-5 py-3">
-				<Pagination
-					bind:currentPage
-					{totalPages}
-					totalItems={filteredIncidents.length}
-					itemName="incidents"
-					class="pt-0 border-t-0"
-				/>
-			</div>
-		{/if}
 	</div>
 {/if}
