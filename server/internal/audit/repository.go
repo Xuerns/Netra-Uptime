@@ -37,7 +37,20 @@ func (r *AuditRepositoryImpl) GetByOrganization(orgId string, query GetAuditLogs
 		Where("organization_id = ?", orgUUID)
 
 	if query.Action != "" {
-		dbQuery = dbQuery.Where("action = ?", query.Action)
+		if strings.Contains(query.Action, ",") {
+			rawActions := strings.Split(query.Action, ",")
+			var actions []string
+			for _, a := range rawActions {
+				if trimmed := strings.TrimSpace(a); trimmed != "" {
+					actions = append(actions, trimmed)
+				}
+			}
+			if len(actions) > 0 {
+				dbQuery = dbQuery.Where("action IN ?", actions)
+			}
+		} else {
+			dbQuery = dbQuery.Where("action = ?", query.Action)
+		}
 	}
 
 	if query.EntityType != "" {

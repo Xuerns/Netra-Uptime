@@ -14,7 +14,7 @@
 	interface Props {
 		logs: AuditLogItem[];
 		isFetching: boolean;
-		selectedAction: string;
+		selectedActions: string[];
 		selectedActionLabel: string;
 		visibleActionGroups: ActionFilterGroup[];
 		getActionStyle: (action: string) => string;
@@ -22,19 +22,21 @@
 		fmtTimeAgo: (iso: string) => string;
 		fmtFullDate: (iso: string) => string;
 		initials: (name?: string) => string;
+		rowsHeight?: number;
 	}
 
 	let {
 		logs,
 		isFetching,
-		selectedAction,
+		selectedActions,
 		selectedActionLabel,
 		visibleActionGroups,
 		getActionStyle,
 		onActionFilterChange,
 		fmtTimeAgo,
 		fmtFullDate,
-		initials
+		initials,
+		rowsHeight = $bindable(0)
 	}: Props = $props();
 
 	let tableContainer = $state<HTMLDivElement | null>(null);
@@ -47,7 +49,7 @@
 </script>
 
 <div
-	class="border border-border rounded-md bg-card overflow-hidden flex flex-col max-h-[calc(100vh-16rem)] transition-opacity duration-200 {isFetching
+	class="border border-border rounded-md bg-card overflow-hidden flex flex-col flex-1 min-h-0 transition-opacity duration-200 {isFetching
 		? 'opacity-50 pointer-events-none'
 		: 'opacity-100'}"
 >
@@ -58,12 +60,13 @@
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger class="focus:outline-none w-full">
 					<span
-						class="flex items-center gap-1.5 transition-colors cursor-pointer {selectedAction
+						class="flex items-center gap-1.5 transition-colors cursor-pointer {selectedActions.length >
+						0
 							? 'text-primary'
 							: 'text-inherit hover:text-foreground'}"
 					>
 						<span class="truncate">{selectedActionLabel || 'Action'}</span>
-						{#if selectedAction}
+						{#if selectedActions.length > 0}
 							<!-- svelte-ignore a11y_no_static_element_interactions -->
 							<span
 								role="button"
@@ -95,14 +98,14 @@
 				>
 					<!-- All Actions option -->
 					<DropdownMenu.Item
-						class="cursor-pointer flex items-center justify-between px-2.5 py-2 rounded-md hover:bg-white/8 text-xs font-medium {selectedAction ===
-						''
+						class="cursor-pointer flex items-center justify-between px-2.5 py-2 rounded-md hover:bg-white/8 text-xs font-medium {selectedActions.length ===
+						0
 							? 'text-primary bg-white/5 font-semibold'
 							: 'text-foreground'}"
 						onclick={() => onActionFilterChange('')}
 					>
 						<span>All Actions</span>
-						{#if selectedAction === ''}
+						{#if selectedActions.length === 0}
 							<CheckCircle2 class="size-3 text-primary shrink-0" />
 						{/if}
 					</DropdownMenu.Item>
@@ -116,9 +119,10 @@
 							<span>{group.label}</span>
 						</DropdownMenu.Label>
 						{#each group.actions as action (action.value)}
-							{@const isSelected = selectedAction === action.value}
+							{@const isSelected = selectedActions.includes(action.value)}
 							{@const style = getActionStyle(action.value)}
 							<DropdownMenu.Item
+								closeOnSelect={false}
 								class="cursor-pointer flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md hover:bg-white/8 text-xs {isSelected
 									? 'text-primary bg-white/5 font-semibold'
 									: 'text-foreground'}"
@@ -142,8 +146,9 @@
 	<!-- Log Rows (Scrollable) -->
 	<div
 		bind:this={tableContainer}
+		bind:clientHeight={rowsHeight}
 		data-lenis-prevent
-		class="overflow-y-auto flex-1 divide-y divide-white/5"
+		class="overflow-y-auto flex-1 min-h-0 divide-y divide-white/5"
 	>
 		{#each logs as log (log.id)}
 			{@const actionStyle = getActionStyle(log.action)}

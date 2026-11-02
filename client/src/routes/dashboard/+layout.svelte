@@ -1,8 +1,9 @@
 <script lang="ts">
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import AppSidebar from '$lib/components/appSidebar.svelte';
-
-	import { Mail } from 'lucide-svelte';
+	import OrgHeaderBar from '$lib/components/org/OrgHeaderBar.svelte';
+	import { headerStore } from '$lib/stores/headerStore.svelte';
+	import { beforeNavigate } from '$app/navigation';
 	import { fade } from 'svelte/transition';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
@@ -16,6 +17,20 @@
 			$page.url.pathname.split('/').filter(Boolean).length > 2
 	);
 
+	const pageTitle = $derived.by(() => {
+		if (headerStore.title) return headerStore.title;
+		const path = $page.url.pathname;
+		if (path.startsWith('/dashboard/org')) return 'Organizations';
+		if (path.startsWith('/dashboard/notification')) return 'Invitations';
+		if (path.startsWith('/dashboard/profile')) return 'Profile';
+		return 'Dashboard';
+	});
+
+	// Reset header state before each navigation so the new page starts clean.
+	beforeNavigate(() => {
+		headerStore.reset();
+	});
+
 	onMount(() => {
 		invitationStore.fetch();
 	});
@@ -27,29 +42,18 @@
 	<Sidebar.Provider>
 		<AppSidebar user={data?.user} />
 		<Sidebar.Inset class="flex flex-col min-h-screen">
-			<header
-				class="flex h-12 shrink-0 items-center justify-between gap-2 border-b bg-card px-4 border-border!"
-			>
-				<Sidebar.Trigger class="-ml-1" />
-
-				<a
-					href="/dashboard/notification"
-					class="flex relative items-center justify-center size-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
-					aria-label="Invitations"
-					title="Invitations"
-				>
-					<Mail class="size-4.5" />
-					{#if invitationStore.hasPending}
-						<span class="absolute top-2 right-2 flex size-2">
-							<span
-								class="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-75"
-							></span>
-							<span class="relative inline-flex size-2 rounded-full bg-primary ring-2 ring-card"
-							></span>
-						</span>
-					{/if}
-				</a>
-			</header>
+			<!-- Top Header Bar -->
+			<OrgHeaderBar
+				orgName="Workspace"
+				breadcrumbHref="/dashboard/org"
+				{pageTitle}
+				showSearch={headerStore.showSearch}
+				bind:searchQuery={headerStore.searchQuery}
+				searchPlaceholder={headerStore.searchPlaceholder}
+				actionType={headerStore.actionType}
+				actionLabel={headerStore.actionLabel}
+				onAction={headerStore.onAction}
+			/>
 
 			<main class="flex-1 relative flex flex-col min-h-0 dashboard-bg">
 				{#key $page.url.pathname}

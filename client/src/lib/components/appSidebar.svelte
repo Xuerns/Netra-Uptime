@@ -187,7 +187,7 @@
 						{/if}
 						{#if invitationStore.hasPending}
 							<span
-								class="absolute top-0.5 right-0.5 size-2 rounded-full bg-primary border border-background z-20"
+								class="absolute top-0.5 right-0.5 size-2 rounded-full bg-primary ring-2 ring-sidebar z-20 group-data-[collapsible=icon]:block hidden"
 							></span>
 						{/if}
 					</div>
@@ -203,8 +203,17 @@
 							>{user.email}</span
 						>
 					</div>
+					{#if invitationStore.hasPending}
+						<span
+							class="ml-auto inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-semibold font-mono rounded-full bg-primary/15 text-primary border border-primary/25 shrink-0 group-data-[collapsible=icon]:hidden"
+						>
+							{invitationStore.pendingCount}
+						</span>
+					{/if}
 					<ChevronsUpDown
-						class="ml-auto size-3.5 text-muted-foreground shrink-0 group-hover:text-sidebar-foreground transition-colors group-data-[collapsible=icon]:hidden"
+						class="{invitationStore.hasPending
+							? ''
+							: 'ml-auto'} size-3.5 text-muted-foreground shrink-0 group-hover:text-sidebar-foreground transition-colors group-data-[collapsible=icon]:hidden"
 					/>
 				</div>
 			</DropdownMenu.Trigger>
@@ -256,7 +265,11 @@
 							<Mail class="size-4" />
 							<span>Invitations</span>
 							{#if invitationStore.hasPending}
-								<span class="ml-auto size-2 rounded-full bg-primary"></span>
+								<span
+									class="ml-auto inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-semibold font-mono rounded-full bg-primary/15 text-primary border border-primary/25"
+								>
+									{invitationStore.pendingCount}
+								</span>
 							{/if}
 						</DropdownMenu.Item></a
 					>

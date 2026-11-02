@@ -9,8 +9,9 @@
 	import { onMount } from 'svelte';
 
 	interface Props {
-		orgName: string;
+		orgName?: string;
 		pageTitle: string;
+		breadcrumbHref?: string;
 		showSearch?: boolean;
 		searchQuery?: string;
 		searchPlaceholder?: string;
@@ -20,8 +21,9 @@
 	}
 
 	let {
-		orgName,
+		orgName = 'Workspace',
 		pageTitle,
+		breadcrumbHref,
 		showSearch = false,
 		searchQuery = $bindable(''),
 		searchPlaceholder = 'Search...',
@@ -62,10 +64,11 @@
 			<Breadcrumb.List class="text-xs">
 				<Breadcrumb.Item>
 					<Breadcrumb.Link
-						href="/dashboard/org/{$page.params.id}"
+						href={breadcrumbHref ??
+							($page.params.id ? `/dashboard/org/${$page.params.id}` : '/dashboard/org')}
 						class="truncate max-w-45 sm:max-w-70"
 					>
-						{orgName}
+						{orgName || 'Workspace'}
 					</Breadcrumb.Link>
 				</Breadcrumb.Item>
 				<Breadcrumb.Separator />

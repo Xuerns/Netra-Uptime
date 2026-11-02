@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { page } from '$app/stores';
 	import type { PageData } from './$types';
 	import { headerStore } from '$lib/stores/headerStore.svelte';
@@ -31,31 +31,62 @@
 	let totalPages = $state(1);
 	let totalCount = $state(0);
 
+	// Adaptive page size: fit as many rows as the available viewport height allows
+	const ESTIMATED_ROW_HEIGHT = 49;
+	const MIN_PAGE_SIZE = 6;
+	const MAX_PAGE_SIZE = 100;
+	const DEFAULT_PAGE_SIZE = 20;
+	const PAGE_SIZE_DEBOUNCE_MS = 300;
+	let rowsHeight = $state(0);
+	let lastFetchedLimit = DEFAULT_PAGE_SIZE;
+	let pageSize = $derived(
+		rowsHeight > 0
+			? Math.min(
+					MAX_PAGE_SIZE,
+					Math.max(MIN_PAGE_SIZE, Math.floor(rowsHeight / ESTIMATED_ROW_HEIGHT))
+				)
+			: DEFAULT_PAGE_SIZE
+	);
 	let searchQuery = $derived(headerStore.searchQuery);
-	let selectedCategory = $state<string>('ALL');
-	let selectedAction = $state('');
+	let selectedCategories = $state<string[]>([]);
+	let selectedActions = $state<string[]>([]);
 
-	let activeCategory = $derived(
-		AUDIT_CATEGORIES.find((c) => c.id === selectedCategory) || AUDIT_CATEGORIES[0]
+	let activeCategories = $derived(
+		AUDIT_CATEGORIES.filter((c) => c.id !== 'ALL' && selectedCategories.includes(c.id))
 	);
 
-	let selectedActionLabel = $derived.by(() => {
-		if (!selectedAction) return '';
-		for (const group of AUDIT_ACTION_GROUPS) {
-			const found = group.actions.find((a) => a.value === selectedAction);
-			if (found) return found.label;
+	let selectedActionItems = $derived.by(() => {
+		const items: Array<{ value: string; label: string }> = [];
+		for (const val of selectedActions) {
+			let label = val;
+			for (const group of AUDIT_ACTION_GROUPS) {
+				const found = group.actions.find((a) => a.value === val);
+				if (found) {
+					label = found.label;
+					break;
+				}
+			}
+			items.push({ value: val, label });
 		}
-		return selectedAction;
+		return items;
 	});
 
+	let selectedActionLabel = $derived(
+		selectedActionItems.length === 0
+			? ''
+			: selectedActionItems.length === 1
+				? selectedActionItems[0].label
+				: `${selectedActionItems.length} Actions`
+	);
+
 	let visibleActionGroups = $derived(
-		selectedCategory === 'ALL'
+		selectedCategories.length === 0
 			? AUDIT_ACTION_GROUPS
-			: AUDIT_ACTION_GROUPS.filter((g) => g.categoryId === selectedCategory)
+			: AUDIT_ACTION_GROUPS.filter((g) => selectedCategories.includes(g.categoryId))
 	);
 
 	let hasActiveFilters = $derived(
-		selectedCategory !== 'ALL' || selectedAction !== '' || searchQuery.trim() !== ''
+		selectedCategories.length > 0 || selectedActions.length > 0 || searchQuery.trim() !== ''
 	);
 
 	const initials = (name?: string) => getInitials(name);
@@ -74,23 +105,31 @@
 		errorMsg = '';
 
 		const pageToFetch = pageNum ?? currentPage;
+		const limitToFetch = pageSize;
 
 		try {
-			const cat = AUDIT_CATEGORIES.find((c) => c.id === selectedCategory);
-			const entityTypeFilter = cat && cat.id !== 'ALL' ? cat.entityTypes : undefined;
+			const entityTypeFilter =
+				activeCategories.length > 0
+					? activeCategories
+							.map((c) => c.entityTypes)
+							.filter(Boolean)
+							.join(',')
+					: undefined;
+			const actionFilter = selectedActions.length > 0 ? selectedActions.join(',') : undefined;
 
 			const res = await AuditAPI.getLogs(orgId, {
 				page: pageToFetch,
-				limit: 20,
+				limit: limitToFetch,
 				search: searchQuery.trim() || undefined,
-				action: selectedAction || undefined,
-				entity_type: entityTypeFilter || undefined
+				action: actionFilter,
+				entity_type: entityTypeFilter
 			});
 
 			logs = res.logs ?? [];
 			totalCount = res.total_count ?? 0;
 			totalPages = res.total_pages ?? 1;
 			currentPage = pageToFetch;
+			lastFetchedLimit = limitToFetch;
 		} catch (err: unknown) {
 			errorMsg = err instanceof Error ? err.message : 'Failed to load audit logs.';
 			logs = [];
@@ -105,43 +144,54 @@
 		fetchAuditLogs(false);
 	}, 350);
 
-	function handleCategoryChange(catId: string) {
-		selectedCategory = catId;
-		currentPage = 1;
-
-		if (selectedAction) {
-			if (catId !== 'ALL') {
-				const group = AUDIT_ACTION_GROUPS.find((g) => g.categoryId === catId);
-				if (!group || !group.actions.some((a) => a.value === selectedAction)) {
-					selectedAction = '';
-				}
-			}
+	function handleCategoryToggle(catId: string) {
+		if (catId === 'ALL') {
+			selectedCategories = [];
+		} else if (selectedCategories.includes(catId)) {
+			selectedCategories = selectedCategories.filter((id) => id !== catId);
+		} else {
+			selectedCategories = [...selectedCategories, catId];
 		}
 
+		if (selectedCategories.length > 0 && selectedActions.length > 0) {
+			const allowedActions = new Set(
+				AUDIT_ACTION_GROUPS.filter((g) => selectedCategories.includes(g.categoryId)).flatMap((g) =>
+					g.actions.map((a) => a.value)
+				)
+			);
+			selectedActions = selectedActions.filter((a) => allowedActions.has(a));
+		}
+
+		currentPage = 1;
 		fetchAuditLogs(false);
 	}
 
 	function handleActionFilterChange(actionVal: string) {
-		selectedAction = actionVal;
-		if (actionVal) {
+		if (!actionVal) {
+			selectedActions = [];
+		} else if (selectedActions.includes(actionVal)) {
+			selectedActions = selectedActions.filter((a) => a !== actionVal);
+		} else {
+			selectedActions = [...selectedActions, actionVal];
 			const parentGroup = AUDIT_ACTION_GROUPS.find((g) =>
 				g.actions.some((a) => a.value === actionVal)
 			);
 			if (
 				parentGroup &&
-				selectedCategory !== 'ALL' &&
-				selectedCategory !== parentGroup.categoryId
+				selectedCategories.length > 0 &&
+				!selectedCategories.includes(parentGroup.categoryId)
 			) {
-				selectedCategory = parentGroup.categoryId;
+				selectedCategories = [...selectedCategories, parentGroup.categoryId];
 			}
 		}
+
 		currentPage = 1;
 		fetchAuditLogs(false);
 	}
 
 	function resetFilters() {
-		selectedCategory = 'ALL';
-		selectedAction = '';
+		selectedCategories = [];
+		selectedActions = [];
 		headerStore.searchQuery = '';
 		currentPage = 1;
 		fetchAuditLogs(false);
@@ -183,28 +233,46 @@
 	onMount(() => {
 		fetchAuditLogs(true);
 	});
+
+	// Refetch from the first page when the viewport-derived page size changes
+	$effect(() => {
+		const size = pageSize;
+		if (isInitialLoading || size === lastFetchedLimit) return;
+
+		const timer = setTimeout(() => {
+			untrack(() => {
+				currentPage = 1;
+				fetchAuditLogs(false, 1);
+			});
+		}, PAGE_SIZE_DEBOUNCE_MS);
+
+		return () => clearTimeout(timer);
+	});
 </script>
 
 <svelte:head>
 	<title>Audit Logs | Netra Uptime</title>
 </svelte:head>
 
-<div class="text-foreground antialiased mx-auto w-full flex-1 flex flex-col min-h-full">
+<div
+	class="text-foreground antialiased mx-auto w-full flex flex-col h-[calc(100vh-6rem)] min-h-120"
+>
 	<!-- Filter Controls Toolbar -->
-	<AuditLogToolbar
-		categories={AUDIT_CATEGORIES}
-		{selectedCategory}
-		{activeCategory}
-		{selectedAction}
-		{selectedActionLabel}
-		{searchQuery}
-		{hasActiveFilters}
-		{totalCount}
-		onCategoryChange={handleCategoryChange}
-		onActionClear={() => handleActionFilterChange('')}
-		onResetFilters={resetFilters}
-		onClearSearch={clearSearch}
-	/>
+	<div class="shrink-0">
+		<AuditLogToolbar
+			categories={AUDIT_CATEGORIES}
+			{selectedCategories}
+			{activeCategories}
+			selectedActions={selectedActionItems}
+			{searchQuery}
+			{hasActiveFilters}
+			{totalCount}
+			onCategoryToggle={handleCategoryToggle}
+			onActionRemove={(val) => handleActionFilterChange(val)}
+			onResetFilters={resetFilters}
+			onClearSearch={clearSearch}
+		/>
+	</div>
 
 	<!-- Error alert -->
 	{#if errorMsg}
@@ -231,7 +299,7 @@
 		<AuditLogTable
 			{logs}
 			{isFetching}
-			{selectedAction}
+			{selectedActions}
 			{selectedActionLabel}
 			{visibleActionGroups}
 			{getActionStyle}
@@ -239,16 +307,19 @@
 			{fmtTimeAgo}
 			{fmtFullDate}
 			{initials}
+			bind:rowsHeight
 		/>
 
 		<!-- Pagination Footer -->
-		<Pagination
-			bind:currentPage
-			{totalPages}
-			totalItems={totalCount}
-			itemName="events"
-			onPageChange={(page) => fetchAuditLogs(false, page)}
-			class="mt-4"
-		/>
+		<div class="shrink-0 mt-auto">
+			<Pagination
+				bind:currentPage
+				{totalPages}
+				totalItems={totalCount}
+				itemName="events"
+				onPageChange={(page) => fetchAuditLogs(false, page)}
+				class="mt-4"
+			/>
+		</div>
 	{/if}
 </div>

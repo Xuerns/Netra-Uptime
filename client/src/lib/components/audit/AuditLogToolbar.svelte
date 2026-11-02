@@ -1,5 +1,13 @@
 <script lang="ts">
-	import { ChevronDown, CheckCircle2, RotateCcw, X, Search, ListFilter } from 'lucide-svelte';
+	import {
+		ChevronDown,
+		CheckCircle2,
+		RotateCcw,
+		X,
+		Search,
+		ListFilter,
+		ScrollText
+	} from 'lucide-svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import type { ComponentType } from 'svelte';
 
@@ -12,33 +20,41 @@
 
 	interface Props {
 		categories: AuditCategory[];
-		selectedCategory: string;
-		activeCategory: AuditCategory;
-		selectedAction: string;
-		selectedActionLabel: string;
+		selectedCategories: string[];
+		activeCategories: AuditCategory[];
+		selectedActions: Array<{ value: string; label: string }>;
 		searchQuery: string;
 		hasActiveFilters: boolean;
 		totalCount: number;
-		onCategoryChange: (catId: string) => void;
-		onActionClear: () => void;
+		onCategoryToggle: (catId: string) => void;
+		onActionRemove: (actionVal: string) => void;
 		onResetFilters: () => void;
 		onClearSearch: () => void;
 	}
 
 	let {
 		categories,
-		selectedCategory,
-		activeCategory,
-		selectedAction,
-		selectedActionLabel,
+		selectedCategories,
+		activeCategories,
+		selectedActions,
 		searchQuery,
 		hasActiveFilters,
 		totalCount,
-		onCategoryChange,
-		onActionClear,
+		onCategoryToggle,
+		onActionRemove,
 		onResetFilters,
 		onClearSearch
 	}: Props = $props();
+
+	let TriggerIcon = $derived(activeCategories.length === 1 ? activeCategories[0].icon : ScrollText);
+
+	let triggerLabel = $derived(
+		activeCategories.length === 0
+			? 'All Categories'
+			: activeCategories.length === 1
+				? activeCategories[0].label
+				: `${activeCategories.length} Categories`
+	);
 </script>
 
 <div class="flex flex-col gap-2.5 mb-6">
@@ -52,17 +68,17 @@
 				<DropdownMenu.Trigger class="focus:outline-none">
 					<button
 						type="button"
-						class="flex items-center gap-2 h-9 px-3 rounded-lg text-xs font-medium border transition-colors cursor-pointer {selectedCategory !==
-						'ALL'
+						class="flex items-center gap-2 h-9 px-3 rounded-lg text-xs font-medium border transition-colors cursor-pointer {selectedCategories.length >
+						0
 							? 'bg-primary/10 border-primary/30 text-primary'
 							: 'bg-surface-sidebar border-border text-foreground hover:bg-white/5'}"
 					>
-						<activeCategory.icon
-							class="size-3.5 {selectedCategory !== 'ALL'
+						<TriggerIcon
+							class="size-3.5 {selectedCategories.length > 0
 								? 'text-primary'
 								: 'text-muted-foreground'}"
 						/>
-						<span>{activeCategory.label}</span>
+						<span>{triggerLabel}</span>
 						<ChevronDown class="size-3 opacity-60 ml-0.5" />
 					</button>
 				</DropdownMenu.Trigger>
@@ -78,12 +94,16 @@
 						Filter by Category
 					</DropdownMenu.Label>
 					{#each categories as cat (cat.id)}
-						{@const isSelected = selectedCategory === cat.id}
+						{@const isSelected =
+							cat.id === 'ALL'
+								? selectedCategories.length === 0
+								: selectedCategories.includes(cat.id)}
 						<DropdownMenu.Item
+							closeOnSelect={cat.id === 'ALL'}
 							class="cursor-pointer flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md hover:bg-white/8 text-xs transition-colors {isSelected
 								? 'text-primary bg-white/5 font-semibold'
 								: 'text-foreground'}"
-							onclick={() => onCategoryChange(cat.id)}
+							onclick={() => onCategoryToggle(cat.id)}
 						>
 							<div class="flex items-center gap-2">
 								<cat.icon
@@ -127,39 +147,39 @@
 		<div class="flex items-center gap-2 flex-wrap text-xs px-1">
 			<span class="text-[11px] text-muted-foreground font-medium">Active:</span>
 
-			{#if selectedCategory !== 'ALL'}
+			{#each activeCategories as cat (cat.id)}
 				<span
 					class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 border border-primary/20 text-primary text-[11px] font-medium"
 				>
-					<activeCategory.icon class="size-3" />
-					<span>Category: {activeCategory.label}</span>
+					<cat.icon class="size-3" />
+					<span>Category: {cat.label}</span>
 					<button
 						type="button"
 						class="hover:text-foreground transition-colors cursor-pointer ml-0.5"
-						onclick={() => onCategoryChange('ALL')}
-						aria-label="Clear category filter"
+						onclick={() => onCategoryToggle(cat.id)}
+						aria-label="Remove {cat.label} category filter"
 					>
 						<X class="size-3" />
 					</button>
 				</span>
-			{/if}
+			{/each}
 
-			{#if selectedAction}
+			{#each selectedActions as act (act.value)}
 				<span
 					class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 border border-primary/20 text-primary text-[11px] font-medium"
 				>
 					<ListFilter class="size-3" />
-					<span>Action: {selectedActionLabel}</span>
+					<span>Action: {act.label}</span>
 					<button
 						type="button"
 						class="hover:text-foreground transition-colors cursor-pointer ml-0.5"
-						onclick={onActionClear}
-						aria-label="Clear action filter"
+						onclick={() => onActionRemove(act.value)}
+						aria-label="Remove {act.label} action filter"
 					>
 						<X class="size-3" />
 					</button>
 				</span>
-			{/if}
+			{/each}
 
 			{#if searchQuery}
 				<span
