@@ -530,16 +530,18 @@ func (r *MonitorRepositoryImpl) GetFleetOverview(orgId string, windowDays int) (
 			intervalFreq[m.IntervalSeconds]++
 		}
 
-		if m.SSLStatus == "valid" {
-			sslHealthy++
-		} else if m.SSLStatus == "warning" || m.SSLStatus == "expired" || m.SSLStatus == "error" {
-			sslWarnings++
-		}
+		if m.Type == "http" && m.EnableSSLDomainCheck {
+			if m.SSLStatus == "valid" {
+				sslHealthy++
+			} else if m.SSLStatus == "warning" || m.SSLStatus == "expired" || m.SSLStatus == "error" {
+				sslWarnings++
+			}
 
-		if m.DomainStatus == "valid" {
-			dnsHealthy++
-		} else if m.DomainStatus == "warning" || m.DomainStatus == "expired" || m.DomainStatus == "error" {
-			dnsWarnings++
+			if m.DomainStatus == "valid" {
+				dnsHealthy++
+			} else if m.DomainStatus == "warning" || m.DomainStatus == "expired" || m.DomainStatus == "error" {
+				dnsWarnings++
+			}
 		}
 	}
 

@@ -87,15 +87,25 @@
 	});
 
 	// ── 4. Certificates & DNS Notices ─────────────────────────────────────────
+	const isSSLDomainEnabled = (m: Monitor) => m.Type === 'http' && (m.EnableSSLDomainCheck ?? true);
+
 	let dnsNoticeCount = $derived(
 		overview?.certificates_and_dns?.dns_warnings ??
-			monitors.filter((m) => m.DomainStatus === 'warning' || m.DomainStatus === 'expired').length
+			monitors.filter(
+				(m) =>
+					isSSLDomainEnabled(m) &&
+					(m.DomainStatus === 'warning' ||
+						m.DomainStatus === 'expired' ||
+						m.DomainStatus === 'error')
+			).length
 	);
 
 	let sslNoticeCount = $derived(
 		overview?.certificates_and_dns?.ssl_warnings ??
 			monitors.filter(
-				(m) => m.SSLStatus === 'expired' || (m.SSLDaysLeft != null && m.SSLDaysLeft <= 30)
+				(m) =>
+					isSSLDomainEnabled(m) &&
+					(m.SSLStatus === 'warning' || m.SSLStatus === 'expired' || m.SSLStatus === 'error')
 			).length
 	);
 
@@ -105,16 +115,12 @@
 
 	let healthySslCount = $derived(
 		overview?.certificates_and_dns?.ssl_healthy ??
-			monitors.filter(
-				(m) => m.SSLStatus === 'valid' && (m.SSLDaysLeft == null || m.SSLDaysLeft > 30)
-			).length
+			monitors.filter((m) => isSSLDomainEnabled(m) && m.SSLStatus === 'valid').length
 	);
 
 	let healthyDnsCount = $derived(
 		overview?.certificates_and_dns?.dns_healthy ??
-			monitors.filter(
-				(m) => m.DomainStatus === 'valid' || (!m.DomainStatus && m.EnableSSLDomainCheck)
-			).length
+			monitors.filter((m) => isSSLDomainEnabled(m) && m.DomainStatus === 'valid').length
 	);
 
 	// ── 5. Fleet Probe Time ───────────────────────────────────────────────────

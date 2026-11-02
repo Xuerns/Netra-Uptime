@@ -233,7 +233,7 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 	}
 
 	if s.rdb != nil {
-		s.rdb.Del(context.Background(), cache.MonitorListKey(orgId))
+		s.rdb.Del(context.Background(), cache.MonitorListKey(orgId), cache.MonitorOverviewKey(orgId, 30))
 	}
 
 	if s.auditService != nil {
@@ -271,21 +271,26 @@ func mapMonitorToResponse(m model.Monitor) MonitorResponse {
 		IsActive:             m.IsActive,
 		OrganizationID:       m.OrganizationID.String(),
 		EnableSSLDomainCheck: m.EnableSSLDomainCheck,
-		SSLDaysLeft:          m.SSLDaysLeft,
-		SSLStatus:            m.SSLStatus,
-		SSLError:             m.SSLError,
-		DomainDaysLeft:       m.DomainDaysLeft,
-		DomainStatus:         m.DomainStatus,
-		DomainError:          m.DomainError,
+		SSLStatus:            "none",
+		DomainStatus:         "none",
 	}
 
-	if m.SSLExpiresAt != nil {
-		tStr := m.SSLExpiresAt.Format(time.RFC3339)
-		resp.SSLExpiresAt = &tStr
-	}
-	if m.DomainExpiresAt != nil {
-		tStr := m.DomainExpiresAt.Format(time.RFC3339)
-		resp.DomainExpiresAt = &tStr
+	if m.Type == "http" && m.EnableSSLDomainCheck {
+		resp.SSLDaysLeft = m.SSLDaysLeft
+		resp.SSLStatus = m.SSLStatus
+		resp.SSLError = m.SSLError
+		resp.DomainDaysLeft = m.DomainDaysLeft
+		resp.DomainStatus = m.DomainStatus
+		resp.DomainError = m.DomainError
+
+		if m.SSLExpiresAt != nil {
+			tStr := m.SSLExpiresAt.Format(time.RFC3339)
+			resp.SSLExpiresAt = &tStr
+		}
+		if m.DomainExpiresAt != nil {
+			tStr := m.DomainExpiresAt.Format(time.RFC3339)
+			resp.DomainExpiresAt = &tStr
+		}
 	}
 
 	if m.Organization.ID != uuid.Nil {
@@ -592,6 +597,20 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 
 	if req.EnableSSLDomainCheck != nil {
 		updatedMonitor.EnableSSLDomainCheck = *req.EnableSSLDomainCheck
+		if !*req.EnableSSLDomainCheck {
+			updatedMonitor.SSLStatus = "none"
+			updatedMonitor.DomainStatus = "none"
+			updatedMonitor.SSLDaysLeft = nil
+			updatedMonitor.DomainDaysLeft = nil
+			updatedMonitor.SSLExpiresAt = nil
+			updatedMonitor.DomainExpiresAt = nil
+			updatedMonitor.SSLError = ""
+			updatedMonitor.DomainError = ""
+			updatedMonitor.LastSSLCheckedAt = nil
+			updatedMonitor.LastDomainCheckedAt = nil
+			updatedMonitor.LastSSLSentReminderDay = nil
+			updatedMonitor.LastDomainSentReminderDay = nil
+		}
 	}
 
 	if req.AlertTemplateID != nil {
@@ -651,8 +670,7 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 	}
 
 	if s.rdb != nil {
-		s.rdb.Del(context.Background(), cache.MonitorListKey(orgId))
-		s.rdb.Del(context.Background(), cache.MonitorDetailKey(orgId, monitorId))
+		s.rdb.Del(context.Background(), cache.MonitorListKey(orgId), cache.MonitorDetailKey(orgId, monitorId), cache.MonitorOverviewKey(orgId, 30))
 	}
 
 	if s.auditService != nil {
@@ -676,8 +694,7 @@ func (s *MonitorServiceImpl) DeleteMonitor(orgId, userId, ipAddress, monitorId s
 	}
 
 	if s.rdb != nil {
-		s.rdb.Del(context.Background(), cache.MonitorListKey(orgId))
-		s.rdb.Del(context.Background(), cache.MonitorDetailKey(orgId, monitorId))
+		s.rdb.Del(context.Background(), cache.MonitorListKey(orgId), cache.MonitorDetailKey(orgId, monitorId), cache.MonitorOverviewKey(orgId, 30))
 	}
 
 	if s.auditService != nil {
@@ -737,8 +754,7 @@ func (s *MonitorServiceImpl) TriggerCheck(orgId, monitorId string) (*RecentCheck
 	}
 
 	if s.rdb != nil {
-		s.rdb.Del(ctx, cache.MonitorDetailKey(orgId, monitorId))
-		s.rdb.Del(ctx, cache.MonitorListKey(orgId))
+		s.rdb.Del(ctx, cache.MonitorDetailKey(orgId, monitorId), cache.MonitorListKey(orgId), cache.MonitorOverviewKey(orgId, 30))
 	}
 
 	var errMsg *string

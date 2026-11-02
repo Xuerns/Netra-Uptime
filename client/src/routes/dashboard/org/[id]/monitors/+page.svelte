@@ -50,6 +50,21 @@
 		isEditMonitorOpen = true;
 	}
 
+	function isFlaggedMonitor(m: Monitor): boolean {
+		return (
+			m.Status !== 'down' &&
+			m.Status !== 'degraded' &&
+			m.Type === 'http' &&
+			(m.EnableSSLDomainCheck ?? true) &&
+			(m.DomainStatus === 'warning' ||
+				m.DomainStatus === 'expired' ||
+				m.DomainStatus === 'error' ||
+				m.SSLStatus === 'warning' ||
+				m.SSLStatus === 'expired' ||
+				m.SSLStatus === 'error')
+		);
+	}
+
 	// ── Derived ───────────────────────────────────────────────────────────────
 	let counts = $derived({
 		total: monitors.length,
@@ -57,15 +72,7 @@
 		degraded: monitors.filter((m) => m.Status === 'degraded').length,
 		down: monitors.filter((m) => m.Status === 'down').length,
 		paused: monitors.filter((m) => m.Status === 'paused').length,
-		flagged: monitors.filter(
-			(m) =>
-				m.Status !== 'down' &&
-				m.Status !== 'degraded' &&
-				(m.DomainStatus === 'warning' ||
-					m.DomainStatus === 'expired' ||
-					m.SSLStatus === 'warning' ||
-					m.SSLStatus === 'expired')
-		).length
+		flagged: monitors.filter(isFlaggedMonitor).length
 	});
 
 	// Sync with unified layout header bar
@@ -109,13 +116,7 @@
 			} else if (statusFilter === 'paused') {
 				matchesStatus = m.Status === 'paused';
 			} else if (statusFilter === 'flagged') {
-				matchesStatus =
-					m.Status !== 'down' &&
-					m.Status !== 'degraded' &&
-					(m.DomainStatus === 'warning' ||
-						m.DomainStatus === 'expired' ||
-						m.SSLStatus === 'warning' ||
-						m.SSLStatus === 'expired');
+				matchesStatus = isFlaggedMonitor(m);
 			}
 			const q = headerStore.searchQuery.toLowerCase().trim();
 			const matchesSearch =

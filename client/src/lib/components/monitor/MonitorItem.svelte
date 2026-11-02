@@ -273,7 +273,7 @@
 					>
 						{trimTarget(monitor.Target, 36)}
 					</p>
-					{#if monitor.Type === 'http' && monitor.SSLStatus && monitor.SSLStatus !== 'none'}
+					{#if monitor.Type === 'http' && (monitor.EnableSSLDomainCheck ?? true) && monitor.SSLStatus && monitor.SSLStatus !== 'none'}
 						<span
 							class="text-[10px] font-mono px-1 rounded-sm border {sslBadge.badgeClass}"
 							title={sslBadge.tooltip}

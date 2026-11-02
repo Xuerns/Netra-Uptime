@@ -1320,3 +1320,86 @@ func TestMonitorHandler_GetFleetOverview(t *testing.T) {
 		t.Errorf("expected 400 for non-numeric window, got %d", wBad2.Code)
 	}
 }
+
+func TestUpdateMonitor_DisableSSLDomainCheck_ResetsFieldsAndInvalidatesOverviewCache(t *testing.T) {
+	rdb, cleanup := newMockRedisClient(t)
+	defer cleanup()
+
+	monID := uuid.New()
+	orgID := uuid.New()
+	daysLeft := 14
+	now := time.Now()
+	reminderDay := 14
+	existing := &model.Monitor{
+		ID:                        monID,
+		OrganizationID:            orgID,
+		Name:                      "Portofolio",
+		Type:                      "http",
+		Target:                    "https://1.1.1.1",
+		Status:                    "up",
+		IsActive:                  true,
+		IntervalSeconds:           300,
+		TimeoutSeconds:            10,
+		EnableSSLDomainCheck:      true,
+		SSLStatus:                 "warning",
+		DomainStatus:              "error",
+		SSLDaysLeft:               &daysLeft,
+		DomainDaysLeft:            &daysLeft,
+		SSLExpiresAt:              &now,
+		DomainExpiresAt:           &now,
+		SSLError:                  "cert expiring soon",
+		DomainError:               "whois lookup failed",
+		LastSSLCheckedAt:          &now,
+		LastDomainCheckedAt:       &now,
+		LastSSLSentReminderDay:    &reminderDay,
+		LastDomainSentReminderDay: &reminderDay,
+	}
+
+	repo := &mockMonitorRepo{
+		getByIdFunc: func(o, m string) (*model.Monitor, error) {
+			return existing, nil
+		},
+		updateFunc: func(m *model.Monitor) error {
+			return nil
+		},
+	}
+	svc := NewMonitorService(repo, rdb, nil)
+
+	ctx := context.Background()
+	overviewKey := "org:" + orgID.String() + ":monitor_overview:30d"
+	_ = rdb.Set(ctx, overviewKey, "stale-overview", 60*time.Second).Err()
+
+	disableCheck := false
+	updated, err := svc.UpdateMonitor(orgID.String(), "user-1", "127.0.0.1", monID.String(), UpdatedMonitorRequest{
+		EnableSSLDomainCheck: &disableCheck,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if updated.EnableSSLDomainCheck {
+		t.Errorf("expected EnableSSLDomainCheck false, got true")
+	}
+	if updated.SSLStatus != "none" || updated.DomainStatus != "none" {
+		t.Errorf("expected SSLStatus and DomainStatus 'none', got %s / %s", updated.SSLStatus, updated.DomainStatus)
+	}
+	if updated.SSLDaysLeft != nil || updated.DomainDaysLeft != nil {
+		t.Errorf("expected SSLDaysLeft and DomainDaysLeft nil")
+	}
+	if updated.SSLExpiresAt != nil || updated.DomainExpiresAt != nil {
+		t.Errorf("expected SSLExpiresAt and DomainExpiresAt nil")
+	}
+	if updated.SSLError != "" || updated.DomainError != "" {
+		t.Errorf("expected SSLError and DomainError empty, got %q / %q", updated.SSLError, updated.DomainError)
+	}
+	if updated.LastSSLCheckedAt != nil || updated.LastDomainCheckedAt != nil {
+		t.Errorf("expected LastSSLCheckedAt and LastDomainCheckedAt nil")
+	}
+	if updated.LastSSLSentReminderDay != nil || updated.LastDomainSentReminderDay != nil {
+		t.Errorf("expected LastSSLSentReminderDay and LastDomainSentReminderDay nil")
+	}
+
+	if _, err := rdb.Get(ctx, overviewKey).Result(); err == nil {
+		t.Errorf("expected overview cache key %s to be invalidated on update", overviewKey)
+	}
+}

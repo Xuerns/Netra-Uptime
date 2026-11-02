@@ -87,6 +87,24 @@ func (wp *WorkerPool) StartSSLDomainScheduler() {
 }
 
 func (wp *WorkerPool) runAllSSLDomainChecks() {
+	// Clean up stale SSL/Domain status for monitors where check is disabled or non-HTTP
+	wp.db.Model(&model.Monitor{}).
+		Where("(enable_ssl_domain_check = false OR type != 'http') AND (ssl_status != 'none' OR domain_status != 'none')").
+		Updates(map[string]interface{}{
+			"ssl_status":                    "none",
+			"domain_status":                 "none",
+			"ssl_days_left":                 nil,
+			"domain_days_left":              nil,
+			"ssl_expires_at":                nil,
+			"domain_expires_at":             nil,
+			"ssl_error":                     "",
+			"domain_error":                  "",
+			"last_ssl_checked_at":           nil,
+			"last_domain_checked_at":        nil,
+			"last_ssl_sent_reminder_day":    nil,
+			"last_domain_sent_reminder_day": nil,
+		})
+
 	var monitors []model.Monitor
 	err := wp.db.Where("is_active = true AND type = 'http' AND enable_ssl_domain_check = true").Find(&monitors).Error
 	if err != nil {
@@ -97,7 +115,13 @@ func (wp *WorkerPool) runAllSSLDomainChecks() {
 	log.Printf("[SSL/Domain Scheduler] Running daily check for %d monitors", len(monitors))
 	for _, m := range monitors {
 		mon := m
-		go ProcessSSLDomainCheck(wp.db, wp.emailSender, wp.dispatcher, &mon)
+		go func(m model.Monitor) {
+			ProcessSSLDomainCheck(wp.db, wp.emailSender, wp.dispatcher, &m)
+			if wp.rdb != nil {
+				orgID := m.OrganizationID.String()
+				wp.rdb.Del(context.Background(), cache.MonitorListKey(orgID), cache.MonitorDetailKey(orgID, m.ID.String()), cache.MonitorOverviewKey(orgID, 30))
+			}
+		}(mon)
 		// Small jitter delay between domain queries to avoid rate limiting
 		time.Sleep(500 * time.Millisecond)
 	}
