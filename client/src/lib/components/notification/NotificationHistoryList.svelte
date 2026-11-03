@@ -54,7 +54,10 @@
 	<div class="flex flex-col gap-2.5">
 		{#each logs as log (log.id)}
 			<div
-				class="flex items-start gap-3 p-4 rounded-lg bg-card border border-border hover:border-primary/30 transition-colors"
+				class="flex items-start gap-3 p-4 rounded-lg bg-card border border-border transition-colors {log.status ===
+				'sent'
+					? 'hover:border-primary/30'
+					: 'hover:border-destructive/30'}"
 			>
 				<div class="mt-0.5 shrink-0">
 					{#if log.status === 'sent'}

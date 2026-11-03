@@ -27,8 +27,10 @@
 	});
 
 	// Reset header state before each navigation so the new page starts clean.
-	beforeNavigate(() => {
-		headerStore.reset();
+	beforeNavigate(({ to }) => {
+		if (to?.url.pathname !== '/dashboard/org') {
+			headerStore.reset();
+		}
 	});
 
 	onMount(() => {

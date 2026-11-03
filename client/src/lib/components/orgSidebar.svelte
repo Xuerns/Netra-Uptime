@@ -181,14 +181,12 @@
 					</DropdownMenu.Item>
 				{/each}
 				<DropdownMenu.Separator class="bg-border" />
-				<a href="/dashboard/org" onclick={viewAllOrganizations} class="w-full">
-					<DropdownMenu.Item
-						class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg hover:bg-accent! hover:text-accent-foreground! text-muted-foreground"
-						onSelect={viewAllOrganizations}
-					>
-						<span class="text-[13px]">View all organizations</span>
-					</DropdownMenu.Item>
-				</a>
+				<DropdownMenu.Item
+					class="cursor-pointer flex items-center gap-2.5 p-2 rounded-lg hover:bg-accent! hover:text-accent-foreground! text-muted-foreground"
+					onSelect={viewAllOrganizations}
+				>
+					<span class="text-[13px]">View all organizations</span>
+				</DropdownMenu.Item>
 			</DropdownMenu.Content>
 		</DropdownMenu.Root>
 	</Sidebar.Header>

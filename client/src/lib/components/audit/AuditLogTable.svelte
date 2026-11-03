@@ -22,7 +22,7 @@
 		fmtTimeAgo: (iso: string) => string;
 		fmtFullDate: (iso: string) => string;
 		initials: (name?: string) => string;
-		rowsHeight?: number;
+		actualRowHeight?: number;
 	}
 
 	let {
@@ -36,25 +36,49 @@
 		fmtTimeAgo,
 		fmtFullDate,
 		initials,
-		rowsHeight = $bindable(0)
+		// eslint-disable-next-line no-useless-assignment
+		actualRowHeight = $bindable(38)
 	}: Props = $props();
 
 	let tableContainer = $state<HTMLDivElement | null>(null);
+	let firstRowEl = $state<HTMLDivElement | null>(null);
+
+	function bindFirstRow(node: HTMLDivElement, isFirst: boolean) {
+		if (isFirst) {
+			firstRowEl = node;
+			return {
+				destroy() {
+					if (firstRowEl === node) {
+						firstRowEl = null;
+					}
+				}
+			};
+		}
+	}
 
 	$effect(() => {
 		if (logs && tableContainer) {
 			tableContainer.scrollTop = 0;
 		}
 	});
+
+	$effect(() => {
+		if (firstRowEl) {
+			const height = firstRowEl.getBoundingClientRect().height;
+			if (height > 0) {
+				actualRowHeight = Math.round(height);
+			}
+		}
+	});
 </script>
 
 <div
-	class="border border-border rounded-md bg-card overflow-hidden flex flex-col flex-1 min-h-0 transition-opacity duration-200 {isFetching
+	class="border border-border rounded-md bg-card overflow-hidden flex flex-col max-h-full transition-opacity duration-200 {isFetching
 		? 'opacity-50 pointer-events-none'
 		: 'opacity-100'}"
 >
 	<!-- Table Column Headers -->
-	<div class="log-table-header sticky top-0 bg-table-header z-10">
+	<div class="log-table-header shrink-0 sticky top-0 bg-table-header z-10">
 		<div class="log-col-actor">Actor</div>
 		<div class="log-col-action">
 			<DropdownMenu.Root>
@@ -146,13 +170,13 @@
 	<!-- Log Rows (Scrollable) -->
 	<div
 		bind:this={tableContainer}
-		bind:clientHeight={rowsHeight}
 		data-lenis-prevent
 		class="overflow-y-auto flex-1 min-h-0 divide-y divide-white/5"
 	>
-		{#each logs as log (log.id)}
+		{#each logs as log, i (log.id)}
 			{@const actionStyle = getActionStyle(log.action)}
 			<div
+				use:bindFirstRow={i === 0}
 				class="log-table-row hover:bg-white/3 transition-colors text-xs py-2 px-4 flex flex-col md:grid md:grid-cols-[200px_160px_1fr_130px_140px] items-start md:items-center gap-2 md:gap-4"
 			>
 				<!-- Col 1: Actor -->

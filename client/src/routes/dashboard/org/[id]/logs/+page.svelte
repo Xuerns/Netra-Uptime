@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, untrack } from 'svelte';
+	import { onMount, untrack, tick } from 'svelte';
 	import { page } from '$app/stores';
 	import type { PageData } from './$types';
 	import { headerStore } from '$lib/stores/headerStore.svelte';
@@ -32,18 +32,33 @@
 	let totalCount = $state(0);
 
 	// Adaptive page size: fit as many rows as the available viewport height allows
-	const ESTIMATED_ROW_HEIGHT = 49;
+	const ESTIMATED_ROW_HEIGHT = 38;
+	const TABLE_HEADER_HEIGHT = 37;
+	const PAGINATION_RESERVE_HEIGHT = 48;
+	const CARD_BORDER_HEIGHT = 2;
 	const MIN_PAGE_SIZE = 6;
 	const MAX_PAGE_SIZE = 100;
 	const DEFAULT_PAGE_SIZE = 20;
 	const PAGE_SIZE_DEBOUNCE_MS = 300;
-	let rowsHeight = $state(0);
+
+	let tableAreaHeight = $state(0);
+	let actualRowHeight = $state(ESTIMATED_ROW_HEIGHT);
 	let lastFetchedLimit = DEFAULT_PAGE_SIZE;
+
+	let availableRowsHeight = $derived(
+		tableAreaHeight > 0
+			? Math.max(
+					0,
+					tableAreaHeight - TABLE_HEADER_HEIGHT - PAGINATION_RESERVE_HEIGHT - CARD_BORDER_HEIGHT
+				)
+			: 0
+	);
+
 	let pageSize = $derived(
-		rowsHeight > 0
+		availableRowsHeight > 0
 			? Math.min(
 					MAX_PAGE_SIZE,
-					Math.max(MIN_PAGE_SIZE, Math.floor(rowsHeight / ESTIMATED_ROW_HEIGHT))
+					Math.max(MIN_PAGE_SIZE, Math.ceil(availableRowsHeight / actualRowHeight))
 				)
 			: DEFAULT_PAGE_SIZE
 	);
@@ -230,7 +245,8 @@
 		}
 	});
 
-	onMount(() => {
+	onMount(async () => {
+		await tick();
 		fetchAuditLogs(true);
 	});
 
@@ -277,49 +293,52 @@
 	<!-- Error alert -->
 	{#if errorMsg}
 		<div
-			class="p-4 border border-rose-500/20 bg-rose-500/10 rounded-lg flex items-center gap-3 text-rose-400 text-sm mb-6"
+			class="p-4 border border-rose-500/20 bg-rose-500/10 rounded-lg flex items-center gap-3 text-rose-400 text-sm mb-6 shrink-0"
 		>
 			<AlertCircle class="size-5 shrink-0" />
 			<span>{errorMsg}</span>
 		</div>
 	{/if}
 
-	<!-- Logs List / Table -->
-	{#if isInitialLoading}
-		<DataSkeleton variant="table" count={8} />
-	{:else if logs.length === 0}
-		<EmptyState
-			icon={ScrollText}
-			title="No Audit Logs Found"
-			description={searchQuery
-				? `No activity matching "${searchQuery}" in this organization.`
-				: 'No recorded activity events for this organization yet.'}
-		/>
-	{:else}
-		<AuditLogTable
-			{logs}
-			{isFetching}
-			{selectedActions}
-			{selectedActionLabel}
-			{visibleActionGroups}
-			{getActionStyle}
-			onActionFilterChange={handleActionFilterChange}
-			{fmtTimeAgo}
-			{fmtFullDate}
-			{initials}
-			bind:rowsHeight
-		/>
-
-		<!-- Pagination Footer -->
-		<div class="shrink-0 mt-auto">
-			<Pagination
-				bind:currentPage
-				{totalPages}
-				totalItems={totalCount}
-				itemName="events"
-				onPageChange={(page) => fetchAuditLogs(false, page)}
-				class="mt-4"
+	<!-- Main Content Area with Adaptive Height Measurement -->
+	<div bind:clientHeight={tableAreaHeight} class="flex-1 min-h-0 flex flex-col">
+		<!-- Logs List / Table -->
+		{#if isInitialLoading}
+			<DataSkeleton variant="table" count={8} />
+		{:else if logs.length === 0}
+			<EmptyState
+				icon={ScrollText}
+				title="No Audit Logs Found"
+				description={searchQuery
+					? `No activity matching "${searchQuery}" in this organization.`
+					: 'No recorded activity events for this organization yet.'}
 			/>
-		</div>
-	{/if}
+		{:else}
+			<AuditLogTable
+				{logs}
+				{isFetching}
+				{selectedActions}
+				{selectedActionLabel}
+				{visibleActionGroups}
+				{getActionStyle}
+				onActionFilterChange={handleActionFilterChange}
+				{fmtTimeAgo}
+				{fmtFullDate}
+				{initials}
+				bind:actualRowHeight
+			/>
+
+			{#if totalPages > 1}
+				<div class="shrink-0 pt-3">
+					<Pagination
+						bind:currentPage
+						{totalPages}
+						totalItems={totalCount}
+						itemName="events"
+						onPageChange={(page) => fetchAuditLogs(false, page)}
+					/>
+				</div>
+			{/if}
+		{/if}
+	</div>
 </div>

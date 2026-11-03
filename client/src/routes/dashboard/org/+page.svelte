@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
-	import { goto } from '$app/navigation';
+	import { goto, afterNavigate } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { Building2, Plus, TriangleAlert, LayoutGrid, List } from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { OrgAPI } from '$lib/api/organization';
@@ -30,8 +31,7 @@
 	let viewMode = $state<'grid' | 'list'>('grid');
 	let dialogOpen = $state(false);
 
-	// Sync with layout header bar
-	$effect(() => {
+	function syncHeader() {
 		headerStore.set({
 			title: 'Organizations',
 			showSearch: true,
@@ -40,6 +40,23 @@
 			actionLabel: 'New organization',
 			onAction: () => openDialog()
 		});
+	}
+
+	// Sync with layout header bar
+	$effect(() => {
+		const _path = $page.url.pathname;
+		if (_path.startsWith('/dashboard/org')) {
+			syncHeader();
+		}
+		return () => {
+			headerStore.reset();
+		};
+	});
+
+	afterNavigate(() => {
+		if ($page.url.pathname.startsWith('/dashboard/org')) {
+			syncHeader();
+		}
 	});
 
 	let filteredOrgs = $derived(
