@@ -17,11 +17,11 @@ type MonitorDailyStat struct {
 	AvgLatencyMs     int       `gorm:"not null;default:0"`
 	MinLatencyMs     int       `gorm:"not null;default:0"`
 	MaxLatencyMs     int       `gorm:"not null;default:0"`
-	Count2xx         int       `gorm:"not null;default:0"`
-	Count3xx         int       `gorm:"not null;default:0"`
-	Count4xx         int       `gorm:"not null;default:0"`
-	Count5xx         int       `gorm:"not null;default:0"`
-	CountError       int       `gorm:"not null;default:0"`
+	Count2xx         int       `gorm:"column:count2xx;not null;default:0"`
+	Count3xx         int       `gorm:"column:count3xx;not null;default:0"`
+	Count4xx         int       `gorm:"column:count4xx;not null;default:0"`
+	Count5xx         int       `gorm:"column:count5xx;not null;default:0"`
+	CountError       int       `gorm:"column:count_error;not null;default:0"`
 	CreatedAt        time.Time `gorm:"autoCreateTime"`
 	UpdatedAt        time.Time `gorm:"autoUpdateTime"`
 

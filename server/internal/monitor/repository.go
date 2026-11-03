@@ -222,7 +222,7 @@ func (r *MonitorRepositoryImpl) GetDailyStats(monitorId string, days int) ([]mod
 			COUNT(CASE WHEN status = 'up' THEN 1 END) AS up_checks,
 			COUNT(CASE WHEN status = 'down' THEN 1 END) AS down_checks,
 			ROUND(AVG(response_time_ms)) AS avg_latency_ms,
-			MIN(response_time_ms) AS min_latency_ms,
+			COALESCE(MIN(CASE WHEN response_time_ms > 0 THEN response_time_ms END), 0) AS min_latency_ms,
 			MAX(response_time_ms) AS max_latency_ms,
 			COUNT(CASE WHEN status_code >= 200 AND status_code < 300 THEN 1 END) AS count_2xx,
 			COUNT(CASE WHEN status_code >= 300 AND status_code < 400 THEN 1 END) AS count_3xx,

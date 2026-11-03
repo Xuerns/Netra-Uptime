@@ -5,3 +5,6 @@
 .git
 .env
 **/*_test.go
+**/tests
+**/playwright-report
+**/test-results

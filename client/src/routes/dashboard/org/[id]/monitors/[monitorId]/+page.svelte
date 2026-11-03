@@ -73,11 +73,12 @@
 			const checks = monitor.recent_checks;
 			const upCount = checks.filter((c) => c.Status === 'up').length;
 			const latencies = checks.map((c) => c.ResponseTimeMs);
+			const validMin = latencies.filter((v) => v > 0);
 			const sumLatency = latencies.reduce((a, b) => a + b, 0);
 			return {
 				uptimePercent: Math.round((upCount / checks.length) * 10000) / 100,
 				avgLatencyMs: Math.round(sumLatency / checks.length),
-				minLatencyMs: latencies.length > 0 ? Math.min(...latencies) : 0,
+				minLatencyMs: validMin.length > 0 ? Math.min(...validMin) : 0,
 				maxLatencyMs: latencies.length > 0 ? Math.max(...latencies) : 0,
 				totalIncidents: incidents.length,
 				downtimeFormatted: `${incidents.length * 5}m`
@@ -89,11 +90,12 @@
 				const checks = monitor.recent_checks;
 				const upCount = checks.filter((c) => c.Status === 'up').length;
 				const latencies = checks.map((c) => c.ResponseTimeMs);
+				const validMin = latencies.filter((v) => v > 0);
 				const sumLatency = latencies.reduce((a, b) => a + b, 0);
 				return {
 					uptimePercent: Math.round((upCount / checks.length) * 10000) / 100,
 					avgLatencyMs: Math.round(sumLatency / checks.length),
-					minLatencyMs: latencies.length > 0 ? Math.min(...latencies) : 0,
+					minLatencyMs: validMin.length > 0 ? Math.min(...validMin) : 0,
 					maxLatencyMs: latencies.length > 0 ? Math.max(...latencies) : 0,
 					totalIncidents: incidents.length,
 					downtimeFormatted: `${incidents.length * 5}m`
@@ -148,23 +150,23 @@
 			}));
 		}
 
-		// Build a lookup map of existing daily stats by formatted date
+		// Build a lookup map of existing daily stats by canonical UTC date key (YYYY-MM-DD)
 		const statMap = new Map<string, MonitorDailyStat>();
 		for (const s of stats) {
-			const label = formatDateOnly(s.Date, tz);
-			statMap.set(label, s);
+			const dateKey = s.Date.slice(0, 10);
+			statMap.set(dateKey, s);
 		}
 
-		// Generate contiguous timeline of effectiveDays (trimmed to monitor creation date)
+		// Generate contiguous timeline of effectiveDays aligned with UTC daily buckets
 		const points: DataPoint[] = [];
-		const baseDate = new Date();
-		baseDate.setHours(12, 0, 0, 0); // Midday avoids DST shifting
+		const now = new Date();
+		const baseUtcMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 12, 0, 0);
 
 		for (let i = effectiveDays - 1; i >= 0; i--) {
-			const d = new Date(baseDate);
-			d.setDate(baseDate.getDate() - i);
-			const label = formatDateOnly(d.toISOString(), tz);
-			const s = statMap.get(label);
+			const d = new Date(baseUtcMs - i * 86_400_000);
+			const dateKey = d.toISOString().slice(0, 10);
+			const label = formatDateOnly(d, 'UTC');
+			const s = statMap.get(dateKey);
 
 			if (s && s.TotalChecks > 0) {
 				const has5xxOrDown =

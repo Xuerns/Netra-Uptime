@@ -45,7 +45,7 @@ func (r *RetentionJob) Stop() {
 }
 
 func (r *RetentionJob) CleanOldChecks() {
-	threshold := time.Now().Add(-24 * time.Hour)
+	threshold := time.Now().UTC().Add(-24 * time.Hour)
 
 	log.Printf("[Retention] Starting aggregation and cleanup for checks before: %s", threshold.Format("2006-01-02 15:04:05"))
 
@@ -65,8 +65,6 @@ func (r *RetentionJob) CleanOldChecks() {
 		CountError   int       `gorm:"column:count_error"`
 	}
 
-	var results []AggregateResult
-
 	query := `
 		SELECT 
 			monitor_id,
@@ -75,7 +73,7 @@ func (r *RetentionJob) CleanOldChecks() {
 			COUNT(CASE WHEN status = 'up' THEN 1 END) AS up_checks,
 			COUNT(CASE WHEN status = 'down' THEN 1 END) AS down_checks,
 			ROUND(AVG(response_time_ms)) AS avg_latency_ms,
-			MIN(response_time_ms) AS min_latency_ms,
+			COALESCE(MIN(CASE WHEN response_time_ms > 0 THEN response_time_ms END), 0) AS min_latency_ms,
 			MAX(response_time_ms) AS max_latency_ms,
 			COUNT(CASE WHEN status_code >= 200 AND status_code < 300 THEN 1 END) AS count_2xx,
 			COUNT(CASE WHEN status_code >= 300 AND status_code < 400 THEN 1 END) AS count_3xx,
@@ -87,9 +85,17 @@ func (r *RetentionJob) CleanOldChecks() {
 		GROUP BY monitor_id, DATE(checked_at)
 	`
 
-	if err := r.db.Raw(query, threshold).Scan(&results).Error; err != nil {
-		log.Printf("[Retention] Failed to aggregate old checks: %v", err)
-	} else if len(results) > 0 {
+	var deletedRows int64
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		var results []AggregateResult
+		if err := tx.Raw(query, threshold).Scan(&results).Error; err != nil {
+			return err
+		}
+
+		if len(results) == 0 {
+			return nil
+		}
+
 		log.Printf("[Retention] Aggregating %d daily stat bucket(s)...", len(results))
 
 		for _, agg := range results {
@@ -120,20 +126,40 @@ func (r *RetentionJob) CleanOldChecks() {
 				CountError:       agg.CountError,
 			}
 
-			if err := r.db.Clauses(clause.OnConflict{
-				Columns:   []clause.Column{{Name: "monitor_id"}, {Name: "date"}},
-				DoUpdates: clause.AssignmentColumns([]string{"total_checks", "up_checks", "down_checks", "uptime_percentage", "avg_latency_ms", "min_latency_ms", "max_latency_ms", "count_2xx", "count_3xx", "count_4xx", "count_5xx", "count_error", "updated_at"}),
+			if err := tx.Clauses(clause.OnConflict{
+				Columns: []clause.Column{{Name: "monitor_id"}, {Name: "date"}},
+				DoUpdates: clause.Assignments(map[string]interface{}{
+					"total_checks":      gorm.Expr("monitor_daily_stats.total_checks + EXCLUDED.total_checks"),
+					"up_checks":         gorm.Expr("monitor_daily_stats.up_checks + EXCLUDED.up_checks"),
+					"down_checks":       gorm.Expr("monitor_daily_stats.down_checks + EXCLUDED.down_checks"),
+					"uptime_percentage": gorm.Expr("CASE WHEN (monitor_daily_stats.total_checks + EXCLUDED.total_checks) > 0 THEN ROUND(((monitor_daily_stats.up_checks + EXCLUDED.up_checks)::numeric / (monitor_daily_stats.total_checks + EXCLUDED.total_checks)::numeric) * 100.0, 2) ELSE 100.00 END"),
+					"avg_latency_ms":    gorm.Expr("CASE WHEN (monitor_daily_stats.total_checks + EXCLUDED.total_checks) > 0 THEN ROUND(((monitor_daily_stats.avg_latency_ms * monitor_daily_stats.total_checks) + (EXCLUDED.avg_latency_ms * EXCLUDED.total_checks))::numeric / (monitor_daily_stats.total_checks + EXCLUDED.total_checks)::numeric) ELSE 0 END"),
+					"min_latency_ms":    gorm.Expr("CASE WHEN monitor_daily_stats.min_latency_ms <= 0 THEN EXCLUDED.min_latency_ms WHEN EXCLUDED.min_latency_ms <= 0 THEN monitor_daily_stats.min_latency_ms ELSE LEAST(monitor_daily_stats.min_latency_ms, EXCLUDED.min_latency_ms) END"),
+					"max_latency_ms":    gorm.Expr("GREATEST(monitor_daily_stats.max_latency_ms, EXCLUDED.max_latency_ms)"),
+					"count2xx":          gorm.Expr("monitor_daily_stats.count2xx + EXCLUDED.count2xx"),
+					"count3xx":          gorm.Expr("monitor_daily_stats.count3xx + EXCLUDED.count3xx"),
+					"count4xx":          gorm.Expr("monitor_daily_stats.count4xx + EXCLUDED.count4xx"),
+					"count5xx":          gorm.Expr("monitor_daily_stats.count5xx + EXCLUDED.count5xx"),
+					"count_error":       gorm.Expr("monitor_daily_stats.count_error + EXCLUDED.count_error"),
+					"updated_at":        gorm.Expr("NOW()"),
+				}),
 			}).Create(&stat).Error; err != nil {
 				log.Printf("[Retention] Failed to upsert daily stat for monitor %s on date %s: %v", agg.MonitorID, agg.Date.Format("2006-01-02"), err)
+				return err
 			}
 		}
-	}
 
-	result := r.db.Where("checked_at < ?", threshold).Delete(&model.Check{})
-	if result.Error != nil {
-		log.Printf("[Retention] Failed to clean old data check: %v", result.Error)
+		result := tx.Where("checked_at < ?", threshold).Delete(&model.Check{})
+		if result.Error != nil {
+			return result.Error
+		}
+		deletedRows = result.RowsAffected
+		return nil
+	})
+	if err != nil {
+		log.Printf("[Retention] Aborted cleanup to prevent data loss: %v", err)
 		return
 	}
 
-	log.Printf("[Retention] Success clean old data check: %d row(s)", result.RowsAffected)
+	log.Printf("[Retention] Success clean old data check: %d row(s)", deletedRows)
 }

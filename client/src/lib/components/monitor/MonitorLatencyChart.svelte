@@ -94,7 +94,7 @@
 
 		const isNoDataPoint = (idx: number) => {
 			const pt = data[idx];
-			return !pt || pt.status === 'no_data' || pt.value === 0;
+			return !pt || pt.status === 'no_data' || pt.value === null;
 		};
 
 		const isGapSegment = (c: any) => {
@@ -126,32 +126,17 @@
 							},
 							backgroundColor: gradient,
 							pointBackgroundColor: pointColors,
-							pointBorderColor: (c: any) => {
-								const idx = c.dataIndex;
-								const pt = data[idx];
-								return !pt || pt.status === 'no_data' || pt.value === 0
-									? 'transparent'
-									: pointBorder;
-							},
+							pointBorderColor: (c: any) =>
+								isNoDataPoint(c.dataIndex) ? 'transparent' : pointBorder,
 							pointBorderWidth: 1.5,
 							pointRadius: (c: any) => {
-								const idx = c.dataIndex;
-								const pt = data[idx];
-								if (!pt || pt.status === 'no_data' || pt.value === 0) return 0;
+								if (isNoDataPoint(c.dataIndex)) return 0;
 								return data.length > 50 ? 2 : 3.5;
 							},
-							pointHoverRadius: (c: any) => {
-								const idx = c.dataIndex;
-								const pt = data[idx];
-								if (!pt || pt.status === 'no_data' || pt.value === 0) return 0;
-								return 6;
-							},
+							pointHoverRadius: (c: any) => (isNoDataPoint(c.dataIndex) ? 0 : 6),
 							pointHoverBackgroundColor: pointColors,
-							pointHoverBorderColor: (c: any) => {
-								const idx = c.dataIndex;
-								const pt = data[idx];
-								return !pt || pt.status === 'no_data' || pt.value === 0 ? 'transparent' : '#ffffff';
-							},
+							pointHoverBorderColor: (c: any) =>
+								isNoDataPoint(c.dataIndex) ? 'transparent' : '#ffffff',
 							pointHoverBorderWidth: 2
 						}
 					]
@@ -197,7 +182,7 @@
 								label: (item) => {
 									const idx = item.dataIndex;
 									const pt = data[idx];
-									if (!pt || pt.status === 'no_data' || pt.value === 0) {
+									if (isNoDataPoint(idx)) {
 										return '0 ms (No Data Recorded)';
 									}
 									return `Latency: ${pt.value} ms`;
@@ -205,7 +190,7 @@
 								afterLabel: (item) => {
 									const idx = item.dataIndex;
 									const pt = data[idx];
-									if (!pt || pt.status === 'no_data' || pt.value === 0) {
+									if (isNoDataPoint(idx)) {
 										return 'Status: Monitor Offline / No checks';
 									}
 									if (pt.details) {
@@ -281,23 +266,21 @@
 			chartInstance.data.datasets[0].data = values as any;
 			chartInstance.data.datasets[0].pointBackgroundColor = pointColors;
 			chartInstance.data.datasets[0].pointHoverBackgroundColor = pointColors;
+			chartInstance.data.datasets[0].pointBorderColor = ((c: any) =>
+				isNoDataPoint(c.dataIndex) ? 'transparent' : pointBorder) as any;
+			chartInstance.data.datasets[0].pointHoverBorderColor = ((c: any) =>
+				isNoDataPoint(c.dataIndex) ? 'transparent' : '#ffffff') as any;
 			chartInstance.data.datasets[0].spanGaps = true;
 			chartInstance.data.datasets[0].segment = {
 				borderColor: (c: any) => (isGapSegment(c) ? 'rgba(148, 163, 184, 0.45)' : color),
 				borderDash: (c: any) => (isGapSegment(c) ? [5, 5] : undefined)
 			} as any;
 			chartInstance.data.datasets[0].pointRadius = ((c: any) => {
-				const idx = c.dataIndex;
-				const pt = data[idx];
-				if (!pt || pt.status === 'no_data' || pt.value === 0) return 0;
+				if (isNoDataPoint(c.dataIndex)) return 0;
 				return data.length > 50 ? 2 : 3.5;
 			}) as any;
-			chartInstance.data.datasets[0].pointHoverRadius = ((c: any) => {
-				const idx = c.dataIndex;
-				const pt = data[idx];
-				if (!pt || pt.status === 'no_data' || pt.value === 0) return 0;
-				return 6;
-			}) as any;
+			chartInstance.data.datasets[0].pointHoverRadius = ((c: any) =>
+				isNoDataPoint(c.dataIndex) ? 0 : 6) as any;
 			chartInstance.update();
 		}
 	}
