@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { OrgAPI, type InviteMemberRequest } from '$lib/api/organization';
@@ -40,6 +41,26 @@
 	let errorMsg = $state('');
 	let searchPage = $state(1);
 	let hasMoreResults = $state(true);
+	let searchContainer = $state<HTMLElement | null>(null);
+
+	function handleFocusOut(e: FocusEvent) {
+		if (e.relatedTarget && !searchContainer?.contains(e.relatedTarget as Node)) {
+			showDropdown = false;
+		}
+	}
+
+	onMount(() => {
+		function handleClickOutside(event: PointerEvent) {
+			if (showDropdown && searchContainer && !searchContainer.contains(event.target as Node)) {
+				showDropdown = false;
+			}
+		}
+
+		document.addEventListener('pointerdown', handleClickOutside);
+		return () => {
+			document.removeEventListener('pointerdown', handleClickOutside);
+		};
+	});
 
 	async function searchUsers(query: string, pageNum: number = 1) {
 		if (!query.trim()) {
@@ -185,7 +206,7 @@
 				<label for="search-user-input" class="text-sm font-medium text-foreground"
 					>Search User</label
 				>
-				<div class="relative">
+				<div class="relative" bind:this={searchContainer} onfocusout={handleFocusOut}>
 					<div
 						class="flex items-center h-10 rounded-lg border border-border bg-background overflow-hidden transition-colors focus-within:ring-1 focus-within:ring-primary focus-within:border-primary gap-2 px-3"
 					>
@@ -206,10 +227,14 @@
 							onfocus={() => {
 								if (searchQuery.trim()) showDropdown = true;
 							}}
-							onblur={() =>
-								setTimeout(() => {
+							onclick={() => {
+								if (searchQuery.trim()) showDropdown = true;
+							}}
+							onkeydown={(e) => {
+								if (e.key === 'Escape') {
 									showDropdown = false;
-								}, 200)}
+								}
+							}}
 							class="flex-1 h-full bg-transparent border-none outline-none text-foreground text-[13px] placeholder:text-muted-foreground/40 min-w-0"
 						/>
 					</div>
@@ -217,21 +242,24 @@
 					<!-- Search dropdown results -->
 					{#if showDropdown && searchQuery.trim()}
 						<div
+							data-lenis-prevent
 							class="absolute top-[calc(100%+4px)] left-0 right-0 rounded-lg border border-border bg-popover z-50 overflow-hidden"
 						>
 							{#if isSearching && searchResults.length === 0}
 								<div class="px-4 py-3 text-[13px] text-muted-foreground">Searching...</div>
 							{:else if filteredResults.length > 0}
-								<ul class="max-h-52 overflow-y-auto py-1" onscroll={handleScroll}>
+								<ul
+									data-lenis-prevent
+									class="max-h-52 overflow-y-auto py-1"
+									onscroll={handleScroll}
+								>
 									{#each filteredResults as user (user.id)}
 										<li>
 											<button
 												type="button"
-												class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-accent/50 transition-colors text-left"
-												onmousedown={(e) => {
-													e.preventDefault();
-													addInvite(user);
-												}}
+												class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-accent/50 transition-colors text-left cursor-pointer"
+												onmousedown={(e) => e.preventDefault()}
+												onclick={() => addInvite(user)}
 											>
 												{#if user.avatar_url}
 													<img
@@ -274,7 +302,7 @@
 						Selected
 						<span class="text-muted-foreground font-normal">({invitedUsers.length})</span>
 					</span>
-					<ul class="flex flex-col gap-2 max-h-48 overflow-y-auto pr-0.5">
+					<ul data-lenis-prevent class="flex flex-col gap-2 max-h-48 overflow-y-auto pr-0.5">
 						{#each invitedUsers as user (user.id)}
 							<li
 								class="flex items-center gap-3 px-3 py-2 rounded-lg bg-background border border-border"
