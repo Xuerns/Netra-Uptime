@@ -26,6 +26,7 @@ DB_SSLMODE=disable
 REDIS_HOST=redis
 REDIS_PORT=6379
 REDIS_PASSWORD=${c.redisPassword}
+AUTH_RATE_LIMIT=60
 
 # Host port exposed by Docker (used by docker-compose.yml)
 HOST_PORT=${c.port}

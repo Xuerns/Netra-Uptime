@@ -1,6 +1,7 @@
 package router
 
 import (
+	"netra-uptime/config"
 	"netra-uptime/internal/alertrule"
 	"netra-uptime/internal/alerttemplate"
 	"netra-uptime/internal/apikey"
@@ -51,7 +52,13 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 		api.GET("/health", h.HealthHandler.Check)
 	}
 
-	authLimiter := middleware.RateLimiter(redis, 5, 1*time.Minute)
+	cfg := config.Load()
+	authRateLimit := 60
+	if cfg != nil && cfg.AuthRateLimit > 0 {
+		authRateLimit = cfg.AuthRateLimit
+	}
+
+	authLimiter := middleware.RateLimiter(redis, authRateLimit, 1*time.Minute)
 	refreshLimiter := middleware.RateLimiter(redis, 30, 1*time.Minute)
 	resetLimiter := middleware.RateLimiter(redis, 3, 15*time.Minute)
 

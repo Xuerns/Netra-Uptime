@@ -371,7 +371,7 @@
 
 <Dialog.Root bind:open={isOpen}>
 	<Dialog.Content
-		class="sm:max-w-187.5 bg-card border border-border text-foreground p-6 rounded-lg"
+		class="sm:max-w-187.5 max-h-[90vh] overflow-y-auto bg-card border border-border text-foreground p-6 rounded-lg"
 	>
 		<Dialog.Header>
 			<div class="flex items-center gap-2">

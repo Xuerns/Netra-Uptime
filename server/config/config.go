@@ -37,6 +37,7 @@ type Config struct {
 	MaxMembersPerOrg       int
 	MaxAssigneesPerMonitor int
 	AllowRegistration      bool
+	AuthRateLimit          int
 
 	DBHost     string
 	DBPort     string
@@ -122,6 +123,7 @@ func loadConfig() *Config {
 		MaxMembersPerOrg:       parseIntEnv("MAX_MEMBERS_PER_ORG", 100),
 		MaxAssigneesPerMonitor: parseIntEnv("MAX_ASSIGNEES_PER_MONITOR", 50),
 		AllowRegistration:      parseBoolEnv("ALLOW_REGISTRATION", true),
+		AuthRateLimit:          parseIntEnv("AUTH_RATE_LIMIT", 60),
 
 		DBHost:     os.Getenv("DB_HOST"),
 		DBPort:     os.Getenv("DB_PORT"),
@@ -138,6 +140,9 @@ func loadConfig() *Config {
 	}
 
 	const AbsoluteMinimumInterval = 30
+	if cfg.AuthRateLimit <= 0 {
+		cfg.AuthRateLimit = 60
+	}
 	if cfg.MinMonitorIntervalSeconds < AbsoluteMinimumInterval {
 		log.Printf("WARNING: MIN_MONITOR_INTERVAL_SECONDS (%d) below safety floor (%d). Enforcing %d seconds.",
 			cfg.MinMonitorIntervalSeconds, AbsoluteMinimumInterval, AbsoluteMinimumInterval)
