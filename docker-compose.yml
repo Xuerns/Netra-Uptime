@@ -64,7 +64,7 @@ services:
 
 volumes:
   postgres_data:
-─
+
 networks:
   netra_uptime_net:
     driver: bridge
