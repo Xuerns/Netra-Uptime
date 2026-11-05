@@ -1,7 +1,6 @@
 package worker
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"html"
@@ -19,7 +18,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 )
 
 type Job struct {
@@ -28,7 +26,7 @@ type Job struct {
 
 type WorkerPool struct {
 	db               *gorm.DB
-	rdb              *redis.Client
+	cache            *cache.MemoryCache
 	jobQueue         chan Job
 	numWorkers       int
 	emailSender      email.EmailSender
@@ -38,10 +36,10 @@ type WorkerPool struct {
 	inFlightMonitors sync.Map
 }
 
-func NewWorkerPool(db *gorm.DB, rdb *redis.Client, numWorkers int, sender email.EmailSender, hub *websocket.WsHandler) *WorkerPool {
+func NewWorkerPool(db *gorm.DB, cacheStore *cache.MemoryCache, numWorkers int, sender email.EmailSender, hub *websocket.WsHandler) *WorkerPool {
 	return &WorkerPool{
 		db:          db,
-		rdb:         rdb,
+		cache:       cacheStore,
 		jobQueue:    make(chan Job, 1000),
 		numWorkers:  numWorkers,
 		emailSender: sender,
@@ -117,9 +115,9 @@ func (wp *WorkerPool) runAllSSLDomainChecks() {
 		mon := m
 		go func(m model.Monitor) {
 			ProcessSSLDomainCheck(wp.db, wp.emailSender, wp.dispatcher, &m)
-			if wp.rdb != nil {
+			if wp.cache != nil {
 				orgID := m.OrganizationID.String()
-				wp.rdb.Del(context.Background(), cache.MonitorListKey(orgID), cache.MonitorDetailKey(orgID, m.ID.String()), cache.MonitorOverviewKey(orgID, 30))
+				wp.cache.Del(cache.MonitorListKey(orgID), cache.MonitorDetailKey(orgID, m.ID.String()), cache.MonitorOverviewKey(orgID, 30))
 			}
 		}(mon)
 		// Small jitter delay between domain queries to avoid rate limiting
@@ -360,13 +358,10 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 		log.Printf("[Check] %s | State Changed: %s -> %s (Fail Count: %d)\n", dbMonitor.Name, prevStatus, dbMonitor.Status, dbMonitor.FailureCount)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	if wp.rdb != nil {
-		wp.rdb.Del(ctx, cache.MonitorDetailKey(dbMonitor.OrganizationID.String(), dbMonitor.ID.String()))
+	if wp.cache != nil {
+		wp.cache.Del(cache.MonitorDetailKey(dbMonitor.OrganizationID.String(), dbMonitor.ID.String()))
 		if dbMonitor.Status != prevStatus {
-			wp.rdb.Del(ctx, cache.MonitorListKey(dbMonitor.OrganizationID.String()))
+			wp.cache.Del(cache.MonitorListKey(dbMonitor.OrganizationID.String()), cache.MonitorOverviewKey(dbMonitor.OrganizationID.String(), 30))
 		}
 	}
 

@@ -4,10 +4,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Incident struct {
-	ID            uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	ID            uuid.UUID `gorm:"primaryKey;type:uuid"`
 	MonitorID     uuid.UUID `gorm:"type:uuid;not null"`
 	Status        string    `gorm:"not null"`                  // ongoing | resolved
 	Severity      string    `gorm:"not null;default:'medium'"` // critical | high | medium | low
@@ -23,8 +24,15 @@ type Incident struct {
 	Assignees        []IncidentAssignee `gorm:"foreignKey:IncidentID;constraint:OnDelete:CASCADE;"`
 }
 
+func (m *Incident) BeforeCreate(tx *gorm.DB) error {
+	if m.ID == uuid.Nil {
+		m.ID = uuid.New()
+	}
+	return nil
+}
+
 type IncidentUpdate struct {
-	ID         uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	ID         uuid.UUID `gorm:"primaryKey;type:uuid"`
 	IncidentID uuid.UUID `gorm:"type:uuid;not null"`
 	CreatedBy  uuid.UUID `gorm:"type:uuid;not null"`
 	Message    string
@@ -34,8 +42,15 @@ type IncidentUpdate struct {
 	User     User     `gorm:"foreignKey:CreatedBy"`
 }
 
+func (m *IncidentUpdate) BeforeCreate(tx *gorm.DB) error {
+	if m.ID == uuid.Nil {
+		m.ID = uuid.New()
+	}
+	return nil
+}
+
 type IncidentAssignee struct {
-	ID         uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	ID         uuid.UUID `gorm:"primaryKey;type:uuid"`
 	IncidentID uuid.UUID `gorm:"type:uuid;not null"`
 	UserID     uuid.UUID `gorm:"type:uuid;not null"`
 	Role       string    `gorm:"not null;default:'responder'"`
@@ -43,4 +58,11 @@ type IncidentAssignee struct {
 
 	Incident Incident `gorm:"foreignKey:IncidentID"`
 	User     User     `gorm:"foreignKey:UserID"`
+}
+
+func (m *IncidentAssignee) BeforeCreate(tx *gorm.DB) error {
+	if m.ID == uuid.Nil {
+		m.ID = uuid.New()
+	}
+	return nil
 }

@@ -15,7 +15,7 @@ func TestHealthCheck_DegradedWhenNil(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
 
-	h := NewHealthHandler(nil, nil, &config.Config{})
+	h := NewHealthHandler(nil, &config.Config{})
 	r.GET("/healthz", h.Check)
 
 	w := httptest.NewRecorder()
@@ -36,5 +36,11 @@ func TestHealthCheck_DegradedWhenNil(t *testing.T) {
 	}
 	if resp.Database != "unreachable" {
 		t.Errorf("expected database unreachable, got %s", resp.Database)
+	}
+	if resp.DBDriver != "postgres" {
+		t.Errorf("expected db_driver postgres, got %s", resp.DBDriver)
+	}
+	if resp.AppMode != "selfhosted" {
+		t.Errorf("expected app_mode selfhosted, got %s", resp.AppMode)
 	}
 }

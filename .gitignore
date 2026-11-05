@@ -2,7 +2,7 @@
 # Root .gitignore for Netra Uptime Monorepo
 # -----------------------------------------------------------------------------
 
-# Sensitive Environment Files (NEVER COMMIT)
+# Sensitive Environment Files & Auto-Generated Secrets (NEVER COMMIT)
 .env
 .env.*
 *.env
@@ -10,16 +10,27 @@
 **/.env.*
 !.env.example
 !**/.env.example
+.netra_secret
+**/.netra_secret
+
+# SQLite Databases & WAL/SHM Runtime Files
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+*.sqlite
+*.sqlite3
 
 # Dependencies
 node_modules/
 **/node_modules/
 
-# Build Outputs & Binary Files
+# Build Outputs & Binary Files (Only keep the placeholder index.html for Go embed)
 build/
 **/build/
 !server/internal/static/build/
-!server/internal/static/build/**
+server/internal/static/build/*
+!server/internal/static/build/index.html
 dist/
 **/dist/
 .svelte-kit/

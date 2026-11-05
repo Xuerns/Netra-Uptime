@@ -1,10 +1,53 @@
+# -----------------------------------------------------------------------------
+# Root .dockerignore for Netra Uptime Monorepo
+# -----------------------------------------------------------------------------
+
+# Non-Runtime Directories (Not needed inside Docker build context)
+.git
+.github
+.vscode
+.idea
+cli
+scripts
+docs
+
+# Sensitive Environment & Auto-Generated Secrets
+.env
+.env.*
+*.env
+**/.env
+**/.env.*
+.netra_secret
+**/.netra_secret
+
+# SQLite Databases & Runtime Journals
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Dependencies & Build Artifacts
 **/node_modules
 **/build
+!server/internal/static/build
+!server/internal/static/build/**
 **/.svelte-kit
 **/dist
-.git
-.env
+.output
+.vercel
+.wrangler
+tmp
+**/tmp
+*.exe
+*.test
+*.out
+*.log
+
+# Tests & Reports
 **/*_test.go
 **/tests
 **/playwright-report
 **/test-results
+*.md

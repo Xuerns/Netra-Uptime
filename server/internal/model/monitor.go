@@ -4,10 +4,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Monitor struct {
-	ID                 uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	ID                 uuid.UUID `gorm:"primaryKey;type:uuid"`
 	OrganizationID     uuid.UUID `gorm:"type:uuid;not null"`
 	Name               string    `gorm:"not null"`
 	Type               string    `gorm:"not null"` // http | tcp | ping
@@ -50,4 +51,11 @@ type Monitor struct {
 
 	RecentChecks        []Check  `gorm:"-" json:"recent_checks"`
 	CalculatedUptime30D *float64 `gorm:"-" json:"calculated_uptime_30d"`
+}
+
+func (m *Monitor) BeforeCreate(tx *gorm.DB) error {
+	if m.ID == uuid.Nil {
+		m.ID = uuid.New()
+	}
+	return nil
 }

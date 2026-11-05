@@ -7,34 +7,31 @@ import (
 	"netra-uptime/config"
 
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type HealthHandler struct {
 	db  *gorm.DB
-	rdb *redis.Client
 	cfg *config.Config
 }
 
-func NewHealthHandler(db *gorm.DB, rdb *redis.Client, cfg *config.Config) *HealthHandler {
-	return &HealthHandler{db: db, rdb: rdb, cfg: cfg}
+func NewHealthHandler(db *gorm.DB, cfg *config.Config) *HealthHandler {
+	return &HealthHandler{db: db, cfg: cfg}
 }
 
 type HealthResponse struct {
 	Status    string    `json:"status"`
 	Database  string    `json:"database"`
-	Redis     string    `json:"redis"`
+	DBDriver  string    `json:"db_driver"`
 	AppMode   string    `json:"app_mode"`
 	Timestamp time.Time `json:"timestamp"`
 }
 
 func (h *HealthHandler) Check(c *gin.Context) {
 	dbStatus := "connected"
-	redisStatus := "connected"
 	isHealthy := true
 
-	// Check Postgres
+	// Check Database
 	if h.db != nil {
 		sqlDB, err := h.db.DB()
 		if err != nil || sqlDB.PingContext(c.Request.Context()) != nil {
@@ -46,18 +43,12 @@ func (h *HealthHandler) Check(c *gin.Context) {
 		isHealthy = false
 	}
 
-	// Check Redis
-	if h.rdb != nil {
-		if err := h.rdb.Ping(c.Request.Context()).Err(); err != nil {
-			redisStatus = "unreachable"
-			isHealthy = false
-		}
-	} else {
-		redisStatus = "unreachable"
-		isHealthy = false
+	dbDriver := "postgres"
+	if h.cfg != nil && h.cfg.DBDriver != "" {
+		dbDriver = h.cfg.DBDriver
 	}
 
-	status := "healthy"
+	status := "ok"
 	httpCode := http.StatusOK
 	if !isHealthy {
 		status = "degraded"
@@ -67,7 +58,7 @@ func (h *HealthHandler) Check(c *gin.Context) {
 	c.JSON(httpCode, HealthResponse{
 		Status:    status,
 		Database:  dbStatus,
-		Redis:     redisStatus,
+		DBDriver:  dbDriver,
 		AppMode:   "selfhosted",
 		Timestamp: time.Now().UTC(),
 	})

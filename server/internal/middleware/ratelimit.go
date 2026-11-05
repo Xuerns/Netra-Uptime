@@ -1,32 +1,25 @@
 package middleware
 
 import (
-	"context"
 	"fmt"
 	"net/http"
+	"netra-uptime/pkg/cache"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
 )
 
-func RateLimiter(rdb *redis.Client, limit int, window time.Duration) gin.HandlerFunc {
+func RateLimiter(cacheStore *cache.MemoryCache, limit int, window time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		ctx := context.Background()
-		ip := c.ClientIP()
-		key := fmt.Sprintf("rate:%s:%s", c.FullPath(), ip)
-
-		pipe := rdb.Pipeline()
-		incr := pipe.Incr(ctx, key)
-		pipe.ExpireNX(ctx, key, window)
-
-		_, err := pipe.Exec(ctx)
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Internal Server error"})
+		if cacheStore == nil {
+			c.Next()
 			return
 		}
 
-		currentCount := incr.Val()
+		ip := c.ClientIP()
+		key := fmt.Sprintf("rate:%s:%s", c.FullPath(), ip)
+
+		currentCount := cacheStore.Incr(key, window)
 
 		c.Header("X-RateLimit-Limit", fmt.Sprintf("%d", limit))
 

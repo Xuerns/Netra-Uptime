@@ -1,7 +1,4 @@
 services:
-  # ─────────────────────────────────────────────
-  # Netra Uptime App (Pre-built Single Container)
-  # ─────────────────────────────────────────────
   netra-uptime:
     image: ghcr.io/xuerns/netra-uptime:latest
     container_name: netra_uptime_app
@@ -12,15 +9,13 @@ services:
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in environment}
       - ALLOWED_ORIGIN=http://localhost:27346
       - PUBLIC_API_URL=http://localhost:27346/api/v1
+      - DB_DRIVER=postgres
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USER=netra
       - DB_PASSWORD=netra_secret_change_me
       - DB_NAME=netra_uptime
       - DB_SSLMODE=disable
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=redis_secret_change_me
       - RECENT_CHECKS_LIMIT=60
       - SELFHOSTED_MAX_MONITORS=0
       - SELFHOSTED_MAX_ORGS=0
@@ -39,14 +34,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     networks:
       - netra_uptime_net
-
-  # ─────────────────────────────────────────────
-  # PostgreSQL
-  # ─────────────────────────────────────────────
+      
   postgres:
     image: postgres:16-alpine
     container_name: netra_uptime_postgres
@@ -65,27 +55,8 @@ services:
     networks:
       - netra_uptime_net
 
-  # ─────────────────────────────────────────────
-  # Redis
-  # ─────────────────────────────────────────────
-  redis:
-    image: redis:7-alpine
-    container_name: netra_uptime_redis
-    restart: unless-stopped
-    command: redis-server --requirepass redis_secret_change_me
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "redis_secret_change_me", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - netra_uptime_net
-
 volumes:
   postgres_data:
-  redis_data:
 
 networks:
   netra_uptime_net:

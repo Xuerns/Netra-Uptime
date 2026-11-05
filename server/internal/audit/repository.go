@@ -72,7 +72,7 @@ func (r *AuditRepositoryImpl) GetByOrganization(orgId string, query GetAuditLogs
 
 	if query.Search != "" {
 		searchPattern := "%" + query.Search + "%"
-		dbQuery = dbQuery.Where("description ILIKE ? OR action ILIKE ?", searchPattern, searchPattern)
+		dbQuery = dbQuery.Where("LOWER(description) LIKE LOWER(?) OR LOWER(action) LIKE LOWER(?)", searchPattern, searchPattern)
 	}
 
 	var totalCount int64

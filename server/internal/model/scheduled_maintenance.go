@@ -4,10 +4,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type ScheduledMaintenance struct {
-	ID             uuid.UUID  `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
+	ID             uuid.UUID  `gorm:"primaryKey;type:uuid" json:"id"`
 	OrganizationID uuid.UUID  `gorm:"type:uuid;not null" json:"organization_id"`
 	StatusPageID   uuid.UUID  `gorm:"type:uuid;not null" json:"status_page_id"`
 	Title          string     `gorm:"not null" json:"title"`
@@ -25,11 +26,25 @@ type ScheduledMaintenance struct {
 	AffectedMonitors []MaintenanceMonitor `gorm:"foreignKey:MaintenanceID;constraint:OnDelete:CASCADE" json:"affected_monitors,omitempty"`
 }
 
+func (m *ScheduledMaintenance) BeforeCreate(tx *gorm.DB) error {
+	if m.ID == uuid.Nil {
+		m.ID = uuid.New()
+	}
+	return nil
+}
+
 type MaintenanceMonitor struct {
-	ID            uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
+	ID            uuid.UUID `gorm:"primaryKey;type:uuid" json:"id"`
 	MaintenanceID uuid.UUID `gorm:"type:uuid;not null" json:"maintenance_id"`
 	MonitorID     uuid.UUID `gorm:"type:uuid;not null" json:"monitor_id"`
 
 	Maintenance ScheduledMaintenance `gorm:"foreignKey:MaintenanceID" json:"maintenance,omitempty"`
 	Monitor     Monitor              `gorm:"foreignKey:MonitorID" json:"monitor,omitempty"`
+}
+
+func (m *MaintenanceMonitor) BeforeCreate(tx *gorm.DB) error {
+	if m.ID == uuid.Nil {
+		m.ID = uuid.New()
+	}
+	return nil
 }

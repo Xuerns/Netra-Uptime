@@ -12,6 +12,7 @@ JWT_ACCESS_EXPIRY=15m
 JWT_REFRESH_EXPIRY=168h
 
 # PostgreSQL
+DB_DRIVER=postgres
 POSTGRES_USER=netra
 POSTGRES_PASSWORD=${c.dbPassword}
 POSTGRES_DB=netra_uptime
@@ -22,10 +23,7 @@ DB_PASSWORD=${c.dbPassword}
 DB_NAME=netra_uptime
 DB_SSLMODE=disable
 
-# Redis
-REDIS_HOST=redis
-REDIS_PORT=6379
-REDIS_PASSWORD=${c.redisPassword}
+# Rate Limiter
 AUTH_RATE_LIMIT=60
 
 # Host port exposed by Docker (used by docker-compose.yml)
@@ -73,21 +71,6 @@ services:
     networks:
       - netra_uptime_net
 
-  redis:
-    image: redis:7-alpine
-    container_name: netra_uptime_redis
-    restart: unless-stopped
-    command: redis-server --requirepass \${REDIS_PASSWORD}
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a \${REDIS_PASSWORD} ping | grep PONG"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - netra_uptime_net
-
   netra-uptime:
     image: ${IMAGE}
     container_name: netra_uptime_app
@@ -105,14 +88,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     networks:
       - netra_uptime_net
 
 volumes:
   postgres_data:
-  redis_data:
 
 networks:
   netra_uptime_net:

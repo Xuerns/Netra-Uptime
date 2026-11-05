@@ -1,7 +1,6 @@
 package monitor
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,7 +13,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 	"golang.org/x/sync/singleflight"
 	"gorm.io/gorm"
 )
@@ -36,7 +34,7 @@ type ImmediateChecker interface {
 
 type MonitorServiceImpl struct {
 	repo             MonitorRepository
-	rdb              *redis.Client
+	cache            *cache.MemoryCache
 	auditService     audit.AuditService
 	immediateChecker ImmediateChecker
 	cfg              *config.Config
@@ -44,7 +42,7 @@ type MonitorServiceImpl struct {
 	sfGroup          singleflight.Group
 }
 
-func NewMonitorService(repo MonitorRepository, rdb *redis.Client, auditService audit.AuditService, opts ...interface{}) MonitorService {
+func NewMonitorService(repo MonitorRepository, cacheStore *cache.MemoryCache, auditService audit.AuditService, opts ...interface{}) MonitorService {
 	var ic ImmediateChecker
 	var cfg *config.Config
 	var db *gorm.DB
@@ -70,7 +68,7 @@ func NewMonitorService(repo MonitorRepository, rdb *redis.Client, auditService a
 	}
 	return &MonitorServiceImpl{
 		repo:             repo,
-		rdb:              rdb,
+		cache:            cacheStore,
 		auditService:     auditService,
 		immediateChecker: ic,
 		cfg:              cfg,
@@ -232,9 +230,7 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 		return nil, errors.New("Failed to create new monitor")
 	}
 
-	if s.rdb != nil {
-		s.rdb.Del(context.Background(), cache.MonitorListKey(orgId), cache.MonitorOverviewKey(orgId, 30))
-	}
+	s.invalidateMonitorCache(orgId, "")
 
 	if s.auditService != nil {
 		monitorIDStr := monitor.ID.String()
@@ -358,13 +354,22 @@ func mapMonitorToResponse(m model.Monitor) MonitorResponse {
 	return resp
 }
 
+func (s *MonitorServiceImpl) invalidateMonitorCache(orgId, monitorId string) {
+	if s.cache == nil {
+		return
+	}
+	if monitorId != "" {
+		s.cache.Del(cache.MonitorDetailKey(orgId, monitorId), cache.MonitorListKey(orgId), cache.MonitorOverviewKey(orgId, 30))
+	} else {
+		s.cache.Del(cache.MonitorListKey(orgId), cache.MonitorOverviewKey(orgId, 30))
+	}
+}
+
 func (s *MonitorServiceImpl) GetById(orgId, monitorId string) (*MonitorResponse, error) {
-	ctx := context.Background()
 	cacheKey := cache.MonitorDetailKey(orgId, monitorId)
 
-	if s.rdb != nil {
-		cacheData, err := s.rdb.Get(ctx, cacheKey).Result()
-		if err == nil && cacheData != "" {
+	if s.cache != nil {
+		if cacheData, ok := s.cache.Get(cacheKey); ok && cacheData != "" {
 			var monitorResponse MonitorResponse
 
 			if err := json.Unmarshal([]byte(cacheData), &monitorResponse); err == nil {
@@ -377,8 +382,8 @@ func (s *MonitorServiceImpl) GetById(orgId, monitorId string) (*MonitorResponse,
 	}
 
 	res, err, _ := s.sfGroup.Do(cacheKey, func() (interface{}, error) {
-		if s.rdb != nil {
-			if cacheData, err := s.rdb.Get(ctx, cacheKey).Result(); err == nil && cacheData != "" {
+		if s.cache != nil {
+			if cacheData, ok := s.cache.Get(cacheKey); ok && cacheData != "" {
 				var monitorResponse MonitorResponse
 				if err := json.Unmarshal([]byte(cacheData), &monitorResponse); err == nil {
 					if monitorResponse.OrganizationID == orgId {
@@ -396,9 +401,9 @@ func (s *MonitorServiceImpl) GetById(orgId, monitorId string) (*MonitorResponse,
 
 		response := mapMonitorToResponse(*monitor)
 
-		if s.rdb != nil {
+		if s.cache != nil {
 			if jsonData, err := json.Marshal(response); err == nil {
-				s.rdb.Set(ctx, cacheKey, jsonData, 15*time.Second)
+				s.cache.Set(cacheKey, string(jsonData), 15*time.Second)
 			}
 		}
 
@@ -413,12 +418,10 @@ func (s *MonitorServiceImpl) GetById(orgId, monitorId string) (*MonitorResponse,
 }
 
 func (s *MonitorServiceImpl) GetAllMonitor(orgId string) ([]MonitorResponse, error) {
-	ctx := context.Background()
 	cacheKey := cache.MonitorListKey(orgId)
 
-	if s.rdb != nil {
-		cacheData, err := s.rdb.Get(ctx, cacheKey).Result()
-		if err == nil && cacheData != "" {
+	if s.cache != nil {
+		if cacheData, ok := s.cache.Get(cacheKey); ok && cacheData != "" {
 			var monitorsResponse []MonitorResponse
 
 			if err := json.Unmarshal([]byte(cacheData), &monitorsResponse); err == nil {
@@ -428,8 +431,8 @@ func (s *MonitorServiceImpl) GetAllMonitor(orgId string) ([]MonitorResponse, err
 	}
 
 	res, err, _ := s.sfGroup.Do(cacheKey, func() (interface{}, error) {
-		if s.rdb != nil {
-			if cacheData, err := s.rdb.Get(ctx, cacheKey).Result(); err == nil && cacheData != "" {
+		if s.cache != nil {
+			if cacheData, ok := s.cache.Get(cacheKey); ok && cacheData != "" {
 				var monitorsResponse []MonitorResponse
 				if err := json.Unmarshal([]byte(cacheData), &monitorsResponse); err == nil {
 					return monitorsResponse, nil
@@ -447,9 +450,9 @@ func (s *MonitorServiceImpl) GetAllMonitor(orgId string) ([]MonitorResponse, err
 			response = append(response, mapMonitorToResponse(m))
 		}
 
-		if s.rdb != nil {
+		if s.cache != nil {
 			if jsonData, err := json.Marshal(response); err == nil {
-				s.rdb.Set(ctx, cacheKey, jsonData, 15*time.Second)
+				s.cache.Set(cacheKey, string(jsonData), 15*time.Second)
 			}
 		}
 
@@ -669,9 +672,7 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 		}
 	}
 
-	if s.rdb != nil {
-		s.rdb.Del(context.Background(), cache.MonitorListKey(orgId), cache.MonitorDetailKey(orgId, monitorId), cache.MonitorOverviewKey(orgId, 30))
-	}
+	s.invalidateMonitorCache(orgId, monitorId)
 
 	if s.auditService != nil {
 		_ = s.auditService.Record(audit.RecordAuditLogParams{
@@ -693,9 +694,7 @@ func (s *MonitorServiceImpl) DeleteMonitor(orgId, userId, ipAddress, monitorId s
 		return errors.New("Failed to delete monitor")
 	}
 
-	if s.rdb != nil {
-		s.rdb.Del(context.Background(), cache.MonitorListKey(orgId), cache.MonitorDetailKey(orgId, monitorId), cache.MonitorOverviewKey(orgId, 30))
-	}
+	s.invalidateMonitorCache(orgId, monitorId)
 
 	if s.auditService != nil {
 		_ = s.auditService.Record(audit.RecordAuditLogParams{
@@ -735,13 +734,12 @@ func (s *MonitorServiceImpl) TriggerCheck(orgId, monitorId string) (*RecentCheck
 		return nil, errors.New("cannot trigger check on inactive monitor")
 	}
 
-	ctx := context.Background()
 	cooldownKey := fmt.Sprintf("check_cooldown:monitor:%s", monitorId)
-	if s.rdb != nil {
-		if s.rdb.Get(ctx, cooldownKey).Err() == nil {
+	if s.cache != nil {
+		if _, ok := s.cache.Get(cooldownKey); ok {
 			return nil, errors.New("check cooldown active, please wait 10 seconds before triggering again")
 		}
-		s.rdb.Set(ctx, cooldownKey, "1", 10*time.Second)
+		s.cache.Set(cooldownKey, "1", 10*time.Second)
 	}
 
 	if s.immediateChecker == nil {
@@ -753,9 +751,7 @@ func (s *MonitorServiceImpl) TriggerCheck(orgId, monitorId string) (*RecentCheck
 		return nil, err
 	}
 
-	if s.rdb != nil {
-		s.rdb.Del(ctx, cache.MonitorDetailKey(orgId, monitorId), cache.MonitorListKey(orgId), cache.MonitorOverviewKey(orgId, 30))
-	}
+	s.invalidateMonitorCache(orgId, monitorId)
 
 	var errMsg *string
 	if check.ErrorMessage != "" {
@@ -778,13 +774,11 @@ func (s *MonitorServiceImpl) GetFleetOverview(orgId string, windowDays int) (*Fl
 		windowDays = 30
 	}
 
-	ctx := context.Background()
 	cacheKey := cache.MonitorOverviewKey(orgId, windowDays)
 
-	// Check Redis cache first
-	if s.rdb != nil {
-		cacheData, err := s.rdb.Get(ctx, cacheKey).Result()
-		if err == nil && cacheData != "" {
+	// Check cache first
+	if s.cache != nil {
+		if cacheData, ok := s.cache.Get(cacheKey); ok && cacheData != "" {
 			var cachedOverview FleetOverviewResponse
 			if err := json.Unmarshal([]byte(cacheData), &cachedOverview); err == nil {
 				return &cachedOverview, nil
@@ -795,8 +789,8 @@ func (s *MonitorServiceImpl) GetFleetOverview(orgId string, windowDays int) (*Fl
 	// Singleflight
 	res, err, _ := s.sfGroup.Do(cacheKey, func() (interface{}, error) {
 		// Re-check cache inside singleflight
-		if s.rdb != nil {
-			if cacheData, err := s.rdb.Get(ctx, cacheKey).Result(); err == nil && cacheData != "" {
+		if s.cache != nil {
+			if cacheData, ok := s.cache.Get(cacheKey); ok && cacheData != "" {
 				var cachedOverview FleetOverviewResponse
 				if err := json.Unmarshal([]byte(cacheData), &cachedOverview); err == nil {
 					return &cachedOverview, nil
@@ -815,9 +809,9 @@ func (s *MonitorServiceImpl) GetFleetOverview(orgId string, windowDays int) (*Fl
 			overview.Uptime.TrendDelta = &delta
 		}
 
-		if s.rdb != nil {
+		if s.cache != nil {
 			if jsonData, err := json.Marshal(overview); err == nil {
-				s.rdb.Set(ctx, cacheKey, jsonData, 30*time.Second)
+				s.cache.Set(cacheKey, string(jsonData), 30*time.Second)
 			}
 		}
 

@@ -4,10 +4,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type APIKey struct {
-	ID             uuid.UUID  `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	ID             uuid.UUID  `gorm:"primaryKey;type:uuid"`
 	OrganizationID uuid.UUID  `gorm:"type:uuid;not null;index"`
 	CreatedByID    uuid.UUID  `gorm:"type:uuid;not null"`
 	Name           string     `gorm:"not null"`
@@ -22,4 +23,11 @@ type APIKey struct {
 
 	Organization Organization `gorm:"foreignKey:OrganizationID"`
 	CreatedBy    User         `gorm:"foreignKey:CreatedByID"`
+}
+
+func (m *APIKey) BeforeCreate(tx *gorm.DB) error {
+	if m.ID == uuid.Nil {
+		m.ID = uuid.New()
+	}
+	return nil
 }

@@ -225,7 +225,7 @@ func (r *OrganizationRepositoryImpl) UpdateOrganization(updateData *map[string]i
 func (r *OrganizationRepositoryImpl) SearchPersons(name string, excludeUserId string, limit int, offset int, orgId string) ([]model.User, error) {
 	var users []model.User
 	query := r.db.Select("id", "name", "avatar_url").
-		Where("name ILIKE ?", "%"+name+"%").
+		Where("LOWER(name) LIKE LOWER(?)", "%"+name+"%").
 		Where("id != ?", excludeUserId)
 
 	if orgId != "" {

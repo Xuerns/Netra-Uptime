@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -10,6 +9,7 @@ import (
 	"net/url"
 	"netra-uptime/config"
 	"netra-uptime/internal/model"
+	"netra-uptime/pkg/cache"
 	"netra-uptime/pkg/email"
 	"netra-uptime/pkg/jwt"
 	"os"
@@ -17,7 +17,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -35,17 +34,17 @@ type AuthService interface {
 }
 
 type AuthServiceImpl struct {
-	repo AuthRepository
-	rdb  *redis.Client
-	cfg  *config.Config
+	repo  AuthRepository
+	cache *cache.MemoryCache
+	cfg   *config.Config
 }
 
-func NewAuthService(repo AuthRepository, rdb *redis.Client, cfg ...*config.Config) AuthService {
+func NewAuthService(repo AuthRepository, cacheStore *cache.MemoryCache, cfg ...*config.Config) AuthService {
 	var c *config.Config
 	if len(cfg) > 0 {
 		c = cfg[0]
 	}
-	return &AuthServiceImpl{repo: repo, rdb: rdb, cfg: c}
+	return &AuthServiceImpl{repo: repo, cache: cacheStore, cfg: c}
 }
 
 func (s *AuthServiceImpl) Register(req RegisterRequest) (string, error) {
@@ -382,11 +381,11 @@ func (s *AuthServiceImpl) InitPasswordChange(userId string, req InitPasswordChan
 		return errors.New("Failed to hash code")
 	}
 
-	ctx := context.Background()
 	key := fmt.Sprintf("password_change_code:%s", userId)
-	if err := s.rdb.Set(ctx, key, string(hashedCode), 15*time.Minute).Err(); err != nil {
+	if s.cache == nil {
 		return errors.New("Failed to save verification code")
 	}
+	s.cache.Set(key, string(hashedCode), 15*time.Minute)
 
 	if err := email.SendVerificationCodeEmail(user.Email, codeStr); err != nil {
 		return errors.New("Failed to send verification email")
@@ -396,38 +395,31 @@ func (s *AuthServiceImpl) InitPasswordChange(userId string, req InitPasswordChan
 }
 
 func (s *AuthServiceImpl) VerifyPasswordChange(userId string, req VerifyPasswordChangeRequest) error {
-	ctx := context.Background()
 	codeKey := fmt.Sprintf("password_change_code:%s", userId)
 	attemptsKey := fmt.Sprintf("password_change_attempts:%s", userId)
 
-	if s.rdb != nil {
-		attemptsVal, err := s.rdb.Get(ctx, attemptsKey).Result()
-		if err == nil {
+	if s.cache != nil {
+		if attemptsVal, ok := s.cache.Get(attemptsKey); ok {
 			if attempts, err := strconv.Atoi(attemptsVal); err == nil && attempts >= 5 {
 				return errors.New("Too many failed attempts. Verification code invalidated.")
 			}
 		}
 	}
 
-	if s.rdb == nil {
+	if s.cache == nil {
 		return errors.New("Verification code expired or not found")
 	}
 
-	hashedCode, err := s.rdb.Get(ctx, codeKey).Result()
-	if err != nil {
+	hashedCode, ok := s.cache.Get(codeKey)
+	if !ok {
 		return errors.New("Verification code expired or not found")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(hashedCode), []byte(req.Code)); err != nil {
-		if s.rdb != nil {
-			attempts, incrErr := s.rdb.Incr(ctx, attemptsKey).Result()
-			if incrErr == nil {
-				s.rdb.Expire(ctx, attemptsKey, 15*time.Minute)
-				if attempts >= 5 {
-					s.rdb.Del(ctx, codeKey, attemptsKey)
-					return errors.New("Too many failed attempts. Verification code invalidated.")
-				}
-			}
+		attempts := s.cache.Incr(attemptsKey, 15*time.Minute)
+		if attempts >= 5 {
+			s.cache.Del(codeKey, attemptsKey)
+			return errors.New("Too many failed attempts. Verification code invalidated.")
 		}
 		return errors.New("Invalid verification code")
 	}
@@ -441,9 +433,7 @@ func (s *AuthServiceImpl) VerifyPasswordChange(userId string, req VerifyPassword
 		return errors.New("Failed to change password")
 	}
 
-	if s.rdb != nil {
-		s.rdb.Del(ctx, attemptsKey, codeKey)
-	}
+	s.cache.Del(attemptsKey, codeKey)
 
 	// Revoke all existing sessions for this user (VULN-05)
 	_ = s.repo.RevokeAllRefreshTokensByUserID(userId)

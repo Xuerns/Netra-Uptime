@@ -16,14 +16,14 @@ import (
 	"netra-uptime/internal/router"
 	"netra-uptime/internal/statuspage"
 	"netra-uptime/internal/worker"
+	"netra-uptime/pkg/cache"
 
-	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
-func BuildHandler(db *gorm.DB, rdb *redis.Client, wp *worker.WorkerPool, cfg *config.Config, wsEvicter ...organization.WebSocketEvicter) router.Handlers {
+func BuildHandler(db *gorm.DB, cacheStore *cache.MemoryCache, wp *worker.WorkerPool, cfg *config.Config, wsEvicter ...organization.WebSocketEvicter) router.Handlers {
 	authRepo := auth.NewAuthRepository(db)
-	authService := auth.NewAuthService(authRepo, rdb, cfg)
+	authService := auth.NewAuthService(authRepo, cacheStore, cfg)
 	authHandler := auth.NewAuthHandler(authService)
 
 	auditRepo := audit.NewAuditRepository(db)
@@ -38,7 +38,7 @@ func BuildHandler(db *gorm.DB, rdb *redis.Client, wp *worker.WorkerPool, cfg *co
 	organizationHandler := organization.NewOrganizationHandler(organizationService)
 
 	monitorRepo := monitor.NewMonitorRepository(db, cfg)
-	monitorServise := monitor.NewMonitorService(monitorRepo, rdb, auditService, wp, cfg)
+	monitorServise := monitor.NewMonitorService(monitorRepo, cacheStore, auditService, wp, cfg)
 	monitorHandler := monitor.NewMonitorHandler(monitorServise)
 
 	incidentRepo := incident.NewMonitorRepository(db)
@@ -46,7 +46,7 @@ func BuildHandler(db *gorm.DB, rdb *redis.Client, wp *worker.WorkerPool, cfg *co
 	incidentHandler := incident.NewIncidentHandler(incidentService)
 
 	statuspageRepo := statuspage.NewStatusPageRepository(db, cfg)
-	statuspageService := statuspage.NewStatusPageService(statuspageRepo, organizationRepo, rdb, auditService, cfg)
+	statuspageService := statuspage.NewStatusPageService(statuspageRepo, organizationRepo, cacheStore, auditService, cfg)
 	statuspageHandler := statuspage.NewStatusPageHandler(statuspageService)
 
 	apiKeyRepo := apikey.NewAPIKeyRepository(db)
@@ -68,7 +68,7 @@ func BuildHandler(db *gorm.DB, rdb *redis.Client, wp *worker.WorkerPool, cfg *co
 	alertTemplateService := alerttemplate.NewService(alertTemplateRepo)
 	alertTemplateHandler := alerttemplate.NewHandler(alertTemplateService)
 
-	healthHandler := health.NewHealthHandler(db, rdb, cfg)
+	healthHandler := health.NewHealthHandler(db, cfg)
 
 	return router.Handlers{
 		AuthHandler:          authHandler,

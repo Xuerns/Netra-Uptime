@@ -1,18 +1,17 @@
 package middleware
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"netra-uptime/internal/apikey"
+	"netra-uptime/pkg/cache"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
 )
 
-func APIKeyAuthMiddleware(service apikey.APIKeyService, rdb *redis.Client) gin.HandlerFunc {
+func APIKeyAuthMiddleware(service apikey.APIKeyService, cacheStore *cache.MemoryCache) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rawKey := c.GetHeader("X-API-Key")
 		if rawKey == "" {
@@ -36,32 +35,26 @@ func APIKeyAuthMiddleware(service apikey.APIKeyService, rdb *redis.Client) gin.H
 		}
 
 		// Enforce Rate Limiting (60 req / min per API Key)
-		if rdb != nil {
+		if cacheStore != nil {
 			nowWindow := time.Now().Unix() / 60
-			rateKey := fmt.Sprintf("rate_limit:api_key:%s:%d", key.ID.String(), nowWindow)
-			ctx := context.Background()
+			rlKey := fmt.Sprintf("rate_limit:api_key:%s:%d", key.ID.String(), nowWindow)
 
-			count, err := rdb.Incr(ctx, rateKey).Result()
-			if err == nil {
-				if count == 1 {
-					rdb.Expire(ctx, rateKey, 65*time.Second)
-				}
+			count := cacheStore.Incr(rlKey, time.Minute)
 
-				limit := int64(60)
-				remaining := limit - count
-				if remaining < 0 {
-					remaining = 0
-				}
+			limit := int64(60)
+			remaining := limit - count
+			if remaining < 0 {
+				remaining = 0
+			}
 
-				c.Header("X-RateLimit-Limit", fmt.Sprintf("%d", limit))
-				c.Header("X-RateLimit-Remaining", fmt.Sprintf("%d", remaining))
-				c.Header("X-RateLimit-Reset", fmt.Sprintf("%d", (nowWindow+1)*60))
+			c.Header("X-RateLimit-Limit", fmt.Sprintf("%d", limit))
+			c.Header("X-RateLimit-Remaining", fmt.Sprintf("%d", remaining))
+			c.Header("X-RateLimit-Reset", fmt.Sprintf("%d", (nowWindow+1)*60))
 
-				if count > limit {
-					c.JSON(http.StatusTooManyRequests, gin.H{"error": "API Key rate limit exceeded (60 requests per minute)"})
-					c.Abort()
-					return
-				}
+			if count > limit {
+				c.JSON(http.StatusTooManyRequests, gin.H{"error": "API Key rate limit exceeded (60 requests per minute)"})
+				c.Abort()
+				return
 			}
 		}
 

@@ -4,10 +4,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type AlertRuleTemplate struct {
-	ID             uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
+	ID             uuid.UUID `gorm:"primaryKey;type:uuid" json:"id"`
 	OrganizationID uuid.UUID `gorm:"type:uuid;not null;index" json:"organization_id"`
 	Name           string    `gorm:"not null" json:"name"`
 	Description    string    `json:"description"`
@@ -18,4 +19,11 @@ type AlertRuleTemplate struct {
 	Organization  Organization `gorm:"foreignKey:OrganizationID" json:"-"`
 	Rules         []AlertRule  `gorm:"foreignKey:TemplateID;constraint:OnDelete:CASCADE;" json:"rules"`
 	MonitorsCount int64        `gorm:"-" json:"monitors_count,omitempty"`
+}
+
+func (m *AlertRuleTemplate) BeforeCreate(tx *gorm.DB) error {
+	if m.ID == uuid.Nil {
+		m.ID = uuid.New()
+	}
+	return nil
 }

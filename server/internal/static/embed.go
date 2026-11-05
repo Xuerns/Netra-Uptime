@@ -26,7 +26,18 @@ func RegisterStaticRoutes(r *gin.Engine) {
 	// Serve /_app/env.js dynamically so users can configure PUBLIC_API_URL
 	// at runtime via environment variable without rebuilding the image.
 	r.GET("/_app/env.js", func(c *gin.Context) {
-		apiURL := os.Getenv("PUBLIC_API_URL")
+		apiURL := strings.TrimSpace(os.Getenv("PUBLIC_API_URL"))
+		if apiURL == "" {
+			scheme := "http"
+			if c.Request.TLS != nil || strings.EqualFold(c.GetHeader("X-Forwarded-Proto"), "https") {
+				scheme = "https"
+			}
+			host := c.Request.Host
+			if host == "" {
+				host = "localhost:27346"
+			}
+			apiURL = fmt.Sprintf("%s://%s/api/v1", scheme, host)
+		}
 
 		js := fmt.Sprintf(
 			`export const env={PUBLIC_API_URL:%q}`,

@@ -4,10 +4,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type MonitorDailyStat struct {
-	ID               uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	ID               uuid.UUID `gorm:"primaryKey;type:uuid"`
 	MonitorID        uuid.UUID `gorm:"type:uuid;not null;index:idx_monitor_daily_date,unique"`
 	Date             time.Time `gorm:"type:date;not null;index:idx_monitor_daily_date,unique"`
 	TotalChecks      int       `gorm:"not null;default:0"`
@@ -26,4 +27,11 @@ type MonitorDailyStat struct {
 	UpdatedAt        time.Time `gorm:"autoUpdateTime"`
 
 	Monitor Monitor `gorm:"foreignKey:MonitorID"`
+}
+
+func (m *MonitorDailyStat) BeforeCreate(tx *gorm.DB) error {
+	if m.ID == uuid.Nil {
+		m.ID = uuid.New()
+	}
+	return nil
 }

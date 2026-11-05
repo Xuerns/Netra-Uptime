@@ -1,7 +1,6 @@
 package router
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"database/sql"
@@ -9,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"netra-uptime/internal/alertrule"
@@ -24,10 +22,10 @@ import (
 	"netra-uptime/internal/publicapi"
 	"netra-uptime/internal/statuspage"
 	"netra-uptime/internal/websocket"
+	"netra-uptime/pkg/cache"
 	"netra-uptime/pkg/jwt"
 	"netra-uptime/pkg/utils"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -37,7 +35,6 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -51,117 +48,6 @@ func init() {
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterValidation("nohtml", utils.NoHTMLValidator)
 	}
-}
-
-// ====================== MOCK REDIS FOR RATE LIMITER ======================
-
-func newMockRedisClient(t *testing.T) (*redis.Client, func()) {
-	t.Helper()
-	l, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatalf("failed to listen on random port: %v", err)
-	}
-
-	store := make(map[string]string)
-	var mu sync.Mutex
-
-	go func() {
-		for {
-			conn, err := l.Accept()
-			if err != nil {
-				return
-			}
-			go func(c net.Conn) {
-				defer func() {
-					_ = c.Close()
-				}()
-				r := bufio.NewReader(c)
-				for {
-					line, err := r.ReadString('\n')
-					if err != nil {
-						return
-					}
-					line = strings.TrimSpace(line)
-					if len(line) == 0 {
-						continue
-					}
-
-					var args []string
-					if strings.HasPrefix(line, "*") {
-						numArgs, _ := strconv.Atoi(line[1:])
-						for i := 0; i < numArgs; i++ {
-							lenLine, err := r.ReadString('\n')
-							if err != nil {
-								return
-							}
-							argLen, _ := strconv.Atoi(strings.TrimSpace(lenLine[1:]))
-							buf := make([]byte, argLen+2)
-							if _, err := io.ReadFull(r, buf); err != nil {
-								return
-							}
-							args = append(args, string(buf[:argLen]))
-						}
-					} else {
-						args = strings.Fields(line)
-					}
-
-					if len(args) == 0 {
-						continue
-					}
-
-					cmd := strings.ToUpper(args[0])
-					switch cmd {
-					case "PING":
-						c.Write([]byte("+PONG\r\n"))
-					case "INCR":
-						mu.Lock()
-						val, _ := strconv.Atoi(store[args[1]])
-						val++
-						store[args[1]] = strconv.Itoa(val)
-						mu.Unlock()
-						fmt.Fprintf(c, ":%d\r\n", val)
-					case "EXPIRE":
-						c.Write([]byte(":1\r\n"))
-					case "GET":
-						mu.Lock()
-						val, ok := store[args[1]]
-						mu.Unlock()
-						if !ok {
-							c.Write([]byte("$-1\r\n"))
-						} else {
-							fmt.Fprintf(c, "$%d\r\n%s\r\n", len(val), val)
-						}
-					case "SET":
-						mu.Lock()
-						store[args[1]] = args[2]
-						mu.Unlock()
-						c.Write([]byte("+OK\r\n"))
-					case "DEL":
-						mu.Lock()
-						for _, k := range args[1:] {
-							delete(store, k)
-						}
-						mu.Unlock()
-						c.Write([]byte(":1\r\n"))
-					default:
-						c.Write([]byte("-ERR unknown command\r\n"))
-					}
-				}
-			}(conn)
-		}
-	}()
-
-	client := redis.NewClient(&redis.Options{
-		Addr:     l.Addr().String(),
-		Protocol: 2,
-	})
-
-	cleanup := func() {
-		_ = client.Close()
-		_ = l.Close()
-	}
-
-	return client, cleanup
 }
 
 // ====================== MOCK SQL DRIVER FOR GORM ======================
@@ -299,7 +185,7 @@ func setupTestRouter(t *testing.T) (*testEnv, func()) {
 	t.Helper()
 	r := gin.New()
 	db := setupMockGormDB(t)
-	rdb, cleanupRedis := newMockRedisClient(t)
+	cacheStore := cache.NewMemoryCache()
 
 	// Mock Services
 	mockAuthSvc := &mockAuthService{}
@@ -328,11 +214,9 @@ func setupTestRouter(t *testing.T) (*testEnv, func()) {
 
 	wsHandler := &websocket.WsHandler{}
 
-	SetupRouter(r, db, rdb, h, wsHandler)
+	SetupRouter(r, db, cacheStore, h, wsHandler)
 
-	cleanup := func() {
-		cleanupRedis()
-	}
+	cleanup := func() {}
 
 	return &testEnv{
 		router: r,

@@ -25,7 +25,7 @@ import (
 func main() {
 
 	config := config.Load()
-	db, err := database.NewPostgres(config)
+	db, err := database.NewDatabase(config)
 
 	if err != nil {
 		log.Fatalf("Failed to connect database: %v\n", err)
@@ -45,9 +45,9 @@ func main() {
 	go wsHub.Run()
 	wsHandler := websocket.NewWsHandler(wsHub, db)
 
-	rdb := cache.NewRedisClient(config)
+	cacheStore := cache.NewMemoryCache()
 
-	wp := worker.NewWorkerPool(db, rdb, 10, sender, wsHandler)
+	wp := worker.NewWorkerPool(db, cacheStore, 10, sender, wsHandler)
 	wp.Start()
 
 	monitorRepo := monitor.NewMonitorRepository(db, config)
@@ -79,13 +79,16 @@ func main() {
 	r.Use(middleware.SetupCORS())
 	r.Use(middleware.SecurityHeaders())
 
-	handlers := BuildHandler(db, rdb, wp, config, wsHub)
-	router.SetupRouter(r, db, rdb, handlers, wsHandler)
+	handlers := BuildHandler(db, cacheStore, wp, config, wsHub)
+	router.SetupRouter(r, db, cacheStore, handlers, wsHandler)
 
 	addr := ":27346"
+	port := "27346"
 	if config.Port != "" {
+		port = config.Port
 		addr = ":" + config.Port
 	}
+	log.Printf("[Netra Uptime] Server running at http://localhost:%s (DB Driver: %s)\n", port, config.DBDriver)
 	if err := r.Run(addr); err != nil {
 		log.Fatalf("Server failed to run on %s: %v", addr, err)
 	}

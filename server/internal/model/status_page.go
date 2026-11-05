@@ -4,10 +4,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type StatusPage struct {
-	ID             uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	ID             uuid.UUID `gorm:"primaryKey;type:uuid"`
 	OrganizationID uuid.UUID `gorm:"type:uuid;not null"`
 	Subdomain      string    `gorm:"unique;not null"`
 	Title          string    `gorm:"not null"`
@@ -26,8 +27,15 @@ type StatusPage struct {
 	ComponentGroups    []ComponentGroup    `gorm:"foreignKey:StatusPageID;constraint:OnDelete:CASCADE"`
 }
 
+func (m *StatusPage) BeforeCreate(tx *gorm.DB) error {
+	if m.ID == uuid.Nil {
+		m.ID = uuid.New()
+	}
+	return nil
+}
+
 type StatusPageMonitor struct {
-	ID           uuid.UUID  `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	ID           uuid.UUID  `gorm:"primaryKey;type:uuid"`
 	StatusPageID uuid.UUID  `gorm:"type:uuid;not null;index"`
 	MonitorID    uuid.UUID  `gorm:"type:uuid;not null;index"`
 	DisplayOrder int        `gorm:"default:0"`
@@ -36,4 +44,11 @@ type StatusPageMonitor struct {
 	StatusPage     StatusPage      `gorm:"foreignKey:StatusPageID"`
 	Monitor        Monitor         `gorm:"foreignKey:MonitorID"`
 	ComponentGroup *ComponentGroup `gorm:"foreignKey:GroupID;constraint:OnDelete:SET NULL"`
+}
+
+func (m *StatusPageMonitor) BeforeCreate(tx *gorm.DB) error {
+	if m.ID == uuid.Nil {
+		m.ID = uuid.New()
+	}
+	return nil
 }

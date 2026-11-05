@@ -1,9 +1,6 @@
 name: netra-uptime
 
 services:
-  # ─────────────────────────────────────────────
-  # PostgreSQL
-  # ─────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     container_name: netra_uptime_postgres
@@ -24,29 +21,6 @@ services:
     networks:
       - netra_uptime_net
 
-  # ─────────────────────────────────────────────
-  # Redis
-  # ─────────────────────────────────────────────
-  redis:
-    image: redis:7-alpine
-    container_name: netra_uptime_redis
-    restart: unless-stopped
-    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_secret}
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_secret}", "ping" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - netra_uptime_net
-
-  # ─────────────────────────────────────────────
-  # Netra Uptime App (Single Container: Go API + Embedded UI)
-  # ─────────────────────────────────────────────
   netra-uptime:
     build:
       context: .
@@ -59,15 +33,13 @@ services:
     environment:
       - APP_ENV
       - PORT
+      - DB_DRIVER=postgres
       - DB_HOST=postgres
       - DB_PORT
       - DB_USER
       - DB_PASSWORD
       - DB_NAME
       - DB_SSLMODE
-      - REDIS_HOST=redis
-      - REDIS_PORT
-      - REDIS_PASSWORD
       - RECENT_CHECKS_LIMIT
       - SELFHOSTED_MAX_MONITORS
       - SELFHOSTED_MAX_ORGS
@@ -87,21 +59,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     networks:
       - netra_uptime_net
 
-# ─────────────────────────────────────────────
-# Volumes
-# ─────────────────────────────────────────────
 volumes:
   postgres_data:
-  redis_data:
-
-    # ─────────────────────────────────────────────
-    # Networks
-    # ─────────────────────────────────────────────
+─
 networks:
   netra_uptime_net:
     driver: bridge

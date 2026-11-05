@@ -1,15 +1,16 @@
 package statuspage
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"netra-uptime/config"
 	"netra-uptime/internal/audit"
 	"netra-uptime/internal/model"
+	"netra-uptime/pkg/cache"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 )
 
 type StatusPageService interface {
@@ -38,17 +39,32 @@ type OrganizationMemberChecker interface {
 type StatusPageServiceImpl struct {
 	repo          StatusPageRepository
 	memberChecker OrganizationMemberChecker
-	rdb           *redis.Client
+	cache         *cache.MemoryCache
 	auditService  audit.AuditService
 	cfg           *config.Config
 }
 
-func NewStatusPageService(repo StatusPageRepository, checker OrganizationMemberChecker, rdb *redis.Client, auditService audit.AuditService, cfg ...*config.Config) StatusPageService {
+func NewStatusPageService(repo StatusPageRepository, checker OrganizationMemberChecker, cacheStore *cache.MemoryCache, auditService audit.AuditService, cfg ...*config.Config) StatusPageService {
 	var c *config.Config
 	if len(cfg) > 0 && cfg[0] != nil {
 		c = cfg[0]
 	}
-	return &StatusPageServiceImpl{repo: repo, memberChecker: checker, rdb: rdb, auditService: auditService, cfg: c}
+	return &StatusPageServiceImpl{repo: repo, memberChecker: checker, cache: cacheStore, auditService: auditService, cfg: c}
+}
+
+func (s *StatusPageServiceImpl) invalidatePublicCache(subdomains ...string) {
+	if s.cache == nil {
+		return
+	}
+	keys := make([]string, 0, len(subdomains))
+	for _, sub := range subdomains {
+		if sub != "" {
+			keys = append(keys, fmt.Sprintf("status_page:public:%s", sub))
+		}
+	}
+	if len(keys) > 0 {
+		s.cache.Del(keys...)
+	}
 }
 
 func (s *StatusPageServiceImpl) getConfig() *config.Config {
@@ -239,8 +255,14 @@ func (s *StatusPageServiceImpl) Delete(statusPageID, orgID, userID, ipAddress st
 		return errors.New("You're not member of this organization")
 	}
 
+	existing, _ := s.repo.GetById(statusPageID, orgID)
+
 	if err := s.repo.Delete(statusPageID, orgID); err != nil {
 		return errors.New("Something wrong, please try again")
+	}
+
+	if existing != nil {
+		s.invalidatePublicCache(existing.Subdomain)
 	}
 
 	if s.auditService != nil {
@@ -269,6 +291,7 @@ func (s *StatusPageServiceImpl) Update(statuspageID, orgID, userID, ipAddress st
 	if err != nil {
 		return nil, errors.New("Not Found")
 	}
+	oldSubdomain := statusPage.Subdomain
 
 	if req.Title != nil {
 		statusPage.Title = *req.Title
@@ -330,6 +353,8 @@ func (s *StatusPageServiceImpl) Update(statuspageID, orgID, userID, ipAddress st
 		return nil, errors.New("Something wrong, please try again")
 	}
 
+	s.invalidatePublicCache(oldSubdomain, updatedStatusPage.Subdomain)
+
 	if s.auditService != nil {
 		_ = s.auditService.Record(audit.RecordAuditLogParams{
 			OrganizationID: orgID,
@@ -371,6 +396,16 @@ func (s *StatusPageServiceImpl) GetById(statusPageID, orgID, userID string) (*St
 }
 
 func (s *StatusPageServiceImpl) GetBySubdomain(subdomain string) (*PublicStatusPageResponse, error) {
+	cacheKey := fmt.Sprintf("status_page:public:%s", subdomain)
+	if s.cache != nil {
+		if cached, ok := s.cache.Get(cacheKey); ok && cached != "" {
+			var resp PublicStatusPageResponse
+			if err := json.Unmarshal([]byte(cached), &resp); err == nil {
+				return &resp, nil
+			}
+		}
+	}
+
 	statusPage, err := s.repo.GetBySubdomain(subdomain)
 	if err != nil {
 		return nil, errors.New("Status page not found")
@@ -481,6 +516,12 @@ func (s *StatusPageServiceImpl) GetBySubdomain(subdomain string) (*PublicStatusP
 		IncidentHistory:      incidentHistory,
 		UpcomingMaintenances: mapMaintenancesToPublicResponse(upcomingMaintenances),
 		OngoingMaintenances:  mapMaintenancesToPublicResponse(ongoingMaintenances),
+	}
+
+	if s.cache != nil {
+		if jsonData, err := json.Marshal(response); err == nil {
+			s.cache.Set(cacheKey, string(jsonData), 15*time.Second)
+		}
 	}
 
 	return response, nil
@@ -648,6 +689,8 @@ func (s *StatusPageServiceImpl) CreateMaintenance(orgID, statusPageID, userID, i
 		return nil, errors.New("Failed to create scheduled maintenance")
 	}
 
+	s.invalidatePublicCache(sp.Subdomain)
+
 	if s.auditService != nil {
 		mIDStr := created.ID.String()
 		_ = s.auditService.Record(audit.RecordAuditLogParams{
@@ -749,6 +792,10 @@ func (s *StatusPageServiceImpl) UpdateMaintenance(orgID, statusPageID, maintenan
 		return nil, errors.New("Failed to update scheduled maintenance")
 	}
 
+	if sp, err := s.repo.GetById(statusPageID, orgID); err == nil && sp != nil {
+		s.invalidatePublicCache(sp.Subdomain)
+	}
+
 	if s.auditService != nil {
 		mIDStr := updated.ID.String()
 		_ = s.auditService.Record(audit.RecordAuditLogParams{
@@ -773,6 +820,10 @@ func (s *StatusPageServiceImpl) DeleteMaintenance(orgID, statusPageID, maintenan
 
 	if err := s.repo.DeleteMaintenance(maintenanceID, orgID); err != nil {
 		return errors.New("Failed to delete scheduled maintenance")
+	}
+
+	if sp, err := s.repo.GetById(statusPageID, orgID); err == nil && sp != nil {
+		s.invalidatePublicCache(sp.Subdomain)
 	}
 
 	if s.auditService != nil {
@@ -857,6 +908,8 @@ func (s *StatusPageServiceImpl) CreateComponentGroup(orgID, statusPageID, userID
 	if err != nil {
 		return nil, errors.New("Failed to create component group")
 	}
+
+	s.invalidatePublicCache(sp.Subdomain)
 
 	if s.auditService != nil {
 		gIDStr := created.ID.String()
@@ -943,6 +996,8 @@ func (s *StatusPageServiceImpl) UpdateComponentGroup(orgID, statusPageID, groupI
 		return nil, errors.New("Failed to update component group")
 	}
 
+	s.invalidatePublicCache(sp.Subdomain)
+
 	if s.auditService != nil {
 		gIDStr := updated.ID.String()
 		_ = s.auditService.Record(audit.RecordAuditLogParams{
@@ -980,6 +1035,8 @@ func (s *StatusPageServiceImpl) DeleteComponentGroup(orgID, statusPageID, groupI
 		return errors.New("Failed to delete component group")
 	}
 
+	s.invalidatePublicCache(sp.Subdomain)
+
 	if s.auditService != nil {
 		gIDStr := group.ID.String()
 		_ = s.auditService.Record(audit.RecordAuditLogParams{
@@ -1002,7 +1059,7 @@ func (s *StatusPageServiceImpl) AssignMonitorToGroup(orgID, statusPageID, monito
 		return errors.New("You're not member of this organization")
 	}
 
-	_, err = s.repo.GetById(statusPageID, orgID)
+	sp, err := s.repo.GetById(statusPageID, orgID)
 	if err != nil {
 		return errors.New("Status page not found")
 	}
@@ -1021,6 +1078,8 @@ func (s *StatusPageServiceImpl) AssignMonitorToGroup(orgID, statusPageID, monito
 	if err := s.repo.AssignMonitorToGroup(statusPageID, monitorID, req.GroupID); err != nil {
 		return errors.New("Failed to assign monitor to group")
 	}
+
+	s.invalidatePublicCache(sp.Subdomain)
 
 	return nil
 }

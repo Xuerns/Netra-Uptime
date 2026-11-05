@@ -17,10 +17,10 @@ import (
 	"netra-uptime/internal/static"
 	"netra-uptime/internal/statuspage"
 	"netra-uptime/internal/websocket"
+	"netra-uptime/pkg/cache"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
@@ -40,7 +40,7 @@ type Handlers struct {
 	HealthHandler        *health.HealthHandler
 }
 
-func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, wsHandler *websocket.WsHandler) {
+func SetupRouter(r *gin.Engine, db *gorm.DB, cacheStore *cache.MemoryCache, h Handlers, wsHandler *websocket.WsHandler) {
 	// Register embedded client static routes & SPA fallback
 	static.RegisterStaticRoutes(r)
 
@@ -58,9 +58,9 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 		authRateLimit = cfg.AuthRateLimit
 	}
 
-	authLimiter := middleware.RateLimiter(redis, authRateLimit, 1*time.Minute)
-	refreshLimiter := middleware.RateLimiter(redis, 30, 1*time.Minute)
-	resetLimiter := middleware.RateLimiter(redis, 3, 15*time.Minute)
+	authLimiter := middleware.RateLimiter(cacheStore, authRateLimit, 1*time.Minute)
+	refreshLimiter := middleware.RateLimiter(cacheStore, 30, 1*time.Minute)
+	resetLimiter := middleware.RateLimiter(cacheStore, 3, 15*time.Minute)
 
 	// Public API
 	api.POST("/auth/register", authLimiter, h.AuthHandler.Register)
@@ -111,7 +111,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 	orgRoutes.GET("/monitors/overview", h.MonitorHandler.GetFleetOverview)
 	orgRoutes.GET("/monitors/:monitorId", h.MonitorHandler.GetById)
 	orgRoutes.GET("/monitors/:monitorId/stats", h.MonitorHandler.GetDailyStats)
-	checkLimiter := middleware.RateLimiter(redis, 10, 1*time.Minute)
+	checkLimiter := middleware.RateLimiter(cacheStore, 10, 1*time.Minute)
 	orgRoutes.POST("/monitors/:monitorId/check", checkLimiter, h.MonitorHandler.TriggerCheck)
 	orgRoutes.PUT("/monitors/:monitorId", middleware.RequireRole("owner", "admin"), h.MonitorHandler.UpdateMonitor)
 	orgRoutes.DELETE("/monitors/:monitorId", middleware.RequireRole("owner", "admin"), h.MonitorHandler.DeleteMonitor)
@@ -178,7 +178,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, redis *redis.Client, h Handlers, ws
 
 	// Public REST API (protected by API Key auth + 60 req/min rate limit)
 	publicGroup := r.Group("api/v1/public")
-	publicGroup.Use(middleware.APIKeyAuthMiddleware(h.APIKeyService, redis))
+	publicGroup.Use(middleware.APIKeyAuthMiddleware(h.APIKeyService, cacheStore))
 	{
 		publicGroup.GET("/monitors", h.PublicAPIHandler.ListMonitors)
 		publicGroup.GET("/monitors/:id", h.PublicAPIHandler.GetMonitor)

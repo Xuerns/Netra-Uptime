@@ -254,14 +254,14 @@ func (r *StatusPageRepositoryImpl) Get30DayUptimeMap(monitorIDs []string) (map[s
 
 	var dailyAggs []uptimeAgg
 	r.db.Table("monitor_daily_stats").
-		Select("monitor_id::text as monitor_id, SUM(total_checks) as total_checks, SUM(up_checks) as up_checks").
+		Select("monitor_id, SUM(total_checks) as total_checks, SUM(up_checks) as up_checks").
 		Where("monitor_id IN ? AND date >= ?", monitorIDs, sinceDate).
 		Group("monitor_id").
 		Scan(&dailyAggs)
 
 	var checkAggs []uptimeAgg
 	r.db.Table("checks").
-		Select("monitor_id::text as monitor_id, COUNT(*) as total_checks, COUNT(CASE WHEN status = 'up' THEN 1 END) as up_checks").
+		Select("monitor_id, COUNT(*) as total_checks, COUNT(CASE WHEN status = 'up' THEN 1 END) as up_checks").
 		Where("monitor_id IN ? AND checked_at >= ?", monitorIDs, sinceDate).
 		Group("monitor_id").
 		Scan(&checkAggs)
@@ -313,17 +313,17 @@ func (r *StatusPageRepositoryImpl) GetMonitorDailyStats(monitorIDs []string, day
 
 	// Also aggregate today's checks from checks table
 	type rawDailyAgg struct {
-		MonitorID   string    `gorm:"column:monitor_id"`
-		Date        time.Time `gorm:"column:date"`
-		TotalChecks int       `gorm:"column:total_checks"`
-		UpChecks    int       `gorm:"column:up_checks"`
-		DownChecks  int       `gorm:"column:down_checks"`
+		MonitorID   string `gorm:"column:monitor_id"`
+		Date        string `gorm:"column:date"`
+		TotalChecks int    `gorm:"column:total_checks"`
+		UpChecks    int    `gorm:"column:up_checks"`
+		DownChecks  int    `gorm:"column:down_checks"`
 	}
 
 	var rawAggs []rawDailyAgg
 	r.db.Table("checks").
 		Select(`
-			monitor_id::text AS monitor_id,
+			monitor_id,
 			DATE(checked_at) AS date,
 			COUNT(*) AS total_checks,
 			COUNT(CASE WHEN status = 'up' THEN 1 END) AS up_checks,
@@ -335,8 +335,15 @@ func (r *StatusPageRepositoryImpl) GetMonitorDailyStats(monitorIDs []string, day
 
 	if len(rawAggs) > 0 {
 		for _, raw := range rawAggs {
+			if len(raw.Date) < 10 {
+				continue
+			}
+			parsedDate, err := time.Parse("2006-01-02", raw.Date[:10])
+			if err != nil {
+				continue
+			}
 			mID := raw.MonitorID
-			dateStr := raw.Date.Format("2006-01-02")
+			dateStr := parsedDate.Format("2006-01-02")
 			existingList := result[mID]
 			found := false
 			for idx, s := range existingList {
@@ -364,7 +371,7 @@ func (r *StatusPageRepositoryImpl) GetMonitorDailyStats(monitorIDs []string, day
 				mUUID, _ := uuid.Parse(mID)
 				existingList = append(existingList, model.MonitorDailyStat{
 					MonitorID:        mUUID,
-					Date:             raw.Date,
+					Date:             parsedDate,
 					TotalChecks:      raw.TotalChecks,
 					UpChecks:         raw.UpChecks,
 					DownChecks:       raw.DownChecks,

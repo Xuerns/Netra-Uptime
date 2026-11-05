@@ -4,10 +4,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type NotificationLog struct {
-	ID          uuid.UUID  `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	ID          uuid.UUID  `gorm:"primaryKey;type:uuid"`
 	MonitorID   *uuid.UUID `gorm:"type:uuid;index"` // nullable: nil for org-level channel dispatches
 	IncidentID  *uuid.UUID `gorm:"type:uuid;index"` // nullable: nil for SSL/domain alerts
 	ChannelID   *uuid.UUID `gorm:"type:uuid;index"` // nullable: nil for assignee email dispatch
@@ -20,4 +21,11 @@ type NotificationLog struct {
 	Monitor             *Monitor             `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
 	Incident            *Incident            `gorm:"foreignKey:IncidentID;constraint:OnDelete:CASCADE;"`
 	NotificationChannel *NotificationChannel `gorm:"foreignKey:ChannelID;constraint:OnDelete:CASCADE;"`
+}
+
+func (m *NotificationLog) BeforeCreate(tx *gorm.DB) error {
+	if m.ID == uuid.Nil {
+		m.ID = uuid.New()
+	}
+	return nil
 }

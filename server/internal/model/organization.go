@@ -4,10 +4,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Organization struct {
-	ID        uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	ID        uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Name      string    `gorm:"not null"`
 	Slug      string    `gorm:"unique;not null"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
@@ -20,8 +21,15 @@ type Organization struct {
 	APIKeys              []APIKey              `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
 }
 
+func (m *Organization) BeforeCreate(tx *gorm.DB) error {
+	if m.ID == uuid.Nil {
+		m.ID = uuid.New()
+	}
+	return nil
+}
+
 type OrganizationMember struct {
-	ID             uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	ID             uuid.UUID `gorm:"primaryKey;type:uuid"`
 	OrganizationID uuid.UUID `gorm:"type:uuid;not null"`
 	UserID         uuid.UUID `gorm:"type:uuid;not null"`
 	Role           string    `gorm:"not null;default:'member'"`
@@ -31,8 +39,15 @@ type OrganizationMember struct {
 	User         User         `gorm:"foreignKey:UserID"`
 }
 
+func (m *OrganizationMember) BeforeCreate(tx *gorm.DB) error {
+	if m.ID == uuid.Nil {
+		m.ID = uuid.New()
+	}
+	return nil
+}
+
 type OrganizationInvitation struct {
-	ID             uuid.UUID `gorm:"primartKey;type:uuid;default:gen_random_uuid()"`
+	ID             uuid.UUID `gorm:"primaryKey;type:uuid"`
 	OrganizationID uuid.UUID `gorm:"type:uuid;not null"`
 	InviterID      uuid.UUID `gorm:"type:uuid;not null"`
 	InviteeID      uuid.UUID `gorm:"type:uuid;not null"`
@@ -44,4 +59,11 @@ type OrganizationInvitation struct {
 	Organization Organization `gorm:"foreignKey:OrganizationID"`
 	Inviter      User         `gorm:"foreignKey:InviterID"`
 	Invitee      User         `gorm:"foreignKey:InviteeID"`
+}
+
+func (m *OrganizationInvitation) BeforeCreate(tx *gorm.DB) error {
+	if m.ID == uuid.Nil {
+		m.ID = uuid.New()
+	}
+	return nil
 }

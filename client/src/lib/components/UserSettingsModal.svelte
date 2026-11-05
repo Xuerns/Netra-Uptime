@@ -90,7 +90,7 @@
 					>
 						<Command.Root>
 							<Command.Input placeholder="Search timezone..." />
-							<Command.List class="max-h-56 overflow-y-auto">
+							<Command.List data-lenis-prevent class="max-h-56 overflow-y-auto">
 								<Command.Empty>No timezone found.</Command.Empty>
 								{#each regions as region (region)}
 									<Command.Group heading={region}>
@@ -115,9 +115,6 @@
 						</Command.Root>
 					</Popover.Content>
 				</Popover.Root>
-				<p class="text-xs text-muted-foreground">
-					Semua waktu di dashboard akan ditampilkan dalam timezone ini.
-				</p>
 			</div>
 		</div>
 

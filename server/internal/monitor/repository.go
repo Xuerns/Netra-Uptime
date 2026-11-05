@@ -200,18 +200,18 @@ func (r *MonitorRepositoryImpl) GetDailyStats(monitorId string, days int) ([]mod
 	}
 
 	type RawDailyAgg struct {
-		Date         time.Time `gorm:"column:date"`
-		TotalChecks  int       `gorm:"column:total_checks"`
-		UpChecks     int       `gorm:"column:up_checks"`
-		DownChecks   int       `gorm:"column:down_checks"`
-		AvgLatencyMs int       `gorm:"column:avg_latency_ms"`
-		MinLatencyMs int       `gorm:"column:min_latency_ms"`
-		MaxLatencyMs int       `gorm:"column:max_latency_ms"`
-		Count2xx     int       `gorm:"column:count_2xx"`
-		Count3xx     int       `gorm:"column:count_3xx"`
-		Count4xx     int       `gorm:"column:count_4xx"`
-		Count5xx     int       `gorm:"column:count_5xx"`
-		CountError   int       `gorm:"column:count_error"`
+		Date         string `gorm:"column:date"`
+		TotalChecks  int    `gorm:"column:total_checks"`
+		UpChecks     int    `gorm:"column:up_checks"`
+		DownChecks   int    `gorm:"column:down_checks"`
+		AvgLatencyMs int    `gorm:"column:avg_latency_ms"`
+		MinLatencyMs int    `gorm:"column:min_latency_ms"`
+		MaxLatencyMs int    `gorm:"column:max_latency_ms"`
+		Count2xx     int    `gorm:"column:count_2xx"`
+		Count3xx     int    `gorm:"column:count_3xx"`
+		Count4xx     int    `gorm:"column:count_4xx"`
+		Count5xx     int    `gorm:"column:count_5xx"`
+		CountError   int    `gorm:"column:count_error"`
 	}
 
 	var rawAggs []RawDailyAgg
@@ -242,7 +242,14 @@ func (r *MonitorRepositoryImpl) GetDailyStats(monitorId string, days int) ([]mod
 		}
 
 		for _, raw := range rawAggs {
-			dateStr := raw.Date.Format("2006-01-02")
+			if len(raw.Date) < 10 {
+				continue
+			}
+			parsedDate, err := time.Parse("2006-01-02", raw.Date[:10])
+			if err != nil {
+				continue
+			}
+			dateStr := parsedDate.Format("2006-01-02")
 			if idx, found := dateMap[dateStr]; found {
 				tot := stats[idx].TotalChecks + raw.TotalChecks
 				up := stats[idx].UpChecks + raw.UpChecks
@@ -277,7 +284,7 @@ func (r *MonitorRepositoryImpl) GetDailyStats(monitorId string, days int) ([]mod
 				}
 				stats = append(stats, model.MonitorDailyStat{
 					MonitorID:        mUUID,
-					Date:             raw.Date,
+					Date:             parsedDate,
 					TotalChecks:      raw.TotalChecks,
 					UpChecks:         raw.UpChecks,
 					DownChecks:       raw.DownChecks,
@@ -318,14 +325,14 @@ func (r *MonitorRepositoryImpl) Get30DayUptimeMap(monitorIDs []string) (map[stri
 
 	var dailyAggs []UptimeAgg
 	r.db.Table("monitor_daily_stats").
-		Select("monitor_id::text as monitor_id, SUM(total_checks) as total_checks, SUM(up_checks) as up_checks").
+		Select("monitor_id, SUM(total_checks) as total_checks, SUM(up_checks) as up_checks").
 		Where("monitor_id IN ? AND date >= ?", monitorIDs, sinceDate).
 		Group("monitor_id").
 		Scan(&dailyAggs)
 
 	var checkAggs []UptimeAgg
 	r.db.Table("checks").
-		Select("monitor_id::text as monitor_id, COUNT(*) as total_checks, COUNT(CASE WHEN status = 'up' THEN 1 END) as up_checks").
+		Select("monitor_id, COUNT(*) as total_checks, COUNT(CASE WHEN status = 'up' THEN 1 END) as up_checks").
 		Where("monitor_id IN ? AND checked_at >= ?", monitorIDs, sinceDate).
 		Group("monitor_id").
 		Scan(&checkAggs)
@@ -356,45 +363,56 @@ func (r *MonitorRepositoryImpl) Get30DayUptimeMap(monitorIDs []string) (map[stri
 	return result, nil
 }
 
+func percentileCont(sorted []int, p float64) float64 {
+	n := len(sorted)
+	if n == 0 {
+		return 0
+	}
+	if n == 1 {
+		return float64(sorted[0])
+	}
+	pos := p * float64(n-1)
+	lower := int(math.Floor(pos))
+	upper := int(math.Ceil(pos))
+	if lower == upper {
+		return float64(sorted[lower])
+	}
+	weight := pos - float64(lower)
+	return float64(sorted[lower])*(1.0-weight) + float64(sorted[upper])*weight
+}
+
 func (r *MonitorRepositoryImpl) GetFleetOverview(orgId string, windowDays int) (*FleetOverviewResponse, error) {
 	overview := &FleetOverviewResponse{
 		WindowDays: windowDays,
 	}
 
 	// 1. Argon Hybrid CTE with Mean of Ratios for Fleet Uptime
+	today := time.Now().UTC().Truncate(24 * time.Hour)
+	currStart := today.AddDate(0, 0, -(windowDays - 1))
+	prevStart := today.AddDate(0, 0, -(windowDays*2 - 1))
+
 	uptimeQuery := `
-		WITH period_bounds AS (
-			SELECT 
-				CURRENT_DATE - (($2::int - 1) * INTERVAL '1 day') AS p_curr_start,
-				CURRENT_DATE - (($2::int * 2 - 1) * INTERVAL '1 day') AS p_prev_start
-		),
-		historical_stats AS (
+		WITH historical_stats AS (
 			SELECT 
 				mds.monitor_id,
-				CASE 
-					WHEN mds.date >= (SELECT p_curr_start FROM period_bounds) THEN 'curr'
-					ELSE 'prev'
-				END AS period,
+				CASE WHEN mds.date >= ? THEN 'curr' ELSE 'prev' END AS period,
 				mds.total_checks,
 				mds.up_checks
 			FROM monitor_daily_stats mds
 			INNER JOIN monitors m ON m.id = mds.monitor_id
-			WHERE m.organization_id = $1
-			  AND mds.date >= (SELECT p_prev_start FROM period_bounds)
+			WHERE m.organization_id = ?
+			  AND mds.date >= ?
 		),
 		live_stats AS (
 			SELECT 
 				c.monitor_id,
-				CASE 
-					WHEN c.checked_at >= (SELECT p_curr_start FROM period_bounds) THEN 'curr'
-					ELSE 'prev'
-				END AS period,
+				CASE WHEN c.checked_at >= ? THEN 'curr' ELSE 'prev' END AS period,
 				COUNT(*) AS total_checks,
-				COUNT(*) FILTER (WHERE c.status = 'up') AS up_checks
+				COUNT(CASE WHEN c.status = 'up' THEN 1 END) AS up_checks
 			FROM checks c
 			INNER JOIN monitors m ON m.id = c.monitor_id
-			WHERE m.organization_id = $1
-			  AND c.checked_at >= (SELECT p_prev_start FROM period_bounds)
+			WHERE m.organization_id = ?
+			  AND c.checked_at >= ?
 			GROUP BY c.monitor_id, period
 		),
 		combined_checks AS (
@@ -415,12 +433,9 @@ func (r *MonitorRepositoryImpl) GetFleetOverview(orgId string, windowDays int) (
 		SELECT 
 			period,
 			COUNT(monitor_id) AS active_monitors_in_period,
-			ROUND(
-				AVG((monitor_up_checks::numeric / monitor_total_checks::numeric) * 100), 
-				2
-			) AS fleet_uptime_pct
+			AVG((monitor_up_checks * 100.0) / monitor_total_checks) AS fleet_uptime_pct
 		FROM per_monitor_period
-		GROUP BY period;
+		GROUP BY period
 	`
 
 	type UptimeRow struct {
@@ -430,59 +445,52 @@ func (r *MonitorRepositoryImpl) GetFleetOverview(orgId string, windowDays int) (
 	}
 
 	var uptimeRows []UptimeRow
-	if err := r.db.Raw(uptimeQuery, orgId, windowDays).Scan(&uptimeRows).Error; err != nil {
+	if err := r.db.Raw(uptimeQuery, currStart, orgId, prevStart, currStart, orgId, prevStart).Scan(&uptimeRows).Error; err != nil {
 		return nil, err
 	}
 
 	for _, row := range uptimeRows {
-		if row.Period == "curr" {
-			overview.Uptime.CurrentPercent = row.FleetUptimePct
-		} else if row.Period == "prev" {
-			overview.Uptime.PreviousPercent = row.FleetUptimePct
+		if row.FleetUptimePct != nil {
+			rounded := math.Round(*row.FleetUptimePct*100) / 100
+			if row.Period == "curr" {
+				overview.Uptime.CurrentPercent = &rounded
+			} else if row.Period == "prev" {
+				overview.Uptime.PreviousPercent = &rounded
+			}
 		}
 	}
 
 	// 2. Live 24h Latency Snapshot on healthy checks in checks
+	since24h := time.Now().UTC().Add(-24 * time.Hour)
 	latencyQuery := `
-		SELECT 
-			ROUND(AVG(c.response_time_ms)) AS avg_ms,
-			ROUND(PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY c.response_time_ms)) AS median_ms,
-			ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY c.response_time_ms)) AS p95_ms,
-			MIN(c.response_time_ms) AS fastest_ms
+		SELECT c.response_time_ms
 		FROM checks c
 		INNER JOIN monitors m ON m.id = c.monitor_id
-		WHERE m.organization_id = $1
+		WHERE m.organization_id = ?
 		  AND c.status = 'up'
 		  AND c.response_time_ms > 0
-		  AND c.checked_at >= NOW() - INTERVAL '24 hours';
+		  AND c.checked_at >= ?
+		ORDER BY c.response_time_ms ASC
 	`
 
-	type RawLatencyRow struct {
-		AvgMs     *float64 `gorm:"column:avg_ms"`
-		MedianMs  *float64 `gorm:"column:median_ms"`
-		P95Ms     *float64 `gorm:"column:p95_ms"`
-		FastestMs *int     `gorm:"column:fastest_ms"`
-	}
-
-	var rawLat RawLatencyRow
-	if err := r.db.Raw(latencyQuery, orgId).Scan(&rawLat).Error; err != nil {
+	var latencies []int
+	if err := r.db.Raw(latencyQuery, orgId, since24h).Scan(&latencies).Error; err != nil {
 		return nil, err
 	}
 
-	if rawLat.AvgMs != nil {
-		avg := int(math.Round(*rawLat.AvgMs))
+	if len(latencies) > 0 {
+		var sum int64
+		for _, lat := range latencies {
+			sum += int64(lat)
+		}
+		avg := int(math.Round(float64(sum) / float64(len(latencies))))
+		med := int(math.Round(percentileCont(latencies, 0.50)))
+		p95 := int(math.Round(percentileCont(latencies, 0.95)))
+		fastest := latencies[0]
+
 		overview.Latency.AvgMs = &avg
-	}
-	if rawLat.MedianMs != nil {
-		med := int(math.Round(*rawLat.MedianMs))
 		overview.Latency.MedianMs = &med
-	}
-	if rawLat.P95Ms != nil {
-		p95 := int(math.Round(*rawLat.P95Ms))
 		overview.Latency.P95Ms = &p95
-	}
-	if rawLat.FastestMs != nil {
-		fastest := *rawLat.FastestMs
 		overview.Latency.FastestMs = &fastest
 	}
 

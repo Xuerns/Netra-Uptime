@@ -1,22 +1,15 @@
 package monitor
 
 import (
-	"bufio"
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"netra-uptime/config"
 	"netra-uptime/internal/model"
+	"netra-uptime/pkg/cache"
 	"netra-uptime/pkg/utils"
-	"strconv"
-	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -24,7 +17,6 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 )
 
 func init() {
@@ -34,105 +26,9 @@ func init() {
 	}
 }
 
-// In-process RESP mock redis server
-func newMockRedisClient(t *testing.T) (*redis.Client, func()) {
+func newMockRedisClient(t *testing.T) (*cache.MemoryCache, func()) {
 	t.Helper()
-	l, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatalf("failed to listen on random port: %v", err)
-	}
-
-	store := make(map[string]string)
-	var mu sync.Mutex
-
-	go func() {
-		for {
-			conn, err := l.Accept()
-			if err != nil {
-				return
-			}
-			go func(c net.Conn) {
-				defer func() {
-					_ = c.Close()
-				}()
-				r := bufio.NewReader(c)
-				for {
-					line, err := r.ReadString('\n')
-					if err != nil {
-						return
-					}
-					line = strings.TrimSpace(line)
-					if len(line) == 0 {
-						continue
-					}
-
-					var args []string
-					if strings.HasPrefix(line, "*") {
-						numArgs, _ := strconv.Atoi(line[1:])
-						for i := 0; i < numArgs; i++ {
-							lenLine, err := r.ReadString('\n')
-							if err != nil {
-								return
-							}
-							argLen, _ := strconv.Atoi(strings.TrimSpace(lenLine[1:]))
-							buf := make([]byte, argLen+2)
-							if _, err := io.ReadFull(r, buf); err != nil {
-								return
-							}
-							args = append(args, string(buf[:argLen]))
-						}
-					} else {
-						args = strings.Fields(line)
-					}
-
-					if len(args) == 0 {
-						continue
-					}
-
-					cmd := strings.ToUpper(args[0])
-					switch cmd {
-					case "PING":
-						c.Write([]byte("+PONG\r\n"))
-					case "GET":
-						mu.Lock()
-						val, ok := store[args[1]]
-						mu.Unlock()
-						if !ok {
-							c.Write([]byte("$-1\r\n"))
-						} else {
-							fmt.Fprintf(c, "$%d\r\n%s\r\n", len(val), val)
-						}
-					case "SET":
-						mu.Lock()
-						store[args[1]] = args[2]
-						mu.Unlock()
-						c.Write([]byte("+OK\r\n"))
-					case "DEL":
-						mu.Lock()
-						for _, k := range args[1:] {
-							delete(store, k)
-						}
-						mu.Unlock()
-						c.Write([]byte(":1\r\n"))
-					default:
-						c.Write([]byte("-ERR unknown command\r\n"))
-					}
-				}
-			}(conn)
-		}
-	}()
-
-	client := redis.NewClient(&redis.Options{
-		Addr:     l.Addr().String(),
-		Protocol: 2,
-	})
-
-	cleanup := func() {
-		_ = client.Close()
-		_ = l.Close()
-	}
-
-	return client, cleanup
+	return cache.NewMemoryCache(), func() {}
 }
 
 // Mock Monitor Repository
@@ -652,18 +548,18 @@ func TestGetById_CacheMiss_ThenCacheSet(t *testing.T) {
 		t.Fatalf("expected 1 repo call, got %d", repoCalls)
 	}
 
-	// Verify key in Redis is scoped by orgId
+	// Verify key in cache is scoped by orgId
 	expectedKey := "monitor:org:" + orgID.String() + ":" + monID.String()
-	val, err := rdb.Get(context.Background(), expectedKey).Result()
-	if err != nil || val == "" {
-		t.Errorf("expected key %s in redis, err: %v", expectedKey, err)
+	val, ok := rdb.Get(expectedKey)
+	if !ok || val == "" {
+		t.Errorf("expected key %s in cache", expectedKey)
 	}
 
 	// Verify legacy global key without orgId does NOT exist
 	legacyKey := "monitor:" + monID.String()
-	_, err = rdb.Get(context.Background(), legacyKey).Result()
-	if err == nil {
-		t.Errorf("expected legacy key %s to NOT exist in redis", legacyKey)
+	_, ok = rdb.Get(legacyKey)
+	if ok {
+		t.Errorf("expected legacy key %s to NOT exist in cache", legacyKey)
 	}
 
 	// Second call: cache hit! repoCalls should still be 1
@@ -729,7 +625,7 @@ func TestGetById_CrossTenantCacheIsolation(t *testing.T) {
 		Name:           "Leaked Monitor Data",
 	}
 	poisonedData, _ := json.Marshal(poisonedResp)
-	rdb.Set(context.Background(), "monitor:org:"+orgB+":"+monID, poisonedData, 60*time.Second)
+	rdb.Set("monitor:org:"+orgB+":"+monID, string(poisonedData), 60*time.Second)
 
 	respPoisoned, err := svc.GetById(orgB, monID)
 	if err == nil {
@@ -860,12 +756,11 @@ func TestUpdateMonitor_InvalidatesOrgScopedCache(t *testing.T) {
 	}
 	svc := NewMonitorService(repo, rdb, nil)
 
-	ctx := context.Background()
 	monitorKey := "monitor:org:" + orgID.String() + ":" + monID.String()
 	listKey := "monitors:org:" + orgID.String()
 
-	_ = rdb.Set(ctx, monitorKey, "cached-data", 60*time.Second).Err()
-	_ = rdb.Set(ctx, listKey, "cached-list", 60*time.Second).Err()
+	rdb.Set(monitorKey, "cached-data", 60*time.Second)
+	rdb.Set(listKey, "cached-list", 60*time.Second)
 
 	newName := "Renamed Mon"
 	_, err := svc.UpdateMonitor(orgID.String(), "user-1", "127.0.0.1", monID.String(), UpdatedMonitorRequest{
@@ -876,10 +771,10 @@ func TestUpdateMonitor_InvalidatesOrgScopedCache(t *testing.T) {
 	}
 
 	// Verify both cache keys are invalidated
-	if _, err := rdb.Get(ctx, monitorKey).Result(); err == nil {
+	if _, ok := rdb.Get(monitorKey); ok {
 		t.Errorf("expected monitor cache key %s to be invalidated", monitorKey)
 	}
-	if _, err := rdb.Get(ctx, listKey).Result(); err == nil {
+	if _, ok := rdb.Get(listKey); ok {
 		t.Errorf("expected monitors list cache key %s to be invalidated", listKey)
 	}
 }
@@ -898,12 +793,11 @@ func TestDeleteMonitor_InvalidatesOrgScopedCache(t *testing.T) {
 	}
 	svc := NewMonitorService(repo, rdb, nil)
 
-	ctx := context.Background()
 	monitorKey := "monitor:org:" + orgID + ":" + monID
 	listKey := "monitors:org:" + orgID
 
-	_ = rdb.Set(ctx, monitorKey, "cached-data", 60*time.Second).Err()
-	_ = rdb.Set(ctx, listKey, "cached-list", 60*time.Second).Err()
+	rdb.Set(monitorKey, "cached-data", 60*time.Second)
+	rdb.Set(listKey, "cached-list", 60*time.Second)
 
 	err := svc.DeleteMonitor(orgID, "user-1", "127.0.0.1", monID)
 	if err != nil {
@@ -911,10 +805,10 @@ func TestDeleteMonitor_InvalidatesOrgScopedCache(t *testing.T) {
 	}
 
 	// Verify both cache keys are invalidated
-	if _, err := rdb.Get(ctx, monitorKey).Result(); err == nil {
+	if _, ok := rdb.Get(monitorKey); ok {
 		t.Errorf("expected monitor cache key %s to be invalidated", monitorKey)
 	}
-	if _, err := rdb.Get(ctx, listKey).Result(); err == nil {
+	if _, ok := rdb.Get(listKey); ok {
 		t.Errorf("expected monitors list cache key %s to be invalidated", listKey)
 	}
 }
@@ -1365,9 +1259,8 @@ func TestUpdateMonitor_DisableSSLDomainCheck_ResetsFieldsAndInvalidatesOverviewC
 	}
 	svc := NewMonitorService(repo, rdb, nil)
 
-	ctx := context.Background()
 	overviewKey := "org:" + orgID.String() + ":monitor_overview:30d"
-	_ = rdb.Set(ctx, overviewKey, "stale-overview", 60*time.Second).Err()
+	rdb.Set(overviewKey, "stale-overview", 60*time.Second)
 
 	disableCheck := false
 	updated, err := svc.UpdateMonitor(orgID.String(), "user-1", "127.0.0.1", monID.String(), UpdatedMonitorRequest{
@@ -1399,7 +1292,7 @@ func TestUpdateMonitor_DisableSSLDomainCheck_ResetsFieldsAndInvalidatesOverviewC
 		t.Errorf("expected LastSSLSentReminderDay and LastDomainSentReminderDay nil")
 	}
 
-	if _, err := rdb.Get(ctx, overviewKey).Result(); err == nil {
+	if _, ok := rdb.Get(overviewKey); ok {
 		t.Errorf("expected overview cache key %s to be invalidated on update", overviewKey)
 	}
 }

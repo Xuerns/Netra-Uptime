@@ -1,14 +1,16 @@
 package config
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/joho/godotenv"
-	"sync"
 )
 
 var (
@@ -39,16 +41,14 @@ type Config struct {
 	AllowRegistration      bool
 	AuthRateLimit          int
 
+	DBDriver   string
+	DBPath     string
 	DBHost     string
 	DBPort     string
 	DBUser     string
 	DBPassword string
 	DBName     string
 	DBSSLMode  string
-
-	RedisHost     string
-	RedisPort     string
-	RedisPassword string
 
 	JwtSecret string
 }
@@ -92,6 +92,19 @@ func loadConfig() *Config {
 		}
 	}
 
+	dbDriver := strings.ToLower(strings.TrimSpace(os.Getenv("DB_DRIVER")))
+	if dbDriver == "" {
+		if os.Getenv("DB_HOST") != "" {
+			dbDriver = "postgres"
+		} else {
+			dbDriver = "sqlite"
+		}
+	}
+	dbPath := strings.TrimSpace(os.Getenv("DB_PATH"))
+	if dbPath == "" {
+		dbPath = "netra.db"
+	}
+
 	dbSSLMode := os.Getenv("DB_SSLMODE")
 	if dbSSLMode == "" {
 		dbSSLMode = "disable"
@@ -100,6 +113,30 @@ func loadConfig() *Config {
 	minInterval := parseIntEnv("SELFHOSTED_MIN_INTERVAL", 30)
 	if minInterval < 30 {
 		minInterval = 30
+	}
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if dbDriver == "sqlite" && jwtSecret == "" {
+		if data, err := os.ReadFile(".netra_secret"); err == nil {
+			if trimmed := strings.TrimSpace(string(data)); len(trimmed) >= 32 {
+				jwtSecret = trimmed
+				_ = os.Setenv("JWT_SECRET", jwtSecret)
+			}
+		}
+		if jwtSecret == "" {
+			buf := make([]byte, 32)
+			if _, err := rand.Read(buf); err != nil {
+				log.Fatalf("FATAL: Failed to generate random JWT_SECRET: %v", err)
+			}
+			secret := hex.EncodeToString(buf)
+			if err := os.WriteFile(".netra_secret", []byte(secret), 0600); err != nil {
+				log.Printf("WARNING: Failed to persist .netra_secret: %v", err)
+			} else {
+				log.Println("[Config] Generated persistent JWT_SECRET in .netra_secret for standalone SQLite mode")
+			}
+			jwtSecret = secret
+			_ = os.Setenv("JWT_SECRET", secret)
+		}
 	}
 
 	cfg := &Config{
@@ -125,6 +162,8 @@ func loadConfig() *Config {
 		AllowRegistration:      parseBoolEnv("ALLOW_REGISTRATION", true),
 		AuthRateLimit:          parseIntEnv("AUTH_RATE_LIMIT", 60),
 
+		DBDriver:   dbDriver,
+		DBPath:     dbPath,
 		DBHost:     os.Getenv("DB_HOST"),
 		DBPort:     os.Getenv("DB_PORT"),
 		DBUser:     os.Getenv("DB_USER"),
@@ -132,11 +171,7 @@ func loadConfig() *Config {
 		DBName:     os.Getenv("DB_NAME"),
 		DBSSLMode:  dbSSLMode,
 
-		RedisHost:     os.Getenv("REDIS_HOST"),
-		RedisPort:     os.Getenv("REDIS_PORT"),
-		RedisPassword: os.Getenv("REDIS_PASSWORD"),
-
-		JwtSecret: os.Getenv("JWT_SECRET"),
+		JwtSecret: jwtSecret,
 	}
 
 	const AbsoluteMinimumInterval = 30
@@ -161,7 +196,7 @@ func loadConfig() *Config {
 		if len(cfg.JwtSecret) < 32 {
 			log.Fatal("FATAL SECURITY CONFIGURATION: JWT_SECRET must be at least 32 characters in production")
 		}
-		if cfg.DBSSLMode == "disable" {
+		if cfg.DBDriver == "postgres" && cfg.DBSSLMode == "disable" {
 			log.Println("SECURITY WARNING: DB_SSLMODE is set to 'disable' in production. Configure 'require' or 'verify-full' to prevent unencrypted database traffic.")
 		}
 	} else if len(cfg.JwtSecret) == 0 {
