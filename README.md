@@ -56,6 +56,30 @@ docker compose up -d
 
 Once running, access the dashboard at: **[http://localhost:27346](http://localhost:27346)**.
 
+### Option 3: Windows Desktop Standalone App (Background & System Tray)
+
+Netra Uptime can run on Windows as a native background desktop service with zero external dependencies (pure-Go embedded SQLite, zero CGO):
+
+1. **Build the Desktop Executable:**
+   ```powershell
+   .\scripts\build-windows.ps1 -Target desktop
+   ```
+   Or directly with Go:
+   ```powershell
+   cd server
+   go build -ldflags "-H windowsgui -s -w" -o netra-uptime.exe ./cmd/netra-uptime-desktop
+   ```
+2. **Run:** Double-click `netra-uptime.exe`. It runs completely silently in the background without any command prompt window and places an icon in the Windows System Tray (near the clock).
+3. **Controls:**
+   - **Click or Right-Click Tray Icon**: Choose **"Open Netra"** to open the dashboard in your default browser (`http://127.0.0.1:27346`).
+   - **Right-Click -> "Quit"**: Gracefully stops workers, flushes the SQLite WAL cache, and exits cleanly.
+   - **Single-Instance Protection**: Launching the `.exe` again automatically focuses/opens your existing Netra dashboard in your browser and exits.
+   - **Silent Startup (e.g. Windows Startup folder)**: Pass `--background` or `--no-browser` to prevent the browser from popping up on login:
+     ```cmd
+     netra-uptime.exe --background
+     ```
+   - **Local LAN Monitoring**: When running on SQLite bound to loopback (`127.0.0.1`), private network monitoring is **enabled automatically** (`ALLOW_PRIVATE_NETWORK_MONITORING=true`) so you can monitor local NAS, printers, routers, and homelab services without any extra configuration. For Docker / container deployments, the SSRF guard stays active by default (`false`). You can explicitly set `ALLOW_PRIVATE_NETWORK_MONITORING=true` or `false` in your environment at any time to override.
+
 ## Key Features
 
 - **Multi-Protocol Monitoring**: Check uptime via HTTP/HTTPS, TCP ports, and ICMP Ping.

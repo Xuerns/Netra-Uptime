@@ -1,95 +1,45 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"log"
-	"netra-uptime/config"
-	"netra-uptime/internal/middleware"
-	"netra-uptime/internal/model"
-	"netra-uptime/internal/monitor"
-	"netra-uptime/internal/router"
-	"netra-uptime/internal/websocket"
-	"netra-uptime/internal/worker"
-	"netra-uptime/pkg/cache"
-	"netra-uptime/pkg/database"
-	"netra-uptime/pkg/email"
-	"netra-uptime/pkg/utils"
+	"net/http"
 	"os"
-	"strings"
-	_ "time/tzdata"
+	"os/signal"
+	"syscall"
+	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/validator/v10"
+	"netra-uptime/config"
+	"netra-uptime/internal/app"
 )
 
 func main() {
-
-	config := config.Load()
-	db, err := database.NewDatabase(config)
-
+	cfg := config.Load()
+	serverApp, err := app.Setup(cfg)
 	if err != nil {
-		log.Fatalf("Failed to connect database: %v\n", err)
+		log.Fatalf("Failed to initialize Netra Uptime: %v", err)
 	}
 
-	_ = db.AutoMigrate(&model.User{}, &model.Check{}, &model.Incident{}, &model.IncidentUpdate{}, &model.Monitor{}, &model.NotificationChannel{},
-		&model.NotificationLog{}, &model.Organization{}, &model.OrganizationMember{}, &model.RefreshToken{}, &model.StatusPage{}, &model.StatusPageMonitor{},
-		&model.OrganizationInvitation{}, &model.PasswordResetToken{}, &model.IncidentAssignee{}, &model.MonitorPIC{}, &model.AuditLog{}, &model.APIKey{}, &model.MonitorDailyStat{}, &model.AlertRule{},
-		&model.AlertRuleTemplate{}, &model.ScheduledMaintenance{}, &model.MaintenanceMonitor{}, &model.ComponentGroup{})
+	log.Printf("[Netra Uptime] Server running at http://%s:%s (DB Driver: %s)\n", cfg.Host, cfg.Port, cfg.DBDriver)
 
-	sender, err := email.NewSMTPSender()
-	if err != nil {
-		log.Printf("Warning: Failed to initialize SMTP email sender: %v (email alerts may be disabled)\n", err)
-	}
-
-	wsHub := websocket.NewHub()
-	go wsHub.Run()
-	wsHandler := websocket.NewWsHandler(wsHub, db)
-
-	cacheStore := cache.NewMemoryCache()
-
-	wp := worker.NewWorkerPool(db, cacheStore, 10, sender, wsHandler)
-	wp.Start()
-
-	monitorRepo := monitor.NewMonitorRepository(db, config)
-	sched := worker.NewScheduler(monitorRepo, wp)
-	sched.Start()
-
-	retention := worker.NewRetentionJob(db)
-	retention.Start()
-
-	r := gin.Default()
-
-	// Disable untrusted proxies by default to prevent IP spoofing / rate limit bypass (VULN-21)
-	if trustedProxies := os.Getenv("TRUSTED_PROXIES"); trustedProxies != "" {
-		proxies := strings.Split(trustedProxies, ",")
-		for i := range proxies {
-			proxies[i] = strings.TrimSpace(proxies[i])
+	go func() {
+		if err := serverApp.Server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("Server failed to run on %s: %v", serverApp.Server.Addr, err)
 		}
-		_ = r.SetTrustedProxies(proxies)
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit
+	log.Println("[Netra Uptime] Shutting down gracefully...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := serverApp.Shutdown(ctx); err != nil {
+		log.Printf("[Netra Uptime] Shutdown warning: %v\n", err)
 	} else {
-		_ = r.SetTrustedProxies(nil)
-	}
-
-	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		if err := v.RegisterValidation("nohtml", utils.NoHTMLValidator); err != nil {
-			log.Fatalf("Failed to register 'nohtml' validator: %v", err)
-		}
-	}
-
-	r.Use(middleware.SetupCORS())
-	r.Use(middleware.SecurityHeaders())
-
-	handlers := BuildHandler(db, cacheStore, wp, config, wsHub)
-	router.SetupRouter(r, db, cacheStore, handlers, wsHandler)
-
-	addr := ":27346"
-	port := "27346"
-	if config.Port != "" {
-		port = config.Port
-		addr = ":" + config.Port
-	}
-	log.Printf("[Netra Uptime] Server running at http://localhost:%s (DB Driver: %s)\n", port, config.DBDriver)
-	if err := r.Run(addr); err != nil {
-		log.Fatalf("Server failed to run on %s: %v", addr, err)
+		log.Println("[Netra Uptime] Server exited cleanly")
 	}
 }

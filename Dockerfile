@@ -38,6 +38,7 @@ COPY --from=server-builder /app/server/netra-uptime ./netra-uptime
 EXPOSE 27346
 
 ENV PORT=27346
+ENV HOST=0.0.0.0
 ENV APP_ENV=production
 
 CMD ["./netra-uptime"]

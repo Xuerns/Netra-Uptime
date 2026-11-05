@@ -33,6 +33,7 @@ services:
     environment:
       - APP_ENV
       - PORT
+      - HOST=0.0.0.0
       - DB_DRIVER=postgres
       - DB_HOST=postgres
       - DB_PORT

@@ -13,13 +13,16 @@ type item struct {
 }
 
 type MemoryCache struct {
-	mu    sync.RWMutex
-	items map[string]item
+	mu       sync.RWMutex
+	items    map[string]item
+	stopCh   chan struct{}
+	stopOnce sync.Once
 }
 
 func NewMemoryCache() *MemoryCache {
 	c := &MemoryCache{
-		items: make(map[string]item),
+		items:  make(map[string]item),
+		stopCh: make(chan struct{}),
 	}
 	go c.janitor()
 	return c
@@ -28,16 +31,28 @@ func NewMemoryCache() *MemoryCache {
 func (c *MemoryCache) janitor() {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
-	for range ticker.C {
-		now := time.Now()
-		c.mu.Lock()
-		for k, it := range c.items {
-			if !now.Before(it.expiresAt) {
-				delete(c.items, k)
+	for {
+		select {
+		case <-c.stopCh:
+			return
+		case <-ticker.C:
+			now := time.Now()
+			c.mu.Lock()
+			for k, it := range c.items {
+				if !now.Before(it.expiresAt) {
+					delete(c.items, k)
+				}
 			}
+			c.mu.Unlock()
 		}
-		c.mu.Unlock()
 	}
+}
+
+// Stop terminates the background janitor goroutine.
+func (c *MemoryCache) Stop() {
+	c.stopOnce.Do(func() {
+		close(c.stopCh)
+	})
 }
 
 func (c *MemoryCache) Get(key string) (string, bool) {

@@ -1,3 +1,8 @@
+param(
+    [ValidateSet("desktop", "server")]
+    [string]$Target = "desktop"
+)
+
 $ErrorActionPreference = "Stop"
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
@@ -9,6 +14,7 @@ $OutputExe = Join-Path $RepoRoot "netra-uptime.exe"
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host " Netra Uptime - Windows Standalone Binary Build Pipeline" -ForegroundColor Cyan
+Write-Host " Target: $Target" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 
 # Step 1: Build SvelteKit static frontend
@@ -29,13 +35,23 @@ try {
     Copy-Item -Path "$ClientBuildDir\*" -Destination "$EmbedBuildDir" -Recurse -Force
 
     # Step 3: Compile Pure-Go Windows executable (CGO_ENABLED=0)
-    Write-Host "[3/4] Compiling Pure-Go standalone binary (CGO_ENABLED=0, windows/amd64)..." -ForegroundColor Yellow
     Push-Location "$ServerDir"
     try {
         $env:CGO_ENABLED = "0"
         $env:GOOS = "windows"
         $env:GOARCH = "amd64"
-        go build -trimpath -ldflags="-s -w" -o "$OutputExe" ./cmd/netra-uptime
+
+        if ($Target -eq "desktop") {
+            Write-Host "[3/4] Compiling Pure-Go Desktop GUI binary (-H windowsgui, tray enabled)..." -ForegroundColor Yellow
+            $LdFlags = "-H windowsgui -s -w"
+            $Entrypoint = "./cmd/netra-uptime-desktop"
+        } else {
+            Write-Host "[3/4] Compiling Pure-Go Console Server binary (stdout logging)..." -ForegroundColor Yellow
+            $LdFlags = "-s -w"
+            $Entrypoint = "./cmd/netra-uptime"
+        }
+
+        go build -trimpath -ldflags="$LdFlags" -o "$OutputExe" $Entrypoint
         if ($LASTEXITCODE -ne 0) {
             throw "Go build failed with exit code $LASTEXITCODE"
         }

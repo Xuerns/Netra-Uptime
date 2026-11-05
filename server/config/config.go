@@ -5,12 +5,16 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"net"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/joho/godotenv"
+
+	"netra-uptime/pkg/utils"
 )
 
 var (
@@ -20,6 +24,7 @@ var (
 
 type Config struct {
 	AppEnv string
+	Host   string
 	Port   string
 
 	RecentChecksLimit     int
@@ -40,6 +45,9 @@ type Config struct {
 	MaxAssigneesPerMonitor int
 	AllowRegistration      bool
 	AuthRateLimit          int
+
+	AllowPrivateNetworkMonitoring       bool
+	AllowPrivateNetworkMonitoringReason string
 
 	DBDriver   string
 	DBPath     string
@@ -71,6 +79,30 @@ func parseBoolEnv(key string, defaultVal bool) bool {
 	return defaultVal
 }
 
+func isLoopbackHost(host string) bool {
+	h := strings.Trim(strings.ToLower(strings.TrimSpace(host)), "[]")
+	if h == "localhost" || h == "127.0.0.1" || h == "::1" {
+		return true
+	}
+	if ip := net.ParseIP(h); ip != nil {
+		return ip.IsLoopback()
+	}
+	return false
+}
+
+// GetExecutableDir returns the directory containing the currently running executable.
+// If os.Executable fails, it falls back to ".".
+func GetExecutableDir() string {
+	exePath, err := os.Executable()
+	if err != nil {
+		return "."
+	}
+	if realPath, err := filepath.EvalSymlinks(exePath); err == nil {
+		exePath = realPath
+	}
+	return filepath.Dir(exePath)
+}
+
 func Load() *Config {
 	cfgOnce.Do(func() {
 		cfgInstance = loadConfig()
@@ -86,8 +118,10 @@ var knownPlaceholderSecrets = map[string]bool{
 func loadConfig() *Config {
 	if err := godotenv.Load(); err != nil {
 		if err := godotenv.Load("../.env"); err != nil {
-			if os.Getenv("DB_HOST") == "" && os.Getenv("APP_ENV") == "" {
-				log.Println("No .env file found")
+			if err := godotenv.Load(filepath.Join(GetExecutableDir(), ".env")); err != nil {
+				if os.Getenv("DB_HOST") == "" && os.Getenv("APP_ENV") == "" {
+					log.Println("No .env file found")
+				}
 			}
 		}
 	}
@@ -100,9 +134,30 @@ func loadConfig() *Config {
 			dbDriver = "sqlite"
 		}
 	}
+
+	host := strings.TrimSpace(os.Getenv("HOST"))
+	if host == "" {
+		host = strings.TrimSpace(os.Getenv("BIND_HOST"))
+	}
+	if host == "" {
+		if dbDriver == "sqlite" {
+			host = "127.0.0.1"
+		} else {
+			host = "0.0.0.0"
+		}
+	}
+
+	port := strings.TrimSpace(os.Getenv("PORT"))
+	if port == "" {
+		port = "27346"
+	}
+
 	dbPath := strings.TrimSpace(os.Getenv("DB_PATH"))
 	if dbPath == "" {
 		dbPath = "netra.db"
+	}
+	if dbDriver == "sqlite" && !filepath.IsAbs(dbPath) {
+		dbPath = filepath.Join(GetExecutableDir(), dbPath)
 	}
 
 	dbSSLMode := os.Getenv("DB_SSLMODE")
@@ -117,7 +172,9 @@ func loadConfig() *Config {
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if dbDriver == "sqlite" && jwtSecret == "" {
-		if data, err := os.ReadFile(".netra_secret"); err == nil {
+		secretFile := filepath.Clean(filepath.Join(GetExecutableDir(), ".netra_secret"))
+		// #nosec G304 -- .netra_secret is an internal secret file path in the executable directory
+		if data, err := os.ReadFile(secretFile); err == nil {
 			if trimmed := strings.TrimSpace(string(data)); len(trimmed) >= 32 {
 				jwtSecret = trimmed
 				_ = os.Setenv("JWT_SECRET", jwtSecret)
@@ -129,19 +186,37 @@ func loadConfig() *Config {
 				log.Fatalf("FATAL: Failed to generate random JWT_SECRET: %v", err)
 			}
 			secret := hex.EncodeToString(buf)
-			if err := os.WriteFile(".netra_secret", []byte(secret), 0600); err != nil {
-				log.Printf("WARNING: Failed to persist .netra_secret: %v", err)
+			// #nosec G304 -- .netra_secret is an internal secret file path in the executable directory
+			if err := os.WriteFile(secretFile, []byte(secret), 0600); err != nil {
+				log.Printf("WARNING: Failed to persist .netra_secret at %s: %v", secretFile, err)
 			} else {
-				log.Println("[Config] Generated persistent JWT_SECRET in .netra_secret for standalone SQLite mode")
+				log.Printf("[Config] Generated persistent JWT_SECRET in %s for standalone SQLite mode", secretFile)
 			}
 			jwtSecret = secret
 			_ = os.Setenv("JWT_SECRET", secret)
 		}
 	}
 
+	var allowPrivate bool
+	var allowPrivateReason string
+	if envVal := strings.TrimSpace(os.Getenv("ALLOW_PRIVATE_NETWORK_MONITORING")); envVal != "" {
+		allowPrivate = parseBoolEnv("ALLOW_PRIVATE_NETWORK_MONITORING", false)
+		allowPrivateReason = "env override"
+	} else {
+		if dbDriver == "sqlite" && isLoopbackHost(host) {
+			allowPrivate = true
+			allowPrivateReason = "desktop loopback default"
+		} else {
+			allowPrivate = false
+			allowPrivateReason = "production default"
+		}
+	}
+	utils.SetDefaultAllowPrivateNetwork(allowPrivate)
+
 	cfg := &Config{
 		AppEnv: os.Getenv("APP_ENV"),
-		Port:   os.Getenv("PORT"),
+		Host:   host,
+		Port:   port,
 
 		RecentChecksLimit:     parseIntEnv("RECENT_CHECKS_LIMIT", 60),
 		SelfHostedMaxMonitors: parseIntEnv("SELFHOSTED_MAX_MONITORS", 0),
@@ -161,6 +236,9 @@ func loadConfig() *Config {
 		MaxAssigneesPerMonitor: parseIntEnv("MAX_ASSIGNEES_PER_MONITOR", 50),
 		AllowRegistration:      parseBoolEnv("ALLOW_REGISTRATION", true),
 		AuthRateLimit:          parseIntEnv("AUTH_RATE_LIMIT", 60),
+
+		AllowPrivateNetworkMonitoring:       allowPrivate,
+		AllowPrivateNetworkMonitoringReason: allowPrivateReason,
 
 		DBDriver:   dbDriver,
 		DBPath:     dbPath,

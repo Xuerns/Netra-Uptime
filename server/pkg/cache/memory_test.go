@@ -62,3 +62,11 @@ func TestMemoryCache_Incr(t *testing.T) {
 		t.Fatalf("expected count to reset to 1 after TTL expiration, got %d", c3)
 	}
 }
+
+func TestMemoryCache_Stop(t *testing.T) {
+	mc := NewMemoryCache()
+	mc.Set("k", "v", time.Minute)
+	mc.Stop()
+	// Calling Stop multiple times should be safe (no panic)
+	mc.Stop()
+}

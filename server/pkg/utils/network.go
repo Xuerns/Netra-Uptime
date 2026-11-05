@@ -9,8 +9,24 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync/atomic"
 	"time"
 )
+
+var defaultAllowPrivate atomic.Bool
+
+// SetDefaultAllowPrivateNetwork sets the fallback value for private network monitoring
+// when the ALLOW_PRIVATE_NETWORK_MONITORING environment variable is not explicitly set.
+func SetDefaultAllowPrivateNetwork(allow bool) {
+	defaultAllowPrivate.Store(allow)
+}
+
+func isPrivateNetworkAllowed() bool {
+	if val := strings.TrimSpace(os.Getenv("ALLOW_PRIVATE_NETWORK_MONITORING")); val != "" {
+		return strings.EqualFold(val, "true")
+	}
+	return defaultAllowPrivate.Load()
+}
 
 var blockedHostnames = map[string]bool{
 	"localhost":                true,
@@ -52,7 +68,7 @@ func ExtractHostname(rawTarget string) (string, error) {
 // Private network ranges (RFC 1918) are blocked unless ALLOW_PRIVATE_NETWORK_MONITORING=true.
 // Loopback, unspecified, link-local, and cloud metadata (169.254.169.254) are ALWAYS blocked.
 func IsRestrictedIP(ip net.IP) error {
-	allowPrivate := strings.EqualFold(os.Getenv("ALLOW_PRIVATE_NETWORK_MONITORING"), "true")
+	allowPrivate := isPrivateNetworkAllowed()
 	return isRestrictedIP(ip, allowPrivate)
 }
 
@@ -103,7 +119,7 @@ func ValidateTargetHost(target string) error {
 		return fmt.Errorf("access to internal hostname '%s' is prohibited", host)
 	}
 
-	allowPrivate := strings.EqualFold(os.Getenv("ALLOW_PRIVATE_NETWORK_MONITORING"), "true")
+	allowPrivate := isPrivateNetworkAllowed()
 
 	// 1. Direct IP Check
 	if directIP := net.ParseIP(host); directIP != nil {
@@ -140,7 +156,7 @@ func ResolveSafeIPs(ctx context.Context, target string) ([]net.IP, error) {
 		return nil, fmt.Errorf("access to internal hostname '%s' is prohibited (SSRF protection)", host)
 	}
 
-	allowPrivate := strings.EqualFold(os.Getenv("ALLOW_PRIVATE_NETWORK_MONITORING"), "true")
+	allowPrivate := isPrivateNetworkAllowed()
 
 	// 1. Direct IP Check
 	if directIP := net.ParseIP(host); directIP != nil {
@@ -193,7 +209,7 @@ func SafeDialContext(ctx context.Context, network, addr string, timeout time.Dur
 		return nil, fmt.Errorf("connection to internal host '%s' is prohibited (SSRF protection)", host)
 	}
 
-	allowPrivate := strings.EqualFold(os.Getenv("ALLOW_PRIVATE_NETWORK_MONITORING"), "true")
+	allowPrivate := isPrivateNetworkAllowed()
 	dialer := &net.Dialer{
 		Timeout:   timeout,
 		KeepAlive: 30 * time.Second,
