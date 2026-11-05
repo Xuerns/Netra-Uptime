@@ -3,9 +3,9 @@ FROM node:22.23.4-alpine AS client-builder
 ENV CI=true
 WORKDIR /app/client
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+COPY client/package.json client/pnpm-lock.yaml client/pnpm-workspace.yaml client/.npmrc ./
+RUN corepack enable && corepack install
 
-COPY client/package.json client/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY client/ ./
