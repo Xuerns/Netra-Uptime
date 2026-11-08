@@ -2,6 +2,7 @@
 	import { onMount, untrack } from 'svelte';
 	import { AlertTemplateAPI, type AlertTemplate } from '$lib/api/alertTemplate';
 	import { MonitorAPI } from '$lib/api/monitor';
+	import * as Select from '$lib/components/ui/select/index.js';
 	import { ExternalLink } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
@@ -25,6 +26,15 @@
 
 	let activeTemplate = $derived(availableTemplates.find((t) => t.id === currentTemplateId) || null);
 
+	let selectedTemplateLabel = $derived.by(() => {
+		if (!currentTemplateId || currentTemplateId === 'none') {
+			return 'System Default Checks';
+		}
+		const found = availableTemplates.find((t) => t.id === currentTemplateId);
+		if (!found) return 'System Default Checks';
+		return `${found.name} (${found.rules?.length || 0})`;
+	});
+
 	async function loadTemplates() {
 		isLoading = true;
 		try {
@@ -47,9 +57,9 @@
 		}
 	}
 
-	async function handleTemplateChange(e: Event) {
-		const target = e.target as HTMLSelectElement;
-		const newTmplId = target.value ? target.value : null;
+	async function handleTemplateSelect(val: string) {
+		const newTmplId = val && val !== 'none' ? val : null;
+		if (newTmplId === currentTemplateId) return;
 
 		isApplyingTemplate = true;
 		try {
@@ -81,19 +91,39 @@
 
 	<!-- Template Selector -->
 	<div class="flex items-center gap-2 w-full">
-		<select
-			value={currentTemplateId || ''}
-			onchange={handleTemplateChange}
+		<Select.Root
+			type="single"
+			value={currentTemplateId || 'none'}
 			disabled={isApplyingTemplate || isLoading}
-			class="h-8.5 px-3 rounded-lg border border-border bg-background text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer flex-1 min-w-0"
+			onValueChange={(val) => {
+				if (val) handleTemplateSelect(val);
+			}}
 		>
-			<option value="">System Default Checks</option>
-			{#each availableTemplates as tmpl (tmpl.id)}
-				<option value={tmpl.id}>
-					{tmpl.name} ({tmpl.rules?.length || 0})
-				</option>
-			{/each}
-		</select>
+			<Select.Trigger
+				class="h-8.5 px-3 rounded-lg border border-border bg-background text-xs font-medium text-foreground focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer flex-1 min-w-0 truncate"
+			>
+				<span class="truncate">{selectedTemplateLabel}</span>
+			</Select.Trigger>
+			<Select.Content class="bg-card border-border text-foreground max-h-60">
+				<Select.Item
+					value="none"
+					label="System Default Checks"
+					class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer text-xs"
+				>
+					System Default Checks
+				</Select.Item>
+				{#each availableTemplates as tmpl (tmpl.id)}
+					{@const tmplLabel = `${tmpl.name} (${tmpl.rules?.length || 0})`}
+					<Select.Item
+						value={tmpl.id}
+						label={tmplLabel}
+						class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer text-xs"
+					>
+						{tmplLabel}
+					</Select.Item>
+				{/each}
+			</Select.Content>
+		</Select.Root>
 
 		<a
 			href={activeTemplate
