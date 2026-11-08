@@ -261,8 +261,12 @@ func (r *StatusPageRepositoryImpl) Get30DayUptimeMap(monitorIDs []string) (map[s
 
 	var checkAggs []uptimeAgg
 	r.db.Table("checks").
-		Select("monitor_id, COUNT(*) as total_checks, COUNT(CASE WHEN status = 'up' THEN 1 END) as up_checks").
-		Where("monitor_id IN ? AND checked_at >= ?", monitorIDs, sinceDate).
+		Select(`
+			monitor_id,
+			COUNT(*) as total_checks,
+			COUNT(CASE WHEN status = 'up' OR (status = 'degraded' AND ((status_code > 0 AND status_code < 500) OR (status_code = 0 AND response_time_ms > 0 AND error_message LIKE 'Response time%'))) THEN 1 END) as up_checks
+		`).
+		Where("monitor_id IN ? AND checked_at >= ? AND status != 'maintenance'", monitorIDs, sinceDate).
 		Group("monitor_id").
 		Scan(&checkAggs)
 
@@ -326,10 +330,10 @@ func (r *StatusPageRepositoryImpl) GetMonitorDailyStats(monitorIDs []string, day
 			monitor_id,
 			DATE(checked_at) AS date,
 			COUNT(*) AS total_checks,
-			COUNT(CASE WHEN status = 'up' THEN 1 END) AS up_checks,
-			COUNT(CASE WHEN status = 'down' THEN 1 END) AS down_checks
+			COUNT(CASE WHEN status = 'up' OR (status = 'degraded' AND ((status_code > 0 AND status_code < 500) OR (status_code = 0 AND response_time_ms > 0 AND error_message LIKE 'Response time%'))) THEN 1 END) AS up_checks,
+			COUNT(CASE WHEN status = 'down' OR (status = 'degraded' AND NOT ((status_code > 0 AND status_code < 500) OR (status_code = 0 AND response_time_ms > 0 AND error_message LIKE 'Response time%'))) THEN 1 END) AS down_checks
 		`).
-		Where("monitor_id IN ? AND checked_at >= ?", monitorIDs, startDate).
+		Where("monitor_id IN ? AND checked_at >= ? AND status != 'maintenance'", monitorIDs, startDate).
 		Group("monitor_id, DATE(checked_at)").
 		Scan(&rawAggs)
 

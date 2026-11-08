@@ -87,6 +87,15 @@
 					{monitor.Type}
 				</div>
 
+				{#if monitor.Type === 'http'}
+					<div
+						class="uppercase px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 font-mono font-semibold text-[11px]"
+						title="HTTP Request Method"
+					>
+						{monitor.HTTPMethod || 'GET'}
+					</div>
+				{/if}
+
 				{#if monitor.Type === 'http' && (monitor.EnableSSLDomainCheck ?? true)}
 					{#if monitor.SSLStatus && monitor.SSLStatus !== 'none'}
 						<span

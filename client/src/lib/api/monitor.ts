@@ -10,6 +10,9 @@ export interface CreateMonitorRequest {
 	interval_seconds: number;
 	timeout_seconds: number;
 	expectation_status_code?: number;
+	http_method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'HEAD';
+	http_headers?: string;
+	http_body?: string;
 	criticality: 'extreme' | 'high' | 'medium' | 'low';
 	MonitorPICs?: string[];
 	assignees?: string[];
@@ -17,12 +20,17 @@ export interface CreateMonitorRequest {
 	alert_template_id?: string | null;
 }
 
+export type CreateMonitorPayload = CreateMonitorRequest;
+
 export interface UpdateMonitorRequest {
 	name?: string;
 	target?: string;
 	interval_seconds?: number;
 	timeout_seconds?: number;
 	expectation_status_code?: number;
+	http_method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'HEAD';
+	http_headers?: string;
+	http_body?: string;
 	is_active?: boolean;
 	criticality?: 'extreme' | 'high' | 'medium' | 'low';
 	MonitorPICs?: string[];
@@ -31,13 +39,16 @@ export interface UpdateMonitorRequest {
 	alert_template_id?: string | null;
 }
 
+export type UpdateMonitorPayload = UpdateMonitorRequest;
+
 export interface RecentCheck {
 	ID: string;
 	MonitorID: string;
-	Status: 'up' | 'down';
+	Status: 'up' | 'down' | 'degraded' | 'maintenance';
 	StatusCode: number;
 	ResponseTimeMs: number;
 	ErrorMessage?: string;
+	ResponseSnippet?: string;
 	CheckedAt: string;
 }
 
@@ -103,6 +114,9 @@ export interface Monitor {
 	IntervalSeconds: number;
 	TimeoutSeconds: number;
 	ExpectedStatusCode?: number;
+	HTTPMethod?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'HEAD';
+	HTTPHeaders?: string;
+	HTTPBody?: string;
 	OrganizationID: string;
 	Organization?: { ID: string; Name: string; Slug: string };
 	CreatedAt: string;
@@ -143,6 +157,9 @@ function mapMonitor(m: any): Monitor {
 		TimeoutSeconds: m.timeout_seconds ?? m.TimeoutSeconds,
 		ExpectedStatusCode:
 			m.expectation_status_code ?? m.expectation_status_code ?? m.ExpectedStatusCode,
+		HTTPMethod: m.http_method ?? m.HTTPMethod,
+		HTTPHeaders: m.http_headers ?? m.HTTPHeaders,
+		HTTPBody: m.http_body ?? m.HTTPBody,
 		OrganizationID: m.organization_id ?? m.OrganizationID,
 		Organization: m.organization
 			? {
@@ -178,6 +195,7 @@ function mapMonitor(m: any): Monitor {
 			StatusCode: c.status_code ?? c.StatusCode,
 			ResponseTimeMs: c.response_time_ms ?? c.ResponseTimeMs,
 			ErrorMessage: c.error_message ?? c.ErrorMessage,
+			ResponseSnippet: c.response_snippet ?? c.ResponseSnippet,
 			CheckedAt: c.checked_at ?? c.CheckedAt
 		}))
 	};

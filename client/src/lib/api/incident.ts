@@ -29,6 +29,8 @@ export interface Incident {
 	Monitor?: Monitor;
 	Status: 'ongoing' | 'resolved';
 	Summary: string;
+	TriggeredRule?: string;
+	ResponseSnippet?: string;
 	StartedAt: string;
 	ResolvedAt?: string;
 	CreatedAt: string;
@@ -75,6 +77,8 @@ function mapIncident(inc: any): Incident {
 		MonitorID: inc.monitor_id ?? inc.MonitorID,
 		Status: inc.status ?? inc.Status,
 		Summary: inc.summary ?? inc.Summary,
+		TriggeredRule: inc.triggered_rule ?? inc.TriggeredRule,
+		ResponseSnippet: inc.response_snippet ?? inc.ResponseSnippet,
 		StartedAt: inc.started_at ?? inc.StartedAt,
 		ResolvedAt: inc.resolved_at ?? inc.ResolvedAt,
 		CreatedAt: inc.created_at ?? inc.CreatedAt,

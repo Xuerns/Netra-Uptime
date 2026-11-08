@@ -26,7 +26,7 @@ func init() {
 	}
 }
 
-func newMockRedisClient(t *testing.T) (*cache.MemoryCache, func()) {
+func newMockMemoryCache(t *testing.T) (*cache.MemoryCache, func()) {
 	t.Helper()
 	return cache.NewMemoryCache(), func() {}
 }
@@ -138,7 +138,7 @@ func (m *mockMonitorRepo) GetFleetOverview(orgId string, windowDays int) (*Fleet
 // ====================== SERVICE TESTS ======================
 
 func TestCreate_Success(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	repo := &mockMonitorRepo{
@@ -165,7 +165,7 @@ func TestCreate_Success(t *testing.T) {
 }
 
 func TestCreate_ExceedsMonitorLimit(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	repo := &mockMonitorRepo{
@@ -189,7 +189,7 @@ func TestCreate_ExceedsMonitorLimit(t *testing.T) {
 }
 
 func TestCreate_ExceedsPICLimit(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	svc := NewMonitorService(&mockMonitorRepo{}, rdb, nil, &config.Config{SelfHostedMaxPIC: 5})
@@ -209,7 +209,7 @@ func TestCreate_ExceedsPICLimit(t *testing.T) {
 }
 
 func TestCreate_ZeroAssignees_Success(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	svc := NewMonitorService(&mockMonitorRepo{}, rdb, nil)
@@ -229,7 +229,7 @@ func TestCreate_ZeroAssignees_Success(t *testing.T) {
 }
 
 func TestCreate_InvalidIntervalBelowMinimum(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	svc := NewMonitorService(&mockMonitorRepo{}, rdb, nil)
@@ -263,7 +263,7 @@ func TestCreate_InvalidIntervalBelowMinimum(t *testing.T) {
 }
 
 func TestCreate_TimeoutTooHigh(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	svc := NewMonitorService(&mockMonitorRepo{}, rdb, nil)
@@ -297,7 +297,7 @@ func TestCreate_TimeoutTooHigh(t *testing.T) {
 }
 
 func TestCreate_TimeoutTooLow(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	svc := NewMonitorService(&mockMonitorRepo{}, rdb, nil)
@@ -316,7 +316,7 @@ func TestCreate_TimeoutTooLow(t *testing.T) {
 }
 
 func TestCreate_TimeoutGreaterOrEqualInterval(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	svc := NewMonitorService(&mockMonitorRepo{}, rdb, nil)
@@ -335,7 +335,7 @@ func TestCreate_TimeoutGreaterOrEqualInterval(t *testing.T) {
 }
 
 func TestUpdateMonitor_TimeoutGreaterOrEqualInterval(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	orgID := uuid.New().String()
@@ -385,7 +385,7 @@ func TestUpdateMonitor_TimeoutGreaterOrEqualInterval(t *testing.T) {
 }
 
 func TestUpdateMonitor_IntervalBelowMinimum(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	orgID := uuid.New().String()
@@ -414,7 +414,7 @@ func TestUpdateMonitor_IntervalBelowMinimum(t *testing.T) {
 }
 
 func TestUpdateMonitor_TimeoutTooHigh(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	orgID := uuid.New().String()
@@ -443,7 +443,7 @@ func TestUpdateMonitor_TimeoutTooHigh(t *testing.T) {
 }
 
 func TestCreate_MaxMonitorsPerOrg(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	// Case 1: Reaching custom MaxMonitorsPerOrg
@@ -485,7 +485,7 @@ func TestCreate_MaxMonitorsPerOrg(t *testing.T) {
 }
 
 func TestCreate_CustomConfigLimits(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	repo := &mockMonitorRepo{
@@ -516,7 +516,7 @@ func TestCreate_CustomConfigLimits(t *testing.T) {
 }
 
 func TestGetById_CacheMiss_ThenCacheSet(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	monID := uuid.New()
@@ -576,7 +576,7 @@ func TestGetById_CacheMiss_ThenCacheSet(t *testing.T) {
 }
 
 func TestGetById_CrossTenantCacheIsolation(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	orgA := uuid.New().String()
@@ -634,7 +634,7 @@ func TestGetById_CrossTenantCacheIsolation(t *testing.T) {
 }
 
 func TestGetAllMonitor_Success(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	orgID := uuid.New()
@@ -658,7 +658,7 @@ func TestGetAllMonitor_Success(t *testing.T) {
 }
 
 func TestUpdateMonitor_PauseAndResume(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	monID := uuid.New()
@@ -709,7 +709,7 @@ func TestUpdateMonitor_PauseAndResume(t *testing.T) {
 }
 
 func TestDeleteMonitor_Success(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	deleted := false
@@ -731,7 +731,7 @@ func TestDeleteMonitor_Success(t *testing.T) {
 }
 
 func TestUpdateMonitor_InvalidatesOrgScopedCache(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	monID := uuid.New()
@@ -780,7 +780,7 @@ func TestUpdateMonitor_InvalidatesOrgScopedCache(t *testing.T) {
 }
 
 func TestDeleteMonitor_InvalidatesOrgScopedCache(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	monID := uuid.New().String()
@@ -862,7 +862,7 @@ func TestMapMonitorToResponse_UptimeFromRecentChecks(t *testing.T) {
 // ====================== HANDLER TESTS ======================
 
 func TestMonitorHandler_Create_Success(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	orgID := uuid.New()
@@ -905,7 +905,7 @@ func TestMonitorHandler_Create_Success(t *testing.T) {
 }
 
 func TestMonitorHandler_GetById(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	orgID := uuid.New()
@@ -941,7 +941,7 @@ func TestMonitorHandler_GetById(t *testing.T) {
 }
 
 func TestGetFleetOverview_ColdStart(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	orgID := uuid.New().String()
@@ -991,7 +991,7 @@ func TestGetFleetOverview_ColdStart(t *testing.T) {
 }
 
 func TestGetFleetOverview_NewMonitor_NoPriorData(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	orgID := uuid.New().String()
@@ -1025,7 +1025,7 @@ func TestGetFleetOverview_NewMonitor_NoPriorData(t *testing.T) {
 }
 
 func TestGetFleetOverview_EstablishedMonitor_PositiveDelta(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	orgID := uuid.New().String()
@@ -1057,7 +1057,7 @@ func TestGetFleetOverview_EstablishedMonitor_PositiveDelta(t *testing.T) {
 }
 
 func TestGetFleetOverview_EstablishedMonitor_NegativeDelta(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	orgID := uuid.New().String()
@@ -1089,7 +1089,7 @@ func TestGetFleetOverview_EstablishedMonitor_NegativeDelta(t *testing.T) {
 }
 
 func TestGetFleetOverview_FloatPrecisionRounding(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	orgID := uuid.New().String()
@@ -1120,8 +1120,8 @@ func TestGetFleetOverview_FloatPrecisionRounding(t *testing.T) {
 	}
 }
 
-func TestGetFleetOverview_RedisCache(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+func TestGetFleetOverview_MemoryCache(t *testing.T) {
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	orgID := uuid.New().String()
@@ -1157,7 +1157,7 @@ func TestGetFleetOverview_RedisCache(t *testing.T) {
 }
 
 func TestMonitorHandler_GetFleetOverview(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	orgID := uuid.New()
@@ -1216,7 +1216,7 @@ func TestMonitorHandler_GetFleetOverview(t *testing.T) {
 }
 
 func TestUpdateMonitor_DisableSSLDomainCheck_ResetsFieldsAndInvalidatesOverviewCache(t *testing.T) {
-	rdb, cleanup := newMockRedisClient(t)
+	rdb, cleanup := newMockMemoryCache(t)
 	defer cleanup()
 
 	monID := uuid.New()
@@ -1294,5 +1294,123 @@ func TestUpdateMonitor_DisableSSLDomainCheck_ResetsFieldsAndInvalidatesOverviewC
 
 	if _, ok := rdb.Get(overviewKey); ok {
 		t.Errorf("expected overview cache key %s to be invalidated on update", overviewKey)
+	}
+}
+
+func TestCreateAndUpdateMonitor_HTTPMethodHeadersBodyValidation(t *testing.T) {
+	rdb, cleanup := newMockMemoryCache(t)
+	defer cleanup()
+
+	orgID := uuid.New().String()
+	userID := uuid.New().String()
+
+	var savedMonitor *model.Monitor
+	repo := &mockMonitorRepo{
+		totalOrganizationMonitorFunc: func(orgId string) (int64, error) {
+			return 1, nil
+		},
+		createFunc: func(m *model.Monitor) error {
+			m.ID = uuid.New()
+			savedMonitor = m
+			return nil
+		},
+		getByIdFunc: func(o, m string) (*model.Monitor, error) {
+			if savedMonitor != nil {
+				return savedMonitor, nil
+			}
+			return nil, errors.New("not found")
+		},
+		updateFunc: func(m *model.Monitor) error {
+			savedMonitor = m
+			return nil
+		},
+	}
+
+	svc := NewMonitorService(repo, rdb, nil)
+
+	// 1. Create POST monitor with valid headers and body
+	mon, err := svc.Create(orgID, userID, "127.0.0.1", &CreateMonitorRequest{
+		Name:            "Webhook Endpoint",
+		Type:            "http",
+		Target:          "https://1.1.1.1/webhook",
+		IntervalSeconds: 60,
+		TimeoutSeconds:  10,
+		HTTPMethod:      "post",
+		HTTPHeaders:     `{"Authorization": "Bearer token123", "X-Custom": "val"}`,
+		HTTPBody:        `{"event":"ping"}`,
+		Criticality:     "high",
+	})
+	if err != nil {
+		t.Fatalf("expected valid POST monitor creation to succeed, got: %v", err)
+	}
+	if mon.HTTPMethod != "POST" {
+		t.Errorf("expected normalized HTTPMethod 'POST', got %q", mon.HTTPMethod)
+	}
+	if mon.HTTPBody != `{"event":"ping"}` {
+		t.Errorf("expected HTTPBody preserved for POST, got %q", mon.HTTPBody)
+	}
+
+	// 2. Reject invalid JSON in HTTPHeaders
+	_, err = svc.Create(orgID, userID, "127.0.0.1", &CreateMonitorRequest{
+		Name:            "Bad Headers",
+		Type:            "http",
+		Target:          "https://1.1.1.1/bad",
+		IntervalSeconds: 60,
+		TimeoutSeconds:  10,
+		HTTPMethod:      "GET",
+		HTTPHeaders:     `not-a-json`,
+		Criticality:     "medium",
+	})
+	if err == nil {
+		t.Fatal("expected error for invalid JSON in http_headers, got nil")
+	}
+
+	// 3. Switching method to GET on update should clear HTTPBody
+	getMethod := "GET"
+	updated, err := svc.UpdateMonitor(orgID, userID, "127.0.0.1", mon.ID.String(), UpdatedMonitorRequest{
+		HTTPMethod: &getMethod,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error updating HTTPMethod to GET: %v", err)
+	}
+	if updated.HTTPMethod != "GET" {
+		t.Errorf("expected HTTPMethod 'GET', got %q", updated.HTTPMethod)
+	}
+	if updated.HTTPBody != "" {
+		t.Errorf("expected HTTPBody to be cleared when method is GET, got %q", updated.HTTPBody)
+	}
+}
+
+func TestMapMonitorToResponse_AvailabilityVsPerformanceAndMaintenance(t *testing.T) {
+	now := time.Now()
+	mon := model.Monitor{
+		ID:         uuid.New(),
+		Name:       "API",
+		Type:       "http",
+		HTTPMethod: "POST",
+		Status:     "up",
+		IsActive:   true,
+		RecentChecks: []model.Check{
+			{Status: "up", StatusCode: 200, ResponseTimeMs: 80, CheckedAt: now},
+			{Status: "degraded", StatusCode: 200, ResponseTimeMs: 1800, ErrorMessage: "Response time 1800ms exceeded 1000", CheckedAt: now},
+			{Status: "degraded", StatusCode: 0, ResponseTimeMs: 10000, ErrorMessage: "Request timed out after 10s", CheckedAt: now},
+			{Status: "down", StatusCode: 502, ResponseTimeMs: 50, ResponseSnippet: `{"error":"bad gateway"}`, CheckedAt: now},
+			{Status: "maintenance", StatusCode: 503, ResponseTimeMs: 20, CheckedAt: now},
+		},
+	}
+
+	resp := mapMonitorToResponse(mon)
+	if resp.UptimePercent == nil {
+		t.Fatal("expected UptimePercent to be non-nil")
+	}
+	// Active checks = 4 (maintenance ignored). Available (Up) = 2 (up + degraded 200 OK). Unavailable = 2 (degraded timeout + down 502).
+	if *resp.UptimePercent != 50.0 {
+		t.Errorf("expected UptimePercent=50.0, got %f", *resp.UptimePercent)
+	}
+	if resp.HTTPMethod != "POST" {
+		t.Errorf("expected HTTPMethod='POST', got %q", resp.HTTPMethod)
+	}
+	if resp.RecentChecks[3].ResponseSnippet == nil || *resp.RecentChecks[3].ResponseSnippet != `{"error":"bad gateway"}` {
+		t.Errorf("expected ResponseSnippet on 4th recent check, got %v", resp.RecentChecks[3].ResponseSnippet)
 	}
 }

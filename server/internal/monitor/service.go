@@ -10,6 +10,7 @@ import (
 	"netra-uptime/internal/model"
 	"netra-uptime/pkg/cache"
 	"netra-uptime/pkg/utils"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -81,6 +82,71 @@ func (s *MonitorServiceImpl) getConfig() *config.Config {
 		return s.cfg
 	}
 	return config.Load()
+}
+
+var allowedHTTPMethods = map[string]bool{
+	"GET":   true,
+	"POST":  true,
+	"PUT":   true,
+	"PATCH": true,
+	"HEAD":  true,
+}
+
+func validateHTTPConfig(monitorType, method, headersJSON, body string) (string, string, string, error) {
+	if monitorType != "http" {
+		return "GET", "", "", nil
+	}
+
+	normalizedMethod := strings.ToUpper(strings.TrimSpace(method))
+	if normalizedMethod == "" {
+		normalizedMethod = "GET"
+	}
+	if !allowedHTTPMethods[normalizedMethod] {
+		return "", "", "", errors.New("invalid HTTP method: must be one of GET, POST, PUT, PATCH, HEAD")
+	}
+
+	normalizedHeaders := ""
+	trimmedHeaders := strings.TrimSpace(headersJSON)
+	if trimmedHeaders != "" {
+		if len(trimmedHeaders) > 4096 {
+			return "", "", "", errors.New("http_headers exceeds maximum length of 4096 bytes")
+		}
+		var hdrMap map[string]string
+		if err := json.Unmarshal([]byte(trimmedHeaders), &hdrMap); err != nil {
+			return "", "", "", errors.New("invalid http_headers: must be a valid JSON object of string key-value pairs")
+		}
+		if len(hdrMap) > 25 {
+			return "", "", "", errors.New("invalid http_headers: maximum of 25 custom headers allowed")
+		}
+		cleanedMap := make(map[string]string, len(hdrMap))
+		for rawKey, val := range hdrMap {
+			if strings.ContainsAny(rawKey, "\r\n") || strings.ContainsAny(val, "\r\n") {
+				return "", "", "", errors.New("invalid http_headers: header keys and values must not contain newline characters")
+			}
+			k := strings.TrimSpace(rawKey)
+			if k == "" {
+				return "", "", "", errors.New("invalid http_headers: header name cannot be empty")
+			}
+			cleanedMap[k] = val
+		}
+		if len(cleanedMap) > 0 {
+			b, err := json.Marshal(cleanedMap)
+			if err != nil {
+				return "", "", "", errors.New("invalid http_headers: failed to serialize headers")
+			}
+			normalizedHeaders = string(b)
+		}
+	}
+
+	if len(body) > 16384 {
+		return "", "", "", errors.New("http_body exceeds maximum length of 16384 bytes")
+	}
+	normalizedBody := body
+	if normalizedMethod == "GET" || normalizedMethod == "HEAD" {
+		normalizedBody = ""
+	}
+
+	return normalizedMethod, normalizedHeaders, normalizedBody, nil
 }
 
 func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *CreateMonitorRequest) (*model.Monitor, error) {
@@ -179,6 +245,11 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 		enableCheck = *req.EnableSSLDomainCheck
 	}
 
+	httpMethod, httpHeaders, httpBody, err := validateHTTPConfig(req.Type, req.HTTPMethod, req.HTTPHeaders, req.HTTPBody)
+	if err != nil {
+		return nil, err
+	}
+
 	var monitor = model.Monitor{
 		Name:                 req.Name,
 		Type:                 req.Type,
@@ -187,6 +258,9 @@ func (s *MonitorServiceImpl) Create(orgId, userId, ipAddress string, req *Create
 		IntervalSeconds:      req.IntervalSeconds,
 		TimeoutSeconds:       req.TimeoutSeconds,
 		ExpectedStatusCode:   req.ExpectedStatusCode,
+		HTTPMethod:           httpMethod,
+		HTTPHeaders:          httpHeaders,
+		HTTPBody:             httpBody,
 		Criticality:          req.Criticality,
 		OrganizationID:       parceUUID,
 		EnableSSLDomainCheck: enableCheck,
@@ -271,6 +345,16 @@ func mapMonitorToResponse(m model.Monitor) MonitorResponse {
 		DomainStatus:         "none",
 	}
 
+	if m.Type == "http" {
+		httpMethod := m.HTTPMethod
+		if httpMethod == "" {
+			httpMethod = "GET"
+		}
+		resp.HTTPMethod = httpMethod
+		resp.HTTPHeaders = m.HTTPHeaders
+		resp.HTTPBody = m.HTTPBody
+	}
+
 	if m.Type == "http" && m.EnableSSLDomainCheck {
 		resp.SSLDaysLeft = m.SSLDaysLeft
 		resp.SSLStatus = m.SSLStatus
@@ -309,12 +393,20 @@ func mapMonitorToResponse(m model.Monitor) MonitorResponse {
 		resp.UptimePercent = m.CalculatedUptime30D
 	} else if len(m.RecentChecks) > 0 {
 		upCount := 0
+		totalCount := 0
 		for _, rc := range m.RecentChecks {
-			if rc.Status == "up" {
+			if rc.Status == "maintenance" {
+				continue
+			}
+			totalCount++
+			if rc.Status == "up" || (rc.Status == "degraded" && ((rc.StatusCode > 0 && rc.StatusCode < 500) || (rc.StatusCode == 0 && rc.ResponseTimeMs > 0 && strings.HasPrefix(rc.ErrorMessage, "Response time")))) {
 				upCount++
 			}
 		}
-		pct := (float64(upCount) / float64(len(m.RecentChecks))) * 100.0
+		pct := 100.0
+		if totalCount > 0 {
+			pct = (float64(upCount) / float64(totalCount)) * 100.0
+		}
 		resp.UptimePercent = &pct
 	} else {
 		pct := 100.0
@@ -334,15 +426,21 @@ func mapMonitorToResponse(m model.Monitor) MonitorResponse {
 		if rc.ErrorMessage != "" {
 			errMsg = &rc.ErrorMessage
 		}
+		var respSnippet *string
+		if rc.ResponseSnippet != "" {
+			s := rc.ResponseSnippet
+			respSnippet = &s
+		}
 
 		resp.RecentChecks = append(resp.RecentChecks, RecentCheck{
-			ID:             rc.ID.String(),
-			MonitorID:      rc.MonitorID.String(),
-			Status:         rc.Status,
-			StatusCode:     rc.StatusCode,
-			ResponseTimeMs: rc.ResponseTimeMs,
-			ErrorMessage:   errMsg,
-			CheckedAt:      checkedAt,
+			ID:              rc.ID.String(),
+			MonitorID:       rc.MonitorID.String(),
+			Status:          rc.Status,
+			StatusCode:      rc.StatusCode,
+			ResponseTimeMs:  rc.ResponseTimeMs,
+			ErrorMessage:    errMsg,
+			ResponseSnippet: respSnippet,
+			CheckedAt:       checkedAt,
 		})
 	}
 
@@ -573,6 +671,32 @@ func (s *MonitorServiceImpl) UpdateMonitor(orgId, userId, ipAddress, monitorId s
 		updatedMonitor.ExpectedStatusCode = *req.ExpectedStatusCode
 	}
 
+	if req.HTTPMethod != nil || req.HTTPHeaders != nil || req.HTTPBody != nil {
+		currMethod := updatedMonitor.HTTPMethod
+		if req.HTTPMethod != nil {
+			currMethod = *req.HTTPMethod
+		}
+		currHeaders := updatedMonitor.HTTPHeaders
+		if req.HTTPHeaders != nil {
+			currHeaders = *req.HTTPHeaders
+		}
+		currBody := updatedMonitor.HTTPBody
+		if req.HTTPBody != nil {
+			currBody = *req.HTTPBody
+		}
+		monType := updatedMonitor.Type
+		if monType == "" {
+			monType = "http"
+		}
+		validMethod, validHeaders, validBody, err := validateHTTPConfig(monType, currMethod, currHeaders, currBody)
+		if err != nil {
+			return nil, err
+		}
+		updatedMonitor.HTTPMethod = validMethod
+		updatedMonitor.HTTPHeaders = validHeaders
+		updatedMonitor.HTTPBody = validBody
+	}
+
 	isActive := updatedMonitor.IsActive
 	if req.IsActive != nil {
 		isActive = *req.IsActive
@@ -757,15 +881,21 @@ func (s *MonitorServiceImpl) TriggerCheck(orgId, monitorId string) (*RecentCheck
 	if check.ErrorMessage != "" {
 		errMsg = &check.ErrorMessage
 	}
+	var respSnippet *string
+	if check.ResponseSnippet != "" {
+		s := check.ResponseSnippet
+		respSnippet = &s
+	}
 
 	return &RecentCheck{
-		ID:             check.ID.String(),
-		MonitorID:      check.MonitorID.String(),
-		Status:         check.Status,
-		StatusCode:     check.StatusCode,
-		ResponseTimeMs: check.ResponseTimeMs,
-		ErrorMessage:   errMsg,
-		CheckedAt:      check.CheckedAt.Format(time.RFC3339),
+		ID:              check.ID.String(),
+		MonitorID:       check.MonitorID.String(),
+		Status:          check.Status,
+		StatusCode:      check.StatusCode,
+		ResponseTimeMs:  check.ResponseTimeMs,
+		ErrorMessage:    errMsg,
+		ResponseSnippet: respSnippet,
+		CheckedAt:       check.CheckedAt.Format(time.RFC3339),
 	}, nil
 }
 

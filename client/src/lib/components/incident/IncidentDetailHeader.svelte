@@ -1,7 +1,16 @@
 <script lang="ts">
 	import type { Incident } from '$lib/api/incident';
 	import { formatDateTime, formatIncidentTimeAgo, formatDuration } from '$lib/utils/datetime';
-	import { CheckCircle2, Radio, Users, Loader2, Server, Clock, ExternalLink } from 'lucide-svelte';
+	import {
+		CheckCircle2,
+		Radio,
+		Users,
+		Loader2,
+		Server,
+		Clock,
+		ExternalLink,
+		Terminal
+	} from 'lucide-svelte';
 
 	interface Props {
 		incident: Incident;
@@ -61,11 +70,33 @@
 				{/if}
 
 				<span class="text-xs text-muted-foreground font-mono">#{incident.ID.substring(0, 8)}</span>
+
+				{#if incident.TriggeredRule}
+					<span
+						class="px-2 py-0.5 rounded bg-muted border border-border text-xs font-mono text-muted-foreground"
+						title="Triggered Alert Rule"
+					>
+						Rule: {incident.TriggeredRule}
+					</span>
+				{/if}
 			</div>
 
 			<h1 class="text-2xl md:text-3xl font-bold text-foreground tracking-tight break-words">
 				{incident.Summary || 'Service Disruption'}
 			</h1>
+
+			{#if incident.ResponseSnippet}
+				<div class="pt-2 space-y-1.5">
+					<div
+						class="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+					>
+						<Terminal class="size-3.5 text-rose-400 shrink-0" />
+						<span>Error Response Snippet (HTTP Payload)</span>
+					</div>
+					<pre
+						class="p-3 rounded-md bg-background border border-border font-mono text-xs text-rose-300 overflow-x-auto whitespace-pre-wrap break-all">{incident.ResponseSnippet}</pre>
+				</div>
+			{/if}
 		</div>
 
 		<!-- Action Button -->

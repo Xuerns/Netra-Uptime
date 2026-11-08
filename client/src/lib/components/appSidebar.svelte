@@ -32,7 +32,7 @@
 	const navResources = [
 		{
 			title: 'Documentation',
-			url: 'https://netra-uptime.com/docs',
+			url: 'https://netrauptime.dev/docs',
 			icon: BookOpen,
 			isExternal: true
 		}

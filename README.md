@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://netra-uptime.com" target="_blank">
+  <a href="https://netrauptime.dev" target="_blank">
     <img src="assets/Logo.png" alt="Netra Uptime Logo" width="84" />
   </a>
   <h1 style="border:none; margin-top: 10px; margin-bottom: 6px;">Netra Uptime</h1>
@@ -14,7 +14,7 @@
   </p>
 
   <p>
-    <a href="https://netra-uptime.com/docs"><strong>Documentation</strong></a> •
+    <a href="https://netrauptime.dev/docs"><strong>Documentation</strong></a> •
     <a href="#quick-start"><strong>Quick Start</strong></a> •
     <a href="#key-features"><strong>Key Features</strong></a> •
     <a href="#contributing"><strong>Contributing</strong></a> •
@@ -27,7 +27,7 @@
 
 **Netra Uptime** is a high-performance, open-source uptime monitoring and status page platform designed for self-hosting. Built with a concurrent Go backend worker pool and a reactive SvelteKit interface, Netra Uptime provides low-latency telemetry, automated incident lifecycle tracking, and customizable alert rules.
 
-![Netra Uptime Dashboard Overview](assets/dashboard-overview.png)
+![Netra Uptime Dashboard Overview](assets/dashboard-overview.jpg)
 
 ## Quick Start
 
@@ -90,7 +90,7 @@ Netra Uptime can run on Windows as a native background desktop service with zero
 - **Public & Private Status Pages**: Branded status pages with uptime history bars, maintenance schedules, component grouping, and embeddable SVG badges.
 - **Automated Incident Management**: Auto-generation of incident records on downtime, collaborative incident triage updates, and automatic resolution when monitors recover.
 - **Multi-Tenancy & Team Roles**: Tenant isolation per organization with role-based access control (`owner`, `admin`, `member`) and email invitations.
-- **System Health Checks**: Built-in `/healthz` and `/api/v1/health` endpoints verifying PostgreSQL and Redis connectivity for Docker and Kubernetes probes.
+- **System Health Checks**: Built-in `/healthz` and `/api/v1/health` endpoints verifying database connectivity for Docker and Kubernetes probes.
 - **Public REST API & API Keys**: Secure external automation via rate-limited API keys.
 
 ## Contributing

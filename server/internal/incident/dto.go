@@ -14,15 +14,17 @@ type GetIncidentUpdateResponse struct {
 }
 
 type IncidentResponse struct {
-	ID         string             `json:"id"`
-	MonitorID  string             `json:"monitor_id"`
-	Status     string             `json:"status"`
-	Severity   string             `json:"severity"`
-	Summary    string             `json:"summary"`
-	StartedAt  string             `json:"started_at"`
-	ResolvedAt *string            `json:"resolved_at"`
-	Monitor    *IncidentMonitor   `json:"monitor,omitempty"`
-	Assignees  []IncidentAssignee `json:"assignees,omitempty"`
+	ID              string             `json:"id"`
+	MonitorID       string             `json:"monitor_id"`
+	Status          string             `json:"status"`
+	Severity        string             `json:"severity"`
+	Summary         string             `json:"summary"`
+	TriggeredRule   string             `json:"triggered_rule,omitempty"`
+	ResponseSnippet string             `json:"response_snippet,omitempty"`
+	StartedAt       string             `json:"started_at"`
+	ResolvedAt      *string            `json:"resolved_at"`
+	Monitor         *IncidentMonitor   `json:"monitor,omitempty"`
+	Assignees       []IncidentAssignee `json:"assignees,omitempty"`
 }
 
 type IncidentMonitor struct {

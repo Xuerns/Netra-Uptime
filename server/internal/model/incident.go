@@ -8,15 +8,16 @@ import (
 )
 
 type Incident struct {
-	ID            uuid.UUID `gorm:"primaryKey;type:uuid"`
-	MonitorID     uuid.UUID `gorm:"type:uuid;not null"`
-	Status        string    `gorm:"not null"`                  // ongoing | resolved
-	Severity      string    `gorm:"not null;default:'medium'"` // critical | high | medium | low
-	StartedAt     time.Time
-	ResolvedAt    *time.Time
-	Summary       string
-	TriggeredRule string     `gorm:"default:''"`
-	AlertRuleID   *uuid.UUID `gorm:"type:uuid;default:null"`
+	ID              uuid.UUID `gorm:"primaryKey;type:uuid"`
+	MonitorID       uuid.UUID `gorm:"type:uuid;not null"`
+	Status          string    `gorm:"not null"`                  // ongoing | resolved
+	Severity        string    `gorm:"not null;default:'medium'"` // critical | high | medium | low
+	StartedAt       time.Time
+	ResolvedAt      *time.Time
+	Summary         string
+	TriggeredRule   string     `gorm:"default:''"`
+	ResponseSnippet string     `gorm:"type:text;default:''" json:"response_snippet,omitempty"`
+	AlertRuleID     *uuid.UUID `gorm:"type:uuid;default:null"`
 
 	Monitor          Monitor            `gorm:"foreignKey:MonitorID"`
 	IncidentUpdates  []IncidentUpdate   `gorm:"foreignKey:IncidentID;constraint:OnDelete:CASCADE;"`

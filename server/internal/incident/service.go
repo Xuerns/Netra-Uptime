@@ -31,12 +31,14 @@ func mapIncidentToResponse(inc model.Incident) IncidentResponse {
 	}
 
 	resp := IncidentResponse{
-		ID:        inc.ID.String(),
-		MonitorID: inc.MonitorID.String(),
-		Status:    inc.Status,
-		Severity:  sev,
-		Summary:   inc.Summary,
-		StartedAt: inc.StartedAt.Format(time.RFC3339),
+		ID:              inc.ID.String(),
+		MonitorID:       inc.MonitorID.String(),
+		Status:          inc.Status,
+		Severity:        sev,
+		Summary:         inc.Summary,
+		TriggeredRule:   inc.TriggeredRule,
+		ResponseSnippet: inc.ResponseSnippet,
+		StartedAt:       inc.StartedAt.Format(time.RFC3339),
 	}
 
 	if inc.ResolvedAt != nil {

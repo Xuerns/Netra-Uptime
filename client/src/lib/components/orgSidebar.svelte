@@ -290,7 +290,7 @@
 						>
 							{#snippet child({ props })}
 								<a
-									href="https://netra-uptime.com/docs"
+									href="https://netrauptime.dev/docs"
 									target="_blank"
 									rel="noopener noreferrer"
 									{...props}

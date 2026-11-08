@@ -29,7 +29,7 @@ You can set up and run your development environment using either of the followin
 
 ### Option A: Docker Compose (All-in-One)
 
-Build and spin up the complete application stack (app container, PostgreSQL, and Redis) simultaneously:
+Build and spin up the complete application stack (app container and PostgreSQL) simultaneously:
 
 ```bash
 docker compose up --build
@@ -41,11 +41,11 @@ The web interface will be accessible at: `http://localhost:27346`.
 
 ### Option B: Local Development Setup
 
-Run the required infrastructure services (PostgreSQL & Redis) inside Docker, and run the backend and frontend servers locally on your host machine for faster live-reloading:
+Run the required infrastructure service (PostgreSQL) inside Docker, and run the backend and frontend servers locally on your host machine for faster live-reloading:
 
 ```bash
-# 1. Start development database and cache containers in background
-docker compose up -d postgres redis
+# 1. Start development PostgreSQL container in background
+docker compose up -d postgres
 
 # 2. Run the Go backend server (terminal 1)
 cd server
@@ -73,6 +73,7 @@ From the `server/` directory:
 ```bash
 go fmt ./...
 go vet ./...
+gosec ./...
 go test ./...
 go build ./...
 ```

@@ -21,6 +21,7 @@
 	import { toast } from 'svelte-sonner';
 	import { getAvatarColor } from '$lib/utils/string';
 	import { logger } from '$lib/utils/logger';
+	import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-svelte';
 
 	interface Props {
 		isOpen?: boolean;
@@ -83,11 +84,44 @@
 	let alertTemplates = $state<AlertTemplate[]>([]);
 	let selectedTemplateId = $state<string>('');
 	let expectedStatusCodeStr = $state<string>('200');
+	let httpMethod = $state<'GET' | 'POST' | 'PUT' | 'PATCH' | 'HEAD'>('GET');
+	let headerPairs = $state<{ key: string; value: string }[]>([]);
+	let httpBody = $state<string>('');
+	let showAdvancedHttp = $state<boolean>(false);
 	let isActive = $state<boolean>(true);
 	let criticality = $state<'extreme' | 'high' | 'medium' | 'low'>('medium');
 	let enableSSLDomainCheck = $state<boolean>(true);
 	let loading = $state(false);
 	let error = $state('');
+
+	const HTTP_METHODS: Array<'GET' | 'POST' | 'PUT' | 'PATCH' | 'HEAD'> = [
+		'GET',
+		'POST',
+		'PUT',
+		'PATCH',
+		'HEAD'
+	];
+
+	function addHeaderPair() {
+		if (headerPairs.length < 25) {
+			headerPairs = [...headerPairs, { key: '', value: '' }];
+		}
+	}
+
+	function removeHeaderPair(index: number) {
+		headerPairs = headerPairs.filter((_, idx) => idx !== index);
+	}
+
+	function serializeHeaders(): string {
+		const map: Record<string, string> = {};
+		for (const pair of headerPairs) {
+			const k = pair.key.trim();
+			if (k) {
+				map[k] = pair.value.trim();
+			}
+		}
+		return Object.keys(map).length > 0 ? JSON.stringify(map) : '';
+	}
 
 	let fieldErrors = $state({ name: '', target: '', intervalSeconds: '', timeoutSeconds: '' });
 	let shake = $state({ name: false, target: false, intervalSeconds: false, timeoutSeconds: false });
@@ -217,6 +251,25 @@
 			expectedStatusCodeStr = monitor.ExpectedStatusCode
 				? monitor.ExpectedStatusCode.toString()
 				: '200';
+			httpMethod =
+				(monitor.HTTPMethod?.toUpperCase() as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'HEAD') || 'GET';
+			httpBody = monitor.HTTPBody || '';
+			let parsedPairs: { key: string; value: string }[] = [];
+			if (monitor.HTTPHeaders) {
+				try {
+					const parsed = JSON.parse(monitor.HTTPHeaders);
+					if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+						parsedPairs = Object.entries(parsed).map(([k, v]) => ({
+							key: String(k),
+							value: String(v ?? '')
+						}));
+					}
+				} catch {
+					parsedPairs = [];
+				}
+			}
+			headerPairs = parsedPairs;
+			showAdvancedHttp = parsedPairs.length > 0 || httpBody.trim() !== '' || httpMethod !== 'GET';
 			isActive = monitor.IsActive !== undefined ? monitor.IsActive : true;
 			criticality = (monitor.Criticality as any) || 'medium';
 			enableSSLDomainCheck =
@@ -249,6 +302,10 @@
 			timeoutSeconds = 10;
 			timeoutSecondsStr = '10';
 			expectedStatusCodeStr = '200';
+			httpMethod = 'GET';
+			headerPairs = [];
+			httpBody = '';
+			showAdvancedHttp = false;
 			isActive = true;
 			criticality = 'medium';
 			enableSSLDomainCheck = true;
@@ -302,6 +359,10 @@
 		error = '';
 
 		try {
+			const serializedHeaders = effectiveType === 'http' ? serializeHeaders() : undefined;
+			const supportsBody = httpMethod === 'POST' || httpMethod === 'PUT' || httpMethod === 'PATCH';
+			const effectiveBody = effectiveType === 'http' ? (supportsBody ? httpBody : '') : undefined;
+
 			if (isEdit && monitor) {
 				await MonitorAPI.update(orgId, monitor.ID, {
 					name,
@@ -310,6 +371,9 @@
 					timeout_seconds: timeoutSeconds,
 					expectation_status_code:
 						effectiveType === 'http' ? parseInt(expectedStatusCodeStr) : undefined,
+					http_method: effectiveType === 'http' ? httpMethod : undefined,
+					http_headers: serializedHeaders,
+					http_body: effectiveBody,
 					is_active: isActive,
 					criticality,
 					assignees: selectedAssignees,
@@ -328,6 +392,9 @@
 					timeout_seconds: timeoutSeconds,
 					expectation_status_code:
 						effectiveType === 'http' ? parseInt(expectedStatusCodeStr) : undefined,
+					http_method: effectiveType === 'http' ? httpMethod : undefined,
+					http_headers: serializedHeaders,
+					http_body: effectiveBody,
 					criticality,
 					assignees: selectedAssignees,
 					MonitorPICs: selectedAssignees,
@@ -454,47 +521,172 @@
 						/>
 					</div>
 
-					<!-- Expected Status Code (HTTP only) -->
+					<!-- HTTP Method, Expected Status Code & Advanced HTTP Options (HTTP only) -->
 					{#if effectiveType === 'http'}
-						<div class="space-y-2">
-							<Label class="text-sm font-medium text-foreground">Expected Status Code</Label>
-							<Select.Root type="single" bind:value={expectedStatusCodeStr}>
-								<Select.Trigger
-									class="bg-background border-border text-foreground focus:ring-1 focus:ring-primary focus:border-primary rounded-lg h-10 w-full"
+						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+							<div class="space-y-2">
+								<Label class="text-sm font-medium text-foreground">HTTP Method</Label>
+								<Select.Root
+									type="single"
+									bind:value={httpMethod}
+									onValueChange={(val) => {
+										if (val && ['POST', 'PUT', 'PATCH'].includes(val)) {
+											showAdvancedHttp = true;
+										}
+									}}
 								>
-									{expectedStatusCodeStr === '200'
-										? '200 (OK)'
-										: expectedStatusCodeStr === '201'
-											? '201 (Created)'
-											: expectedStatusCodeStr === '301'
-												? '301 (Moved Permanently)'
-												: expectedStatusCodeStr === '404'
-													? '404 (Not Found)'
-													: expectedStatusCodeStr}
-								</Select.Trigger>
-								<Select.Content class="bg-card border-border text-foreground">
-									<Select.Item
-										value="200"
-										class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer"
-										>200 (OK)</Select.Item
+									<Select.Trigger
+										class="bg-background border-border text-foreground focus:ring-1 focus:ring-primary focus:border-primary rounded-lg h-10 w-full font-mono"
 									>
-									<Select.Item
-										value="201"
-										class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer"
-										>201 (Created)</Select.Item
+										{httpMethod}
+									</Select.Trigger>
+									<Select.Content class="bg-card border-border text-foreground">
+										{#each HTTP_METHODS as methodOpt (methodOpt)}
+											<Select.Item
+												value={methodOpt}
+												class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer font-mono"
+											>
+												{methodOpt}
+											</Select.Item>
+										{/each}
+									</Select.Content>
+								</Select.Root>
+							</div>
+
+							<div class="space-y-2">
+								<Label class="text-sm font-medium text-foreground">Expected Status Code</Label>
+								<Select.Root type="single" bind:value={expectedStatusCodeStr}>
+									<Select.Trigger
+										class="bg-background border-border text-foreground focus:ring-1 focus:ring-primary focus:border-primary rounded-lg h-10 w-full"
 									>
-									<Select.Item
-										value="301"
-										class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer"
-										>301 (Moved Permanently)</Select.Item
-									>
-									<Select.Item
-										value="404"
-										class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer"
-										>404 (Not Found)</Select.Item
-									>
-								</Select.Content>
-							</Select.Root>
+										{expectedStatusCodeStr === '200'
+											? '200 (OK)'
+											: expectedStatusCodeStr === '201'
+												? '201 (Created)'
+												: expectedStatusCodeStr === '301'
+													? '301 (Moved Permanently)'
+													: expectedStatusCodeStr === '404'
+														? '404 (Not Found)'
+														: expectedStatusCodeStr}
+									</Select.Trigger>
+									<Select.Content class="bg-card border-border text-foreground">
+										<Select.Item
+											value="200"
+											class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer"
+											>200 (OK)</Select.Item
+										>
+										<Select.Item
+											value="201"
+											class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer"
+											>201 (Created)</Select.Item
+										>
+										<Select.Item
+											value="301"
+											class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer"
+											>301 (Moved Permanently)</Select.Item
+										>
+										<Select.Item
+											value="404"
+											class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer"
+											>404 (Not Found)</Select.Item
+										>
+									</Select.Content>
+								</Select.Root>
+							</div>
+						</div>
+
+						<!-- Advanced HTTP Request (Custom Headers & Body) -->
+						<div class="rounded-lg border border-border bg-background/60 p-3 space-y-3">
+							<button
+								type="button"
+								onclick={() => (showAdvancedHttp = !showAdvancedHttp)}
+								class="w-full flex items-center justify-between text-left text-xs font-semibold text-foreground hover:text-primary transition-colors cursor-pointer"
+							>
+								<span class="flex items-center gap-1.5">
+									{#if showAdvancedHttp}
+										<ChevronDown class="size-3.5 text-primary" />
+									{:else}
+										<ChevronRight class="size-3.5 text-muted-foreground" />
+									{/if}
+									<span>Advanced HTTP Request (Headers & Body)</span>
+								</span>
+								<span class="text-[11px] font-mono text-muted-foreground">
+									{headerPairs.filter((p) => p.key.trim() !== '').length} header(s)
+								</span>
+							</button>
+
+							{#if showAdvancedHttp}
+								<div class="pt-2 border-t border-border/60 space-y-4">
+									<!-- Custom HTTP Headers -->
+									<div class="space-y-2">
+										<div class="flex items-center justify-between">
+											<Label class="text-xs font-medium text-foreground">Custom HTTP Headers</Label>
+											<button
+												type="button"
+												onclick={addHeaderPair}
+												disabled={headerPairs.length >= 25}
+												class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline disabled:opacity-40 cursor-pointer"
+											>
+												<Plus class="size-3.5" />
+												<span>Add Header</span>
+											</button>
+										</div>
+
+										{#if headerPairs.length === 0}
+											<p class="text-[11px] text-muted-foreground">
+												No custom headers configured. Click "Add Header" to include Authorization or
+												custom API headers.
+											</p>
+										{:else}
+											<div class="space-y-2">
+												{#each headerPairs as pair, idx (idx)}
+													<div class="flex items-center gap-2">
+														<Input
+															placeholder="Header-Name (e.g. Authorization)"
+															bind:value={pair.key}
+															class="bg-background border-border text-foreground placeholder:text-muted-foreground rounded-md h-8 text-xs font-mono flex-1"
+														/>
+														<Input
+															placeholder="Value (e.g. Bearer token)"
+															bind:value={pair.value}
+															class="bg-background border-border text-foreground placeholder:text-muted-foreground rounded-md h-8 text-xs font-mono flex-1"
+														/>
+														<button
+															type="button"
+															onclick={() => removeHeaderPair(idx)}
+															aria-label="Remove header"
+															class="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer shrink-0"
+														>
+															<Trash2 class="size-3.5" />
+														</button>
+													</div>
+												{/each}
+											</div>
+										{/if}
+									</div>
+
+									<!-- Request Body (for POST, PUT, PATCH) -->
+									{#if httpMethod === 'POST' || httpMethod === 'PUT' || httpMethod === 'PATCH'}
+										<div class="space-y-1.5">
+											<div class="flex items-center justify-between">
+												<Label for="monitor-http-body" class="text-xs font-medium text-foreground">
+													Request Body ({httpMethod})
+												</Label>
+												<span class="text-[10px] font-mono text-muted-foreground"
+													>JSON / Raw Payload</span
+												>
+											</div>
+											<textarea
+												id="monitor-http-body"
+												rows={4}
+												placeholder={'{"ping": "pong"}'}
+												bind:value={httpBody}
+												class="w-full rounded-md bg-background border border-border p-2.5 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary resize-y"
+											></textarea>
+										</div>
+									{/if}
+								</div>
+							{/if}
 						</div>
 					{/if}
 

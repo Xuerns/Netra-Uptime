@@ -31,7 +31,6 @@ func isPrivateNetworkAllowed() bool {
 var blockedHostnames = map[string]bool{
 	"localhost":                true,
 	"postgres":                 true,
-	"redis":                    true,
 	"metadata.google.internal": true,
 	"metadata":                 true,
 }

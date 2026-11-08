@@ -57,8 +57,8 @@ Netra Uptime web dashboard will be available at: **http://localhost:27346**
 | `netra-uptime init` | Generate `.env` and `docker-compose.yml` with secure random credentials. |
 | `netra-uptime start` | Initialize (if not already done) and start containers (`docker compose up -d`). |
 | `netra-uptime stop` | Stop and remove running containers (`docker compose down`). |
-| `netra-uptime status` | Show status and health checks of Netra Uptime, Postgres, and Redis (`docker compose ps`). |
-| `netra-uptime credentials` | Display database and Redis connection credentials from `.env` (alias: `creds`). |
+| `netra-uptime status` | Show status and health checks of Netra Uptime and Postgres (`docker compose ps`). |
+| `netra-uptime credentials` | Display database connection credentials from `.env` (alias: `creds`). |
 | `netra-uptime logs` | Stream live container logs (`docker compose logs -f`). |
 | `netra-uptime update` | Pull the latest Docker images and restart containers. |
 | `netra-uptime help` | Display available commands and options. |

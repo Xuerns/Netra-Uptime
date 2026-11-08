@@ -70,18 +70,18 @@ func (r *RetentionJob) CleanOldChecks() {
 			monitor_id,
 			DATE(checked_at) AS date,
 			COUNT(*) AS total_checks,
-			COUNT(CASE WHEN status = 'up' THEN 1 END) AS up_checks,
-			COUNT(CASE WHEN status = 'down' THEN 1 END) AS down_checks,
-			ROUND(AVG(response_time_ms)) AS avg_latency_ms,
-			COALESCE(MIN(CASE WHEN response_time_ms > 0 THEN response_time_ms END), 0) AS min_latency_ms,
-			MAX(response_time_ms) AS max_latency_ms,
+			COUNT(CASE WHEN status = 'up' OR (status = 'degraded' AND ((status_code > 0 AND status_code < 500) OR (status_code = 0 AND response_time_ms > 0 AND error_message LIKE 'Response time%'))) THEN 1 END) AS up_checks,
+			COUNT(CASE WHEN status = 'down' OR (status = 'degraded' AND NOT ((status_code > 0 AND status_code < 500) OR (status_code = 0 AND response_time_ms > 0 AND error_message LIKE 'Response time%'))) THEN 1 END) AS down_checks,
+			COALESCE(ROUND(AVG(CASE WHEN response_time_ms > 0 AND status != 'down' AND status != 'maintenance' AND (status = 'up' OR (status_code > 0 AND status_code < 500) OR (status_code = 0 AND error_message LIKE 'Response time%')) THEN response_time_ms END)), 0) AS avg_latency_ms,
+			COALESCE(MIN(CASE WHEN response_time_ms > 0 AND status != 'down' AND status != 'maintenance' AND (status = 'up' OR (status_code > 0 AND status_code < 500) OR (status_code = 0 AND error_message LIKE 'Response time%')) THEN response_time_ms END), 0) AS min_latency_ms,
+			COALESCE(MAX(CASE WHEN response_time_ms > 0 AND status != 'down' AND status != 'maintenance' AND (status = 'up' OR (status_code > 0 AND status_code < 500) OR (status_code = 0 AND error_message LIKE 'Response time%')) THEN response_time_ms END), 0) AS max_latency_ms,
 			COUNT(CASE WHEN status_code >= 200 AND status_code < 300 THEN 1 END) AS count_2xx,
 			COUNT(CASE WHEN status_code >= 300 AND status_code < 400 THEN 1 END) AS count_3xx,
 			COUNT(CASE WHEN status_code >= 400 AND status_code < 500 THEN 1 END) AS count_4xx,
 			COUNT(CASE WHEN status_code >= 500 AND status_code < 600 THEN 1 END) AS count_5xx,
 			COUNT(CASE WHEN status_code = 0 OR status_code IS NULL THEN 1 END) AS count_error
 		FROM checks
-		WHERE checked_at < ?
+		WHERE checked_at < ? AND status != 'maintenance'
 		GROUP BY monitor_id, DATE(checked_at)
 	`
 
@@ -92,11 +92,9 @@ func (r *RetentionJob) CleanOldChecks() {
 			return err
 		}
 
-		if len(results) == 0 {
-			return nil
+		if len(results) > 0 {
+			log.Printf("[Retention] Aggregating %d daily stat bucket(s)...", len(results))
 		}
-
-		log.Printf("[Retention] Aggregating %d daily stat bucket(s)...", len(results))
 
 		for _, agg := range results {
 			monitorUUID, err := uuid.Parse(agg.MonitorID)
@@ -141,7 +139,7 @@ func (r *RetentionJob) CleanOldChecks() {
 					"up_checks":         gorm.Expr("monitor_daily_stats.up_checks + EXCLUDED.up_checks"),
 					"down_checks":       gorm.Expr("monitor_daily_stats.down_checks + EXCLUDED.down_checks"),
 					"uptime_percentage": gorm.Expr("CASE WHEN (monitor_daily_stats.total_checks + EXCLUDED.total_checks) > 0 THEN ROUND(((monitor_daily_stats.up_checks + EXCLUDED.up_checks) * 100.0) / (monitor_daily_stats.total_checks + EXCLUDED.total_checks), 2) ELSE 100.00 END"),
-					"avg_latency_ms":    gorm.Expr("CASE WHEN (monitor_daily_stats.total_checks + EXCLUDED.total_checks) > 0 THEN ROUND((((monitor_daily_stats.avg_latency_ms * monitor_daily_stats.total_checks) + (EXCLUDED.avg_latency_ms * EXCLUDED.total_checks)) * 100.0) / ((monitor_daily_stats.total_checks + EXCLUDED.total_checks) * 100.0)) ELSE 0 END"),
+					"avg_latency_ms":    gorm.Expr("CASE WHEN (monitor_daily_stats.up_checks + EXCLUDED.up_checks) > 0 THEN ROUND((((monitor_daily_stats.avg_latency_ms * monitor_daily_stats.up_checks) + (EXCLUDED.avg_latency_ms * EXCLUDED.up_checks)) * 100.0) / ((monitor_daily_stats.up_checks + EXCLUDED.up_checks) * 100.0)) ELSE 0 END"),
 					"min_latency_ms":    gorm.Expr("CASE WHEN monitor_daily_stats.min_latency_ms <= 0 THEN EXCLUDED.min_latency_ms WHEN EXCLUDED.min_latency_ms <= 0 THEN monitor_daily_stats.min_latency_ms ELSE CASE WHEN monitor_daily_stats.min_latency_ms < EXCLUDED.min_latency_ms THEN monitor_daily_stats.min_latency_ms ELSE EXCLUDED.min_latency_ms END END"),
 					"max_latency_ms":    gorm.Expr("CASE WHEN monitor_daily_stats.max_latency_ms > EXCLUDED.max_latency_ms THEN monitor_daily_stats.max_latency_ms ELSE EXCLUDED.max_latency_ms END"),
 					"count2xx":          gorm.Expr("monitor_daily_stats.count2xx + EXCLUDED.count2xx"),

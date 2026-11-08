@@ -8,13 +8,14 @@ import (
 )
 
 type Check struct {
-	ID             uuid.UUID `gorm:"primaryKey;type:uuid"`
-	MonitorID      uuid.UUID `gorm:"type:uuid;not null"`
-	Status         string    `gorm:"not null"` // up | down
-	StatusCode     int
-	ResponseTimeMs int
-	ErrorMessage   string
-	CheckedAt      time.Time `gorm:"autoCreateTime"`
+	ID              uuid.UUID `gorm:"primaryKey;type:uuid"`
+	MonitorID       uuid.UUID `gorm:"type:uuid;not null"`
+	Status          string    `gorm:"not null"` // up | down | degraded | maintenance
+	StatusCode      int
+	ResponseTimeMs  int
+	ErrorMessage    string
+	ResponseSnippet string    `gorm:"type:text;default:''" json:"response_snippet,omitempty"`
+	CheckedAt       time.Time `gorm:"autoCreateTime"`
 
 	Monitor Monitor `gorm:"foreignKey:MonitorID"`
 }

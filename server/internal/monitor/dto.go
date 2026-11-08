@@ -7,6 +7,9 @@ type CreateMonitorRequest struct {
 	IntervalSeconds      int      `json:"interval_seconds" binding:"required,min=10"`
 	TimeoutSeconds       int      `json:"timeout_seconds" binding:"required,min=1,max=30"`
 	ExpectedStatusCode   int      `json:"expectation_status_code" binding:"omitempty"`
+	HTTPMethod           string   `json:"http_method" binding:"omitempty,oneof=GET POST PUT PATCH HEAD"`
+	HTTPHeaders          string   `json:"http_headers" binding:"omitempty,max=4096"`
+	HTTPBody             string   `json:"http_body" binding:"omitempty,max=16384"`
 	Criticality          string   `json:"criticality" binding:"required,oneof=extreme high medium low"`
 	MonitorPICs          []string `json:"MonitorPICs" binding:"omitempty,max=50,dive,uuid"`
 	Assignees            []string `json:"assignees" binding:"omitempty,max=50,dive,uuid"`
@@ -20,6 +23,9 @@ type UpdatedMonitorRequest struct {
 	IntervalSeconds      *int      `json:"interval_seconds" binding:"omitempty,min=10"`
 	TimeoutSeconds       *int      `json:"timeout_seconds" binding:"omitempty,min=1,max=30"`
 	ExpectedStatusCode   *int      `json:"expectation_status_code" binding:"omitempty"`
+	HTTPMethod           *string   `json:"http_method" binding:"omitempty,oneof=GET POST PUT PATCH HEAD"`
+	HTTPHeaders          *string   `json:"http_headers" binding:"omitempty,max=4096"`
+	HTTPBody             *string   `json:"http_body" binding:"omitempty,max=16384"`
 	IsActive             *bool     `json:"is_active"`
 	Criticality          *string   `json:"criticality" binding:"omitempty,oneof=extreme high medium low"`
 	MonitorPICs          *[]string `json:"MonitorPICs" binding:"omitempty,max=50,dive,uuid"`
@@ -37,6 +43,9 @@ type MonitorResponse struct {
 	IntervalSeconds      int                   `json:"interval_seconds"`
 	TimeoutSeconds       int                   `json:"timeout_seconds"`
 	ExpectedStatusCode   int                   `json:"expectation_status_code"` // Kept to match binding
+	HTTPMethod           string                `json:"http_method,omitempty"`
+	HTTPHeaders          string                `json:"http_headers,omitempty"`
+	HTTPBody             string                `json:"http_body,omitempty"`
 	Criticality          string                `json:"criticality"`
 	IsActive             bool                  `json:"is_active"`
 	EnableSSLDomainCheck bool                  `json:"enable_ssl_domain_check"`
@@ -72,13 +81,14 @@ type MonitorPICInfo struct {
 type MonitorAssigneeInfo = MonitorPICInfo
 
 type RecentCheck struct {
-	ID             string  `json:"id"`
-	MonitorID      string  `json:"monitor_id"`
-	Status         string  `json:"status"`
-	StatusCode     int     `json:"status_code"`
-	ResponseTimeMs int     `json:"response_time_ms"`
-	ErrorMessage   *string `json:"error_message,omitempty"`
-	CheckedAt      string  `json:"checked_at"`
+	ID              string  `json:"id"`
+	MonitorID       string  `json:"monitor_id"`
+	Status          string  `json:"status"`
+	StatusCode      int     `json:"status_code"`
+	ResponseTimeMs  int     `json:"response_time_ms"`
+	ErrorMessage    *string `json:"error_message,omitempty"`
+	ResponseSnippet *string `json:"response_snippet,omitempty"`
+	CheckedAt       string  `json:"checked_at"`
 }
 
 type FleetOverviewResponse struct {

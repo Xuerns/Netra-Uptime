@@ -227,3 +227,164 @@ func TestDualModeSQLite_QueriesAndRetention(t *testing.T) {
 		t.Errorf("Expected merged MaxLatencyMs=150 after upsert, got %d", updatedStat.MaxLatencyMs)
 	}
 }
+
+func TestMetricAndSLAAccuracy_NoBiasFromTimeoutsOrDownChecks(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "netra_sla_accuracy.db")
+	cfg := &config.Config{
+		DBDriver:          "sqlite",
+		DBPath:            dbPath,
+		RecentChecksLimit: 60,
+	}
+
+	db, err := database.NewDatabase(cfg)
+	if err != nil {
+		t.Fatalf("NewDatabase failed: %v", err)
+	}
+	t.Cleanup(func() {
+		if sqlDB, err := db.DB(); err == nil {
+			_ = sqlDB.Close()
+		}
+	})
+
+	err = db.AutoMigrate(
+		&model.Organization{},
+		&model.Monitor{},
+		&model.Check{},
+		&model.MonitorDailyStat{},
+		&model.MonitorPIC{},
+		&model.MaintenanceMonitor{},
+	)
+	if err != nil {
+		t.Fatalf("AutoMigrate failed: %v", err)
+	}
+
+	org := &model.Organization{Name: "SLA Org", Slug: "sla-org"}
+	db.Create(org)
+
+	mon := &model.Monitor{
+		OrganizationID:     org.ID,
+		Name:               "Payment API",
+		Type:               "http",
+		Target:             "https://pay.example.com/health",
+		TargetDomain:       "pay.example.com",
+		IntervalSeconds:    60,
+		TimeoutSeconds:     10,
+		ExpectedStatusCode: 200,
+		IsActive:           true,
+		Status:             "up",
+		Criticality:        "extreme",
+	}
+	db.Create(mon)
+
+	now := time.Now().UTC()
+	checks := []model.Check{
+		// 1. Healthy check: 100ms
+		{
+			MonitorID:      mon.ID,
+			Status:         "up",
+			StatusCode:     200,
+			ResponseTimeMs: 100,
+			CheckedAt:      now.Add(-50 * time.Minute),
+		},
+		// 2. High-latency degraded check (200 OK, 500ms): Available (Up) + valid latency
+		{
+			MonitorID:      mon.ID,
+			Status:         "degraded",
+			StatusCode:     200,
+			ResponseTimeMs: 500,
+			ErrorMessage:   "Response time 500ms exceeded 300",
+			CheckedAt:      now.Add(-40 * time.Minute),
+		},
+		// 3. Timeout degraded check (status_code=0, 10000ms): Unavailable (Down) + excluded from latency
+		{
+			MonitorID:      mon.ID,
+			Status:         "degraded",
+			StatusCode:     0,
+			ResponseTimeMs: 10000,
+			ErrorMessage:   "Request timed out after 10s (Service did not respond in time)",
+			CheckedAt:      now.Add(-30 * time.Minute),
+		},
+		// 4. Connection refused down check (status_code=0, 1ms): Unavailable (Down) + excluded from latency
+		{
+			MonitorID:      mon.ID,
+			Status:         "down",
+			StatusCode:     0,
+			ResponseTimeMs: 1,
+			ErrorMessage:   "Connection refused: Host is offline or port is closed",
+			CheckedAt:      now.Add(-20 * time.Minute),
+		},
+		// 5. Maintenance check (status_code=503, 50ms): Excluded from SLA total/up/down and latency
+		{
+			MonitorID:      mon.ID,
+			Status:         "maintenance",
+			StatusCode:     503,
+			ResponseTimeMs: 50,
+			ErrorMessage:   "[Maintenance: Planned Window] Status code mismatch",
+			CheckedAt:      now.Add(-10 * time.Minute),
+		},
+	}
+	for i := range checks {
+		if err := db.Create(&checks[i]).Error; err != nil {
+			t.Fatalf("failed to seed check %d: %v", i, err)
+		}
+	}
+
+	monitorRepo := monitor.NewMonitorRepository(db, cfg)
+
+	// Verify GetDailyStats
+	stats, err := monitorRepo.GetDailyStats(mon.ID.String(), 7)
+	if err != nil {
+		t.Fatalf("GetDailyStats failed: %v", err)
+	}
+	if len(stats) != 1 {
+		t.Fatalf("expected 1 daily stat row, got %d", len(stats))
+	}
+	s := stats[0]
+	// Total active checks = 4 (maintenance excluded). Up = 2 (100ms up + 500ms degraded 200 OK). Down = 2 (timeout + down).
+	if s.TotalChecks != 4 {
+		t.Errorf("expected TotalChecks=4 (maintenance excluded), got %d", s.TotalChecks)
+	}
+	if s.UpChecks != 2 {
+		t.Errorf("expected UpChecks=2 (including degraded 200 OK), got %d", s.UpChecks)
+	}
+	if s.DownChecks != 2 {
+		t.Errorf("expected DownChecks=2 (including timeout), got %d", s.DownChecks)
+	}
+	if s.UptimePercentage != 50.0 {
+		t.Errorf("expected UptimePercentage=50.0, got %f", s.UptimePercentage)
+	}
+	// Latency must only include 100ms and 500ms -> Avg=300ms, Min=100ms, Max=500ms (NOT 10000ms timeout or 1ms down!)
+	if s.AvgLatencyMs != 300 {
+		t.Errorf("expected AvgLatencyMs=300 (excluding 10000ms timeout and 1ms down), got %d", s.AvgLatencyMs)
+	}
+	if s.MinLatencyMs != 100 {
+		t.Errorf("expected MinLatencyMs=100, got %d", s.MinLatencyMs)
+	}
+	if s.MaxLatencyMs != 500 {
+		t.Errorf("expected MaxLatencyMs=500 (excluding 10000ms timeout), got %d", s.MaxLatencyMs)
+	}
+
+	// Verify Get30DayUptimeMap
+	uptimeMap, err := monitorRepo.Get30DayUptimeMap([]string{mon.ID.String()})
+	if err != nil {
+		t.Fatalf("Get30DayUptimeMap failed: %v", err)
+	}
+	if uptimeMap[mon.ID.String()] != 50.0 {
+		t.Errorf("expected 30d uptime 50.0%%, got %f%%", uptimeMap[mon.ID.String()])
+	}
+
+	// Verify GetFleetOverview
+	overview, err := monitorRepo.GetFleetOverview(org.ID.String(), 30)
+	if err != nil {
+		t.Fatalf("GetFleetOverview failed: %v", err)
+	}
+	if overview.Uptime.CurrentPercent == nil || *overview.Uptime.CurrentPercent != 50.0 {
+		t.Errorf("expected fleet CurrentPercent=50.0, got %v", overview.Uptime.CurrentPercent)
+	}
+	if overview.Latency.AvgMs == nil || *overview.Latency.AvgMs != 300 {
+		t.Errorf("expected fleet Latency.AvgMs=300, got %v", overview.Latency.AvgMs)
+	}
+	if overview.Latency.FastestMs == nil || *overview.Latency.FastestMs != 100 {
+		t.Errorf("expected fleet Latency.FastestMs=100, got %v", overview.Latency.FastestMs)
+	}
+}

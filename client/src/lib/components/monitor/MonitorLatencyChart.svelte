@@ -5,8 +5,10 @@
 	export interface DataPoint {
 		label: string;
 		value: number | null; // response time in ms (null if no checks on this date)
-		status?: 'up' | 'down' | 'degraded' | 'unresponsive' | 'no_data';
+		status?: 'up' | 'down' | 'degraded' | 'maintenance' | 'unresponsive' | 'no_data';
 		statusCode?: number;
+		responseSnippet?: string;
+		errorMessage?: string;
 		details?: {
 			count2xx?: number;
 			count3xx?: number;
@@ -41,32 +43,29 @@
 
 	function getPointColor(pt: DataPoint): string {
 		if (pt.status === 'no_data') return 'transparent';
+		if (pt.status === 'maintenance') return '#64748B';
+
+		// 1. Daily aggregate mode (> 24h) or points with uptime SLA details
+		if (pt.details && pt.details.uptimePercent !== undefined) {
+			const uptime = Number(pt.details.uptimePercent);
+			if (!Number.isNaN(uptime)) {
+				if (uptime >= 99) return '#10B981'; // Emerald >= 99% (Healthy)
+				if (uptime >= 95) return '#F59E0B'; // Amber 95% - 98.99% (Degraded)
+				return '#EF4444'; // Rose < 95% (Down / Unhealthy)
+			}
+		}
+
 		if (monitorType === 'http') {
-			// 1. Single check realtime mode (24h)
+			// 2. Single check realtime mode (24h)
 			if (pt.statusCode && pt.statusCode > 0) {
 				if (pt.statusCode >= 200 && pt.statusCode < 300) return '#10B981'; // Emerald 2xx
 				if (pt.statusCode >= 300 && pt.statusCode < 400) return '#3B82F6'; // Blue 3xx
 				if (pt.statusCode >= 400 && pt.statusCode < 500) return '#F59E0B'; // Amber 4xx
 				if (pt.statusCode >= 500 && pt.statusCode < 600) return '#EF4444'; // Rose 5xx
 			}
-			// 2. Daily aggregate mode (> 24h) with status breakdown
-			if (pt.details) {
-				if (
-					(pt.details.count5xx ?? 0) > 0 ||
-					(pt.details.countError ?? 0) > 0 ||
-					pt.status === 'down'
-				) {
-					return '#EF4444'; // Rose 5xx / Outage
-				}
-				if ((pt.details.count4xx ?? 0) > 0) {
-					return '#F59E0B'; // Amber 4xx / Client Errors
-				}
-				if ((pt.details.count3xx ?? 0) > 0) {
-					return '#3B82F6'; // Blue 3xx / Redirects
-				}
-				return '#10B981'; // Emerald 2xx / Healthy
-			}
 		}
+
+		// 3. Fallback / Single check realtime mode (24h) for TCP/Ping or without status code
 		if (pt.status === 'down') return '#EF4444';
 		if (pt.status === 'degraded' || pt.status === 'unresponsive') return '#F59E0B';
 		return '#10B981';
@@ -199,7 +198,8 @@
 											const val = Number(pt.details.uptimePercent);
 											if (!Number.isNaN(val)) {
 												const formatted = val === 100 ? '100%' : `${val.toFixed(2)}%`;
-												lines.push(`Uptime: ${formatted}`);
+												const statusLabel = val >= 99 ? 'Healthy' : val >= 95 ? 'Degraded' : 'Down';
+												lines.push(`Uptime: ${formatted} (${statusLabel})`);
 											}
 										}
 										const counts: string[] = [];
@@ -215,16 +215,35 @@
 										}
 										return lines.length > 0 ? (lines as any) : 'Status: OK';
 									}
+									if (pt.status === 'maintenance') {
+										const lines = ['Status: Scheduled Maintenance (SLA Exempt)'];
+										if (pt.responseSnippet) {
+											const snip =
+												pt.responseSnippet.length > 80
+													? `${pt.responseSnippet.slice(0, 80)}...`
+													: pt.responseSnippet;
+											lines.push(`Snippet: ${snip}`);
+										}
+										return lines as any;
+									}
+									const extraLines: string[] = [];
 									if (pt.statusCode && pt.statusCode > 0) {
-										return `HTTP Status: ${pt.statusCode}`;
+										extraLines.push(`HTTP Status: ${pt.statusCode}`);
+									} else if (pt.status === 'down') {
+										extraLines.push('Status: Down (Connection Error)');
+									} else if (pt.status === 'degraded' || pt.status === 'unresponsive') {
+										extraLines.push('Status: Unresponsive / Degraded');
+									} else {
+										extraLines.push('Status: OK');
 									}
-									if (pt.status === 'down') {
-										return `Status: Down (Connection Error)`;
+									if (pt.responseSnippet) {
+										const snip =
+											pt.responseSnippet.length > 80
+												? `${pt.responseSnippet.slice(0, 80)}...`
+												: pt.responseSnippet;
+										extraLines.push(`Response: ${snip}`);
 									}
-									if (pt.status === 'degraded' || pt.status === 'unresponsive') {
-										return `Status: Unresponsive / Degraded`;
-									}
-									return `Status: OK`;
+									return extraLines as any;
 								}
 							}
 						}
@@ -306,26 +325,39 @@
 			{title}
 		</h3>
 
-		<!-- Status Code Color Legend (Only for HTTP) or Status Legend (TCP / Ping) -->
-		{#if monitorType === 'http'}
+		<!-- Status Code Color Legend (Only for HTTP in 24h) or SLA Threshold Legend (Aggregated) or Status Legend (TCP / Ping) -->
+		{#if isAggregated}
 			<div
 				class="flex items-center gap-x-3 gap-y-1 flex-wrap text-[11px] font-mono text-muted-foreground"
 			>
 				<span class="flex items-center gap-1"
-					><span class="size-2 rounded-full bg-emerald-400"></span>
-					{isAggregated ? 'All 2xx' : '2xx'}</span
+					><span class="size-2 rounded-full bg-emerald-400"></span> &ge;99% Healthy</span
 				>
 				<span class="flex items-center gap-1"
-					><span class="size-2 rounded-full bg-blue-400"></span>
-					{isAggregated ? 'Has 3xx' : '3xx'}</span
+					><span class="size-2 rounded-full bg-amber-400"></span> 95%–98.99% Degraded</span
 				>
 				<span class="flex items-center gap-1"
-					><span class="size-2 rounded-full bg-amber-400"></span>
-					{isAggregated ? 'Has 4xx' : '4xx'}</span
+					><span class="size-2 rounded-full bg-rose-500"></span> &lt;95% Down</span
+				>
+				<span class="flex items-center gap-1.5"
+					><span class="w-3 border-t border-dashed border-slate-400"></span> No Data</span
+				>
+			</div>
+		{:else if monitorType === 'http'}
+			<div
+				class="flex items-center gap-x-3 gap-y-1 flex-wrap text-[11px] font-mono text-muted-foreground"
+			>
+				<span class="flex items-center gap-1"
+					><span class="size-2 rounded-full bg-emerald-400"></span> 2xx</span
 				>
 				<span class="flex items-center gap-1"
-					><span class="size-2 rounded-full bg-rose-500"></span>
-					{isAggregated ? '5xx / Outage' : '5xx/Err'}</span
+					><span class="size-2 rounded-full bg-blue-400"></span> 3xx</span
+				>
+				<span class="flex items-center gap-1"
+					><span class="size-2 rounded-full bg-amber-400"></span> 4xx</span
+				>
+				<span class="flex items-center gap-1"
+					><span class="size-2 rounded-full bg-rose-500"></span> 5xx/Err</span
 				>
 				<span class="flex items-center gap-1.5"
 					><span class="w-3 border-t border-dashed border-slate-400"></span> No Data</span

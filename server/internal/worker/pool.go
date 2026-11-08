@@ -33,7 +33,10 @@ type WorkerPool struct {
 	hub              *websocket.WsHandler
 	dispatcher       *notification.Dispatcher
 	notifySem        chan struct{}
+	notifyWg         sync.WaitGroup
 	inFlightMonitors sync.Map
+	retryDelay       time.Duration
+	disableRetry     bool
 }
 
 func NewWorkerPool(db *gorm.DB, cacheStore *cache.MemoryCache, numWorkers int, sender email.EmailSender, hub *websocket.WsHandler) *WorkerPool {
@@ -46,7 +49,18 @@ func NewWorkerPool(db *gorm.DB, cacheStore *cache.MemoryCache, numWorkers int, s
 		hub:         hub,
 		dispatcher:  notification.NewDispatcher(db, sender),
 		notifySem:   make(chan struct{}, 50), // max 50 concurrent notification goroutines
+		retryDelay:  2 * time.Second,
 	}
+}
+
+func (wp *WorkerPool) SetRetryDelay(d time.Duration) {
+	if d < 0 {
+		wp.disableRetry = true
+		wp.retryDelay = 0
+		return
+	}
+	wp.disableRetry = false
+	wp.retryDelay = d
 }
 
 func (wp *WorkerPool) GetDB() *gorm.DB {
@@ -54,11 +68,17 @@ func (wp *WorkerPool) GetDB() *gorm.DB {
 }
 
 func (wp *WorkerPool) safeGoNotify(fn func()) {
+	wp.notifyWg.Add(1)
 	go func() {
+		defer wp.notifyWg.Done()
 		wp.notifySem <- struct{}{}
 		defer func() { <-wp.notifySem }()
 		fn()
 	}()
+}
+
+func (wp *WorkerPool) WaitNotifications() {
+	wp.notifyWg.Wait()
 }
 
 func (wp *WorkerPool) Start() {
@@ -147,6 +167,84 @@ func (wp *WorkerPool) ProcessImmediate(monitorID uuid.UUID) (*model.Check, error
 	return check, nil
 }
 
+func shouldRetryCheck(monitor *model.Monitor, statusCode int, checkErr error) bool {
+	if checkErr != nil {
+		msg := strings.ToLower(checkErr.Error())
+		if strings.Contains(msg, "ssrf protection") ||
+			strings.Contains(msg, "prohibited") ||
+			strings.Contains(msg, "invalid target") ||
+			strings.Contains(msg, "missing hostname") ||
+			strings.Contains(msg, "cannot be empty") {
+			return false
+		}
+		return true
+	}
+
+	if monitor.Type == "http" {
+		if statusCode >= 500 || (monitor.ExpectedStatusCode > 0 && statusCode != monitor.ExpectedStatusCode) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (wp *WorkerPool) executeSingleCheck(monitor *model.Monitor, timeout time.Duration) (statusCode int, responseTime time.Duration, responseSnippet string, checkErr error) {
+	switch monitor.Type {
+	case "http":
+		statusCode, responseTime, responseSnippet, checkErr = checker.CheckHTTPWithOptions(monitor.Target, timeout, checker.HTTPCheckOptions{
+			Method:         monitor.HTTPMethod,
+			HeadersJSON:    monitor.HTTPHeaders,
+			Body:           monitor.HTTPBody,
+			ExpectedStatus: monitor.ExpectedStatusCode,
+		})
+	case "tcp":
+		responseTime, checkErr = checker.CheckTCP(monitor.Target, timeout)
+	case "ping":
+		responseTime, checkErr = checker.CheckPing(monitor.Target, timeout)
+	}
+	return statusCode, responseTime, responseSnippet, checkErr
+}
+
+func (wp *WorkerPool) syncAndCheckMaintenance(monitorID uuid.UUID, now time.Time) (*model.ScheduledMaintenance, bool) {
+	if wp.db == nil {
+		return nil, false
+	}
+
+	// 1. Auto-transition scheduled -> in_progress
+	wp.db.Model(&model.ScheduledMaintenance{}).
+		Where("status = ? AND scheduled_start <= ? AND scheduled_end >= ?", "scheduled", now, now).
+		Updates(map[string]interface{}{
+			"status":       "in_progress",
+			"actual_start": now,
+		})
+
+	// 2. Auto-transition scheduled/in_progress -> completed
+	wp.db.Model(&model.ScheduledMaintenance{}).
+		Where("status IN ? AND scheduled_end < ?", []string{"scheduled", "in_progress"}, now).
+		Updates(map[string]interface{}{
+			"status":     "completed",
+			"actual_end": now,
+		})
+
+	// 3. Query active maintenance for this monitor
+	var activeMaint model.ScheduledMaintenance
+	err := wp.db.Table("scheduled_maintenances").
+		Select("scheduled_maintenances.*").
+		Joins("INNER JOIN maintenance_monitors ON maintenance_monitors.maintenance_id = scheduled_maintenances.id").
+		Where(
+			"maintenance_monitors.monitor_id = ? AND scheduled_maintenances.status IN ? AND scheduled_maintenances.scheduled_start <= ? AND scheduled_maintenances.scheduled_end >= ?",
+			monitorID, []string{"scheduled", "in_progress"}, now, now,
+		).
+		Order("scheduled_maintenances.scheduled_start ASC").
+		First(&activeMaint).Error
+	if err == nil && activeMaint.ID != uuid.Nil {
+		return &activeMaint, true
+	}
+
+	return nil, false
+}
+
 func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 	monID := monitor.ID.String()
 	if _, loaded := wp.inFlightMonitors.LoadOrStore(monID, struct{}{}); loaded {
@@ -159,17 +257,13 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 		timeout = 10 * time.Second
 	}
 
-	var statusCode int
-	var responseTime time.Duration
-	var checkErr error
-
-	switch monitor.Type {
-	case "http":
-		statusCode, responseTime, checkErr = checker.CheckHTTP(monitor.Target, timeout, monitor.ExpectedStatusCode)
-	case "tcp":
-		responseTime, checkErr = checker.CheckTCP(monitor.Target, timeout)
-	case "ping":
-		responseTime, checkErr = checker.CheckPing(monitor.Target, timeout)
+	statusCode, responseTime, responseSnippet, checkErr := wp.executeSingleCheck(monitor, timeout)
+	if !wp.disableRetry && shouldRetryCheck(monitor, statusCode, checkErr) {
+		if wp.retryDelay > 0 {
+			time.Sleep(wp.retryDelay)
+		}
+		log.Printf("[Worker] Immediate retry triggered for monitor %s (%s) after initial failure\n", monitor.Name, monitor.Target)
+		statusCode, responseTime, responseSnippet, checkErr = wp.executeSingleCheck(monitor, timeout)
 	}
 
 	var dbMonitor model.Monitor
@@ -194,6 +288,8 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 	prevStatus := dbMonitor.Status
 	prevFailureCount := dbMonitor.FailureCount
 
+	activeMaint, inMaintenance := wp.syncAndCheckMaintenance(monitor.ID, time.Now().UTC())
+
 	eval := EvaluateRules(&dbMonitor, effectiveRules, statusCode, responseTime, checkErr)
 
 	errMsg := ""
@@ -203,9 +299,16 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 		errMsg = eval.Reason
 	}
 
+	if responseSnippet != "" && statusCode >= 400 && errMsg != "" {
+		errMsg = fmt.Sprintf("%s — Response: %s", errMsg, responseSnippet)
+	}
+
 	statusCheck := "up"
 	if eval.IsBreached {
-		if eval.Severity == "critical" {
+		if inMaintenance {
+			statusCheck = "maintenance"
+			errMsg = fmt.Sprintf("[Maintenance: %s] %s", activeMaint.Title, errMsg)
+		} else if eval.Severity == "critical" {
 			statusCheck = "down"
 		} else {
 			statusCheck = "degraded"
@@ -213,19 +316,22 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 	}
 
 	checkResult := model.Check{
-		MonitorID:      monitor.ID,
-		Status:         statusCheck,
-		StatusCode:     statusCode,
-		ResponseTimeMs: int(responseTime.Milliseconds()),
-		ErrorMessage:   errMsg,
-		CheckedAt:      time.Now(),
+		MonitorID:       monitor.ID,
+		Status:          statusCheck,
+		StatusCode:      statusCode,
+		ResponseTimeMs:  int(responseTime.Milliseconds()),
+		ErrorMessage:    errMsg,
+		ResponseSnippet: responseSnippet,
+		CheckedAt:       time.Now(),
 	}
 
 	if err := wp.db.Create(&checkResult).Error; err != nil {
 		log.Printf("Failed to create check for monitor %s: %v\n", monitor.Name, err)
 	}
 
-	if !eval.IsBreached {
+	if inMaintenance && eval.IsBreached {
+		log.Printf("[Maintenance] Suppressed alert/incident for monitor %s during maintenance '%s'\n", dbMonitor.Name, activeMaint.Title)
+	} else if !eval.IsBreached {
 		// Success / Healthy Scenario
 		if dbMonitor.Status == "down" || dbMonitor.Status == "degraded" {
 			prevStatus := dbMonitor.Status
@@ -235,11 +341,12 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 			subject := fmt.Sprintf("[Netra Uptime] Resolved: %s is back UP", monitor.Name)
 			message := fmt.Sprintf("<h3>Service Restored</h3><p>Your monitor <b>%s</b> (%s) has returned to healthy state (previously %s).</p>", html.EscapeString(dbMonitor.Name), html.EscapeString(dbMonitor.Target), html.EscapeString(prevStatus))
 
+			monCopy := dbMonitor
 			wp.safeGoNotify(func() {
-				wp.sendNotification(&dbMonitor, subject, message)
+				wp.sendNotification(&monCopy, subject, message)
 			})
 			wp.safeGoNotify(func() {
-				wp.dispatcher.Dispatch(&dbMonitor, nil, "monitor.up", subject, message)
+				wp.dispatcher.Dispatch(&monCopy, nil, "monitor.up", subject, message)
 			})
 
 			now := time.Now()
@@ -269,7 +376,10 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 				subject := fmt.Sprintf("[Netra Uptime] ALERT: %s is DOWN (%s)", monitor.Name, eval.RuleName)
 				message := fmt.Sprintf("<h3>Service Down Alert</h3><p>Your monitor <b>%s</b> (%s) triggered alert rule <b>%s</b>.<br>Reason: <i>%s</i> (breached %d consecutive times)</p>", html.EscapeString(dbMonitor.Name), html.EscapeString(dbMonitor.Target), html.EscapeString(eval.RuleName), html.EscapeString(eval.Reason), eval.RequiredBreaches)
 
-				go wp.sendNotification(&dbMonitor, subject, message)
+				monCopy := dbMonitor
+				wp.safeGoNotify(func() {
+					wp.sendNotification(&monCopy, subject, message)
+				})
 
 				var alertRuleUUID *uuid.UUID
 				if eval.RuleID != nil {
@@ -279,20 +389,23 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 				}
 
 				newIncident := model.Incident{
-					MonitorID:     monitor.ID,
-					Status:        "ongoing",
-					Severity:      ResolveIncidentSeverity(dbMonitor.Criticality, eval.Severity),
-					StartedAt:     time.Now(),
-					Summary:       fmt.Sprintf("%s: %s", eval.RuleName, eval.Reason),
-					TriggeredRule: eval.RuleName,
-					AlertRuleID:   alertRuleUUID,
+					MonitorID:       monitor.ID,
+					Status:          "ongoing",
+					Severity:        ResolveIncidentSeverity(dbMonitor.Criticality, eval.Severity),
+					StartedAt:       time.Now(),
+					Summary:         fmt.Sprintf("%s: %s", eval.RuleName, eval.Reason),
+					TriggeredRule:   eval.RuleName,
+					ResponseSnippet: responseSnippet,
+					AlertRuleID:     alertRuleUUID,
 				}
 
 				if err := wp.db.Create(&newIncident).Error; err != nil {
 					log.Printf("[Incident] Failed to create incident for monitor %s: %v\n", monitor.Name, err)
 				} else {
 					incidentIDStr := newIncident.ID.String()
-					go wp.dispatcher.Dispatch(&dbMonitor, &incidentIDStr, "monitor.down", subject, message)
+					wp.safeGoNotify(func() {
+						wp.dispatcher.Dispatch(&monCopy, &incidentIDStr, "monitor.down", subject, message)
+					})
 					log.Printf("[Incident] MONITOR DOWN TRIGGERED: %s is DOWN (%s). Error: %s\n", monitor.Name, eval.RuleName, eval.Reason)
 				}
 			} else {
@@ -316,8 +429,9 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 					message = fmt.Sprintf("<h3>Service Degraded Warning</h3><p>Your monitor <b>%s</b> (%s) is experiencing degraded performance.<br>Rule: <b>%s</b><br>Reason: <i>%s</i> (breached %d consecutive times)</p>", html.EscapeString(dbMonitor.Name), html.EscapeString(dbMonitor.Target), html.EscapeString(eval.RuleName), html.EscapeString(eval.Reason), eval.RequiredBreaches)
 				}
 
+				monCopy := dbMonitor
 				wp.safeGoNotify(func() {
-					wp.sendNotification(&dbMonitor, subject, message)
+					wp.sendNotification(&monCopy, subject, message)
 				})
 
 				var alertRuleUUID *uuid.UUID
@@ -328,13 +442,14 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 				}
 
 				newIncident := model.Incident{
-					MonitorID:     monitor.ID,
-					Status:        "ongoing",
-					Severity:      "medium",
-					StartedAt:     time.Now(),
-					Summary:       fmt.Sprintf("%s: %s", eval.RuleName, eval.Reason),
-					TriggeredRule: eval.RuleName,
-					AlertRuleID:   alertRuleUUID,
+					MonitorID:       monitor.ID,
+					Status:          "ongoing",
+					Severity:        "medium",
+					StartedAt:       time.Now(),
+					Summary:         fmt.Sprintf("%s: %s", eval.RuleName, eval.Reason),
+					TriggeredRule:   eval.RuleName,
+					ResponseSnippet: responseSnippet,
+					AlertRuleID:     alertRuleUUID,
 				}
 
 				if err := wp.db.Create(&newIncident).Error; err != nil {
@@ -342,7 +457,7 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 				} else {
 					incidentIDStr := newIncident.ID.String()
 					wp.safeGoNotify(func() {
-						wp.dispatcher.Dispatch(&dbMonitor, &incidentIDStr, "monitor.degraded", subject, message)
+						wp.dispatcher.Dispatch(&monCopy, &incidentIDStr, "monitor.degraded", subject, message)
 					})
 					log.Printf("[Incident] MONITOR UNRESPONSIVE / DEGRADED: %s (%s). %s\n", monitor.Name, eval.RuleName, eval.Reason)
 				}

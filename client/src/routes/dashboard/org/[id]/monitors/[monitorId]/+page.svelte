@@ -2,9 +2,15 @@
 	import { onMount, untrack } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { MonitorAPI, type Monitor, type MonitorDailyStat } from '$lib/api/monitor';
+	import {
+		MonitorAPI,
+		type Monitor,
+		type MonitorDailyStat,
+		type RecentCheck
+	} from '$lib/api/monitor';
 	import { IncidentAPI, type Incident } from '$lib/api/incident';
 	import MonitorDetailHeader from '$lib/components/monitor/MonitorDetailHeader.svelte';
+	import MonitorModal from '$lib/components/monitor/MonitorModal.svelte';
 	import MonitorStatsGrid from '$lib/components/monitor/MonitorStatsGrid.svelte';
 	import MonitorLatencyChart, {
 		type DataPoint
@@ -37,8 +43,74 @@
 	let activePeriod = $state<Period>('30d');
 	let isLoading = $state(true);
 	let fetchError = $state('');
+	let isEditModalOpen = $state(false);
 
 	let tz = $derived($userTimezone);
+
+	function isAvailableCheck(c: RecentCheck): boolean {
+		if (c.Status === 'up') return true;
+		if (c.Status === 'degraded') {
+			if (c.StatusCode > 0 && c.StatusCode < 500) return true;
+			if (c.StatusCode === 0 && c.ResponseTimeMs > 0 && c.ErrorMessage?.startsWith('Response time'))
+				return true;
+		}
+		return false;
+	}
+
+	function calculateDowntimeFormatted(incidentList: Incident[], daysWindow: number): string {
+		if (!incidentList || incidentList.length === 0) return '0m';
+		const nowMs = Date.now();
+		const windowStartMs = nowMs - daysWindow * 86_400_000;
+		let totalMs = 0;
+
+		for (const inc of incidentList) {
+			const startMs = new Date(inc.StartedAt).getTime();
+			if (Number.isNaN(startMs)) continue;
+			const rawEndMs = inc.ResolvedAt ? new Date(inc.ResolvedAt).getTime() : nowMs;
+			const endMs = Number.isNaN(rawEndMs) ? nowMs : rawEndMs;
+			if (endMs < windowStartMs) continue;
+
+			const effectiveStart = Math.max(startMs, windowStartMs);
+			if (endMs > effectiveStart) {
+				totalMs += endMs - effectiveStart;
+			}
+		}
+
+		if (totalMs <= 0) return '0m';
+		const totalSeconds = Math.floor(totalMs / 1000);
+		if (totalSeconds < 60) return '< 1m';
+		const totalMinutes = Math.floor(totalSeconds / 60);
+		if (totalMinutes < 60) return `${totalMinutes}m`;
+		const hours = Math.floor(totalMinutes / 60);
+		const mins = totalMinutes % 60;
+		if (hours < 24) {
+			return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+		}
+		const days = Math.floor(hours / 24);
+		const remHours = hours % 24;
+		return remHours > 0 ? `${days}d ${remHours}h` : `${days}d`;
+	}
+
+	function computeRecentCheckMetrics(checks: RecentCheck[], downtimeFormatted: string) {
+		const activeChecks = checks.filter((c) => c.Status !== 'maintenance');
+		const upCount = activeChecks.filter(isAvailableCheck).length;
+		const uptimePercent =
+			activeChecks.length > 0 ? Math.round((upCount / activeChecks.length) * 10000) / 100 : 100;
+		const healthyLatencies = activeChecks
+			.filter((c) => isAvailableCheck(c) && c.ResponseTimeMs > 0)
+			.map((c) => c.ResponseTimeMs);
+		const sumLatency = healthyLatencies.reduce((a, b) => a + b, 0);
+
+		return {
+			uptimePercent,
+			avgLatencyMs:
+				healthyLatencies.length > 0 ? Math.round(sumLatency / healthyLatencies.length) : 0,
+			minLatencyMs: healthyLatencies.length > 0 ? Math.min(...healthyLatencies) : 0,
+			maxLatencyMs: healthyLatencies.length > 0 ? Math.max(...healthyLatencies) : 0,
+			totalIncidents: incidents.length,
+			downtimeFormatted
+		};
+	}
 
 	// Days count for active period
 	let periodDays = $derived.by(() => {
@@ -69,37 +141,15 @@
 
 	// Calculated Metrics from stats / recent checks
 	let computedMetrics = $derived.by(() => {
+		const downtimeFormatted = calculateDowntimeFormatted(incidents, periodDays);
+
 		if (activePeriod === '24h' && monitor?.recent_checks && monitor.recent_checks.length > 0) {
-			const checks = monitor.recent_checks;
-			const upCount = checks.filter((c) => c.Status === 'up').length;
-			const latencies = checks.map((c) => c.ResponseTimeMs);
-			const validMin = latencies.filter((v) => v > 0);
-			const sumLatency = latencies.reduce((a, b) => a + b, 0);
-			return {
-				uptimePercent: Math.round((upCount / checks.length) * 10000) / 100,
-				avgLatencyMs: Math.round(sumLatency / checks.length),
-				minLatencyMs: validMin.length > 0 ? Math.min(...validMin) : 0,
-				maxLatencyMs: latencies.length > 0 ? Math.max(...latencies) : 0,
-				totalIncidents: incidents.length,
-				downtimeFormatted: `${incidents.length * 5}m`
-			};
+			return computeRecentCheckMetrics(monitor.recent_checks, downtimeFormatted);
 		}
 
 		if (stats.length === 0) {
 			if (monitor?.recent_checks && monitor.recent_checks.length > 0) {
-				const checks = monitor.recent_checks;
-				const upCount = checks.filter((c) => c.Status === 'up').length;
-				const latencies = checks.map((c) => c.ResponseTimeMs);
-				const validMin = latencies.filter((v) => v > 0);
-				const sumLatency = latencies.reduce((a, b) => a + b, 0);
-				return {
-					uptimePercent: Math.round((upCount / checks.length) * 10000) / 100,
-					avgLatencyMs: Math.round(sumLatency / checks.length),
-					minLatencyMs: validMin.length > 0 ? Math.min(...validMin) : 0,
-					maxLatencyMs: latencies.length > 0 ? Math.max(...latencies) : 0,
-					totalIncidents: incidents.length,
-					downtimeFormatted: `${incidents.length * 5}m`
-				};
+				return computeRecentCheckMetrics(monitor.recent_checks, downtimeFormatted);
 			}
 			return {
 				uptimePercent: monitor?.UptimePercent ?? 100,
@@ -107,15 +157,18 @@
 				minLatencyMs: 0,
 				maxLatencyMs: monitor?.ResponseTimeMs ?? 0,
 				totalIncidents: incidents.length,
-				downtimeFormatted: '0m'
+				downtimeFormatted
 			};
 		}
 
 		const totalChecks = stats.reduce((acc, s) => acc + s.TotalChecks, 0);
 		const upChecks = stats.reduce((acc, s) => acc + s.UpChecks, 0);
 		const uptimePercent = totalChecks > 0 ? (upChecks / totalChecks) * 100 : 100;
-		const totalLatencyWeighted = stats.reduce((acc, s) => acc + s.AvgLatencyMs * s.TotalChecks, 0);
-		const avgLatency = totalChecks > 0 ? Math.round(totalLatencyWeighted / totalChecks) : 0;
+		const totalLatencyWeighted = stats.reduce(
+			(acc, s) => acc + s.AvgLatencyMs * (s.UpChecks > 0 ? s.UpChecks : 0),
+			0
+		);
+		const avgLatency = upChecks > 0 ? Math.round(totalLatencyWeighted / upChecks) : 0;
 		const validMin = stats.map((s) => s.MinLatencyMs).filter((v) => v > 0);
 		const minLatency = validMin.length > 0 ? Math.min(...validMin) : 0;
 		const maxLatency = Math.max(...stats.map((s) => s.MaxLatencyMs), 0);
@@ -126,7 +179,7 @@
 			minLatencyMs: Number.isFinite(minLatency) ? minLatency : 0,
 			maxLatencyMs: Number.isFinite(maxLatency) ? maxLatency : 0,
 			totalIncidents: incidents.length,
-			downtimeFormatted: `${incidents.length * 5}m`
+			downtimeFormatted
 		};
 	});
 
@@ -137,7 +190,9 @@
 				label: formatDateTime(c.CheckedAt, tz),
 				value: c.ResponseTimeMs,
 				status: c.Status,
-				statusCode: c.StatusCode
+				statusCode: c.StatusCode,
+				responseSnippet: c.ResponseSnippet,
+				errorMessage: c.ErrorMessage
 			}));
 		}
 
@@ -146,7 +201,9 @@
 				label: formatDateTime(c.CheckedAt, tz),
 				value: c.ResponseTimeMs,
 				status: c.Status,
-				statusCode: c.StatusCode
+				statusCode: c.StatusCode,
+				responseSnippet: c.ResponseSnippet,
+				errorMessage: c.ErrorMessage
 			}));
 		}
 
@@ -169,13 +226,14 @@
 			const s = statMap.get(dateKey);
 
 			if (s && s.TotalChecks > 0) {
-				const has5xxOrDown =
-					(s.Count5xx ?? 0) > 0 || (s.CountError ?? 0) > 0 || (s.DownChecks ?? 0) > 0;
-				const has4xx = (s.Count4xx ?? 0) > 0;
+				const uptimePct =
+					typeof s.UptimePercentage === 'number'
+						? s.UptimePercentage
+						: (s.UpChecks / s.TotalChecks) * 100;
 				let calculatedStatus: 'up' | 'down' | 'degraded' = 'up';
-				if (has5xxOrDown) {
+				if (uptimePct < 95) {
 					calculatedStatus = 'down';
-				} else if (has4xx) {
+				} else if (uptimePct < 99) {
 					calculatedStatus = 'degraded';
 				}
 
@@ -190,7 +248,7 @@
 						count5xx: s.Count5xx,
 						countError: s.CountError ?? s.DownChecks,
 						total: s.TotalChecks,
-						uptimePercent: s.UptimePercentage
+						uptimePercent: uptimePct
 					}
 				});
 			} else {
@@ -439,11 +497,19 @@
 			<MonitorDetailHeader
 				{monitor}
 				onPauseResume={handlePauseResume}
+				onEdit={() => (isEditModalOpen = true)}
 				onDelete={handleDelete}
 				onCheckNow={handleTriggerCheck}
 				isChecking={isTriggeringCheck}
 			/>
 		</header>
+
+		<MonitorModal
+			bind:isOpen={isEditModalOpen}
+			{monitor}
+			{orgId}
+			onSuccess={() => loadMonitorData(true)}
+		/>
 
 		<!-- 2. Overview: Time Range Selector + Key Metrics Strip -->
 		<section class="py-6 border-b border-border/60 space-y-6" aria-labelledby="overview-heading">

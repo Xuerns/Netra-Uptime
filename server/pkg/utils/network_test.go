@@ -37,11 +37,6 @@ func TestValidateTargetHost(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "Block redis container host",
-			target:  "tcp://redis:6379",
-			wantErr: true,
-		},
-		{
 			name:    "Block private IP 10.x.x.x by default",
 			target:  "http://10.0.0.1:80",
 			wantErr: true,

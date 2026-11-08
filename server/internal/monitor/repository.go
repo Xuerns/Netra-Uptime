@@ -228,18 +228,18 @@ func (r *MonitorRepositoryImpl) GetDailyStats(monitorId string, days int) ([]mod
 		Select(`
 			DATE(checked_at) AS date,
 			COUNT(*) AS total_checks,
-			COUNT(CASE WHEN status = 'up' THEN 1 END) AS up_checks,
-			COUNT(CASE WHEN status = 'down' THEN 1 END) AS down_checks,
-			ROUND(AVG(response_time_ms)) AS avg_latency_ms,
-			COALESCE(MIN(CASE WHEN response_time_ms > 0 THEN response_time_ms END), 0) AS min_latency_ms,
-			MAX(response_time_ms) AS max_latency_ms,
+			COUNT(CASE WHEN status = 'up' OR (status = 'degraded' AND ((status_code > 0 AND status_code < 500) OR (status_code = 0 AND response_time_ms > 0 AND error_message LIKE 'Response time%'))) THEN 1 END) AS up_checks,
+			COUNT(CASE WHEN status = 'down' OR (status = 'degraded' AND NOT ((status_code > 0 AND status_code < 500) OR (status_code = 0 AND response_time_ms > 0 AND error_message LIKE 'Response time%'))) THEN 1 END) AS down_checks,
+			COALESCE(ROUND(AVG(CASE WHEN response_time_ms > 0 AND status != 'down' AND status != 'maintenance' AND (status = 'up' OR (status_code > 0 AND status_code < 500) OR (status_code = 0 AND error_message LIKE 'Response time%')) THEN response_time_ms END)), 0) AS avg_latency_ms,
+			COALESCE(MIN(CASE WHEN response_time_ms > 0 AND status != 'down' AND status != 'maintenance' AND (status = 'up' OR (status_code > 0 AND status_code < 500) OR (status_code = 0 AND error_message LIKE 'Response time%')) THEN response_time_ms END), 0) AS min_latency_ms,
+			COALESCE(MAX(CASE WHEN response_time_ms > 0 AND status != 'down' AND status != 'maintenance' AND (status = 'up' OR (status_code > 0 AND status_code < 500) OR (status_code = 0 AND error_message LIKE 'Response time%')) THEN response_time_ms END), 0) AS max_latency_ms,
 			COUNT(CASE WHEN status_code >= 200 AND status_code < 300 THEN 1 END) AS count_2xx,
 			COUNT(CASE WHEN status_code >= 300 AND status_code < 400 THEN 1 END) AS count_3xx,
 			COUNT(CASE WHEN status_code >= 400 AND status_code < 500 THEN 1 END) AS count_4xx,
 			COUNT(CASE WHEN status_code >= 500 AND status_code < 600 THEN 1 END) AS count_5xx,
 			COUNT(CASE WHEN status_code = 0 OR status_code IS NULL THEN 1 END) AS count_error
 		`).
-		Where("monitor_id = ? AND checked_at >= ?", monitorId, startDate).
+		Where("monitor_id = ? AND checked_at >= ? AND status != 'maintenance'", monitorId, startDate).
 		Group("DATE(checked_at)").
 		Scan(&rawAggs)
 
@@ -267,7 +267,7 @@ func (r *MonitorRepositoryImpl) GetDailyStats(monitorId string, days int) ([]mod
 				if tot > 0 {
 					pct = (float64(up) / float64(tot)) * 100.0
 				}
-				prevTot := stats[idx].TotalChecks
+				prevUp := stats[idx].UpChecks
 				stats[idx].TotalChecks = tot
 				stats[idx].UpChecks = up
 				stats[idx].DownChecks = down
@@ -283,8 +283,8 @@ func (r *MonitorRepositoryImpl) GetDailyStats(monitorId string, days int) ([]mod
 				if raw.MaxLatencyMs > stats[idx].MaxLatencyMs {
 					stats[idx].MaxLatencyMs = raw.MaxLatencyMs
 				}
-				if tot > 0 {
-					stats[idx].AvgLatencyMs = (stats[idx].AvgLatencyMs*prevTot + raw.AvgLatencyMs*raw.TotalChecks) / tot
+				if up > 0 {
+					stats[idx].AvgLatencyMs = (stats[idx].AvgLatencyMs*prevUp + raw.AvgLatencyMs*raw.UpChecks) / up
 				}
 			} else {
 				pct := 100.0
@@ -341,8 +341,12 @@ func (r *MonitorRepositoryImpl) Get30DayUptimeMap(monitorIDs []string) (map[stri
 
 	var checkAggs []UptimeAgg
 	r.db.Table("checks").
-		Select("monitor_id, COUNT(*) as total_checks, COUNT(CASE WHEN status = 'up' THEN 1 END) as up_checks").
-		Where("monitor_id IN ? AND checked_at >= ?", monitorIDs, sinceDate).
+		Select(`
+			monitor_id,
+			COUNT(*) as total_checks,
+			COUNT(CASE WHEN status = 'up' OR (status = 'degraded' AND ((status_code > 0 AND status_code < 500) OR (status_code = 0 AND response_time_ms > 0 AND error_message LIKE 'Response time%'))) THEN 1 END) as up_checks
+		`).
+		Where("monitor_id IN ? AND checked_at >= ? AND status != 'maintenance'", monitorIDs, sinceDate).
 		Group("monitor_id").
 		Scan(&checkAggs)
 
@@ -417,11 +421,12 @@ func (r *MonitorRepositoryImpl) GetFleetOverview(orgId string, windowDays int) (
 				c.monitor_id,
 				CASE WHEN c.checked_at >= ? THEN 'curr' ELSE 'prev' END AS period,
 				COUNT(*) AS total_checks,
-				COUNT(CASE WHEN c.status = 'up' THEN 1 END) AS up_checks
+				COUNT(CASE WHEN c.status = 'up' OR (c.status = 'degraded' AND ((c.status_code > 0 AND c.status_code < 500) OR (c.status_code = 0 AND c.response_time_ms > 0 AND c.error_message LIKE 'Response time%'))) THEN 1 END) AS up_checks
 			FROM checks c
 			INNER JOIN monitors m ON m.id = c.monitor_id
 			WHERE m.organization_id = ?
 			  AND c.checked_at >= ?
+			  AND c.status != 'maintenance'
 			GROUP BY c.monitor_id, period
 		),
 		combined_checks AS (
@@ -476,8 +481,11 @@ func (r *MonitorRepositoryImpl) GetFleetOverview(orgId string, windowDays int) (
 		FROM checks c
 		INNER JOIN monitors m ON m.id = c.monitor_id
 		WHERE m.organization_id = ?
-		  AND c.status = 'up'
 		  AND c.response_time_ms > 0
+		  AND (
+		    c.status = 'up'
+		    OR (c.status = 'degraded' AND ((c.status_code > 0 AND c.status_code < 500) OR (c.status_code = 0 AND c.error_message LIKE 'Response time%')))
+		  )
 		  AND c.checked_at >= ?
 		ORDER BY c.response_time_ms ASC
 	`

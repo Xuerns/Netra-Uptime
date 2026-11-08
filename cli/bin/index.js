@@ -19,7 +19,7 @@ Commands:
   stop      Run: docker compose down
   status    Show container status
   logs      Follow logs
-  credentials  Display database and redis credentials from .env (alias: creds)
+  credentials  Display database credentials from .env (alias: creds)
   update    Pull the latest image and restart
   help      Show this help
 
@@ -77,7 +77,7 @@ function init(dir, opts) {
   } else {
     writeFileSync(
       envPath,
-      generateEnv({ port, jwtSecret: secret(32), dbPassword: secret(), redisPassword: secret() }),
+      generateEnv({ port, jwtSecret: secret(32), dbPassword: secret() }),
       { mode: 0o600 }
     );
     console.log(`✔ Created ${envPath}`);
@@ -119,7 +119,6 @@ function readCredentials(dir) {
       dbUser: parse('POSTGRES_USER') || 'netra',
       dbPassword: parse('POSTGRES_PASSWORD'),
       dbName: parse('POSTGRES_DB') || 'netra_uptime',
-      redisPassword: parse('REDIS_PASSWORD'),
     };
   } catch {
     return null;
@@ -136,9 +135,7 @@ function formatCredentialsSummary(creds) {
   PostgreSQL  : localhost:5432
     • Database: ${creds.dbName}
     • User    : ${creds.dbUser}
-    • Password: ${creds.dbPassword || '(not set)'}
-  Redis       : localhost:6379
-    • Password: ${creds.redisPassword || '(not set)'}`;
+    • Password: ${creds.dbPassword || '(not set)'}`;
 }
 
 function main() {
@@ -184,7 +181,7 @@ Next steps:
 ${formatCredentialsSummary(creds)}
 
 Useful commands:
-  • netra-uptime credentials${dirFlag} - View database and redis credentials
+  • netra-uptime credentials${dirFlag} - View database credentials
   • netra-uptime status${dirFlag}      - Check container health
   • netra-uptime logs${dirFlag}        - Stream live logs
   • netra-uptime stop${dirFlag}        - Stop all containers

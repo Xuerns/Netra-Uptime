@@ -17,6 +17,9 @@ type Monitor struct {
 	IntervalSeconds    int       `gorm:"not null;default:60"`
 	TimeoutSeconds     int       `gorm:"not null;default:30"`
 	ExpectedStatusCode int       `gorm:"default:200"`
+	HTTPMethod         string    `gorm:"size:10;not null;default:'GET'" json:"http_method"`
+	HTTPHeaders        string    `gorm:"type:text;default:''" json:"http_headers"`
+	HTTPBody           string    `gorm:"type:text;default:''" json:"http_body"`
 	IsActive           bool      `gorm:"default:true"`
 	CreatedAt          time.Time `gorm:"autoCreateTime"`
 	UpdatedAt          time.Time `gorm:"autoUpdateTime"`
