@@ -40,14 +40,16 @@ type Monitor struct {
 	LastDomainSentReminderDay *int       `gorm:"default:null"`
 	AlertTemplateID           *uuid.UUID `gorm:"type:uuid;index" json:"alert_template_id"`
 
-	Organization       Organization        `gorm:"foreignKey:OrganizationID"`
-	Checks             []Check             `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
-	Incidents          []Incident          `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
-	StatusPageMonitors []StatusPageMonitor `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
-	MonitorPICs        []MonitorPIC        `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
-	NotificationLogs   []NotificationLog   `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
-	AlertRules         []AlertRule         `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
-	AlertTemplate      *AlertRuleTemplate  `gorm:"foreignKey:AlertTemplateID;constraint:OnDelete:SET NULL;" json:"alert_template,omitempty"`
+	Organization        Organization         `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE;"`
+	Checks              []Check              `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
+	Incidents           []Incident           `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
+	StatusPageMonitors  []StatusPageMonitor  `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
+	MonitorPICs         []MonitorPIC         `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
+	NotificationLogs    []NotificationLog    `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
+	AlertRules          []AlertRule          `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
+	MonitorDailyStats   []MonitorDailyStat   `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;" json:"-"`
+	MaintenanceMonitors []MaintenanceMonitor `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;" json:"-"`
+	AlertTemplate       *AlertRuleTemplate   `gorm:"foreignKey:AlertTemplateID;constraint:OnDelete:SET NULL;" json:"alert_template,omitempty"`
 
 	RecentChecks        []Check  `gorm:"-" json:"recent_checks"`
 	CalculatedUptime30D *float64 `gorm:"-" json:"calculated_uptime_30d"`

@@ -22,9 +22,10 @@ type StatusPage struct {
 	ThemeColor string `gorm:"default:'#4edea3'"`
 	CustomCSS  string `gorm:"type:text;default:''"`
 
-	Organization       Organization        `gorm:"foreignKey:OrganizationID"`
-	StatusPageMonitors []StatusPageMonitor `gorm:"foreignKey:StatusPageID;constraint:OnDelete:CASCADE"`
-	ComponentGroups    []ComponentGroup    `gorm:"foreignKey:StatusPageID;constraint:OnDelete:CASCADE"`
+	Organization          Organization           `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
+	StatusPageMonitors    []StatusPageMonitor    `gorm:"foreignKey:StatusPageID;constraint:OnDelete:CASCADE"`
+	ComponentGroups       []ComponentGroup       `gorm:"foreignKey:StatusPageID;constraint:OnDelete:CASCADE"`
+	ScheduledMaintenances []ScheduledMaintenance `gorm:"foreignKey:StatusPageID;constraint:OnDelete:CASCADE"`
 }
 
 func (m *StatusPage) BeforeCreate(tx *gorm.DB) error {

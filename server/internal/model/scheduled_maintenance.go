@@ -21,9 +21,9 @@ type ScheduledMaintenance struct {
 	CreatedAt      time.Time  `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt      time.Time  `gorm:"autoUpdateTime" json:"updated_at"`
 
-	Organization     Organization         `gorm:"foreignKey:OrganizationID" json:"organization,omitempty"`
-	StatusPage       StatusPage           `gorm:"foreignKey:StatusPageID" json:"status_page,omitempty"`
-	AffectedMonitors []MaintenanceMonitor `gorm:"foreignKey:MaintenanceID;constraint:OnDelete:CASCADE" json:"affected_monitors,omitempty"`
+	Organization     Organization         `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE;" json:"organization,omitempty"`
+	StatusPage       StatusPage           `gorm:"foreignKey:StatusPageID;constraint:OnDelete:CASCADE;" json:"status_page,omitempty"`
+	AffectedMonitors []MaintenanceMonitor `gorm:"foreignKey:MaintenanceID;constraint:OnDelete:CASCADE;" json:"affected_monitors,omitempty"`
 }
 
 func (m *ScheduledMaintenance) BeforeCreate(tx *gorm.DB) error {
@@ -38,8 +38,8 @@ type MaintenanceMonitor struct {
 	MaintenanceID uuid.UUID `gorm:"type:uuid;not null" json:"maintenance_id"`
 	MonitorID     uuid.UUID `gorm:"type:uuid;not null" json:"monitor_id"`
 
-	Maintenance ScheduledMaintenance `gorm:"foreignKey:MaintenanceID" json:"maintenance,omitempty"`
-	Monitor     Monitor              `gorm:"foreignKey:MonitorID" json:"monitor,omitempty"`
+	Maintenance ScheduledMaintenance `gorm:"foreignKey:MaintenanceID;constraint:OnDelete:CASCADE;" json:"maintenance,omitempty"`
+	Monitor     Monitor              `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;" json:"monitor,omitempty"`
 }
 
 func (m *MaintenanceMonitor) BeforeCreate(tx *gorm.DB) error {

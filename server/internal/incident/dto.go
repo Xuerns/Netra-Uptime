@@ -3,7 +3,7 @@ package incident
 import "time"
 
 type UpdateIncidentRequest struct {
-	Message string `json:"message" binding:"required,min=10,max=100"`
+	Message string `json:"message" binding:"required,min=10,max=200"`
 }
 
 type GetIncidentUpdateResponse struct {

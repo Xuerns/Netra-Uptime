@@ -13,12 +13,16 @@ type Organization struct {
 	Slug      string    `gorm:"unique;not null"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 
-	OrganizationMembers  []OrganizationMember  `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
-	Monitors             []Monitor             `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
-	StatusPages          []StatusPage          `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
-	NotificationChannels []NotificationChannel `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
-	AuditLogs            []AuditLog            `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
-	APIKeys              []APIKey              `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
+	OrganizationMembers     []OrganizationMember     `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
+	OrganizationInvitations []OrganizationInvitation `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
+	Monitors                []Monitor                `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
+	StatusPages             []StatusPage             `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
+	ScheduledMaintenances   []ScheduledMaintenance   `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
+	NotificationChannels    []NotificationChannel    `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
+	AlertRuleTemplates      []AlertRuleTemplate      `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
+	AlertRules              []AlertRule              `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
+	AuditLogs               []AuditLog               `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
+	APIKeys                 []APIKey                 `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE"`
 }
 
 func (m *Organization) BeforeCreate(tx *gorm.DB) error {

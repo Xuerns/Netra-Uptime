@@ -26,7 +26,7 @@ type MonitorDailyStat struct {
 	CreatedAt        time.Time `gorm:"autoCreateTime"`
 	UpdatedAt        time.Time `gorm:"autoUpdateTime"`
 
-	Monitor Monitor `gorm:"foreignKey:MonitorID"`
+	Monitor Monitor `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;"`
 }
 
 func (m *MonitorDailyStat) BeforeCreate(tx *gorm.DB) error {

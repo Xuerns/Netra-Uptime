@@ -22,7 +22,7 @@ type AlertRule struct {
 	CreatedAt      time.Time  `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt      time.Time  `gorm:"autoUpdateTime" json:"updated_at"`
 
-	Organization Organization       `gorm:"foreignKey:OrganizationID" json:"-"`
+	Organization Organization       `gorm:"foreignKey:OrganizationID;constraint:OnDelete:CASCADE;" json:"-"`
 	Monitor      *Monitor           `gorm:"foreignKey:MonitorID;constraint:OnDelete:CASCADE;" json:"monitor,omitempty"`
 	Template     *AlertRuleTemplate `gorm:"foreignKey:TemplateID;constraint:OnDelete:CASCADE;" json:"-"`
 }

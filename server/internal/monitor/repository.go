@@ -128,7 +128,16 @@ func (r *MonitorRepositoryImpl) Update(monitor *model.Monitor) error {
 }
 
 func (r *MonitorRepositoryImpl) Delete(orgId, monitorId string) error {
-	return r.db.Where("organization_id = ? AND id = ?", orgId, monitorId).Delete(&model.Monitor{}).Error
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		subQuery := tx.Model(&model.Monitor{}).Select("id").Where("organization_id = ? AND id = ?", orgId, monitorId)
+		if err := tx.Where("monitor_id IN (?)", subQuery).Delete(&model.MonitorDailyStat{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("monitor_id IN (?)", subQuery).Delete(&model.MaintenanceMonitor{}).Error; err != nil {
+			return err
+		}
+		return tx.Where("organization_id = ? AND id = ?", orgId, monitorId).Delete(&model.Monitor{}).Error
+	})
 }
 
 func (r *MonitorRepositoryImpl) GetActiveMonitor() ([]model.Monitor, error) {

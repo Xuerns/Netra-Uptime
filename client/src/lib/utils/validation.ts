@@ -85,3 +85,11 @@ export function validateMonitorTimeout(timeout: number, interval?: number): stri
 	}
 	return '';
 }
+
+export function validateIncidentMessage(message: string): string {
+	const trimmed = message.trim();
+	if (!trimmed) return 'Message is required';
+	if (trimmed.length < 10) return 'Message minimum 10 characters';
+	if (trimmed.length > 200) return 'Message maximum 200 characters';
+	return '';
+}
