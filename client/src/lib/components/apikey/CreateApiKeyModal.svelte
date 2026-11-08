@@ -4,6 +4,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
+	import * as Select from '$lib/components/ui/select/index.js';
 	import { APIKeyAPI, type CreateAPIKeyRequest } from '$lib/api/apikey';
 	import { parseApiError } from '$lib/utils/parseApiError';
 
@@ -20,6 +21,19 @@
 	let expiresInDays = $state<number | null>(null);
 	let isSubmitting = $state(false);
 	let createError = $state('');
+
+	let selectedExpirationLabel = $derived.by(() => {
+		switch (expiresInDays) {
+			case 30:
+				return '30 Days';
+			case 90:
+				return '90 Days';
+			case 365:
+				return '1 Year';
+			default:
+				return 'Never (Recommended for CI/CD)';
+		}
+	});
 
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
@@ -124,17 +138,50 @@
 			</div>
 
 			<div class="space-y-1.5">
-				<Label for="expiration" class="text-xs font-semibold text-foreground">Expiration</Label>
-				<select
-					id="expiration"
-					bind:value={expiresInDays}
-					class="w-full h-10 px-3 text-xs bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:border-primary"
+				<Label class="text-xs font-semibold text-foreground">Expiration</Label>
+				<Select.Root
+					type="single"
+					value={expiresInDays === null ? 'never' : String(expiresInDays)}
+					onValueChange={(val) => {
+						expiresInDays = val === 'never' ? null : Number(val);
+					}}
 				>
-					<option value={null}>Never (Recommended for CI/CD)</option>
-					<option value={30}>30 Days</option>
-					<option value={90}>90 Days</option>
-					<option value={365}>1 Year</option>
-				</select>
+					<Select.Trigger
+						class="w-full h-10 px-3 text-xs bg-secondary border border-border rounded-lg text-foreground focus:ring-1 focus:ring-primary justify-between"
+					>
+						<span>{selectedExpirationLabel}</span>
+					</Select.Trigger>
+					<Select.Content class="z-[60] bg-card border-border text-foreground">
+						<Select.Item
+							value="never"
+							label="Never (Recommended for CI/CD)"
+							class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer text-xs"
+						>
+							Never (Recommended for CI/CD)
+						</Select.Item>
+						<Select.Item
+							value="30"
+							label="30 Days"
+							class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer text-xs"
+						>
+							30 Days
+						</Select.Item>
+						<Select.Item
+							value="90"
+							label="90 Days"
+							class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer text-xs"
+						>
+							90 Days
+						</Select.Item>
+						<Select.Item
+							value="365"
+							label="1 Year"
+							class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer text-xs"
+						>
+							1 Year
+						</Select.Item>
+					</Select.Content>
+				</Select.Root>
 			</div>
 
 			<div class="flex justify-end gap-2 pt-3 border-t border-border">

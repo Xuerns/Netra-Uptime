@@ -1,4 +1,4 @@
-﻿<script lang="ts">
+<script lang="ts">
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { PanelLeft as PanelLeftIcon } from 'lucide-svelte';
 	import { cn } from '$lib/utils';
@@ -25,7 +25,7 @@
 	size="icon-sm"
 	class={cn('cn-sidebar-trigger', className)}
 	type="button"
-	onclick={(e) => {
+	onclick={(e: any) => {
 		onclick?.(e);
 		sidebar.toggle();
 	}}

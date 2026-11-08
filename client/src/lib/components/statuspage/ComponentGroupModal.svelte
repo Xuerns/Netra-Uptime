@@ -3,6 +3,7 @@
 	import { StatusPageAPI, type ComponentGroup, type StatusPage } from '$lib/api/statuspage';
 	import type { Monitor } from '$lib/api/monitor';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import * as Select from '$lib/components/ui/select/index.js';
 	import * as Tabs from '$lib/components/ui/tabs';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -353,6 +354,10 @@
 					{:else}
 						<div class="space-y-2">
 							{#each pageMonitors as mon (mon.ID)}
+								{@const currentGroupId = monitorGroupMap[mon.ID] || 'ungrouped'}
+								{@const currentGroupName =
+									groups.find((g) => g.id === monitorGroupMap[mon.ID])?.name ||
+									'Ungrouped (Default)'}
 								<div
 									class="flex items-center justify-between p-3 rounded-lg border border-border/70 bg-white/3 gap-3"
 								>
@@ -364,17 +369,38 @@
 									</div>
 
 									<div class="w-48 sm:w-56 shrink-0">
-										<select
-											value={monitorGroupMap[mon.ID] || ''}
+										<Select.Root
+											type="single"
+											value={currentGroupId}
 											disabled={savingMonitorId === mon.ID}
-											class="w-full text-xs rounded-md bg-background/80 border border-border p-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-											onchange={(e) => handleAssignMonitor(mon.ID, e.currentTarget.value)}
+											onValueChange={(val) => {
+												if (val) handleAssignMonitor(mon.ID, val === 'ungrouped' ? '' : val);
+											}}
 										>
-											<option value="">Ungrouped (Default)</option>
-											{#each groups as g (g.id)}
-												<option value={g.id}>{g.name}</option>
-											{/each}
-										</select>
+											<Select.Trigger
+												class="w-full text-xs rounded-md bg-background/80 border border-border h-9 px-3 text-foreground focus:ring-1 focus:ring-primary justify-between"
+											>
+												<span class="truncate">{currentGroupName}</span>
+											</Select.Trigger>
+											<Select.Content class="z-[60] bg-card border-border text-foreground max-h-60">
+												<Select.Item
+													value="ungrouped"
+													label="Ungrouped (Default)"
+													class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer text-xs"
+												>
+													Ungrouped (Default)
+												</Select.Item>
+												{#each groups as g (g.id)}
+													<Select.Item
+														value={g.id}
+														label={g.name}
+														class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer text-xs"
+													>
+														{g.name}
+													</Select.Item>
+												{/each}
+											</Select.Content>
+										</Select.Root>
 									</div>
 								</div>
 							{/each}

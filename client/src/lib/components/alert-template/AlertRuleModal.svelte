@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
+	import * as Select from '$lib/components/ui/select/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
@@ -11,7 +12,7 @@
 	} from '$lib/api/alertRule';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
-	import { ShieldAlert, AlertTriangle, Plus, Pencil } from 'lucide-svelte';
+	import { ShieldAlert, AlertTriangle } from 'lucide-svelte';
 
 	interface Props {
 		open?: boolean;
@@ -38,6 +39,28 @@
 	let severity = $state<'critical' | 'warning'>('critical');
 	let isRuleActive = $state(true);
 	let isSaving = $state(false);
+
+	const metricOptions = [
+		{ value: 'status_code', label: 'Status Code' },
+		{ value: 'response_time_ms', label: 'Latency (ms)' },
+		{ value: 'timeout', label: 'Timeout' }
+	] as const;
+
+	const operatorOptions = [
+		{ value: '==', label: '== (Equals)' },
+		{ value: '!=', label: '!= (Not Equals)' },
+		{ value: '>', label: '> (Greater than)' },
+		{ value: '>=', label: '>= (Greater or equal)' },
+		{ value: '<', label: '< (Less than)' },
+		{ value: '<=', label: '<= (Less or equal)' }
+	] as const;
+
+	let selectedMetricLabel = $derived(
+		metricOptions.find((o) => o.value === metric)?.label ?? 'Status Code'
+	);
+	let selectedOperatorLabel = $derived(
+		operatorOptions.find((o) => o.value === operator)?.label ?? operator
+	);
 
 	$effect(() => {
 		if (open) {
@@ -135,32 +158,59 @@
 
 			<div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
 				<div class="space-y-1.5">
-					<Label for="rule-metric" class="text-xs font-medium">Metric</Label>
-					<select
-						id="rule-metric"
-						bind:value={metric}
-						class="w-full h-10 rounded-md border border-border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+					<Label class="text-xs font-medium">Metric</Label>
+					<Select.Root
+						type="single"
+						value={metric}
+						onValueChange={(val) => {
+							if (val) metric = val as 'status_code' | 'response_time_ms' | 'timeout';
+						}}
 					>
-						<option value="status_code">Status Code</option>
-						<option value="response_time_ms">Latency (ms)</option>
-						<option value="timeout">Timeout</option>
-					</select>
+						<Select.Trigger
+							class="w-full h-10 rounded-md border border-border bg-background px-3 text-xs text-foreground focus:ring-1 focus:ring-primary justify-between"
+						>
+							<span>{selectedMetricLabel}</span>
+						</Select.Trigger>
+						<Select.Content class="z-[60] bg-card border-border text-foreground">
+							{#each metricOptions as opt (opt.value)}
+								<Select.Item
+									value={opt.value}
+									label={opt.label}
+									class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer text-xs"
+								>
+									{opt.label}
+								</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
 				</div>
 
 				<div class="space-y-1.5">
-					<Label for="rule-operator" class="text-xs font-medium">Operator</Label>
-					<select
-						id="rule-operator"
-						bind:value={operator}
-						class="w-full h-10 rounded-md border border-border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+					<Label class="text-xs font-medium">Operator</Label>
+					<Select.Root
+						type="single"
+						value={operator}
+						onValueChange={(val) => {
+							if (val) operator = val as '==' | '!=' | '>' | '>=' | '<' | '<=' | 'in' | 'not_in';
+						}}
 					>
-						<option value="==">== (Equals)</option>
-						<option value="!=">!= (Not Equals)</option>
-						<option value=">">&gt; (Greater than)</option>
-						<option value=">=">&gt;= (Greater or equal)</option>
-						<option value="<">&lt; (Less than)</option>
-						<option value="<=">&lt;= (Less or equal)</option>
-					</select>
+						<Select.Trigger
+							class="w-full h-10 rounded-md border border-border bg-background px-3 text-xs text-foreground focus:ring-1 focus:ring-primary justify-between"
+						>
+							<span>{selectedOperatorLabel}</span>
+						</Select.Trigger>
+						<Select.Content class="z-[60] bg-card border-border text-foreground">
+							{#each operatorOptions as opt (opt.value)}
+								<Select.Item
+									value={opt.value}
+									label={opt.label}
+									class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer text-xs"
+								>
+									{opt.label}
+								</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
 				</div>
 			</div>
 

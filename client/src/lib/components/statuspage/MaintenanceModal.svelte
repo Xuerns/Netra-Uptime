@@ -3,6 +3,8 @@
 	import { StatusPageAPI, type Maintenance, type StatusPage } from '$lib/api/statuspage';
 	import type { Monitor } from '$lib/api/monitor';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import * as Select from '$lib/components/ui/select/index.js';
+	import { DateTimePicker } from '$lib/components/ui/date-picker/index.js';
 	import { Input } from '$lib/components/ui/input';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Label } from '$lib/components/ui/label';
@@ -48,6 +50,17 @@
 	let scheduledEnd = $state('');
 	let selectedMonitors = $state<string[]>([]);
 	let formError = $state('');
+
+	let selectedStatusLabel = $derived.by(() => {
+		switch (editStatus) {
+			case 'in_progress':
+				return 'In Progress';
+			case 'completed':
+				return 'Completed';
+			default:
+				return 'Scheduled';
+		}
+	});
 
 	let lastOpenedId = $state<string | null>(null);
 
@@ -300,16 +313,43 @@
 
 					{#if editingMaintenance}
 						<div class="space-y-1.5">
-							<Label for="m-status" class="text-xs font-medium text-foreground">Status</Label>
-							<select
-								id="m-status"
-								bind:value={editStatus}
-								class="w-full text-xs rounded-md bg-background/50 border border-border p-2 text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+							<Label class="text-xs font-medium text-foreground">Status</Label>
+							<Select.Root
+								type="single"
+								value={editStatus}
+								onValueChange={(val) => {
+									if (val) editStatus = val as 'scheduled' | 'in_progress' | 'completed';
+								}}
 							>
-								<option value="scheduled">Scheduled</option>
-								<option value="in_progress">In Progress</option>
-								<option value="completed">Completed</option>
-							</select>
+								<Select.Trigger
+									class="w-full text-xs rounded-md bg-background/50 border border-border h-9 px-3 text-foreground focus:ring-1 focus:ring-ring justify-between"
+								>
+									<span>{selectedStatusLabel}</span>
+								</Select.Trigger>
+								<Select.Content class="z-[60] bg-card border-border text-foreground">
+									<Select.Item
+										value="scheduled"
+										label="Scheduled"
+										class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer text-xs"
+									>
+										Scheduled
+									</Select.Item>
+									<Select.Item
+										value="in_progress"
+										label="In Progress"
+										class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer text-xs"
+									>
+										In Progress
+									</Select.Item>
+									<Select.Item
+										value="completed"
+										label="Completed"
+										class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer text-xs"
+									>
+										Completed
+									</Select.Item>
+								</Select.Content>
+							</Select.Root>
 						</div>
 					{/if}
 
@@ -318,20 +358,18 @@
 							<Label for="m-start" class="text-xs font-medium text-foreground"
 								>Scheduled Start *</Label
 							>
-							<Input
+							<DateTimePicker
 								id="m-start"
-								type="datetime-local"
 								bind:value={scheduledStart}
-								class="text-xs bg-background/50 border-border"
+								placeholder="Select start date & time"
 							/>
 						</div>
 						<div class="space-y-1.5">
 							<Label for="m-end" class="text-xs font-medium text-foreground">Scheduled End *</Label>
-							<Input
+							<DateTimePicker
 								id="m-end"
-								type="datetime-local"
 								bind:value={scheduledEnd}
-								class="text-xs bg-background/50 border-border"
+								placeholder="Select end date & time"
 							/>
 						</div>
 					</div>
