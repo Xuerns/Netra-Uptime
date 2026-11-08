@@ -87,7 +87,9 @@ test.describe.serial('API Keys and Audit Logs Explorer', () => {
 		await expect(revealModal).toBeHidden();
 
 		// Verify key is listed in the dashboard
-		const testKeyCard = page.locator('div.p-4', { hasText: testKeyName }).first();
+		const testKeyCard = page
+			.locator('div.p-4, div.px-4, [data-testid="api-key-item"]', { hasText: testKeyName })
+			.first();
 		await expect(testKeyCard).toBeVisible();
 		await expect(testKeyCard.getByText('Read Only')).toBeVisible();
 		await expect(testKeyCard.getByText(/pw_live_.*?\.\.\.\*\*\*\*/)).toBeVisible();
@@ -115,7 +117,9 @@ test.describe.serial('API Keys and Audit Logs Explorer', () => {
 		await expect(revealModal).toBeHidden();
 
 		// Verify item attributes
-		const keyCard = page.locator('div.p-4', { hasText: fullAccessKeyName }).first();
+		const keyCard = page
+			.locator('div.p-4, div.px-4, [data-testid="api-key-item"]', { hasText: fullAccessKeyName })
+			.first();
 		await expect(keyCard).toBeVisible();
 		await expect(keyCard.getByText('Full Access (Read & Write)')).toBeVisible();
 		await expect(keyCard.getByText('Expires: —')).toBeVisible();
@@ -128,7 +132,9 @@ test.describe.serial('API Keys and Audit Logs Explorer', () => {
 		await expect(page.getByText(readOnlyKeyName)).toBeVisible();
 
 		// Find the row containing readOnlyKeyName and click its revoke button
-		const keyRow = page.locator('div.p-4', { hasText: readOnlyKeyName }).first();
+		const keyRow = page
+			.locator('div.p-4, div.px-4, [data-testid="api-key-item"]', { hasText: readOnlyKeyName })
+			.first();
 		await keyRow.locator('button[title="Revoke API key"]').click();
 
 		// Confirm dialog is an alertdialog

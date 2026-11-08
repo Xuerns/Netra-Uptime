@@ -85,7 +85,18 @@ pnpm lint
 pnpm run check
 pnpm run format
 pnpm run build
+pnpm test:e2e
 ```
+
+---
+
+## Documentation Requirements (NetraUptimeDocs)
+
+Whenever you introduce a **new feature**, modify an **existing architecture**, or add **new architectural components**, please document them in **[NetraUptimeDocs](https://github.com/Xuerns/NetraUptimeDocs)** **only after your Pull Request has been approved and merged** into `main`:
+
+- **Document After Merge**: Do not submit documentation PRs before your code changes are merged, as implementations and API contracts may change during review. Once your Netra Uptime PR is merged, open a corresponding documentation PR in [NetraUptimeDocs](https://github.com/Xuerns/NetraUptimeDocs) and reference the merged PR.
+- **New Features**: Document configuration parameters, environment variables, UI flows, and API endpoints.
+- **Architectural Changes**: Document architectural updates, service interactions, database model changes, or worker design.
 
 ---
 
@@ -120,6 +131,10 @@ A technical overview of the workflow, code changes, and components involved.
 
 #### 3. Why is this feature / change important?
 The motivation and benefits this brings to Netra Uptime users and project stability.
+
+#### 4. Documentation (NetraUptimeDocs)
+- [ ] Requires documentation update in [NetraUptimeDocs](https://github.com/Xuerns/NetraUptimeDocs) after merge (Yes / No)
+*(Note: If Yes, submit the documentation PR to NetraUptimeDocs only after this PR has been merged.)*
 ```
 
 ---

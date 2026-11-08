@@ -17,7 +17,8 @@
 </script>
 
 <div
-	class="p-4 rounded-lg bg-card border border-border flex items-center justify-between gap-4 flex-wrap transition-colors hover:border-primary/30"
+	data-testid="api-key-item"
+	class="px-4 py-2.5 rounded-md bg-card border border-border flex items-center justify-between gap-4 flex-wrap transition-colors hover:border-primary/30"
 >
 	<div class="flex flex-col gap-1 min-w-0">
 		<div class="flex items-center gap-2.5 flex-wrap">

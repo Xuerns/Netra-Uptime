@@ -28,14 +28,14 @@
 </script>
 
 <div
-	class="bg-table-header border-b border-border px-5 py-3.5 flex items-center justify-between text-xs text-muted-foreground"
+	class="bg-table-header border-b border-border px-4 py-2 flex items-center justify-between text-xs text-muted-foreground"
 >
 	<!-- Left: Status Filter Tabs (Active vs Resolved) -->
-	<div class="flex items-center gap-6">
+	<div class="flex items-center gap-5">
 		<!-- Active / Open Tab -->
 		<button
 			type="button"
-			class="flex items-center gap-2 transition-colors cursor-pointer {activeFilter === 'active'
+			class="flex items-center gap-1.5 transition-colors cursor-pointer {activeFilter === 'active'
 				? 'font-bold text-foreground'
 				: 'font-medium text-foreground/40 hover:text-foreground/70'}"
 			onclick={() => onSelectActiveFilter('active')}
@@ -45,7 +45,7 @@
 			/>
 			<span>Active</span>
 			<span
-				class="px-2 py-0.5 text-[11px] rounded-full font-mono font-semibold transition-colors {activeFilter ===
+				class="px-1.5 py-0.5 text-[10.5px] rounded-full font-mono font-semibold transition-colors {activeFilter ===
 				'active'
 					? 'bg-rose-500/20 text-rose-300'
 					: 'bg-white/5 text-foreground/40'}"
@@ -57,7 +57,7 @@
 		<!-- Resolved / Closed Tab -->
 		<button
 			type="button"
-			class="flex items-center gap-2 transition-colors cursor-pointer {activeFilter === 'resolved'
+			class="flex items-center gap-1.5 transition-colors cursor-pointer {activeFilter === 'resolved'
 				? 'font-bold text-foreground'
 				: 'font-medium text-foreground/40 hover:text-foreground/70'}"
 			onclick={() => onSelectActiveFilter('resolved')}
@@ -67,7 +67,7 @@
 			/>
 			<span>Resolved</span>
 			<span
-				class="px-2 py-0.5 text-[11px] rounded-full font-mono font-semibold transition-colors {activeFilter ===
+				class="px-1.5 py-0.5 text-[10.5px] rounded-full font-mono font-semibold transition-colors {activeFilter ===
 				'resolved'
 					? 'bg-emerald-500/20 text-emerald-300'
 					: 'bg-white/5 text-foreground/40'}"
@@ -78,11 +78,11 @@
 	</div>
 
 	<!-- Right: Severity Filter Dropdown & Stats -->
-	<div class="flex items-center gap-3.5 text-xs">
+	<div class="flex items-center gap-3 text-xs">
 		<!-- Severity Dropdown Filter -->
 		<DropdownMenu.Root>
 			<DropdownMenu.Trigger
-				class="flex items-center gap-2 px-2.5 py-1.5 rounded-md border text-xs transition-colors cursor-pointer focus:outline-none {severityFilter !==
+				class="flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs transition-colors cursor-pointer focus:outline-none {severityFilter !==
 				'all'
 					? 'bg-white/10 border-border text-foreground font-medium'
 					: 'bg-transparent border-transparent hover:bg-white/5 text-muted-foreground hover:text-foreground'}"

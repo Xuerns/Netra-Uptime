@@ -7,6 +7,7 @@
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
 	import { invitationStore } from '$lib/stores/invitation.svelte';
+	import { headerStore } from '$lib/stores/headerStore.svelte';
 	import InvitationCard, {
 		type Invitation
 	} from '$lib/components/notification/InvitationCard.svelte';
@@ -14,6 +15,10 @@
 	let invitations: Invitation[] = $state([]);
 	let isLoading = $state(true);
 	let errorMsg = $state('');
+
+	$effect(() => {
+		headerStore.reset();
+	});
 
 	onMount(async () => {
 		await loadInvitations();

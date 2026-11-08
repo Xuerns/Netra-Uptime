@@ -49,6 +49,102 @@ test.describe.serial('Organization Management Lifecycle', () => {
 		await expect(page.getByRole('heading', { name: defaultOrgName })).toBeVisible();
 	});
 
+	test('should retain search bar and new organization button when using browser back from profile', async () => {
+		await page.goto('/dashboard/org');
+		await page.waitForURL(/\/dashboard\/org/, { timeout: 10000 });
+
+		// Navigate to Profile via sidebar footer dropdown
+		await page.locator('[data-sidebar="footer"]').getByRole('button').click();
+		await page.getByRole('menuitem', { name: /Profile/i }).click();
+		await page.waitForURL(/\/dashboard\/profile/, { timeout: 10000 });
+
+		// Navigate back via browser back
+		await page.goBack();
+		await page.waitForURL(/\/dashboard\/org/, { timeout: 10000 });
+
+		// Check if search bar and new organization button are still visible
+		await expect(page.getByPlaceholder('Search organizations...')).toBeVisible();
+		await expect(page.getByRole('button', { name: 'New organization' })).toBeVisible();
+	});
+
+	test('should retain search bar and new organization button when navigating to profile and back via sidebar link', async () => {
+		await page.goto('/dashboard/org');
+		await page.waitForURL(/\/dashboard\/org/, { timeout: 10000 });
+
+		// Navigate to Profile via sidebar footer dropdown
+		await page.locator('[data-sidebar="footer"]').getByRole('button').click();
+		await page.getByRole('menuitem', { name: /Profile/i }).click();
+		await page.waitForURL(/\/dashboard\/profile/, { timeout: 10000 });
+
+		// Navigate back via sidebar link "Organizations"
+		await page
+			.locator('[data-sidebar="content"]')
+			.getByRole('link', { name: 'Organizations' })
+			.click();
+		await page.waitForURL(/\/dashboard\/org/, { timeout: 10000 });
+
+		// Check if search bar and new organization button are still visible
+		await expect(page.getByPlaceholder('Search organizations...')).toBeVisible();
+		await expect(page.getByRole('button', { name: 'New organization' })).toBeVisible();
+	});
+
+	test('should retain search bar and new organization button when clicking breadcrumb Workspace from profile', async () => {
+		await page.goto('/dashboard/org');
+		await page.waitForURL(/\/dashboard\/org/, { timeout: 10000 });
+
+		// Navigate to Profile via sidebar footer dropdown
+		await page.locator('[data-sidebar="footer"]').getByRole('button').click();
+		await page.getByRole('menuitem', { name: /Profile/i }).click();
+		await page.waitForURL(/\/dashboard\/profile/, { timeout: 10000 });
+
+		// Navigate back via breadcrumb link "Workspace"
+		await page.getByRole('link', { name: 'Workspace' }).click();
+		await page.waitForURL(/\/dashboard\/org/, { timeout: 10000 });
+
+		// Check if search bar and new organization button are still visible
+		await expect(page.getByPlaceholder('Search organizations...')).toBeVisible();
+		await expect(page.getByRole('button', { name: 'New organization' })).toBeVisible();
+	});
+
+	test('should retain search bar and new organization button when using browser back from invitations', async () => {
+		await page.goto('/dashboard/org');
+		await page.waitForURL(/\/dashboard\/org/, { timeout: 10000 });
+
+		// Navigate to Invitations via sidebar footer dropdown
+		await page.locator('[data-sidebar="footer"]').getByRole('button').click();
+		await page.getByRole('menuitem', { name: /Invitations/i }).click();
+		await page.waitForURL(/\/dashboard\/notification/, { timeout: 10000 });
+
+		// Navigate back via browser back
+		await page.goBack();
+		await page.waitForURL(/\/dashboard\/org/, { timeout: 10000 });
+
+		// Check if search bar and new organization button are still visible
+		await expect(page.getByPlaceholder('Search organizations...')).toBeVisible();
+		await expect(page.getByRole('button', { name: 'New organization' })).toBeVisible();
+	});
+
+	test('should retain search bar and new organization button when navigating to invitations and back via sidebar link', async () => {
+		await page.goto('/dashboard/org');
+		await page.waitForURL(/\/dashboard\/org/, { timeout: 10000 });
+
+		// Navigate to Invitations via sidebar footer dropdown
+		await page.locator('[data-sidebar="footer"]').getByRole('button').click();
+		await page.getByRole('menuitem', { name: /Invitations/i }).click();
+		await page.waitForURL(/\/dashboard\/notification/, { timeout: 10000 });
+
+		// Navigate back to Organizations via sidebar link
+		await page
+			.locator('[data-sidebar="content"]')
+			.getByRole('link', { name: 'Organizations' })
+			.click();
+		await page.waitForURL(/\/dashboard\/org/, { timeout: 10000 });
+
+		// Check if search bar and new organization button are still visible
+		await expect(page.getByPlaceholder('Search organizations...')).toBeVisible();
+		await expect(page.getByRole('button', { name: 'New organization' })).toBeVisible();
+	});
+
 	test('should validate organization modal inputs, auto-generate slug, and cancel creation', async () => {
 		await page.goto('/dashboard/org');
 		await page.waitForURL(/\/dashboard\/org/, { timeout: 10000 });

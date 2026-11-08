@@ -44,19 +44,18 @@
 
 	// Sync with layout header bar
 	$effect(() => {
-		const _path = $page.url.pathname;
-		if (_path.startsWith('/dashboard/org')) {
-			syncHeader();
-		}
-		return () => {
-			headerStore.reset();
-		};
+		void $page.url.pathname;
+		syncHeader();
 	});
 
 	afterNavigate(() => {
 		if ($page.url.pathname.startsWith('/dashboard/org')) {
 			syncHeader();
 		}
+	});
+
+	onMount(() => {
+		syncHeader();
 	});
 
 	let filteredOrgs = $derived(

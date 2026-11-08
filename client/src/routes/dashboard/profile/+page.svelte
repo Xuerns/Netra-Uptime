@@ -1,8 +1,13 @@
 <script lang="ts">
 	import { ProfileInfoCard, SecurityPasswordCard, DangerZoneCard } from '$lib/components/profile';
+	import { headerStore } from '$lib/stores/headerStore.svelte';
 
 	let { data } = $props();
 	let user = $derived(data.user);
+
+	$effect(() => {
+		headerStore.reset();
+	});
 </script>
 
 <svelte:head>

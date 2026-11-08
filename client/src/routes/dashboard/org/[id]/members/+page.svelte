@@ -181,7 +181,7 @@
 		</div>
 	{:else}
 		<!-- Members List -->
-		<div class="border border-border rounded-lg bg-card divide-y divide-border">
+		<div class="border border-border rounded-md bg-card divide-y divide-border">
 			{#each filteredMembers as m (m.ID)}
 				<MemberListItem
 					member={m}

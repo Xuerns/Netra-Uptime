@@ -86,11 +86,11 @@
 					{/each}
 				</div>
 			{:else}
-				<div class="border border-border rounded-lg bg-card divide-y divide-border overflow-hidden">
+				<div class="border border-border rounded-md bg-card divide-y divide-border overflow-hidden">
 					{#each Array(count || 6) as _}
-						<div class="flex items-center justify-between p-3.5 gap-4 animate-pulse">
+						<div class="flex items-center justify-between px-4 py-2.5 gap-4 animate-pulse">
 							<div class="flex items-center gap-3 flex-1 min-w-0">
-								<div class="size-7 rounded-lg bg-white/10 shrink-0"></div>
+								<div class="size-7 rounded-md bg-white/10 shrink-0"></div>
 								<div class="space-y-1 flex-1 min-w-0">
 									<div class="h-3.5 w-36 bg-white/10 rounded"></div>
 									<div class="h-2.5 w-48 bg-white/5 rounded font-mono"></div>
@@ -139,9 +139,9 @@
 		<!-- Standard List Rows Skeleton (used in Members, API Keys, Notifications) -->
 		<div class="border border-border rounded-md bg-card divide-y divide-border overflow-hidden">
 			{#each Array(count) as _}
-				<div class="flex items-center justify-between p-4 animate-pulse gap-4">
-					<div class="flex items-center gap-3.5 min-w-0 flex-1">
-						<div class="size-9 rounded-md bg-white/10 shrink-0"></div>
+				<div class="flex items-center justify-between px-4 py-2.5 animate-pulse gap-4">
+					<div class="flex items-center gap-3 min-w-0 flex-1">
+						<div class="size-8 rounded-md bg-white/10 shrink-0"></div>
 						<div class="space-y-1.5 flex-1 min-w-0">
 							<div class="h-4 w-40 bg-white/10 rounded"></div>
 							<div class="h-3 w-28 bg-white/5 rounded font-mono"></div>
@@ -158,7 +158,7 @@
 		<!-- Table Skeleton (used in Audit Logs) -->
 		<div class="border border-border rounded-md bg-card overflow-hidden">
 			<div
-				class="p-3.5 bg-table-header border-b border-border flex items-center justify-between gap-4"
+				class="px-4 py-2 bg-table-header border-b border-border flex items-center justify-between gap-4"
 			>
 				<div class="h-4 w-28 bg-white/10 rounded"></div>
 				<div class="h-4 w-24 bg-white/10 rounded"></div>
@@ -167,7 +167,7 @@
 			</div>
 			<div class="divide-y divide-border">
 				{#each Array(count || 8) as _}
-					<div class="p-4 flex items-center justify-between gap-4 animate-pulse">
+					<div class="px-4 py-2.5 flex items-center justify-between gap-4 animate-pulse">
 						<div class="flex items-center gap-3 flex-1 min-w-0">
 							<div class="size-7 rounded bg-white/10 shrink-0"></div>
 							<div class="h-3.5 w-44 bg-white/10 rounded"></div>

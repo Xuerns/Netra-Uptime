@@ -176,7 +176,7 @@
 
 			<!-- Pagination Footer Bar -->
 			{#if filteredIncidents.length > 0}
-				<div class="shrink-0 mt-auto bg-white/3 border-t border-border px-5 py-3">
+				<div class="shrink-0 mt-auto bg-white/3 border-t border-border px-4 py-2">
 					<Pagination
 						bind:currentPage
 						{totalPages}

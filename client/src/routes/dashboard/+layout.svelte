@@ -17,6 +17,8 @@
 			$page.url.pathname.split('/').filter(Boolean).length > 2
 	);
 
+	const isOrgSelectionPage = $derived($page.url.pathname === '/dashboard/org');
+
 	const pageTitle = $derived.by(() => {
 		if (headerStore.title) return headerStore.title;
 		const path = $page.url.pathname;
@@ -50,10 +52,10 @@
 				orgName="Workspace"
 				breadcrumbHref="/dashboard/org"
 				{pageTitle}
-				showSearch={headerStore.showSearch}
+				showSearch={isOrgSelectionPage ? headerStore.showSearch : false}
 				bind:searchQuery={headerStore.searchQuery}
 				searchPlaceholder={headerStore.searchPlaceholder}
-				actionType={headerStore.actionType}
+				actionType={isOrgSelectionPage ? headerStore.actionType : null}
 				actionLabel={headerStore.actionLabel}
 				onAction={headerStore.onAction}
 			/>

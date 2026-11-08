@@ -31,18 +31,18 @@
 	let { member, currentUserId, isOwner, canManage, onPromote, onDemote, onKick }: Props = $props();
 </script>
 
-<div class="flex items-center justify-between p-4 hover:bg-muted/20 transition-colors">
+<div class="flex items-center justify-between px-4 py-2.5 hover:bg-muted/20 transition-colors">
 	<!-- User Info -->
-	<div class="flex items-center gap-3.5 min-w-0">
+	<div class="flex items-center gap-3 min-w-0">
 		{#if member.User?.AvatarURL}
 			<img
 				src={member.User.AvatarURL}
 				alt={member.User?.Name || 'User'}
-				class="size-9 rounded-lg object-cover border border-border shrink-0"
+				class="size-8 rounded-md object-cover border border-border shrink-0"
 			/>
 		{:else}
 			<div
-				class="size-9 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 border border-border {avatarColor(
+				class="size-8 rounded-md flex items-center justify-center font-bold text-xs shrink-0 border border-border {avatarColor(
 					member.User?.Name || 'User'
 				)}"
 			>
