@@ -28,9 +28,15 @@
 	import { userTimezone } from '$lib/stores/timezone';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
+	import { headerStore } from '$lib/stores/headerStore.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+
+	// Ensure top navigation header is clean
+	$effect(() => {
+		headerStore.reset();
+	});
 
 	// ── Params ────────────────────────────────────────────────────────────────
 	const orgId = $derived(data.orgId || ($page.params.id as string));

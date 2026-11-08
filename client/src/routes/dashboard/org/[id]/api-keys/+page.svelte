@@ -90,6 +90,7 @@
 
 	// Sync with layout top bar
 	$effect(() => {
+		void $page.url.pathname;
 		headerStore.set({
 			actionType: canManage ? 'button' : null,
 			actionLabel: 'Create API Key',

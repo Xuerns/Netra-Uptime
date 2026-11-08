@@ -26,8 +26,9 @@
 		return 'Dashboard';
 	});
 
-	// Reset header state before each navigation so the new page starts clean.
+	// Reset header state before non-org navigation so the new page starts clean.
 	beforeNavigate(({ to }) => {
+		if (to?.url.pathname.startsWith('/dashboard/org/')) return;
 		if (to?.url.pathname !== '/dashboard/org') {
 			headerStore.reset();
 		}

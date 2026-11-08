@@ -65,7 +65,7 @@
 				<Breadcrumb.Item>
 					<Breadcrumb.Link
 						href={breadcrumbHref ??
-							($page.params.id ? `/dashboard/org/${$page.params.id}` : '/dashboard/org')}
+							($page.params.id ? `/dashboard/org/${$page.params.id}/monitors` : '/dashboard/org')}
 						class="truncate max-w-45 sm:max-w-70"
 					>
 						{orgName || 'Workspace'}

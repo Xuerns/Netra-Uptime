@@ -378,6 +378,7 @@
 											}}
 										>
 											<Select.Trigger
+												data-testid="assign-group-select"
 												class="w-full text-xs rounded-md bg-background/80 border border-border h-9 px-3 text-foreground focus:ring-1 focus:ring-primary justify-between"
 											>
 												<span class="truncate">{currentGroupName}</span>

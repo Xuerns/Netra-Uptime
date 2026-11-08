@@ -18,9 +18,15 @@
 		OrgDangerZoneCard
 	} from '$lib/components/org';
 	import type { Member } from '$lib/components/org/TransferOwnershipModal.svelte';
+	import { headerStore } from '$lib/stores/headerStore.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+
+	// Ensure top navigation header is clean
+	$effect(() => {
+		headerStore.reset();
+	});
 
 	const orgId = $derived(($page.params.id as string) || '');
 	const currentUserId = $derived(data?.user?.id ?? $page.data.user?.id);

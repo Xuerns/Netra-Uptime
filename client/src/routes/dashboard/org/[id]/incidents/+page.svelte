@@ -84,6 +84,7 @@
 
 	// Sync with layout top bar
 	$effect(() => {
+		void $page.url.pathname;
 		const ongoingCount = allIncidents.filter((i) => i.Status !== 'resolved').length;
 		headerStore.set({
 			showSearch: true,

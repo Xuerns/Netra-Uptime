@@ -147,6 +147,7 @@
 					}}
 				>
 					<Select.Trigger
+						data-testid="expiration"
 						class="w-full h-10 px-3 text-xs bg-secondary border border-border rounded-lg text-foreground focus:ring-1 focus:ring-primary justify-between"
 					>
 						<span>{selectedExpirationLabel}</span>

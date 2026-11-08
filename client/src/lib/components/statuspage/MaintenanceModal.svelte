@@ -322,6 +322,7 @@
 								}}
 							>
 								<Select.Trigger
+									data-testid="m-status"
 									class="w-full text-xs rounded-md bg-background/50 border border-border h-9 px-3 text-foreground focus:ring-1 focus:ring-ring justify-between"
 								>
 									<span>{selectedStatusLabel}</span>

@@ -98,10 +98,12 @@ test.describe.serial('Alert Templates Management Lifecycle', () => {
 		await dialog.locator('#rule-name-input').fill('High Latency Warning');
 
 		// Select Metric: Latency (ms)
-		await dialog.locator('#rule-metric').selectOption('response_time_ms');
+		await dialog.getByRole('combobox').first().click();
+		await page.getByRole('option', { name: /Latency/i }).click();
 
 		// Select Operator: > (Greater than)
-		await dialog.locator('#rule-operator').selectOption('>');
+		await dialog.getByRole('combobox').nth(1).click();
+		await page.getByRole('option', { name: /> \(Greater than\)/i }).click();
 
 		// Fill Target Value
 		await dialog.locator('#rule-target').fill('1500');
@@ -160,8 +162,10 @@ test.describe.serial('Alert Templates Management Lifecycle', () => {
 
 		// Fill status code rule
 		await dialog.locator('#rule-name-input').fill('5xx Server Error Alert');
-		await dialog.locator('#rule-metric').selectOption('status_code');
-		await dialog.locator('#rule-operator').selectOption('==');
+		await dialog.getByRole('combobox').first().click();
+		await page.getByRole('option', { name: /Status Code/i }).click();
+		await dialog.getByRole('combobox').nth(1).click();
+		await page.getByRole('option', { name: /== \(Equals\)/i }).click();
 		await dialog.locator('#rule-target').fill('5xx');
 		await dialog.locator('#rule-consecutive').fill('2');
 

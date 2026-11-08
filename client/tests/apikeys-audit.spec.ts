@@ -44,7 +44,8 @@ test.describe.serial('API Keys and Audit Logs Explorer', () => {
 
 		await dialog.locator('#keyName').fill(readOnlyKeyName);
 		await dialog.getByRole('button', { name: /Read Only/i }).click();
-		await dialog.locator('#expiration').selectOption({ label: '30 Days' });
+		await dialog.getByRole('combobox').click();
+		await page.getByRole('option', { name: '30 Days' }).click();
 
 		await dialog.getByRole('button', { name: 'Generate API Key' }).click();
 
@@ -103,7 +104,8 @@ test.describe.serial('API Keys and Audit Logs Explorer', () => {
 
 		await dialog.locator('#keyName').fill(fullAccessKeyName);
 		await dialog.getByRole('button', { name: /Full Access/i }).click();
-		await dialog.locator('#expiration').selectOption({ label: 'Never (Recommended for CI/CD)' });
+		await dialog.getByRole('combobox').click();
+		await page.getByRole('option', { name: /Never/i }).click();
 
 		await dialog.getByRole('button', { name: 'Generate API Key' }).click();
 

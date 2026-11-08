@@ -53,6 +53,7 @@
 
 	// Sync with layout header bar
 	$effect(() => {
+		void $page.url.pathname;
 		headerStore.set({
 			showSearch: true,
 			searchPlaceholder: 'Search members by name...',

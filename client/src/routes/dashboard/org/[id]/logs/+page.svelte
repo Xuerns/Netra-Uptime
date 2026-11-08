@@ -220,6 +220,7 @@
 
 	// Sync with layout top bar
 	$effect(() => {
+		void $page.url.pathname;
 		headerStore.set({
 			showSearch: true,
 			searchPlaceholder: 'Search audit logs...',

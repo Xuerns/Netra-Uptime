@@ -46,6 +46,7 @@
 
 	// Synchronize top navigation header
 	$effect(() => {
+		void $page.url.pathname;
 		headerStore.set({
 			title: 'Alert Templates',
 			showSearch: true,

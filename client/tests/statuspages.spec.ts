@@ -42,7 +42,7 @@ test.describe.serial('Status Page Lifecycle', () => {
 		await page.waitForURL(new RegExp(`/dashboard/org/${org.id}/statuspage`));
 
 		// Verify page title and header
-		await expect(page.getByRole('heading', { name: 'Status Pages' })).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'Status Pages', exact: true })).toBeVisible();
 
 		// Verify empty state
 		await expect(page.getByRole('heading', { name: 'No status pages yet' })).toBeVisible();
@@ -169,8 +169,9 @@ test.describe.serial('Status Page Lifecycle', () => {
 
 		// Assign our monitor to the newly created group
 		await expect(dialog.getByText(monitorName)).toBeVisible();
-		const groupSelect = dialog.locator('select').first();
-		await groupSelect.selectOption({ label: groupName });
+		const groupTrigger = dialog.getByRole('combobox').first();
+		await groupTrigger.click();
+		await page.getByRole('option', { name: groupName }).click();
 
 		// Switch back to Manage Groups tab to edit group name
 		const manageTab = dialog.getByRole('tab', { name: /manage groups/i });
@@ -232,9 +233,10 @@ test.describe.serial('Status Page Lifecycle', () => {
 		const editBtn = dialog.getByRole('button', { name: 'Edit' }).first();
 		await editBtn.click();
 
-		const statusSelect = dialog.locator('#m-status');
+		const statusSelect = dialog.getByRole('combobox').first();
 		await expect(statusSelect).toBeVisible();
-		await statusSelect.selectOption('in_progress');
+		await statusSelect.click();
+		await page.getByRole('option', { name: 'In Progress' }).click();
 
 		const updateBtn = dialog.getByRole('button', { name: 'Update Maintenance' });
 		await updateBtn.click();

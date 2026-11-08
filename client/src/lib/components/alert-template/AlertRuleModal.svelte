@@ -167,6 +167,7 @@
 						}}
 					>
 						<Select.Trigger
+							data-testid="rule-metric"
 							class="w-full h-10 rounded-md border border-border bg-background px-3 text-xs text-foreground focus:ring-1 focus:ring-primary justify-between"
 						>
 							<span>{selectedMetricLabel}</span>
@@ -195,6 +196,7 @@
 						}}
 					>
 						<Select.Trigger
+							data-testid="rule-operator"
 							class="w-full h-10 rounded-md border border-border bg-background px-3 text-xs text-foreground focus:ring-1 focus:ring-primary justify-between"
 						>
 							<span>{selectedOperatorLabel}</span>

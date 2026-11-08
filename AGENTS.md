@@ -26,6 +26,10 @@
 - Never use pulse animation
 - Makesure the library save
 
+# E2E Testing
+- Always run e2e testing after changed client code
+- Run 'pnpm test:e2e' on client folder
+
 # Important Notes
 - Never hardcode any API keys and creditials, use environment variables (.env) instead
 

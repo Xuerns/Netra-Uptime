@@ -50,6 +50,7 @@
 	// ── Derived ───────────────────────────────────────────────────────────────
 	// Sync with layout top bar
 	$effect(() => {
+		void $page.url.pathname;
 		headerStore.set({
 			showSearch: statusPages.length > 0,
 			searchPlaceholder: 'Search status pages...',

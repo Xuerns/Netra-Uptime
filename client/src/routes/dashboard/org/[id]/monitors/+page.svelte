@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import { afterNavigate } from '$app/navigation';
 	import type { PageData } from './$types';
 	import { flip } from 'svelte/animate';
 	import { Activity, Plus, TriangleAlert, Globe, Radio, Cpu, Search } from 'lucide-svelte';
@@ -75,8 +76,7 @@
 		flagged: monitors.filter(isFlaggedMonitor).length
 	});
 
-	// Sync with unified layout header bar
-	$effect(() => {
+	function syncHeader() {
 		headerStore.set({
 			showSearch: true,
 			searchPlaceholder: 'Search monitors (URL, tag, name)...',
@@ -102,6 +102,18 @@
 									}
 								: { text: 'All systems monitored', variant: 'emerald' }
 		});
+	}
+
+	// Sync with unified layout header bar
+	$effect(() => {
+		void $page.url.pathname;
+		void counts;
+		syncHeader();
+	});
+
+	// Re-synchronize header on navigation events (including back/forward traversal)
+	afterNavigate(() => {
+		syncHeader();
 	});
 
 	let filtered = $derived(
@@ -199,8 +211,17 @@
 			}
 		});
 
+		// Restore header if restored from browser bfcache
+		const handlePageShow = (event: PageTransitionEvent) => {
+			if (event.persisted) {
+				syncHeader();
+			}
+		};
+		window.addEventListener('pageshow', handlePageShow);
+
 		return () => {
 			unsubscribe();
+			window.removeEventListener('pageshow', handlePageShow);
 		};
 	});
 </script>

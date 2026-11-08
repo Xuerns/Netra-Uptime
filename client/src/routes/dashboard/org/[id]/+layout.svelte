@@ -6,7 +6,6 @@
 	import { activeOrgId, organizations } from '$lib/stores/organization';
 	import { fade } from 'svelte/transition';
 	import { page } from '$app/stores';
-	import { beforeNavigate } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { invitationStore } from '$lib/stores/invitation.svelte';
 	import type { LayoutData } from './$types';
@@ -53,11 +52,6 @@
 		if (data?.orgId) {
 			activeOrgId.set(data.orgId);
 		}
-	});
-
-	// Reset header state before each navigation so the new page starts clean.
-	beforeNavigate(() => {
-		headerStore.reset();
 	});
 
 	onMount(() => {

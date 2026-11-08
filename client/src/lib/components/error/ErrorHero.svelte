@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
+	import { goto } from '$app/navigation';
 
 	interface Props {
 		statusCode?: number;
@@ -10,7 +11,11 @@
 
 	function handleGoBack(): void {
 		if (typeof window !== 'undefined') {
-			window.history.back();
+			if (window.history.length > 1) {
+				window.history.back();
+			} else {
+				goto('/dashboard');
+			}
 		}
 	}
 </script>
