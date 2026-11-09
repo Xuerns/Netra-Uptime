@@ -4,12 +4,13 @@
 
 	interface Props {
 		monitors: Monitor[];
+		canManage?: boolean;
 		onDelete: (id: string) => void | Promise<void>;
 		onEdit: (m: Monitor) => void;
 		onTogglePause: (m: Monitor) => void | Promise<void>;
 	}
 
-	let { monitors, onDelete, onEdit, onTogglePause }: Props = $props();
+	let { monitors, canManage = true, onDelete, onEdit, onTogglePause }: Props = $props();
 </script>
 
 <div class="monitors-scroll-area w-full">
@@ -35,6 +36,7 @@
 					{#each monitors as monitor (monitor.ID)}
 						<MonitorItem
 							{monitor}
+							{canManage}
 							viewMode="list"
 							handleDeleteMonitor={async (id) => {
 								await onDelete(id);

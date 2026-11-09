@@ -17,6 +17,7 @@
 
 	interface Props {
 		monitor: Monitor;
+		canManage?: boolean;
 		onPauseResume?: () => void;
 		onEdit?: () => void;
 		onDelete?: () => void;
@@ -26,6 +27,7 @@
 
 	let {
 		monitor,
+		canManage = true,
 		onPauseResume,
 		onEdit,
 		onDelete,
@@ -136,7 +138,7 @@
 			</Button>
 		{/if}
 
-		{#if onPauseResume}
+		{#if canManage && onPauseResume}
 			<Button variant="outline" size="sm" onclick={onPauseResume} class="gap-1.5">
 				{#if monitor.Status === 'paused'}
 					<Play class="size-3.5" />
@@ -148,14 +150,14 @@
 			</Button>
 		{/if}
 
-		{#if onEdit}
+		{#if canManage && onEdit}
 			<Button variant="outline" size="sm" onclick={onEdit} class="gap-1.5">
 				<Pencil class="size-3.5" />
 				<span>Edit</span>
 			</Button>
 		{/if}
 
-		{#if onDelete}
+		{#if canManage && onDelete}
 			<Button
 				variant="outline"
 				size="sm"

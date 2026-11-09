@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch, handleApiError } from './client';
 import { env } from '$env/dynamic/public';
 
 const API_Route = `${env.PUBLIC_API_URL}`;
@@ -57,11 +57,8 @@ export const AuthAPI = {
 			throw new Error('Too many attempts. Please wait a moment and try again.');
 		}
 
-		const data = await res.json();
-		if (!res.ok) {
-			throw new Error(data.error || data.message || 'Login failed');
-		}
-		return data;
+		if (!res.ok) await handleApiError(res, 'Login failed');
+		return res.json();
 	},
 
 	async register(payload: RegisterRequest): Promise<AuthMessageResponse> {
@@ -76,11 +73,8 @@ export const AuthAPI = {
 			throw new Error('Too many attempts. Please wait a moment and try again.');
 		}
 
-		const data = await res.json();
-		if (!res.ok) {
-			throw new Error(data.error || data.message || 'Registration failed');
-		}
-		return data;
+		if (!res.ok) await handleApiError(res, 'Registration failed');
+		return res.json();
 	},
 
 	async logout(): Promise<void> {
@@ -88,18 +82,12 @@ export const AuthAPI = {
 			method: 'POST',
 			redirectOnFail: false
 		});
-		if (!res.ok) {
-			const data = await res.json().catch(() => ({}));
-			throw new Error(data.error || data.message || 'Failed to logout');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to logout');
 	},
 
 	async getProfile(): Promise<UserProfile> {
 		const res = await apiFetch(`${API_Route}/auth/profile`);
-		if (!res.ok) {
-			const err = await res.json().catch(() => ({}));
-			throw new Error(err.error || 'Failed to fetch profile');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to fetch profile');
 		const data = await res.json();
 		return data.user ?? data;
 	},
@@ -110,10 +98,7 @@ export const AuthAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)
 		});
-		if (!res.ok) {
-			const err = await res.json().catch(() => ({}));
-			throw new Error(err.error || 'Failed to update profile');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to update profile');
 		return res.json();
 	},
 
@@ -123,10 +108,7 @@ export const AuthAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)
 		});
-		if (!res.ok) {
-			const err = await res.json().catch(() => ({}));
-			throw new Error(err.error || 'Failed to initiate password change');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to initiate password change');
 		return res.json();
 	},
 
@@ -136,10 +118,7 @@ export const AuthAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)
 		});
-		if (!res.ok) {
-			const err = await res.json().catch(() => ({}));
-			throw new Error(err.error || 'Failed to verify password change');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to verify password change');
 		return res.json();
 	},
 
@@ -149,11 +128,8 @@ export const AuthAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ email })
 		});
-		const data = await res.json();
-		if (!res.ok) {
-			throw new Error(data.error || data.message || 'Failed to send reset link.');
-		}
-		return data;
+		if (!res.ok) await handleApiError(res, 'Failed to send reset link.');
+		return res.json();
 	},
 
 	async resetPassword(token: string, password: string): Promise<{ message?: string }> {
@@ -162,10 +138,7 @@ export const AuthAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ token, password })
 		});
-		const data = await res.json();
-		if (!res.ok) {
-			throw new Error(data.error || data.message || 'Failed to reset password.');
-		}
-		return data;
+		if (!res.ok) await handleApiError(res, 'Failed to reset password.');
+		return res.json();
 	}
 };

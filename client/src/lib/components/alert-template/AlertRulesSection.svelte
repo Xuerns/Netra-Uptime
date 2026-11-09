@@ -11,10 +11,11 @@
 	interface Props {
 		template: AlertTemplate;
 		orgId: string;
+		canManage?: boolean;
 		onRefresh: () => Promise<void>;
 	}
 
-	let { template, orgId, onRefresh }: Props = $props();
+	let { template, orgId, canManage = true, onRefresh }: Props = $props();
 
 	let isRuleModalOpen = $state(false);
 	let ruleToEdit = $state<AlertRule | null>(null);
@@ -77,30 +78,38 @@
 				Evaluated on each monitor check. Breaches trigger incidents and notifications.
 			</p>
 		</div>
-		<button
-			onclick={openAddRule}
-			class="inline-flex items-center gap-1.5 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-8.5 px-3 rounded-lg font-medium text-xs cursor-pointer shadow-xs"
-		>
-			<Plus class="size-3.5 stroke-[2.5]" />
-			<span>Add Rule</span>
-		</button>
+		{#if canManage}
+			<button
+				onclick={openAddRule}
+				class="inline-flex items-center gap-1.5 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-8.5 px-3 rounded-lg font-medium text-xs cursor-pointer shadow-xs"
+			>
+				<Plus class="size-3.5 stroke-[2.5]" />
+				<span>Add Rule</span>
+			</button>
+		{/if}
 	</div>
 
 	{#if !template.rules || template.rules.length === 0}
 		<div class="py-10 text-center space-y-2">
 			<h3 class="text-sm font-semibold text-foreground">No alert rules defined yet</h3>
 			<p class="text-xs text-muted-foreground max-w-[44ch] mx-auto">
-				Add threshold conditions to activate automated alert triggers for linked monitors.
+				{#if canManage}
+					Add threshold conditions to activate automated alert triggers for linked monitors.
+				{:else}
+					No alert rules defined in this template yet.
+				{/if}
 			</p>
-			<div class="pt-2">
-				<button
-					onclick={openAddRule}
-					class="inline-flex items-center gap-1.5 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground h-8 px-3 rounded-lg font-medium text-xs cursor-pointer"
-				>
-					<Plus class="size-3" />
-					<span>Add First Rule</span>
-				</button>
-			</div>
+			{#if canManage}
+				<div class="pt-2">
+					<button
+						onclick={openAddRule}
+						class="inline-flex items-center gap-1.5 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground h-8 px-3 rounded-lg font-medium text-xs cursor-pointer"
+					>
+						<Plus class="size-3" />
+						<span>Add First Rule</span>
+					</button>
+				</div>
+			{/if}
 		</div>
 	{:else}
 		<ul class="divide-y divide-border/60">
@@ -140,29 +149,31 @@
 					</div>
 
 					<!-- Rule Actions -->
-					<div class="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
-						<button
-							onclick={() => handleToggleRuleActive(r)}
-							class="px-2.5 py-1 text-xs rounded-md border border-border bg-secondary hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-							title={r.is_active ? 'Pause this rule' : 'Activate this rule'}
-						>
-							{r.is_active ? 'Pause' : 'Activate'}
-						</button>
-						<button
-							onclick={() => openEditRule(r)}
-							class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors cursor-pointer"
-							title="Edit Rule"
-						>
-							<Pencil class="size-4" />
-						</button>
-						<button
-							onclick={() => confirmDeleteRule(r)}
-							class="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-							title="Delete Rule"
-						>
-							<Trash2 class="size-4" />
-						</button>
-					</div>
+					{#if canManage}
+						<div class="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+							<button
+								onclick={() => handleToggleRuleActive(r)}
+								class="px-2.5 py-1 text-xs rounded-md border border-border bg-secondary hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+								title={r.is_active ? 'Pause this rule' : 'Activate this rule'}
+							>
+								{r.is_active ? 'Pause' : 'Activate'}
+							</button>
+							<button
+								onclick={() => openEditRule(r)}
+								class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors cursor-pointer"
+								title="Edit Rule"
+							>
+								<Pencil class="size-4" />
+							</button>
+							<button
+								onclick={() => confirmDeleteRule(r)}
+								class="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+								title="Delete Rule"
+							>
+								<Trash2 class="size-4" />
+							</button>
+						</div>
+					{/if}
 				</li>
 			{/each}
 		</ul>

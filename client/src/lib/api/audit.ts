@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch, handleApiError } from './client';
 import { env } from '$env/dynamic/public';
 
 const API_Route = `${env.PUBLIC_API_URL}`;
@@ -49,10 +49,7 @@ export const AuditAPI = {
 			method: 'GET'
 		});
 
-		if (!res.ok) {
-			const errJson = await res.json().catch(() => ({}));
-			throw new Error(errJson.error || 'Failed to fetch audit logs');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to fetch audit logs');
 
 		const json = await res.json();
 		return json.data as PaginatedAuditLogsResponse;

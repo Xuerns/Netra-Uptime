@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch, handleApiError } from './client';
 import { env } from '$env/dynamic/public';
 
 const API_Route = `${env.PUBLIC_API_URL}`;
@@ -235,16 +235,13 @@ export const StatusPageAPI = {
 			{ redirectOnFail: false },
 			customFetch
 		);
-		if (!res.ok) {
-			const err = await res.json().catch(() => ({}));
-			throw new Error(err.error || 'Failed to fetch public status page');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to fetch public status page');
 		return res.json();
 	},
 
 	getAll: async (orgId: string) => {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/statuspage`, { method: 'GET' });
-		if (!res.ok) throw new Error('Failed to fetch status pages');
+		if (!res.ok) await handleApiError(res, 'Failed to fetch status pages');
 		const json = await res.json();
 		return {
 			...json,
@@ -259,7 +256,7 @@ export const StatusPageAPI = {
 				method: 'GET'
 			}
 		);
-		if (!res.ok) throw new Error('Failed to fetch status page monitors');
+		if (!res.ok) await handleApiError(res, 'Failed to fetch status page monitors');
 		const json = await res.json();
 		return {
 			...json,
@@ -278,7 +275,7 @@ export const StatusPageAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(data)
 		});
-		if (!res.ok) throw new Error('Failed to create status page');
+		if (!res.ok) await handleApiError(res, 'Failed to create status page');
 		const json = await res.json();
 		return {
 			...json,
@@ -292,7 +289,7 @@ export const StatusPageAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(data)
 		});
-		if (!res.ok) throw new Error('Failed to update status page');
+		if (!res.ok) await handleApiError(res, 'Failed to update status page');
 		const json = await res.json();
 		return {
 			...json,
@@ -304,7 +301,7 @@ export const StatusPageAPI = {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/statuspage/${statusPageId}`, {
 			method: 'DELETE'
 		});
-		if (!res.ok) throw new Error('Failed to delete status page');
+		if (!res.ok) await handleApiError(res, 'Failed to delete status page');
 		return res.json();
 	},
 
@@ -321,7 +318,7 @@ export const StatusPageAPI = {
 				body: JSON.stringify(data)
 			}
 		);
-		if (!res.ok) throw new Error('Failed to create maintenance');
+		if (!res.ok) await handleApiError(res, 'Failed to create maintenance');
 		return res.json();
 	},
 
@@ -332,7 +329,7 @@ export const StatusPageAPI = {
 				method: 'GET'
 			}
 		);
-		if (!res.ok) throw new Error('Failed to fetch maintenances');
+		if (!res.ok) await handleApiError(res, 'Failed to fetch maintenances');
 		return res.json();
 	},
 
@@ -350,7 +347,7 @@ export const StatusPageAPI = {
 				body: JSON.stringify(data)
 			}
 		);
-		if (!res.ok) throw new Error('Failed to update maintenance');
+		if (!res.ok) await handleApiError(res, 'Failed to update maintenance');
 		return res.json();
 	},
 
@@ -361,7 +358,7 @@ export const StatusPageAPI = {
 				method: 'DELETE'
 			}
 		);
-		if (!res.ok) throw new Error('Failed to delete maintenance');
+		if (!res.ok) await handleApiError(res, 'Failed to delete maintenance');
 		return res.json();
 	},
 
@@ -370,7 +367,7 @@ export const StatusPageAPI = {
 			`${API_Route}/organization/${orgId}/statuspage/${statusPageId}/groups`,
 			{ method: 'GET' }
 		);
-		if (!res.ok) throw new Error('Failed to fetch component groups');
+		if (!res.ok) await handleApiError(res, 'Failed to fetch component groups');
 		return res.json();
 	},
 
@@ -383,7 +380,7 @@ export const StatusPageAPI = {
 				body: JSON.stringify(data)
 			}
 		);
-		if (!res.ok) throw new Error('Failed to create component group');
+		if (!res.ok) await handleApiError(res, 'Failed to create component group');
 		return res.json();
 	},
 
@@ -401,7 +398,7 @@ export const StatusPageAPI = {
 				body: JSON.stringify(data)
 			}
 		);
-		if (!res.ok) throw new Error('Failed to update component group');
+		if (!res.ok) await handleApiError(res, 'Failed to update component group');
 		return res.json();
 	},
 
@@ -410,7 +407,7 @@ export const StatusPageAPI = {
 			`${API_Route}/organization/${orgId}/statuspage/${statusPageId}/groups/${groupId}`,
 			{ method: 'DELETE' }
 		);
-		if (!res.ok) throw new Error('Failed to delete component group');
+		if (!res.ok) await handleApiError(res, 'Failed to delete component group');
 		return res.json();
 	},
 
@@ -428,7 +425,7 @@ export const StatusPageAPI = {
 				body: JSON.stringify({ group_id: groupId || null })
 			}
 		);
-		if (!res.ok) throw new Error('Failed to assign monitor to group');
+		if (!res.ok) await handleApiError(res, 'Failed to assign monitor to group');
 		return res.json();
 	}
 };

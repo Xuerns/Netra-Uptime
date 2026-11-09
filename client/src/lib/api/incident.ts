@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch, handleApiError } from './client';
 import { env } from '$env/dynamic/public';
 import type { Monitor } from './monitor';
 
@@ -118,7 +118,7 @@ export const IncidentAPI = {
 			? `${API_Route}/organization/${orgId}/incident?monitor_id=${encodeURIComponent(monitorId)}`
 			: `${API_Route}/organization/${orgId}/incident`;
 		const res = await apiFetch(url, { method: 'GET' });
-		if (!res.ok) throw new Error('Failed to fetch incidents');
+		if (!res.ok) await handleApiError(res, 'Failed to fetch incidents');
 
 		const data = await res.json();
 		if (data.data) {
@@ -132,7 +132,7 @@ export const IncidentAPI = {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/incident/${incidentId}`, {
 			method: 'GET'
 		});
-		if (!res.ok) throw new Error('Failed to fetch incident detail');
+		if (!res.ok) await handleApiError(res, 'Failed to fetch incident detail');
 		const data = await res.json();
 		if (data.data) {
 			data.data = mapIncident(data.data);
@@ -146,10 +146,7 @@ export const IncidentAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(data)
 		});
-		if (!res.ok) {
-			const errData = await res.json().catch(() => ({}));
-			throw new Error(errData.error || 'Failed to add update');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to add update');
 		return res.json();
 	},
 
@@ -157,10 +154,7 @@ export const IncidentAPI = {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/incident/${incidentId}/join`, {
 			method: 'POST'
 		});
-		if (!res.ok) {
-			const errData = await res.json().catch(() => ({}));
-			throw new Error(errData.error || 'Failed to join incident');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to join incident');
 		return res.json();
 	},
 
@@ -174,7 +168,7 @@ export const IncidentAPI = {
 				method: 'GET'
 			}
 		);
-		if (!res.ok) throw new Error('Failed to fetch incident updates');
+		if (!res.ok) await handleApiError(res, 'Failed to fetch incident updates');
 		return res.json();
 	}
 };

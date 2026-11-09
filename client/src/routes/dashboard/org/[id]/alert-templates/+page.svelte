@@ -11,8 +11,12 @@
 		AlertTemplateRow,
 		CreateAlertTemplateModal
 	} from '$lib/components/alert-template/index.js';
+	import type { PageData } from './$types';
 
-	const orgId = $derived($page.params.id as string);
+	let { data }: { data: PageData } = $props();
+
+	const orgId = $derived(data.orgId || ($page.params.id as string) || '');
+	const canManage = $derived(data?.canManage ?? false);
 
 	let templates = $state<AlertTemplate[]>([]);
 	let isLoading = $state(true);
@@ -51,7 +55,7 @@
 			title: 'Alert Templates',
 			showSearch: true,
 			searchPlaceholder: 'Search templates by name or description...',
-			actionType: 'button',
+			actionType: canManage ? 'button' : null,
 			actionLabel: 'Create Template',
 			onAction: () => {
 				isCreateModalOpen = true;
@@ -129,16 +133,22 @@
 			</div>
 			<h3 class="text-xl font-semibold text-foreground mb-1.5">No alert templates yet</h3>
 			<p class="text-sm text-muted-foreground max-w-[44ch] mb-6 leading-relaxed">
-				Create reusable templates with customized rule thresholds (status codes, latency limits,
-				timeouts) to centrally manage incident alerts across all monitors.
+				{#if canManage}
+					Create reusable templates with customized rule thresholds (status codes, latency limits,
+					timeouts) to centrally manage incident alerts across all monitors.
+				{:else}
+					No alert templates configured yet. Ask an admin or owner to create one.
+				{/if}
 			</p>
-			<button
-				onclick={() => (isCreateModalOpen = true)}
-				class="inline-flex items-center gap-1.5 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 rounded-lg font-medium text-xs cursor-pointer focus:outline-none"
-			>
-				<Plus class="size-3.5 stroke-[2.5]" />
-				<span>Create Template</span>
-			</button>
+			{#if canManage}
+				<button
+					onclick={() => (isCreateModalOpen = true)}
+					class="inline-flex items-center gap-1.5 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 rounded-lg font-medium text-xs cursor-pointer focus:outline-none"
+				>
+					<Plus class="size-3.5 stroke-[2.5]" />
+					<span>Create Template</span>
+				</button>
+			{/if}
 		</div>
 	{:else if filteredTemplates.length === 0}
 		<!-- No Search Results -->

@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch, handleApiError } from './client';
 import { env } from '$env/dynamic/public';
 
 const API = `${env.PUBLIC_API_URL}`;
@@ -52,7 +52,7 @@ export const NotificationAPI = {
 		const res = await apiFetch(`${API}/organization/${orgId}/notifications/channels`, {
 			method: 'GET'
 		});
-		if (!res.ok) throw new Error('Failed to fetch notification channels');
+		if (!res.ok) await handleApiError(res, 'Failed to fetch notification channels');
 		const json = await res.json();
 		return json.data ?? [];
 	},
@@ -61,7 +61,7 @@ export const NotificationAPI = {
 		const res = await apiFetch(`${API}/organization/${orgId}/notifications/channels/${channelId}`, {
 			method: 'GET'
 		});
-		if (!res.ok) throw new Error('Failed to fetch notification channel');
+		if (!res.ok) await handleApiError(res, 'Failed to fetch notification channel');
 		const json = await res.json();
 		return json.data;
 	},
@@ -75,8 +75,8 @@ export const NotificationAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)
 		});
+		if (!res.ok) await handleApiError(res, 'Failed to create notification channel');
 		const json = await res.json();
-		if (!res.ok) throw new Error(json.error ?? 'Failed to create notification channel');
 		return json.data;
 	},
 
@@ -90,8 +90,8 @@ export const NotificationAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)
 		});
+		if (!res.ok) await handleApiError(res, 'Failed to update notification channel');
 		const json = await res.json();
-		if (!res.ok) throw new Error(json.error ?? 'Failed to update notification channel');
 		return json.data;
 	},
 
@@ -99,10 +99,7 @@ export const NotificationAPI = {
 		const res = await apiFetch(`${API}/organization/${orgId}/notifications/channels/${channelId}`, {
 			method: 'DELETE'
 		});
-		if (!res.ok) {
-			const json = await res.json().catch(() => ({}));
-			throw new Error(json.error ?? 'Failed to delete notification channel');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to delete notification channel');
 	},
 
 	// ── Logs ──────────────────────────────────────────────────────────────
@@ -111,7 +108,7 @@ export const NotificationAPI = {
 			`${API}/organization/${orgId}/notifications/logs?limit=${limit}&offset=${offset}`,
 			{ method: 'GET' }
 		);
-		if (!res.ok) throw new Error('Failed to fetch notification logs');
+		if (!res.ok) await handleApiError(res, 'Failed to fetch notification logs');
 		const json = await res.json();
 		return json.data ?? { logs: [], total: 0, limit, offset };
 	}

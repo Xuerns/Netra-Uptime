@@ -29,12 +29,14 @@
 	let {
 		monitor,
 		viewMode = 'grid',
+		canManage = true,
 		handleDeleteMonitor,
 		handleEditMonitor,
 		handleTogglePause
 	}: {
 		monitor: Monitor;
 		viewMode?: 'grid' | 'list';
+		canManage?: boolean;
 		handleDeleteMonitor?: (id: string) => Promise<void>;
 		handleEditMonitor?: (monitor: Monitor) => void;
 		handleTogglePause?: (monitor: Monitor) => Promise<void>;
@@ -108,60 +110,62 @@
 				<div class="flex items-center shrink-0">
 					<MonitorStatusBadge status={monitor.Status} class="shrink-0" />
 
-					<DropdownMenu.Root bind:open={isMenuOpen}>
-						<div
-							class="overflow-hidden transition-all duration-200 ease-in-out flex items-center justify-end {isMenuOpen
-								? 'w-7 ml-2 opacity-100 pointer-events-auto'
-								: 'w-0 ml-0 opacity-0 pointer-events-none group-hover:w-7 group-hover:ml-2 group-hover:opacity-100 group-hover:pointer-events-auto focus-within:w-7 focus-within:ml-2 focus-within:opacity-100 focus-within:pointer-events-auto'}"
-						>
-							<DropdownMenu.Trigger
-								class="flex items-center justify-center size-7 shrink-0 rounded-md text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-								aria-label="Monitor options"
+					{#if canManage}
+						<DropdownMenu.Root bind:open={isMenuOpen}>
+							<div
+								class="overflow-hidden transition-all duration-200 ease-in-out flex items-center justify-end {isMenuOpen
+									? 'w-7 ml-2 opacity-100 pointer-events-auto'
+									: 'w-0 ml-0 opacity-0 pointer-events-none group-hover:w-7 group-hover:ml-2 group-hover:opacity-100 group-hover:pointer-events-auto focus-within:w-7 focus-within:ml-2 focus-within:opacity-100 focus-within:pointer-events-auto'}"
 							>
-								<MoreVertical class="size-4" />
-							</DropdownMenu.Trigger>
-						</div>
-						<DropdownMenu.Content
-							align="end"
-							class="w-40 bg-card border-border text-foreground rounded-lg p-1 shadow-xl z-50"
-						>
-							{#if handleTogglePause}
-								<DropdownMenu.Item
-									class="cursor-pointer flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-white/10 transition-colors"
-									onclick={() => handleTogglePause(monitor)}
+								<DropdownMenu.Trigger
+									class="flex items-center justify-center size-7 shrink-0 rounded-md text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+									aria-label="Monitor options"
 								>
-									{#if monitor.Status === 'paused'}
-										<Play class="size-3.5 text-emerald-400" />
-										<span>Resume check</span>
-									{:else}
-										<Pause class="size-3.5 text-amber-400" />
-										<span>Pause check</span>
-									{/if}
-								</DropdownMenu.Item>
-							{/if}
-							{#if handleEditMonitor}
-								<DropdownMenu.Item
-									class="cursor-pointer flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-white/10 transition-colors"
-									onclick={() => handleEditMonitor(monitor)}
-								>
-									<Edit2 class="size-3.5" />
-									<span>Edit monitor</span>
-								</DropdownMenu.Item>
-							{/if}
-							{#if handleDeleteMonitor}
-								<DropdownMenu.Separator class="bg-white/10 my-1" />
-								<DropdownMenu.Item
-									class="cursor-pointer flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-destructive hover:bg-destructive/10 transition-colors"
-									onclick={() => {
-										isConfirmDeleteOpen = true;
-									}}
-								>
-									<Trash2 class="size-3.5" />
-									<span>Delete monitor</span>
-								</DropdownMenu.Item>
-							{/if}
-						</DropdownMenu.Content>
-					</DropdownMenu.Root>
+									<MoreVertical class="size-4" />
+								</DropdownMenu.Trigger>
+							</div>
+							<DropdownMenu.Content
+								align="end"
+								class="w-40 bg-card border-border text-foreground rounded-lg p-1 shadow-xl z-50"
+							>
+								{#if handleTogglePause}
+									<DropdownMenu.Item
+										class="cursor-pointer flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-white/10 transition-colors"
+										onclick={() => handleTogglePause(monitor)}
+									>
+										{#if monitor.Status === 'paused'}
+											<Play class="size-3.5 text-emerald-400" />
+											<span>Resume check</span>
+										{:else}
+											<Pause class="size-3.5 text-amber-400" />
+											<span>Pause check</span>
+										{/if}
+									</DropdownMenu.Item>
+								{/if}
+								{#if handleEditMonitor}
+									<DropdownMenu.Item
+										class="cursor-pointer flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-white/10 transition-colors"
+										onclick={() => handleEditMonitor(monitor)}
+									>
+										<Edit2 class="size-3.5" />
+										<span>Edit monitor</span>
+									</DropdownMenu.Item>
+								{/if}
+								{#if handleDeleteMonitor}
+									<DropdownMenu.Separator class="bg-white/10 my-1" />
+									<DropdownMenu.Item
+										class="cursor-pointer flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-destructive hover:bg-destructive/10 transition-colors"
+										onclick={() => {
+											isConfirmDeleteOpen = true;
+										}}
+									>
+										<Trash2 class="size-3.5" />
+										<span>Delete monitor</span>
+									</DropdownMenu.Item>
+								{/if}
+							</DropdownMenu.Content>
+						</DropdownMenu.Root>
+					{/if}
 				</div>
 			</div>
 
@@ -336,54 +340,56 @@
 				<ArrowUpRight class="size-4" />
 			</a>
 
-			<DropdownMenu.Root>
-				<DropdownMenu.Trigger
-					class="flex items-center justify-center size-7 rounded-md text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors cursor-pointer focus:outline-none"
-					aria-label="Monitor options"
-				>
-					<MoreVertical class="size-4" />
-				</DropdownMenu.Trigger>
-				<DropdownMenu.Content
-					align="end"
-					class="w-40 bg-card border-border text-foreground rounded-lg p-1 shadow-xl z-50"
-				>
-					{#if handleTogglePause}
-						<DropdownMenu.Item
-							class="cursor-pointer flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-white/10 transition-colors"
-							onclick={() => handleTogglePause(monitor)}
-						>
-							{#if monitor.Status === 'paused'}
-								<Play class="size-3.5 text-emerald-400" />
-								<span>Resume check</span>
-							{:else}
-								<Pause class="size-3.5 text-amber-400" />
-								<span>Pause check</span>
-							{/if}
-						</DropdownMenu.Item>
-					{/if}
-					{#if handleEditMonitor}
-						<DropdownMenu.Item
-							class="cursor-pointer flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-white/10 transition-colors"
-							onclick={() => handleEditMonitor(monitor)}
-						>
-							<Edit2 class="size-3.5" />
-							<span>Edit monitor</span>
-						</DropdownMenu.Item>
-					{/if}
-					{#if handleDeleteMonitor}
-						<DropdownMenu.Separator class="bg-white/10 my-1" />
-						<DropdownMenu.Item
-							class="cursor-pointer flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-destructive hover:bg-destructive/10 transition-colors"
-							onclick={() => {
-								isConfirmDeleteOpen = true;
-							}}
-						>
-							<Trash2 class="size-3.5" />
-							<span>Delete monitor</span>
-						</DropdownMenu.Item>
-					{/if}
-				</DropdownMenu.Content>
-			</DropdownMenu.Root>
+			{#if canManage}
+				<DropdownMenu.Root>
+					<DropdownMenu.Trigger
+						class="flex items-center justify-center size-7 rounded-md text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors cursor-pointer focus:outline-none"
+						aria-label="Monitor options"
+					>
+						<MoreVertical class="size-4" />
+					</DropdownMenu.Trigger>
+					<DropdownMenu.Content
+						align="end"
+						class="w-40 bg-card border-border text-foreground rounded-lg p-1 shadow-xl z-50"
+					>
+						{#if handleTogglePause}
+							<DropdownMenu.Item
+								class="cursor-pointer flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-white/10 transition-colors"
+								onclick={() => handleTogglePause(monitor)}
+							>
+								{#if monitor.Status === 'paused'}
+									<Play class="size-3.5 text-emerald-400" />
+									<span>Resume check</span>
+								{:else}
+									<Pause class="size-3.5 text-amber-400" />
+									<span>Pause check</span>
+								{/if}
+							</DropdownMenu.Item>
+						{/if}
+						{#if handleEditMonitor}
+							<DropdownMenu.Item
+								class="cursor-pointer flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-white/10 transition-colors"
+								onclick={() => handleEditMonitor(monitor)}
+							>
+								<Edit2 class="size-3.5" />
+								<span>Edit monitor</span>
+							</DropdownMenu.Item>
+						{/if}
+						{#if handleDeleteMonitor}
+							<DropdownMenu.Separator class="bg-white/10 my-1" />
+							<DropdownMenu.Item
+								class="cursor-pointer flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-destructive hover:bg-destructive/10 transition-colors"
+								onclick={() => {
+									isConfirmDeleteOpen = true;
+								}}
+							>
+								<Trash2 class="size-3.5" />
+								<span>Delete monitor</span>
+							</DropdownMenu.Item>
+						{/if}
+					</DropdownMenu.Content>
+				</DropdownMenu.Root>
+			{/if}
 		</div>
 	</div>
 {/if}

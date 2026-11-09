@@ -50,7 +50,7 @@ test.describe.serial('API Keys and Audit Logs Explorer', () => {
 		await dialog.getByRole('button', { name: 'Generate API Key' }).click();
 
 		// Plaintext reveal modal should open
-		const revealModal = page.getByRole('dialog');
+		const revealModal = page.getByRole('dialog', { name: 'API Key Created Successfully' });
 		await expect(revealModal.getByText('API Key Created Successfully')).toBeVisible();
 		await revealModal.getByRole('button', { name: 'Done' }).click();
 		await expect(revealModal).toBeHidden();
@@ -67,7 +67,7 @@ test.describe.serial('API Keys and Audit Logs Explorer', () => {
 		await dialog.locator('#keyName').fill(testKeyName);
 		await dialog.getByRole('button', { name: 'Generate API Key' }).click();
 
-		const revealModal = page.getByRole('dialog');
+		const revealModal = page.getByRole('dialog', { name: 'API Key Created Successfully' });
 		await expect(revealModal.getByText('API Key Created Successfully')).toBeVisible();
 		await expect(revealModal.getByText('it will never be displayed again!')).toBeVisible();
 
@@ -111,7 +111,7 @@ test.describe.serial('API Keys and Audit Logs Explorer', () => {
 
 		await dialog.getByRole('button', { name: 'Generate API Key' }).click();
 
-		const revealModal = page.getByRole('dialog');
+		const revealModal = page.getByRole('dialog', { name: 'API Key Created Successfully' });
 		await expect(revealModal.getByText('API Key Created Successfully')).toBeVisible();
 		await revealModal.getByRole('button', { name: 'Done' }).click();
 		await expect(revealModal).toBeHidden();

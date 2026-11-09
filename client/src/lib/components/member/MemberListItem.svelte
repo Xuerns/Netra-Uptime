@@ -22,13 +22,12 @@
 		member: Member;
 		currentUserId: string;
 		isOwner: boolean;
-		canManage: boolean;
 		onPromote: (id: string) => void;
 		onDemote: (id: string) => void;
 		onKick: (m: Member) => void;
 	}
 
-	let { member, currentUserId, isOwner, canManage, onPromote, onDemote, onKick }: Props = $props();
+	let { member, currentUserId, isOwner, onPromote, onDemote, onKick }: Props = $props();
 </script>
 
 <div class="flex items-center justify-between px-4 py-2.5 hover:bg-muted/20 transition-colors">
@@ -98,8 +97,8 @@
 			</Badge>
 		{/if}
 
-		<!-- Member Action Menu -->
-		{#if canManage && member.UserID !== currentUserId && member.Role !== 'owner'}
+		<!-- Member Action Menu (Owner Only) -->
+		{#if isOwner && member.UserID !== currentUserId && member.Role !== 'owner'}
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger
 					class="p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-secondary transition-colors focus:outline-none cursor-pointer"
@@ -110,14 +109,14 @@
 					align="end"
 					class="bg-card border-border text-foreground min-w-37.5 p-1 rounded-lg"
 				>
-					{#if member.Role === 'member' && isOwner}
+					{#if member.Role === 'member'}
 						<DropdownMenu.Item
 							class="hover:bg-white/10 cursor-pointer rounded-md p-2 text-xs"
 							onclick={() => onPromote(member.UserID)}
 						>
 							<ShieldAlert class="mr-2 size-3.5 text-emerald-400" /> Make Admin
 						</DropdownMenu.Item>
-					{:else if member.Role === 'admin' && isOwner}
+					{:else if member.Role === 'admin'}
 						<DropdownMenu.Item
 							class="hover:bg-white/10 cursor-pointer rounded-md p-2 text-xs"
 							onclick={() => onDemote(member.UserID)}

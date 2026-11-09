@@ -16,10 +16,14 @@
 		AlertRulesSection,
 		LinkedMonitorsSection
 	} from '$lib/components/alert-template/index.js';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 
 	// ── Params ────────────────────────────────────────────────────────────────
-	const orgId = $derived($page.params.id as string);
-	const templateId = $derived($page.params.templateId as string);
+	const orgId = $derived(data.orgId || ($page.params.id as string));
+	const templateId = $derived(($page.params.templateId as string) || '');
+	const canManage = $derived(data?.canManage ?? false);
 
 	// ── State ─────────────────────────────────────────────────────────────────
 	let template = $state<AlertTemplate | null>(null);
@@ -147,28 +151,30 @@
 			</div>
 
 			<!-- Action Buttons -->
-			<div class="flex items-center gap-2 shrink-0">
-				<button
-					onclick={() => (isEditTemplateOpen = true)}
-					class="inline-flex items-center gap-1.5 bg-secondary border border-border text-foreground hover:text-primary hover:border-primary/50 active:scale-[0.98] transition-all duration-200 h-9 px-3.5 rounded-lg font-medium text-xs cursor-pointer"
-				>
-					<Pencil class="size-3.5" />
-					<span>Edit Info</span>
-				</button>
-				<button
-					onclick={() => (isDeleteTemplateConfirmOpen = true)}
-					class="inline-flex items-center gap-1.5 bg-destructive/10 border border-destructive/20 text-destructive hover:bg-destructive hover:text-destructive-foreground active:scale-[0.98] transition-all duration-200 h-9 px-3.5 rounded-lg font-medium text-xs cursor-pointer"
-				>
-					<Trash2 class="size-3.5" />
-					<span>Delete</span>
-				</button>
-			</div>
+			{#if canManage}
+				<div class="flex items-center gap-2 shrink-0">
+					<button
+						onclick={() => (isEditTemplateOpen = true)}
+						class="inline-flex items-center gap-1.5 bg-secondary border border-border text-foreground hover:text-primary hover:border-primary/50 active:scale-[0.98] transition-all duration-200 h-9 px-3.5 rounded-lg font-medium text-xs cursor-pointer"
+					>
+						<Pencil class="size-3.5" />
+						<span>Edit Info</span>
+					</button>
+					<button
+						onclick={() => (isDeleteTemplateConfirmOpen = true)}
+						class="inline-flex items-center gap-1.5 bg-destructive/10 border border-destructive/20 text-destructive hover:bg-destructive hover:text-destructive-foreground active:scale-[0.98] transition-all duration-200 h-9 px-3.5 rounded-lg font-medium text-xs cursor-pointer"
+					>
+						<Trash2 class="size-3.5" />
+						<span>Delete</span>
+					</button>
+				</div>
+			{/if}
 		</header>
 
 		<!-- ── Sections: Alert Rules (2/3) + Linked Monitors (1/3) ────────────────── -->
 		<section class="grid grid-cols-1 lg:grid-cols-3" aria-label="Alert template configuration">
 			<div class="py-6 min-w-0 lg:col-span-2 lg:pr-6">
-				<AlertRulesSection {template} {orgId} onRefresh={loadTemplateData} />
+				<AlertRulesSection {template} {orgId} {canManage} onRefresh={loadTemplateData} />
 			</div>
 
 			<div class="py-6 min-w-0 border-t border-border/60 lg:border-t-0 lg:border-l lg:pl-6">

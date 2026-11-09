@@ -57,10 +57,10 @@
 
 	const currentUserId = $derived(getCurrentUserId(data?.user ?? $page.data?.user));
 	const currentMember = $derived(
-		findMemberByUserId(data?.members ?? $page.data?.members, currentUserId)
+		data?.currentMember ?? findMemberByUserId(data?.members ?? $page.data?.members, currentUserId)
 	);
-	const userRole = $derived(getMemberRole(currentMember, 'admin'));
-	const canManage = $derived(canManageOrg(userRole));
+	const userRole = $derived(data?.currentUserRole ?? getMemberRole(currentMember, 'member'));
+	const canManage = $derived(data?.canManage ?? canManageOrg(userRole));
 
 	onMount(() => {
 		if (orgId) {

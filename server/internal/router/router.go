@@ -106,7 +106,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cacheStore *cache.MemoryCache, h Ha
 	orgRoutes.PUT("/demote", middleware.RequireRole("owner"), h.OrganizationHandler.DemoteToMember)
 
 	// Monitor
-	orgRoutes.POST("/monitors", middleware.RequireRole("owner"), h.MonitorHandler.CreateMonitor)
+	orgRoutes.POST("/monitors", middleware.RequireRole("owner", "admin"), h.MonitorHandler.CreateMonitor)
 	orgRoutes.GET("/monitors", h.MonitorHandler.GetAllMonitor)
 	orgRoutes.GET("/monitors/overview", h.MonitorHandler.GetFleetOverview)
 	orgRoutes.GET("/monitors/:monitorId", h.MonitorHandler.GetById)

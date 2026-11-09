@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch, handleApiError } from './client';
 import { env } from '$env/dynamic/public';
 
 const API_Route = `${env.PUBLIC_API_URL}`;
@@ -204,7 +204,7 @@ function mapMonitor(m: any): Monitor {
 export const MonitorAPI = {
 	getAll: async (orgId: string) => {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/monitors`, { method: 'GET' });
-		if (!res.ok) throw new Error('Failed to fetch monitors');
+		if (!res.ok) await handleApiError(res, 'Failed to fetch monitors');
 		const json = await res.json();
 		return {
 			...json,
@@ -216,7 +216,7 @@ export const MonitorAPI = {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/monitors/${monitorId}`, {
 			method: 'GET'
 		});
-		if (!res.ok) throw new Error('Failed to fetch monitor');
+		if (!res.ok) await handleApiError(res, 'Failed to fetch monitor');
 		const json = await res.json();
 		return {
 			...json,
@@ -230,7 +230,7 @@ export const MonitorAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(data)
 		});
-		if (!res.ok) throw new Error('Failed to create monitor');
+		if (!res.ok) await handleApiError(res, 'Failed to create monitor');
 		const json = await res.json();
 		return {
 			...json,
@@ -244,7 +244,7 @@ export const MonitorAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(data)
 		});
-		if (!res.ok) throw new Error('Failed to update monitor');
+		if (!res.ok) await handleApiError(res, 'Failed to update monitor');
 		const json = await res.json();
 		return {
 			...json,
@@ -256,7 +256,7 @@ export const MonitorAPI = {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/monitors/${monitorId}`, {
 			method: 'DELETE'
 		});
-		if (!res.ok) throw new Error('Failed to delete monitor');
+		if (!res.ok) await handleApiError(res, 'Failed to delete monitor');
 		return res.json();
 	},
 
@@ -264,7 +264,7 @@ export const MonitorAPI = {
 		const res = await apiFetch(
 			`${API_Route}/organization/${orgId}/monitors/${monitorId}/stats?days=${days}`
 		);
-		if (!res.ok) throw new Error('Failed to fetch monitor daily stats');
+		if (!res.ok) await handleApiError(res, 'Failed to fetch monitor daily stats');
 		return res.json();
 	},
 
@@ -273,7 +273,7 @@ export const MonitorAPI = {
 			`${API_Route}/organization/${orgId}/monitors/overview?window=${windowDays}`,
 			{ method: 'GET' }
 		);
-		if (!res.ok) throw new Error('Failed to fetch fleet overview');
+		if (!res.ok) await handleApiError(res, 'Failed to fetch fleet overview');
 		return await res.json();
 	},
 
@@ -281,7 +281,7 @@ export const MonitorAPI = {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/monitors/${monitorId}/check`, {
 			method: 'POST'
 		});
-		if (!res.ok) throw new Error('Failed to trigger monitor check');
+		if (!res.ok) await handleApiError(res, 'Failed to trigger monitor check');
 		return res.json();
 	},
 
@@ -294,7 +294,7 @@ export const MonitorAPI = {
 				body: JSON.stringify({ template_id: templateId })
 			}
 		);
-		if (!res.ok) throw new Error('Failed to update monitor template');
+		if (!res.ok) await handleApiError(res, 'Failed to update monitor template');
 		return res.json();
 	}
 };

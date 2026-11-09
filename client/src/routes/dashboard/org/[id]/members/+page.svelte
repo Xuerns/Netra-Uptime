@@ -46,10 +46,13 @@
 		members: regularMembers.length
 	});
 
-	const currentMember = $derived(findMemberByUserId(members, currentUserId));
-	const currentUserRole = $derived(getMemberRole(currentMember, 'member'));
-	const isOwner = $derived(currentUserRole === 'owner');
-	const canManage = $derived(canManageOrg(currentUserRole));
+	const currentMember = $derived(
+		findMemberByUserId(members.length > 0 ? members : data?.members, currentUserId) ??
+			data?.currentMember
+	);
+	const currentUserRole = $derived(getMemberRole(currentMember, data?.currentUserRole ?? 'member'));
+	const isOwner = $derived(data?.isOwner ?? currentUserRole === 'owner');
+	const canManage = $derived(data?.canManage ?? canManageOrg(currentUserRole));
 
 	// Sync with layout header bar
 	$effect(() => {
@@ -187,7 +190,6 @@
 					member={m}
 					{currentUserId}
 					{isOwner}
-					{canManage}
 					onPromote={handlePromote}
 					onDemote={handleDemote}
 					onKick={promptKick}

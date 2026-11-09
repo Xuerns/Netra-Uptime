@@ -19,6 +19,7 @@
 	} from '$lib/components/org';
 	import type { Member } from '$lib/components/org/TransferOwnershipModal.svelte';
 	import { headerStore } from '$lib/stores/headerStore.svelte';
+	import { getCurrentUserId } from '$lib/utils/role';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -28,12 +29,15 @@
 		headerStore.reset();
 	});
 
-	const orgId = $derived(($page.params.id as string) || '');
-	const currentUserId = $derived(data?.user?.id ?? $page.data.user?.id);
+	const orgId = $derived(data.orgId || ($page.params.id as string) || '');
+	const currentUserId = $derived(getCurrentUserId(data?.user ?? $page.data?.user));
 
 	let isLoading = $state(true);
 	let hasAccess = $state(false);
 	let currentUserRole = $state('');
+	const isOwner = $derived(
+		currentUserRole ? currentUserRole === 'owner' : (data?.isOwner ?? false)
+	);
 	let eligibleMembers = $state<Member[]>([]);
 
 	let isTransferModalOpen = $state(false);
@@ -119,7 +123,7 @@
 		</Card.Root>
 	{:else}
 		<!-- General Settings (Owner Only) -->
-		{#if currentUserRole === 'owner'}
+		{#if isOwner}
 			<OrgGeneralSettingsCard
 				{orgId}
 				initialName={orgName}
@@ -133,7 +137,7 @@
 
 		<!-- Danger Zone -->
 		<OrgDangerZoneCard
-			isOwner={currentUserRole === 'owner'}
+			{isOwner}
 			onOpenTransfer={() => (isTransferModalOpen = true)}
 			onOpenDisband={() => (isDisbandModalOpen = true)}
 			onOpenLeave={() => (isLeaveModalOpen = true)}

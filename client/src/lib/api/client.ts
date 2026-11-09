@@ -68,3 +68,13 @@ export async function apiFetch(
 
 	return response;
 }
+
+export async function handleApiError(res: Response, fallbackMessage: string): Promise<never> {
+	const err = await res.json().catch(() => null);
+	const message =
+		(typeof err?.error === 'string' && err.error) ||
+		(typeof err?.message === 'string' && err.message) ||
+		(typeof err === 'string' && err) ||
+		fallbackMessage;
+	throw new Error(message);
+}

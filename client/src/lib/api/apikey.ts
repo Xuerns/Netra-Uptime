@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch, handleApiError } from './client';
 import { env } from '$env/dynamic/public';
 
 const API_Route = `${env.PUBLIC_API_URL}`;
@@ -30,10 +30,7 @@ export interface CreatedAPIKeyResponse {
 export const APIKeyAPI = {
 	getAllByOrg: async (orgId: string): Promise<{ data: APIKey[] }> => {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/api-keys`, { method: 'GET' });
-		if (!res.ok) {
-			const err = await res.json().catch(() => ({}));
-			throw new Error(err.error || 'Failed to fetch API keys');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to fetch API keys');
 		return res.json();
 	},
 
@@ -43,10 +40,7 @@ export const APIKeyAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(req)
 		});
-		if (!res.ok) {
-			const err = await res.json().catch(() => ({}));
-			throw new Error(err.error || 'Failed to create API key');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to create API key');
 		return res.json();
 	},
 
@@ -54,9 +48,6 @@ export const APIKeyAPI = {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/api-keys/${keyId}`, {
 			method: 'DELETE'
 		});
-		if (!res.ok) {
-			const err = await res.json().catch(() => ({}));
-			throw new Error(err.error || 'Failed to revoke API key');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to revoke API key');
 	}
 };

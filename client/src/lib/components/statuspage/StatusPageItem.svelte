@@ -13,6 +13,7 @@
 
 	let {
 		sp,
+		canManage = true,
 		onEdit,
 		onDelete,
 		onMaintenance,
@@ -20,6 +21,7 @@
 		onEmbedBadge
 	}: {
 		sp: StatusPage;
+		canManage?: boolean;
 		onEdit?: (sp: StatusPage) => void;
 		onDelete?: (sp: StatusPage) => void;
 		onMaintenance?: (sp: StatusPage) => void;
@@ -102,7 +104,7 @@
 			<ExternalLink class="size-3.5" />
 		</a>
 
-		{#if onEdit || onDelete || onMaintenance || onGroups || onEmbedBadge}
+		{#if (canManage && (onEdit || onDelete || onMaintenance || onGroups)) || onEmbedBadge}
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger
 					class="flex items-center justify-center size-7 rounded-sm bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
@@ -121,7 +123,7 @@
 							Embed Badge
 						</DropdownMenu.Item>
 					{/if}
-					{#if onGroups}
+					{#if canManage && onGroups}
 						<DropdownMenu.Item
 							onclick={handleGroups}
 							class="flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-white/10 cursor-pointer"
@@ -130,7 +132,7 @@
 							Groups
 						</DropdownMenu.Item>
 					{/if}
-					{#if onMaintenance}
+					{#if canManage && onMaintenance}
 						<DropdownMenu.Item
 							onclick={handleMaintenance}
 							class="flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-white/10 cursor-pointer"
@@ -139,7 +141,7 @@
 							Maintenance
 						</DropdownMenu.Item>
 					{/if}
-					{#if onEdit}
+					{#if canManage && onEdit}
 						<DropdownMenu.Item
 							onclick={handleEdit}
 							class="flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-white/10 cursor-pointer"
@@ -148,8 +150,10 @@
 							Edit
 						</DropdownMenu.Item>
 					{/if}
-					{#if onDelete}
-						<DropdownMenu.Separator />
+					{#if canManage && onDelete}
+						{#if onEmbedBadge || onGroups || onMaintenance || onEdit}
+							<DropdownMenu.Separator />
+						{/if}
 						<DropdownMenu.Item
 							onclick={handleDelete}
 							class="flex items-center gap-2.5 px-3 py-2 text-xs text-destructive hover:bg-destructive/10 cursor-pointer"

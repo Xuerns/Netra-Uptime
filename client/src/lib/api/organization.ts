@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch, handleApiError } from './client';
 import { env } from '$env/dynamic/public';
 
 const API_Route = `${env.PUBLIC_API_URL}`;
@@ -171,7 +171,7 @@ function mapOrganization(org: any): OrganizationItem {
 export const OrgAPI = {
 	getAll: async (): Promise<OrgListResponse> => {
 		const res = await apiFetch(`${API_Route}/organization/all`, { method: 'GET' });
-		if (!res.ok) throw new Error('Failed to fetch organizations');
+		if (!res.ok) await handleApiError(res, 'Failed to fetch organizations');
 		const json = await res.json();
 		return {
 			...json,
@@ -185,7 +185,7 @@ export const OrgAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(data)
 		});
-		if (!res.ok) throw new Error('Failed to create organization');
+		if (!res.ok) await handleApiError(res, 'Failed to create organization');
 		const json = await res.json();
 		return {
 			...json,
@@ -198,7 +198,7 @@ export const OrgAPI = {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/members`, {
 			method: 'GET'
 		});
-		if (!res.ok) throw new Error('Failed to fetch members');
+		if (!res.ok) await handleApiError(res, 'Failed to fetch members');
 		const json = await res.json();
 		return {
 			...json,
@@ -217,10 +217,7 @@ export const OrgAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ invitations })
 		});
-		if (!res.ok) {
-			const err = await res.json().catch(() => ({}));
-			throw new Error(err.error || err.message || 'Failed to invite member');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to invite member');
 		return res.json();
 	},
 
@@ -231,7 +228,7 @@ export const OrgAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(memberId)
 		});
-		if (!res.ok) throw new Error('Failed to kick member');
+		if (!res.ok) await handleApiError(res, 'Failed to kick member');
 		return res.json();
 	},
 
@@ -241,7 +238,7 @@ export const OrgAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(data)
 		});
-		if (!res.ok) throw new Error('Failed to update organization');
+		if (!res.ok) await handleApiError(res, 'Failed to update organization');
 		const json = await res.json();
 		return {
 			...json,
@@ -253,16 +250,13 @@ export const OrgAPI = {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/disband`, {
 			method: 'DELETE'
 		});
-		if (!res.ok) throw new Error('Failed to disband organization');
+		if (!res.ok) await handleApiError(res, 'Failed to disband organization');
 		return res.json();
 	},
 
 	getInvitations: async (): Promise<OrgInvitationsResponse> => {
 		const res = await apiFetch(`${API_Route}/invitation`, { method: 'GET' });
-		if (!res.ok) {
-			const errText = await res.text();
-			throw new Error(`Failed to fetch invitations: ${res.status} ${errText}`);
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to fetch invitations');
 		return res.json();
 	},
 
@@ -275,7 +269,7 @@ export const OrgAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ invitation_id: invitationId, action })
 		});
-		if (!res.ok) throw new Error('Failed to process invitation');
+		if (!res.ok) await handleApiError(res, 'Failed to process invitation');
 		return res.json();
 	},
 
@@ -292,7 +286,7 @@ export const OrgAPI = {
 		const res = await apiFetch(url, { method: 'GET' });
 		if (!res.ok) {
 			if (res.status === 404) return { data: [] }; // Handle No users found
-			throw new Error('Failed to search persons');
+			await handleApiError(res, 'Failed to search persons');
 		}
 		return res.json();
 	},
@@ -303,7 +297,7 @@ export const OrgAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ user_id: userId })
 		});
-		if (!res.ok) throw new Error('Failed to promote user to admin');
+		if (!res.ok) await handleApiError(res, 'Failed to promote user to admin');
 		return res.json();
 	},
 
@@ -313,7 +307,7 @@ export const OrgAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ user_id: userId })
 		});
-		if (!res.ok) throw new Error('Failed to demote user to member');
+		if (!res.ok) await handleApiError(res, 'Failed to demote user to member');
 		return res.json();
 	},
 
@@ -323,7 +317,7 @@ export const OrgAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ user_id: userId })
 		});
-		if (!res.ok) throw new Error('Failed to transfer ownership');
+		if (!res.ok) await handleApiError(res, 'Failed to transfer ownership');
 		return res.json();
 	},
 
@@ -331,7 +325,7 @@ export const OrgAPI = {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/leave`, {
 			method: 'PUT'
 		});
-		if (!res.ok) throw new Error('Failed to leave organization');
+		if (!res.ok) await handleApiError(res, 'Failed to leave organization');
 		return res.json();
 	}
 };

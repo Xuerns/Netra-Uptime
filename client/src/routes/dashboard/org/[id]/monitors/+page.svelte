@@ -26,6 +26,7 @@
 
 	// ── Route param & Organization ─────────────────────────────────────────────
 	const orgId = $derived(data.orgId || ($page.params.id as string) || '');
+	const canManage = $derived(data?.canManage ?? false);
 
 	// ── State ─────────────────────────────────────────────────────────────────
 	let monitors = $state<Monitor[]>([]);
@@ -80,7 +81,7 @@
 		headerStore.set({
 			showSearch: true,
 			searchPlaceholder: 'Search monitors (URL, tag, name)...',
-			actionType: 'monitor',
+			actionType: canManage ? 'monitor' : null,
 			onAction: (type: 'http' | 'ping' | 'tcp') => openAddMonitor(type),
 			badge:
 				counts.total === 0
@@ -264,39 +265,45 @@
 				</div>
 				<h3 class="text-xl font-semibold text-foreground mb-1.5">No monitors yet</h3>
 				<p class="text-[14px] text-muted-foreground max-w-[38ch] mb-6 leading-relaxed">
-					Create a monitor to start tracking uptime and response times for your services.
+					{#if canManage}
+						Create a monitor to start tracking uptime and response times for your services.
+					{:else}
+						No monitors configured yet. Ask an admin or owner to create one.
+					{/if}
 				</p>
-				<DropdownMenu.Root>
-					<DropdownMenu.Trigger
-						class="inline-flex items-center gap-1.5 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 rounded-lg font-medium text-xs cursor-pointer focus:outline-none"
-					>
-						<Plus class="size-3.5 stroke-[2.5]" />
-						<span>Add monitor</span>
-					</DropdownMenu.Trigger>
-					<DropdownMenu.Content
-						align="center"
-						class="bg-card border-border text-foreground min-w-[160px] p-1.5 rounded-lg"
-					>
-						<DropdownMenu.Item
-							class="hover:bg-white/10 cursor-pointer rounded-md p-2 text-xs"
-							onclick={() => openAddMonitor('http')}
+				{#if canManage}
+					<DropdownMenu.Root>
+						<DropdownMenu.Trigger
+							class="inline-flex items-center gap-1.5 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 rounded-lg font-medium text-xs cursor-pointer focus:outline-none"
 						>
-							<Globe class="mr-2 size-3.5 text-emerald-400" /> HTTP/API
-						</DropdownMenu.Item>
-						<DropdownMenu.Item
-							class="hover:bg-white/10 cursor-pointer rounded-md p-2 text-xs"
-							onclick={() => openAddMonitor('ping')}
+							<Plus class="size-3.5 stroke-[2.5]" />
+							<span>Add monitor</span>
+						</DropdownMenu.Trigger>
+						<DropdownMenu.Content
+							align="center"
+							class="bg-card border-border text-foreground min-w-[160px] p-1.5 rounded-lg"
 						>
-							<Radio class="mr-2 size-3.5 text-emerald-400" /> Ping
-						</DropdownMenu.Item>
-						<DropdownMenu.Item
-							class="hover:bg-white/10 cursor-pointer rounded-md p-2 text-xs"
-							onclick={() => openAddMonitor('tcp')}
-						>
-							<Cpu class="mr-2 size-3.5 text-emerald-400" /> TCP (Port)
-						</DropdownMenu.Item>
-					</DropdownMenu.Content>
-				</DropdownMenu.Root>
+							<DropdownMenu.Item
+								class="hover:bg-white/10 cursor-pointer rounded-md p-2 text-xs"
+								onclick={() => openAddMonitor('http')}
+							>
+								<Globe class="mr-2 size-3.5 text-emerald-400" /> HTTP/API
+							</DropdownMenu.Item>
+							<DropdownMenu.Item
+								class="hover:bg-white/10 cursor-pointer rounded-md p-2 text-xs"
+								onclick={() => openAddMonitor('ping')}
+							>
+								<Radio class="mr-2 size-3.5 text-emerald-400" /> Ping
+							</DropdownMenu.Item>
+							<DropdownMenu.Item
+								class="hover:bg-white/10 cursor-pointer rounded-md p-2 text-xs"
+								onclick={() => openAddMonitor('tcp')}
+							>
+								<Cpu class="mr-2 size-3.5 text-emerald-400" /> TCP (Port)
+							</DropdownMenu.Item>
+						</DropdownMenu.Content>
+					</DropdownMenu.Root>
+				{/if}
 			</div>
 		{:else}
 			<!-- BEGIN: OverviewHeroStrip -->
@@ -346,6 +353,7 @@
 							<div animate:flip={{ duration: 250 }} class="flex w-full h-full">
 								<MonitorItem
 									{monitor}
+									{canManage}
 									viewMode="grid"
 									{handleDeleteMonitor}
 									{handleEditMonitor}
@@ -360,6 +368,7 @@
 			{:else}
 				<MonitorListTable
 					monitors={filtered}
+					{canManage}
 					onDelete={handleDeleteMonitor}
 					onEdit={handleEditMonitor}
 					onTogglePause={handleTogglePause}

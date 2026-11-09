@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch, handleApiError } from './client';
 import { env } from '$env/dynamic/public';
 import type { AlertRule, CreateAlertRuleRequest, UpdateAlertRuleRequest } from './alertRule';
 
@@ -34,7 +34,7 @@ export const AlertTemplateAPI = {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/alert-templates`, {
 			method: 'GET'
 		});
-		if (!res.ok) throw new Error('Failed to fetch alert templates');
+		if (!res.ok) await handleApiError(res, 'Failed to fetch alert templates');
 		return res.json();
 	},
 
@@ -45,7 +45,7 @@ export const AlertTemplateAPI = {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/alert-templates/${templateId}`, {
 			method: 'GET'
 		});
-		if (!res.ok) throw new Error('Failed to fetch alert template');
+		if (!res.ok) await handleApiError(res, 'Failed to fetch alert template');
 		return res.json();
 	},
 
@@ -58,10 +58,7 @@ export const AlertTemplateAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)
 		});
-		if (!res.ok) {
-			const err = await res.json().catch(() => ({}));
-			throw new Error(err.error || 'Failed to create alert template');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to create alert template');
 		return res.json();
 	},
 
@@ -75,10 +72,7 @@ export const AlertTemplateAPI = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)
 		});
-		if (!res.ok) {
-			const err = await res.json().catch(() => ({}));
-			throw new Error(err.error || 'Failed to update alert template');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to update alert template');
 		return res.json();
 	},
 
@@ -89,10 +83,7 @@ export const AlertTemplateAPI = {
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/alert-templates/${templateId}`, {
 			method: 'DELETE'
 		});
-		if (!res.ok) {
-			const err = await res.json().catch(() => ({}));
-			throw new Error(err.error || 'Failed to delete alert template');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to delete alert template');
 		return res.json();
 	},
 
@@ -109,10 +100,7 @@ export const AlertTemplateAPI = {
 				body: JSON.stringify(payload)
 			}
 		);
-		if (!res.ok) {
-			const err = await res.json().catch(() => ({}));
-			throw new Error(err.error || 'Failed to add rule to template');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to add rule to template');
 		return res.json();
 	},
 
@@ -130,10 +118,7 @@ export const AlertTemplateAPI = {
 				body: JSON.stringify(payload)
 			}
 		);
-		if (!res.ok) {
-			const err = await res.json().catch(() => ({}));
-			throw new Error(err.error || 'Failed to update rule');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to update rule');
 		return res.json();
 	},
 
@@ -148,10 +133,7 @@ export const AlertTemplateAPI = {
 				method: 'DELETE'
 			}
 		);
-		if (!res.ok) {
-			const err = await res.json().catch(() => ({}));
-			throw new Error(err.error || 'Failed to remove rule from template');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to remove rule from template');
 		return res.json();
 	},
 
@@ -168,10 +150,7 @@ export const AlertTemplateAPI = {
 				body: JSON.stringify({ template_id: templateId })
 			}
 		);
-		if (!res.ok) {
-			const err = await res.json().catch(() => ({}));
-			throw new Error(err.error || 'Failed to assign template to monitor');
-		}
+		if (!res.ok) await handleApiError(res, 'Failed to assign template to monitor');
 		return res.json();
 	}
 };

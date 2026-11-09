@@ -1,11 +1,14 @@
 import { error } from '@sveltejs/kit';
 import type { LayoutLoad } from './$types';
 import { OrgAPI } from '$lib/api/organization';
+import { getCurrentUserId, findMemberByUserId, getMemberRole, canManageOrg } from '$lib/utils/role';
 
-export const load: LayoutLoad = async ({ params }) => {
+export const load: LayoutLoad = async ({ params, parent }) => {
 	const orgId = params.id;
 
 	try {
+		const { user } = await parent();
+
 		// Fetch org list to find current org details
 		const orgsRes = await OrgAPI.getAll();
 		const allOrgs = orgsRes.data ?? [];
@@ -19,11 +22,20 @@ export const load: LayoutLoad = async ({ params }) => {
 		const membersRes = await OrgAPI.getMembers(orgId);
 		const members = membersRes.data ?? [];
 
+		const currentMember = findMemberByUserId(members, getCurrentUserId(user));
+		const currentUserRole = getMemberRole(currentMember, 'member');
+		const canManage = canManageOrg(currentUserRole);
+		const isOwner = currentUserRole === 'owner';
+
 		return {
 			org: currentOrg,
 			allOrgs,
 			members,
-			orgId
+			orgId,
+			currentMember,
+			currentUserRole,
+			canManage,
+			isOwner
 		};
 	} catch (err: unknown) {
 		if (err && typeof err === 'object' && 'status' in err) throw err;

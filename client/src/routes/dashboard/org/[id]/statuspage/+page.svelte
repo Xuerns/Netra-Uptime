@@ -15,8 +15,12 @@
 	import { headerStore } from '$lib/stores/headerStore.svelte';
 	import { toast } from 'svelte-sonner';
 	import { parseApiError } from '$lib/utils/parseApiError';
+	import type { PageData } from './$types';
 
-	const orgId = $derived(($page.params.id as string) || '');
+	let { data }: { data: PageData } = $props();
+
+	const orgId = $derived(data.orgId || ($page.params.id as string) || '');
+	const canManage = $derived(data?.canManage ?? false);
 
 	// ── State ─────────────────────────────────────────────────────────────────
 	let statusPages = $state<StatusPage[]>([]);
@@ -54,7 +58,7 @@
 		headerStore.set({
 			showSearch: statusPages.length > 0,
 			searchPlaceholder: 'Search status pages...',
-			actionType: 'button',
+			actionType: canManage ? 'button' : null,
 			actionLabel: 'Add status page',
 			onAction: openAddModal,
 			badge: {
@@ -205,15 +209,21 @@
 				</div>
 				<h3 class="text-xl font-semibold text-foreground mb-1.5">No status pages yet</h3>
 				<p class="text-[14px] text-muted-foreground max-w-[38ch] mb-6 leading-relaxed">
-					Create a status page to share system status and uptime with your customers.
+					{#if canManage}
+						Create a status page to share system status and uptime with your customers.
+					{:else}
+						No status pages configured yet. Ask an admin or owner to create one.
+					{/if}
 				</p>
-				<Button
-					class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 gap-1.5 font-medium rounded-lg"
-					onclick={openAddModal}
-				>
-					<Plus class="size-4" />
-					Add status page
-				</Button>
+				{#if canManage}
+					<Button
+						class="bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-foreground active:scale-[0.98] transition-all duration-200 h-9 px-4 gap-1.5 font-medium rounded-lg"
+						onclick={openAddModal}
+					>
+						<Plus class="size-4" />
+						Add status page
+					</Button>
+				{/if}
 			</div>
 
 			<!-- Search / filter no-results -->
@@ -257,6 +267,7 @@
 					{#each filtered as sp (sp.ID)}
 						<StatusPageItem
 							{sp}
+							{canManage}
 							onEdit={openEditModal}
 							onDelete={openDeleteConfirm}
 							onMaintenance={openMaintenanceModal}

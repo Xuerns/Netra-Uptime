@@ -13,9 +13,16 @@
 		monitorId: string;
 		monitorType?: string;
 		alertTemplateId?: string | null;
+		canManage?: boolean;
 	}
 
-	let { orgId, monitorId, monitorType = 'http', alertTemplateId = null }: Props = $props();
+	let {
+		orgId,
+		monitorId,
+		monitorType = 'http',
+		alertTemplateId = null,
+		canManage = true
+	}: Props = $props();
 
 	let isHttp = $derived(monitorType?.toLowerCase() === 'http');
 
@@ -45,8 +52,10 @@
 				const defaultTmpl = availableTemplates.find((t) => t.is_default);
 				if (defaultTmpl) {
 					currentTemplateId = defaultTmpl.id;
-					// Save to monitor in background
-					MonitorAPI.applyTemplate(orgId, monitorId, defaultTmpl.id).catch(() => {});
+					// Save to monitor in background if user can manage
+					if (canManage) {
+						MonitorAPI.applyTemplate(orgId, monitorId, defaultTmpl.id).catch(() => {});
+					}
 				}
 			}
 		} catch (err: unknown) {
@@ -90,51 +99,68 @@
 	</div>
 
 	<!-- Template Selector -->
-	<div class="flex items-center gap-2 w-full">
-		<Select.Root
-			type="single"
-			value={currentTemplateId || 'none'}
-			disabled={isApplyingTemplate || isLoading}
-			onValueChange={(val) => {
-				if (val) handleTemplateSelect(val);
-			}}
-		>
-			<Select.Trigger
-				class="h-8.5 px-3 rounded-lg border border-border bg-background text-xs font-medium text-foreground focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer flex-1 min-w-0 truncate"
+	{#if canManage}
+		<div class="flex items-center gap-2 w-full">
+			<Select.Root
+				type="single"
+				value={currentTemplateId || 'none'}
+				disabled={isApplyingTemplate || isLoading}
+				onValueChange={(val) => {
+					if (val) handleTemplateSelect(val);
+				}}
 			>
-				<span class="truncate">{selectedTemplateLabel}</span>
-			</Select.Trigger>
-			<Select.Content class="bg-card border-border text-foreground max-h-60">
-				<Select.Item
-					value="none"
-					label="System Default Checks"
-					class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer text-xs"
+				<Select.Trigger
+					class="h-8.5 px-3 rounded-lg border border-border bg-background text-xs font-medium text-foreground focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer flex-1 min-w-0 truncate"
 				>
-					System Default Checks
-				</Select.Item>
-				{#each availableTemplates as tmpl (tmpl.id)}
-					{@const tmplLabel = `${tmpl.name} (${tmpl.rules?.length || 0})`}
+					<span class="truncate">{selectedTemplateLabel}</span>
+				</Select.Trigger>
+				<Select.Content class="bg-card border-border text-foreground max-h-60">
 					<Select.Item
-						value={tmpl.id}
-						label={tmplLabel}
+						value="none"
+						label="System Default Checks"
 						class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer text-xs"
 					>
-						{tmplLabel}
+						System Default Checks
 					</Select.Item>
-				{/each}
-			</Select.Content>
-		</Select.Root>
+					{#each availableTemplates as tmpl (tmpl.id)}
+						{@const tmplLabel = `${tmpl.name} (${tmpl.rules?.length || 0})`}
+						<Select.Item
+							value={tmpl.id}
+							label={tmplLabel}
+							class="hover:bg-accent focus:bg-accent focus:text-foreground cursor-pointer text-xs"
+						>
+							{tmplLabel}
+						</Select.Item>
+					{/each}
+				</Select.Content>
+			</Select.Root>
 
-		<a
-			href={activeTemplate
-				? `/dashboard/org/${orgId}/alert-templates/${activeTemplate.id}`
-				: `/dashboard/org/${orgId}/alert-templates`}
-			class="inline-flex items-center gap-1.5 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-8.5 px-3 rounded-lg font-medium text-xs cursor-pointer shrink-0"
+			<a
+				href={activeTemplate
+					? `/dashboard/org/${orgId}/alert-templates/${activeTemplate.id}`
+					: `/dashboard/org/${orgId}/alert-templates`}
+				class="inline-flex items-center gap-1.5 bg-secondary border border-border text-primary hover:bg-primary hover:border-primary hover:text-primary-foreground active:scale-[0.98] transition-all duration-200 h-8.5 px-3 rounded-lg font-medium text-xs cursor-pointer shrink-0"
+			>
+				<span>{activeTemplate ? 'Edit' : 'Manage'}</span>
+				<ExternalLink class="size-3" />
+			</a>
+		</div>
+	{:else}
+		<div
+			class="flex items-center justify-between gap-2 p-2 rounded-lg border border-border bg-background text-xs min-h-8.5"
 		>
-			<span>{activeTemplate ? 'Edit' : 'Manage'}</span>
-			<ExternalLink class="size-3" />
-		</a>
-	</div>
+			<span class="font-medium text-foreground truncate">{selectedTemplateLabel}</span>
+			{#if activeTemplate}
+				<a
+					href="/dashboard/org/{orgId}/alert-templates/{activeTemplate.id}"
+					class="inline-flex items-center gap-1 text-primary hover:underline shrink-0 text-xs font-medium"
+				>
+					<span>View</span>
+					<ExternalLink class="size-3" />
+				</a>
+			{/if}
+		</div>
+	{/if}
 
 	<!-- Rules Content Area -->
 	{#if isLoading}

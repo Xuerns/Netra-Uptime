@@ -41,6 +41,7 @@
 	// ── Params ────────────────────────────────────────────────────────────────
 	const orgId = $derived(data.orgId || ($page.params.id as string));
 	const monitorId = $derived(($page.params.monitorId as string) || '');
+	const canManage = $derived(data?.canManage ?? false);
 
 	// ── State ─────────────────────────────────────────────────────────────────
 	let monitor = $state<Monitor | null>(null);
@@ -502,6 +503,7 @@
 		<header class="pb-6 border-b border-border/60">
 			<MonitorDetailHeader
 				{monitor}
+				{canManage}
 				onPauseResume={handlePauseResume}
 				onEdit={() => (isEditModalOpen = true)}
 				onDelete={handleDelete}
@@ -580,6 +582,7 @@
 				<MonitorAlertRulesSection
 					{orgId}
 					{monitorId}
+					{canManage}
 					monitorType={monitor.Type}
 					alertTemplateId={monitor.AlertTemplateID}
 				/>
