@@ -84,22 +84,22 @@
 	}
 </script>
 
-<div class="w-full space-y-2 select-none">
+<div class="w-full space-y-1 select-none">
 	<!-- Top Bar stats & Tooltip Container -->
 	<div class="relative w-full">
 		{#if hoveredIndex !== null && paddedStats[hoveredIndex] && tooltipPos}
 			{@const day = paddedStats[hoveredIndex]}
 			<div
-				class="absolute -top-12 z-30 -translate-x-1/2 pointer-events-none transition-all duration-75"
+				class="absolute -top-11 z-30 -translate-x-1/2 pointer-events-none transition-all duration-75"
 				style="left: {Math.max(60, Math.min(tooltipPos.x, 700))}px"
 			>
 				<div
-					class="bg-card/95 backdrop-blur-md border border-border px-2.5 py-1.5 rounded-lg text-center text-xs whitespace-nowrap"
+					class="bg-card/95 backdrop-blur-md border border-border px-2.5 py-1 rounded-md text-center text-xs whitespace-nowrap"
 				>
-					<div class="font-semibold text-foreground">{formatDate(day.date)}</div>
+					<div class="font-medium text-foreground text-[11px]">{formatDate(day.date)}</div>
 					{#if day.has_data}
 						<div
-							class="text-[11px] font-mono text-muted-foreground flex items-center gap-1.5 justify-center mt-0.5"
+							class="text-[10px] font-mono text-muted-foreground flex items-center gap-1.5 justify-center mt-0.5"
 						>
 							<span
 								style={day.uptime_percentage >= 99.0 && accentColor ? `color: ${accentColor};` : ''}
@@ -119,7 +119,7 @@
 							{/if}
 						</div>
 					{:else}
-						<div class="text-[11px] text-muted-foreground mt-0.5">No checks recorded</div>
+						<div class="text-[10px] text-muted-foreground mt-0.5">No checks recorded</div>
 					{/if}
 				</div>
 			</div>
@@ -128,7 +128,7 @@
 		<!-- The 90-Day Segments -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
-			class="flex items-center gap-[2px] sm:gap-[3px] w-full h-8 sm:h-9 py-1"
+			class="flex items-center gap-[2px] sm:gap-[2.5px] w-full h-5 sm:h-6 py-0.5"
 			onmouseleave={handleMouseLeave}
 		>
 			{#each paddedStats as day, i (day.date || i)}
@@ -138,7 +138,7 @@
 					style={day.has_data && day.uptime_percentage >= 99.0 && accentColor
 						? `background-color: ${accentColor};`
 						: ''}
-					class="flex-1 h-full rounded-[2px] sm:rounded-sm transition-all duration-150 {getBarColor(
+					class="flex-1 h-full rounded-[1.5px] sm:rounded-[2px] transition-all duration-150 {getBarColor(
 						day
 					)} {hoveredIndex === i ? 'scale-y-125 z-10 brightness-125' : 'opacity-90'}"
 					onmouseenter={(e) => handleMouseEnter(i, e)}
@@ -150,7 +150,7 @@
 
 	<!-- Bottom Axis / Scale -->
 	<div
-		class="flex justify-between items-center text-[11px] font-mono text-muted-foreground/80 px-0.5"
+		class="flex justify-between items-center text-[10px] sm:text-[11px] font-mono text-muted-foreground/80 px-0.5"
 	>
 		<span>90 days ago</span>
 		{#if overallUptime !== null && overallUptime !== undefined}

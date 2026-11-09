@@ -123,7 +123,9 @@
 	/>
 
 	<!-- Main Content Container -->
-	<main class="flex-1 pb-16 px-4 sm:px-6 max-w-5xl mx-auto w-full space-y-10 mt-6">
+	<main
+		class="flex-1 pb-12 sm:pb-16 px-4 sm:px-6 max-w-5xl mx-auto w-full space-y-6 sm:space-y-8 mt-5 sm:mt-6"
+	>
 		<!-- 1. Overall Status Banner Component -->
 		<PublicStatusBanner {statusConfig} {lastUpdated} />
 

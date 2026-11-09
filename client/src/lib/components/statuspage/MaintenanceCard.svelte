@@ -39,7 +39,7 @@
 </script>
 
 <div
-	class="rounded-md border transition-all duration-200 backdrop-blur-md overflow-hidden p-5 sm:p-6 space-y-3 {isOngoing
+	class="rounded-md border transition-all duration-200 backdrop-blur-md overflow-hidden p-3.5 sm:p-4 space-y-2.5 {isOngoing
 		? 'bg-blue-500/10 border-blue-500/30 text-blue-300'
 		: 'bg-indigo-500/5 border-indigo-500/20 text-indigo-300'}"
 >
@@ -48,14 +48,14 @@
 		<div class="flex items-center gap-2">
 			{#if isOngoing}
 				<span
-					class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30"
+					class="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30"
 				>
 					<span class="size-1.5 rounded-full bg-blue-400"></span>
 					In Progress
 				</span>
 			{:else}
 				<span
-					class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
+					class="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
 				>
 					<Calendar class="size-3" />
 					Scheduled ({timeUntil(maintenance.scheduled_start)})
@@ -70,14 +70,12 @@
 
 	<!-- Title & Description -->
 	<div>
-		<h3 class="text-base sm:text-lg font-semibold text-foreground flex items-center gap-2">
-			<Wrench class="size-4 text-blue-400 shrink-0" />
+		<h3 class="text-sm sm:text-base font-semibold text-foreground flex items-center gap-2">
+			<Wrench class="size-3.5 text-blue-400 shrink-0" />
 			{maintenance.title}
 		</h3>
 		{#if maintenance.description}
-			<p
-				class="text-xs sm:text-sm text-muted-foreground mt-1.5 leading-relaxed whitespace-pre-line"
-			>
+			<p class="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed whitespace-pre-line">
 				{maintenance.description}
 			</p>
 		{/if}
@@ -85,11 +83,11 @@
 
 	<!-- Affected Monitors -->
 	{#if maintenance.affected_monitors && maintenance.affected_monitors.length > 0}
-		<div class="pt-2 border-t border-border/40 flex flex-wrap items-center gap-2">
+		<div class="pt-2 border-t border-border/40 flex flex-wrap items-center gap-1.5">
 			<span class="text-[11px] text-muted-foreground font-medium">Affected Services:</span>
 			{#each maintenance.affected_monitors as monitorName (monitorName)}
 				<span
-					class="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 border border-border/80 text-foreground/80"
+					class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 border border-border/80 text-foreground/80"
 				>
 					{monitorName}
 				</span>

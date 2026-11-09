@@ -39,11 +39,13 @@
 	}
 </script>
 
-<section class="space-y-4">
+<section class="space-y-3 sm:space-y-4">
 	<div class="flex items-center justify-between">
 		<div class="flex items-center gap-2">
 			<Radio class="size-4 text-primary" />
-			<h2 class="text-lg font-semibold tracking-tight text-foreground">Services & Systems</h2>
+			<h2 class="text-base sm:text-lg font-semibold tracking-tight text-foreground">
+				Services & Systems
+			</h2>
 		</div>
 		<span class="text-xs text-muted-foreground font-mono">
 			{statusPage.monitors?.length || 0} component{statusPage.monitors?.length === 1 ? '' : 's'}
@@ -53,7 +55,7 @@
 	{#if statusPage.monitors && statusPage.monitors.length > 0}
 		{#if monitorGrouping.hasGroups}
 			<!-- Grouped Component Sections -->
-			<div class="space-y-4">
+			<div class="space-y-3">
 				{#each monitorGrouping.groups as gInfo (gInfo.group.id)}
 					{@const isCollapsed = isGroupCollapsed(
 						gInfo.group.id,
@@ -68,20 +70,20 @@
 					>
 						<!-- Group Header (Collapsible Trigger) -->
 						<Collapsible.Trigger
-							class="w-full px-5 py-3.5 flex items-center justify-between gap-3 bg-white/2 hover:bg-white/5 transition-colors text-left cursor-pointer data-[state=open]:border-b data-[state=open]:border-border/50"
+							class="w-full px-4 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between gap-3 bg-white/2 hover:bg-white/5 transition-colors text-left cursor-pointer data-[state=open]:border-b data-[state=open]:border-border/50"
 						>
-							<div class="flex items-center gap-3 min-w-0">
+							<div class="flex items-center gap-2.5 min-w-0">
 								<ChevronDown
 									class="size-4 text-muted-foreground transition-transform duration-200 shrink-0 {isCollapsed
 										? '-rotate-90'
 										: ''}"
 								/>
 								<div class="flex items-center gap-2 min-w-0">
-									<h3 class="text-base font-semibold text-foreground truncate">
+									<h3 class="text-sm sm:text-base font-semibold text-foreground truncate">
 										{gInfo.group.name}
 									</h3>
 									<span
-										class="text-[11px] font-mono text-muted-foreground px-2 py-0.5 rounded-full bg-white/5 border border-border/60"
+										class="text-[11px] font-mono text-muted-foreground px-1.5 py-0.5 rounded-full bg-white/5 border border-border/60"
 									>
 										{gInfo.monitors.length}
 									</span>
@@ -93,9 +95,9 @@
 						<Collapsible.Content
 							class="overflow-hidden transition-all data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down"
 						>
-							<div class="p-4 sm:p-5 space-y-3">
+							<div class="p-3 sm:p-3.5 space-y-2">
 								{#if gInfo.monitors.length === 0}
-									<div class="text-xs text-muted-foreground py-3 text-center italic">
+									<div class="text-xs text-muted-foreground py-2 text-center italic">
 										No monitors currently in this group.
 									</div>
 								{:else}
@@ -123,9 +125,9 @@
 						class="rounded-md border border-border/80 bg-card overflow-hidden"
 					>
 						<Collapsible.Trigger
-							class="w-full px-5 py-3.5 flex items-center justify-between gap-3 bg-white/2 hover:bg-white/5 transition-colors text-left cursor-pointer data-[state=open]:border-b data-[state=open]:border-border/50"
+							class="w-full px-4 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between gap-3 bg-white/2 hover:bg-white/5 transition-colors text-left cursor-pointer data-[state=open]:border-b data-[state=open]:border-border/50"
 						>
-							<div class="flex items-center gap-3 min-w-0">
+							<div class="flex items-center gap-2.5 min-w-0">
 								<ChevronDown
 									class="size-4 text-muted-foreground transition-transform duration-200 shrink-0 {isUngroupedCollapsed
 										? '-rotate-90'
@@ -133,9 +135,11 @@
 								/>
 								<div class="flex items-center gap-2 min-w-0">
 									<FolderTree class="size-4 text-muted-foreground shrink-0" />
-									<h3 class="text-base font-semibold text-foreground truncate">Other Components</h3>
+									<h3 class="text-sm sm:text-base font-semibold text-foreground truncate">
+										Other Components
+									</h3>
 									<span
-										class="text-[11px] font-mono text-muted-foreground px-2 py-0.5 rounded-full bg-white/5 border border-border/60"
+										class="text-[11px] font-mono text-muted-foreground px-1.5 py-0.5 rounded-full bg-white/5 border border-border/60"
 									>
 										{monitorGrouping.ungrouped.length}
 									</span>
@@ -146,7 +150,7 @@
 						<Collapsible.Content
 							class="overflow-hidden transition-all data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down"
 						>
-							<div class="p-4 sm:p-5 space-y-3">
+							<div class="p-3 sm:p-3.5 space-y-2">
 								{#each monitorGrouping.ungrouped as monitor (monitor.id)}
 									<PublicMonitorRow {monitor} {themeColor} />
 								{/each}
@@ -157,7 +161,7 @@
 			</div>
 		{:else}
 			<!-- Flat List Layout (Fallback when no groups exist) -->
-			<div class="space-y-3">
+			<div class="space-y-2 sm:space-y-2.5">
 				{#each statusPage.monitors as monitor (monitor.id)}
 					<PublicMonitorRow {monitor} {themeColor} />
 				{/each}

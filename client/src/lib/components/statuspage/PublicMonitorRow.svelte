@@ -17,7 +17,7 @@
 				return {
 					label: 'Operational',
 					dotClass: '',
-					dotStyle: `background-color: ${themeColor}; box-shadow: 0 0 8px ${themeColor}b3;`,
+					dotStyle: `background-color: ${themeColor};`,
 					textClass: '',
 					textStyle: `color: ${themeColor};`,
 					sparklineColor: themeColor
@@ -25,7 +25,7 @@
 			case 'degraded':
 				return {
 					label: 'Degraded',
-					dotClass: 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.7)]',
+					dotClass: 'bg-amber-500',
 					dotStyle: '',
 					textClass: 'text-amber-400',
 					textStyle: '',
@@ -34,7 +34,7 @@
 			case 'paused':
 				return {
 					label: 'Paused',
-					dotClass: 'bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.7)]',
+					dotClass: 'bg-blue-400',
 					dotStyle: '',
 					textClass: 'text-blue-400',
 					textStyle: '',
@@ -43,7 +43,7 @@
 			default:
 				return {
 					label: 'Down',
-					dotClass: 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.7)]',
+					dotClass: 'bg-red-500',
 					dotStyle: '',
 					textClass: 'text-red-400',
 					textStyle: '',
@@ -56,52 +56,53 @@
 </script>
 
 <div
-	class="group rounded-md border border-border/70 hover:border-border/90 bg-card p-4 sm:p-5 transition-all duration-200 space-y-3"
+	class="group rounded-md border border-border/70 hover:border-border/90 bg-card p-3 sm:px-4 sm:py-3 transition-all duration-200 space-y-2"
 >
 	<!-- Monitor Top Info Row -->
-	<div class="flex flex-wrap items-center justify-between gap-3">
-		<div class="flex items-center gap-2.5 min-w-0">
+	<div class="flex flex-wrap items-center justify-between gap-2.5">
+		<div class="flex items-center gap-2 min-w-0">
 			<p
-				class="text-sm sm:text-base font-semibold text-foreground truncate group-hover:text-primary transition-colors"
+				class="text-sm sm:text-[15px] font-medium text-foreground truncate group-hover:text-primary transition-colors"
 			>
 				{monitor.name}
 			</p>
 			<span
-				class="text-[10px] font-mono px-2 py-0.5 bg-surface-dim text-muted-foreground uppercase border border-outline-variant rounded-sm shrink-0"
+				class="text-[10px] font-mono px-1.5 py-0.5 bg-surface-dim text-muted-foreground uppercase border border-outline-variant rounded-sm shrink-0"
 			>
 				{monitor.type}
 			</span>
 		</div>
 
-		<div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
+		<div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
 			{#if monitor.recent_checks && monitor.recent_checks.length > 0}
 				<div
-					class="hidden sm:inline-flex items-center gap-2.5 px-2.5 py-1 rounded-full bg-white/3 border border-border/50"
+					class="hidden sm:inline-flex items-center gap-2 px-2 py-0.5 rounded-full bg-white/3 border border-border/50"
 					title="Recent latency trend"
 				>
-					<div class="w-16 md:w-20 h-4 flex items-center">
+					<div class="w-14 md:w-16 h-3.5 flex items-center">
 						<Sparkline
 							data={monitor.recent_checks.slice().reverse()}
 							color={statusInfo.sparklineColor}
-							height={16}
+							height={14}
 						/>
 					</div>
-					<span class="text-xs font-mono text-muted-foreground inline-flex items-center gap-1">
+					<span class="text-[11px] font-mono text-muted-foreground inline-flex items-center gap-1">
 						<Activity class="size-3 text-muted-foreground" />
 						{monitor.recent_checks[0]}ms
 					</span>
 				</div>
 				<span
-					class="text-xs font-mono text-muted-foreground inline-flex sm:hidden items-center gap-1"
+					class="text-[11px] font-mono text-muted-foreground inline-flex sm:hidden items-center gap-1"
 				>
 					<Activity class="size-3 text-muted-foreground" />
 					{monitor.recent_checks[0]}ms
 				</span>
 			{/if}
 			<div
-				class="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 border border-border/60"
+				class="flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-white/5 border border-border/60"
 			>
-				<span style={statusInfo.dotStyle} class="size-2 rounded-full {statusInfo.dotClass}"></span>
+				<span style={statusInfo.dotStyle} class="size-1.5 rounded-full {statusInfo.dotClass}"
+				></span>
 				<span style={statusInfo.textStyle} class={statusInfo.textClass}>{statusInfo.label}</span>
 			</div>
 		</div>
