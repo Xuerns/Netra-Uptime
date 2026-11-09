@@ -22,10 +22,10 @@ export const load: LayoutLoad = async ({ fetch }) => {
 			};
 		}
 	} catch (error) {
-		logger.error('Gagal mengambil data user:', error);
+		logger.error('Failed to fetch user data:', error);
 	}
 
-	// Nilai default jika gagal memuat (misal belum login)
+	// Default values if loading fails (e.g. not logged in)
 	return {
 		user: {
 			name: 'Unknown User',

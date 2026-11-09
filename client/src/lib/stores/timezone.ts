@@ -33,11 +33,11 @@ function createUserTimezoneStore(): Writable<string> {
 	};
 }
 
-/** Svelte store yang menyimpan timezone aktif user (IANA timezone name). */
+/** Svelte store holding the user's active timezone (IANA timezone name). */
 export const userTimezone = createUserTimezoneStore();
 
 /**
- * Daftar timezone populer yang ditampilkan di User Settings.
+ * List of popular timezones displayed in User Settings.
  * Format: { value: IANA name, label: display label, region: grouping }
  */
 export const POPULAR_TIMEZONES = [

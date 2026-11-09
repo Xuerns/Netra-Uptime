@@ -8,7 +8,7 @@ export interface Organization {
 	role?: string;
 }
 
-// Menyimpan daftar seluruh organisasi milik user
+// Stores the list of all organizations owned by the user
 export const organizations = writable<Organization[]>([]);
 
 function createActiveOrgIdStore(): Writable<string | null> {
@@ -45,5 +45,5 @@ function createActiveOrgIdStore(): Writable<string | null> {
 	};
 }
 
-// Menyimpan ID organisasi yang saat ini sedang aktif (dipilih) di sidebar/dashboard
+// Stores the ID of the organization currently active (selected) in the sidebar/dashboard
 export const activeOrgId = createActiveOrgIdStore();

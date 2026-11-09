@@ -524,7 +524,7 @@ func TestBadRoute_ProfileWithPOST(t *testing.T) {
 }
 
 // ==============================================================================
-// 2. ❌ ROUTE TIDAK ADA (404)
+// 2. ❌ NON-EXISTENT ROUTE (404)
 // ==============================================================================
 
 func TestBadRoute_NonExistentEndpoint(t *testing.T) {
@@ -555,7 +555,7 @@ func TestBadRoute_RandomPath(t *testing.T) {
 }
 
 // ==============================================================================
-// 3. 🔐 UNAUTHORIZED — PROTECTED ROUTES TANPA TOKEN (401)
+// 3. 🔐 UNAUTHORIZED — PROTECTED ROUTES WITHOUT TOKEN (401)
 // ==============================================================================
 
 func TestBadRoute_ProfileWithoutToken(t *testing.T) {

@@ -89,6 +89,7 @@ func TestDualModeSQLite_QueriesAndRetention(t *testing.T) {
 	}
 
 	now := time.Now().UTC()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, time.UTC)
 	twoDaysAgo := time.Date(now.Year(), now.Month(), now.Day()-2, 0, 0, 0, 0, time.UTC)
 
 	// Seed an existing daily stat for 2 days ago to test both reading and ON CONFLICT upsert merging
@@ -109,28 +110,28 @@ func TestDualModeSQLite_QueriesAndRetention(t *testing.T) {
 		t.Fatalf("Failed to seed MonitorDailyStat: %v", err)
 	}
 
-	// Seed recent checks (within 24h) and old checks (2 days ago, older than 24h retention threshold)
+	// Seed recent checks on today (within 24h) and old checks (2 days ago, older than 24h retention threshold)
 	checks := []model.Check{
 		{
 			MonitorID:      mon.ID,
 			Status:         "up",
 			StatusCode:     200,
 			ResponseTimeMs: 40,
-			CheckedAt:      now.Add(-2 * time.Hour),
+			CheckedAt:      today.Add(1 * time.Hour),
 		},
 		{
 			MonitorID:      mon.ID,
 			Status:         "up",
 			StatusCode:     200,
 			ResponseTimeMs: 60,
-			CheckedAt:      now.Add(-1 * time.Hour),
+			CheckedAt:      today.Add(2 * time.Hour),
 		},
 		{
 			MonitorID:      mon.ID,
 			Status:         "up",
 			StatusCode:     200,
 			ResponseTimeMs: 120,
-			CheckedAt:      now.Add(-30 * time.Minute),
+			CheckedAt:      today.Add(3 * time.Hour),
 		},
 		// Old check (>24h ago on twoDaysAgo) to be aggregated by RetentionJob.CleanOldChecks()
 		{
@@ -277,6 +278,7 @@ func TestMetricAndSLAAccuracy_NoBiasFromTimeoutsOrDownChecks(t *testing.T) {
 	db.Create(mon)
 
 	now := time.Now().UTC()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, time.UTC)
 	checks := []model.Check{
 		// 1. Healthy check: 100ms
 		{
@@ -284,7 +286,7 @@ func TestMetricAndSLAAccuracy_NoBiasFromTimeoutsOrDownChecks(t *testing.T) {
 			Status:         "up",
 			StatusCode:     200,
 			ResponseTimeMs: 100,
-			CheckedAt:      now.Add(-50 * time.Minute),
+			CheckedAt:      today.Add(10 * time.Minute),
 		},
 		// 2. High-latency degraded check (200 OK, 500ms): Available (Up) + valid latency
 		{
@@ -293,7 +295,7 @@ func TestMetricAndSLAAccuracy_NoBiasFromTimeoutsOrDownChecks(t *testing.T) {
 			StatusCode:     200,
 			ResponseTimeMs: 500,
 			ErrorMessage:   "Response time 500ms exceeded 300",
-			CheckedAt:      now.Add(-40 * time.Minute),
+			CheckedAt:      today.Add(20 * time.Minute),
 		},
 		// 3. Timeout degraded check (status_code=0, 10000ms): Unavailable (Down) + excluded from latency
 		{
@@ -302,7 +304,7 @@ func TestMetricAndSLAAccuracy_NoBiasFromTimeoutsOrDownChecks(t *testing.T) {
 			StatusCode:     0,
 			ResponseTimeMs: 10000,
 			ErrorMessage:   "Request timed out after 10s (Service did not respond in time)",
-			CheckedAt:      now.Add(-30 * time.Minute),
+			CheckedAt:      today.Add(30 * time.Minute),
 		},
 		// 4. Connection refused down check (status_code=0, 1ms): Unavailable (Down) + excluded from latency
 		{
@@ -311,7 +313,7 @@ func TestMetricAndSLAAccuracy_NoBiasFromTimeoutsOrDownChecks(t *testing.T) {
 			StatusCode:     0,
 			ResponseTimeMs: 1,
 			ErrorMessage:   "Connection refused: Host is offline or port is closed",
-			CheckedAt:      now.Add(-20 * time.Minute),
+			CheckedAt:      today.Add(40 * time.Minute),
 		},
 		// 5. Maintenance check (status_code=503, 50ms): Excluded from SLA total/up/down and latency
 		{
@@ -320,7 +322,7 @@ func TestMetricAndSLAAccuracy_NoBiasFromTimeoutsOrDownChecks(t *testing.T) {
 			StatusCode:     503,
 			ResponseTimeMs: 50,
 			ErrorMessage:   "[Maintenance: Planned Window] Status code mismatch",
-			CheckedAt:      now.Add(-10 * time.Minute),
+			CheckedAt:      today.Add(50 * time.Minute),
 		},
 	}
 	for i := range checks {

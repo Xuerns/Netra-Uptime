@@ -194,7 +194,7 @@ export const OrgAPI = {
 	},
 
 	getMembers: async (orgId: string): Promise<OrgMembersResponse> => {
-		// organizationID diambil dari path `:orgId` dan divalidasi oleh tenant middleware
+		// organizationID is extracted from the path `:orgId` and validated by tenant middleware
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/members`, {
 			method: 'GET'
 		});
@@ -225,7 +225,7 @@ export const OrgAPI = {
 	},
 
 	kickMember: async (orgId: string, memberId: string): Promise<OrgActionResponse> => {
-		// Di backend `KickMember`, di-bind langsung ke `var memberId string` alih-alih `KickMemberRequest`
+		// In the backend `KickMember`, directly bound to `var memberId string` instead of `KickMemberRequest`
 		const res = await apiFetch(`${API_Route}/organization/${orgId}/kick`, {
 			method: 'DELETE',
 			headers: { 'Content-Type': 'application/json' },
