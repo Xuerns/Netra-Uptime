@@ -38,8 +38,12 @@ You can launch Netra Uptime in less than a minute using either the official CLI 
 Run Netra Uptime immediately without cloning using your favorite package runner:
 
 ```bash
-# npx
+# Instant run via npx
 npx netra-uptime start
+
+# Or install globally to manage Netra Uptime anywhere (netra-uptime creds, status, stop, etc.):
+npm install -g netra-uptime
+netra-uptime start
 ```
 
 ### Option 2: Docker Compose (Self-Hosting)

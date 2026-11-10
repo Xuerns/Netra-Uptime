@@ -1,6 +1,8 @@
 # Netra Uptime CLI
 
-Official CLI to quickly initialize, run, and manage **Netra Uptime** self-hosted uptime monitoring and status pages.
+Official CLI to quickly initialize, run, and manage **[Netra Uptime](https://netrauptime.dev)** self-hosted uptime monitoring and status pages.
+
+Official Website & Documentation: **[https://netrauptime.dev](https://netrauptime.dev)**
 
 ## Quick Start
 
@@ -22,9 +24,11 @@ yarn dlx netra-uptime start
 bunx netra-uptime start
 ```
 
-### 2. Global Installation (Optional)
+> **Important**: Running via `npx` executes on-demand and does **not** register `netra-uptime` in your system `$PATH`. If you start with `npx`, subsequent commands must also be prefixed with `npx` (e.g. `npx netra-uptime stop`, `npx netra-uptime creds`), or install globally below.
 
-If you prefer having the `netra-uptime` command permanently available:
+### 2. Global Installation (Recommended for CLI commands)
+
+To use `netra-uptime <command>` directly anywhere in your terminal without typing `npx`:
 
 ```bash
 # npm

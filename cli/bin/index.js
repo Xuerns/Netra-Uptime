@@ -10,23 +10,32 @@ import { generateEnv, generateCompose } from '../src/templates.js';
 const HELP = `
 Netra Uptime CLI
 
+Official Website & Documentation:
+  https://netrauptime.dev
+
 Usage:
   netra-uptime <command> [options]
 
 Commands:
-  init      Generate .env and docker-compose.yml (random secrets)
-  start     Init (if needed) and run: docker compose up -d
-  stop      Run: docker compose down
-  status    Show container status
-  logs      Follow logs
+  init         Generate .env and docker-compose.yml (random secrets)
+  start        Init (if needed) and run: docker compose up -d
+  stop         Run: docker compose down
+  status       Show container status
+  logs         Follow logs
   credentials  Display database credentials from .env (alias: creds)
-  update    Pull the latest image and restart
-  help      Show this help
+  update       Pull the latest image and restart
+  help         Show this help
 
 Options:
   --port <n>   Host port for the web UI (default: 27346)
   --dir <path> Install directory (default: ~/.netra-uptime)
   --force      Overwrite existing .env / docker-compose.yml (init)
+
+Notice:
+  To run "netra-uptime <command>" directly in your terminal, install globally:
+    npm install -g netra-uptime
+  If running on-demand via npx, prefix every command with npx:
+    npx netra-uptime <command>
 `;
 
 function parseArgs(argv) {
@@ -165,6 +174,13 @@ Next steps:
 
   4. Need more info? Run:
      netra-uptime help
+
+⚠ Notice:
+  To run "netra-uptime" commands directly from your terminal, install globally:
+    npm install -g netra-uptime
+  (If running via npx without global install, prefix commands with npx: "npx netra-uptime start${dirFlag}")
+
+Website & Documentation: https://netrauptime.dev
 `);
       break;
     }
@@ -176,7 +192,8 @@ Next steps:
       const creds = readCredentials(dir);
       console.log(`
 ⫸ Netra Uptime is up and running! ⫷
-   Web Dashboard: http://localhost:${activePort}
+   Web Dashboard : http://localhost:${activePort}
+   Documentation : https://netrauptime.dev
 
 ${formatCredentialsSummary(creds)}
 
@@ -185,7 +202,14 @@ Useful commands:
   • netra-uptime status${dirFlag}      - Check container health
   • netra-uptime logs${dirFlag}        - Stream live logs
   • netra-uptime stop${dirFlag}        - Stop all containers
-  • netra-uptime help              - View all commands
+  • netra-uptime help                  - View all commands
+
+⚠ Notice:
+  Commands above are only available directly if installed globally:
+    npm install -g netra-uptime
+  If you started using npx, prefix commands with npx:
+    npx netra-uptime credentials${dirFlag}
+    npx netra-uptime stop${dirFlag}
 `);
       break;
     }
@@ -194,6 +218,8 @@ Useful commands:
       const creds = readCredentials(dir);
       console.log(`
 ${formatCredentialsSummary(creds)}
+
+Website & Documentation: https://netrauptime.dev
 `);
       break;
     }
