@@ -274,22 +274,30 @@ Consistent typography scales bridge both dark and light modes, relying on **Inte
 - **Live Pulse**:
   - Dark Mode: 8px circle with slow-pulsing `box-shadow: 0 0 12px rgba(78, 222, 163, 0.6)`.
   - Light Mode: 8px circle in solid `#10B981` with soft emerald halo `rgba(16, 185, 129, 0.25)`.
-- **Status Pills (`UP`, `DOWN`, `PAUSED`)**:
+- **Status Pills (`UP`, `DOWN`, `PAUSED`, `MAINTENANCE`)**:
   - Operational: Full pill radius (`rounded-full`), text `#10B981` with matching tinted background (`rgba(16, 185, 129, 0.12)` in Dark, `#ECFDF5` in Light) and border (`rgba(16, 185, 129, 0.25)` in Dark, `#A7F3D0` in Light).
   - Degraded / Warning: Amber tint (`#FFFBEB` in Light / `rgba(245, 158, 11, 0.12)` in Dark).
   - Critical Outage: Rose tint (`#FEF2F2` in Light / `rgba(239, 68, 68, 0.15)` in Dark).
+  - Scheduled Maintenance: Blue/indigo tint (`#EFF6FF` in Light with text `#1E40AF` and border `#BFDBFE` / `rgba(59, 130, 246, 0.15)` in Dark with text `text-blue-400` and border `border-blue-500/30`).
 
-### 3. Inputs & Search Fields
+### 3. Incident Response Snippet Box
+- **Diagnostics Monospace Box**: Monospace container rendering sanitized error response snippets:
+  - Background: `bg-background` (Dark: `#131315`, Light: `#F8FAFC`).
+  - Border: `1px solid var(--border)` (`rgba(255, 255, 255, 0.1)` Dark / `#E2E8F0` Light).
+  - Typography: `font-mono text-xs text-rose-300` (Dark) / `text-rose-700` (Light), `whitespace-pre-wrap break-all`.
+  - Padding & Radius: `p-3 rounded-md`.
+
+### 4. Inputs & Search Fields
 - **Dark Mode**: Background `rgba(0, 0, 0, 0.25)`, border `1px solid rgba(255, 255, 255, 0.1)`, placeholder `#64748B`. Focus transitions border to `#3B82F6` with 4px soft outer glow.
 - **Light Mode**: Background `#FFFFFF`, border `1px solid #E2E8F0`, placeholder `#94A3B8`. Focus transitions border to `#10B981` or `#3B82F6` with soft tint shadow.
 
-### 4. Uptime Graphs & Sparklines
+### 5. Uptime Graphs & Sparklines
 - **Interpolation**: Stepped or crisp multi-segment line rendering to capture discrete latency and status intervals.
 - **Stroke & Area Fill**:
   - Dark Mode: Stroke `#4edea3` (2px), gradient area fill `linear-gradient(180deg, rgba(78, 222, 163, 0.2) 0%, rgba(78, 222, 163, 0.0) 100%)`. Grid lines in `rgba(255, 255, 255, 0.06)`.
   - Light Mode: Stroke `#10B981` (2px), gradient area fill `linear-gradient(180deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.0) 100%)`. Grid lines in `#E2E8F0` dashed (`4 4`).
 
-### 5. Navigation Sidebar
+### 6. Navigation Sidebar
 - Fixed `260px` left rail with brand logo mark, grouped navigation (`MONITORING`, `ORGANIZATION`), and user profile trigger.
 - **Active State**:
   - Dark Mode: `background: rgba(78, 222, 163, 0.12)`, text `#4edea3`, font-weight `600`.

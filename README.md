@@ -60,15 +60,17 @@ Once running, access the dashboard at: **[http://localhost:27346](http://localho
 
 Netra Uptime can run on Windows as a native background desktop service with zero external dependencies (pure-Go embedded SQLite, zero CGO):
 
-1. **Build the Desktop Executable:**
-   ```powershell
-   .\scripts\build-windows.ps1 -Target desktop
-   ```
-   Or directly with Go:
-   ```powershell
-   cd server
-   go build -ldflags "-H windowsgui -s -w" -o netra-uptime.exe ./cmd/netra-uptime-desktop
-   ```
+1. **Get the Desktop Executable:**
+   - **Download Pre-built:** Download the latest portable [**`netra-uptime.exe`**](https://github.com/Xuerns/Netra-Uptime/releases/latest/download/netra-uptime.exe) or [**`netra-uptime-windows.zip`**](https://github.com/Xuerns/Netra-Uptime/releases/latest/download/netra-uptime-windows.zip).
+   - **Or Build Locally:**
+     ```powershell
+     .\scripts\build-windows.ps1 -Target desktop
+     ```
+     Or directly with Go:
+     ```powershell
+     cd server
+     go build -ldflags "-H windowsgui -s -w" -o netra-uptime.exe ./cmd/netra-uptime-desktop
+     ```
 2. **Run:** Double-click `netra-uptime.exe`. It runs completely silently in the background without any command prompt window and places an icon in the Windows System Tray (near the clock).
 3. **Controls:**
    - **Click or Right-Click Tray Icon**: Choose **"Open Netra"** to open the dashboard in your default browser (`http://127.0.0.1:27346`).
@@ -82,14 +84,17 @@ Netra Uptime can run on Windows as a native background desktop service with zero
 
 ## Key Features
 
-- **Multi-Protocol Monitoring**: Check uptime via HTTP/HTTPS, TCP ports, and ICMP Ping.
+- **Multi-Protocol & Advanced HTTP Checks**: Check uptime via HTTP/HTTPS (supporting custom methods `GET`, `POST`, `PUT`, `PATCH`, `HEAD`, custom headers with CRLF injection protection, request payloads, and sanitized error response snippets), TCP ports, and unprivileged ICMP Ping.
+- **Immediate Retry (Zero False Positives)**: Automatic 1x retry after a 2-second sleep on transient connection drops, timeouts, 5xx server errors, or status code mismatches before alert rules trigger.
+- **Scheduled Maintenance Suppression**: Automated maintenance window lifecycle (`scheduled` -> `in_progress` -> `completed`), tagging checks as `maintenance`, suppressing incidents and notifications, and shielding 90-day SLA calculations.
+- **Unbiased SLA Telemetry & Real Downtime**: Availability strictly decoupled from latency degradation (valid HTTP < 500 checks remain available, timeouts count as down), latency skew eliminated from averages, and exact downtime tracking between incident trigger and recovery timestamps.
 - **SSL Certificate & Domain Expiry**: Proactive tracking of SSL certificate validity and WHOIS/RDAP domain expiration.
 - **Concurrent Worker Pool**: Non-blocking scheduler powered by Go goroutines and worker channels.
 - **Manual Trigger ("Check Now")**: Run on-demand diagnostic checks directly from the monitor detail dashboard without waiting for cron intervals.
 - **Custom Alert Rules & Multi-Channel Notifications**: Fine-grained breach thresholds (consecutive failures, response time limits) with notification dispatchers (Email/SMTP, Slack, Discord, Webhooks).
 - **Public & Private Status Pages**: Branded status pages with uptime history bars, maintenance schedules, component grouping, and embeddable SVG badges.
 - **Automated Incident Management**: Auto-generation of incident records on downtime, collaborative incident triage updates, and automatic resolution when monitors recover.
-- **Multi-Tenancy & Team Roles**: Tenant isolation per organization with role-based access control (`owner`, `admin`, `member`) and email invitations.
+- **Multi-Tenancy & Fleet Management**: Multi-tenant isolation per organization with role-based access control (`owner`, `admin`, `member`), allowing both Owners and Admins to manage monitors, alert rules, and status pages with granular UI gating and dynamic API error reporting.
 - **System Health Checks**: Built-in `/healthz` and `/api/v1/health` endpoints verifying database connectivity for Docker and Kubernetes probes.
 - **Public REST API & API Keys**: Secure external automation via rate-limited API keys.
 

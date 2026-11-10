@@ -33,7 +33,8 @@ HOST_PORT=${c.port}
 ALLOWED_ORIGIN=${origin}
 PUBLIC_API_URL=${origin}/api/v1
 
-# Self-hosted limits (0 = unlimited)
+# Self-hosted limits & network policies
+ALLOW_PRIVATE_NETWORK_MONITORING=false
 RECENT_CHECKS_LIMIT=60
 MAX_MONITORS_PER_ORG=200
 MAX_MEMBERS_PER_ORG=100

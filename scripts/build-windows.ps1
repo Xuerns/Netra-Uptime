@@ -1,6 +1,7 @@
 param(
     [ValidateSet("desktop", "server")]
-    [string]$Target = "desktop"
+    [string]$Target = "desktop",
+    [switch]$CreateZip
 )
 
 $ErrorActionPreference = "Stop"
@@ -78,6 +79,18 @@ if (Test-Path "$OutputExe") {
     Write-Host " Binary : $OutputExe" -ForegroundColor Green
     Write-Host " Size   : $SizeMB MB ($($FileInfo.Length) bytes)" -ForegroundColor Green
     Write-Host "==========================================================" -ForegroundColor Green
+
+    if ($CreateZip) {
+        $OutputZip = Join-Path $RepoRoot "netra-uptime-windows.zip"
+        Write-Host "Creating release archive: $OutputZip..." -ForegroundColor Yellow
+        if (Test-Path "$OutputZip") {
+            Remove-Item -Path "$OutputZip" -Force
+        }
+        Compress-Archive -Path "$OutputExe" -DestinationPath "$OutputZip" -Force
+        $ZipInfo = Get-Item "$OutputZip"
+        $ZipMB = [math]::Round($ZipInfo.Length / 1MB, 2)
+        Write-Host " Archive: $OutputZip ($ZipMB MB)" -ForegroundColor Green
+    }
 } else {
     throw "Expected output binary not found at $OutputExe"
 }
