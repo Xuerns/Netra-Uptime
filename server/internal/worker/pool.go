@@ -237,7 +237,8 @@ func (wp *WorkerPool) syncAndCheckMaintenance(monitorID uuid.UUID, now time.Time
 			monitorID, []string{"scheduled", "in_progress"}, now, now,
 		).
 		Order("scheduled_maintenances.scheduled_start ASC").
-		First(&activeMaint).Error
+		Limit(1).
+		Find(&activeMaint).Error
 	if err == nil && activeMaint.ID != uuid.Nil {
 		return &activeMaint, true
 	}
@@ -280,7 +281,7 @@ func (wp *WorkerPool) procces(monitor *model.Monitor) *model.Check {
 	} else {
 		// If monitor has no explicit template assigned, check if organization has a default template
 		var defaultTemplate model.AlertRuleTemplate
-		if err := wp.db.Where("organization_id = ? AND is_default = true", dbMonitor.OrganizationID).First(&defaultTemplate).Error; err == nil {
+		if err := wp.db.Where("organization_id = ? AND is_default = true", dbMonitor.OrganizationID).Limit(1).Find(&defaultTemplate).Error; err == nil && defaultTemplate.ID != uuid.Nil {
 			_ = wp.db.Where("template_id = ? AND is_active = true", defaultTemplate.ID).Find(&effectiveRules).Error
 		}
 	}
