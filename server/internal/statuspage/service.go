@@ -600,11 +600,11 @@ func mapIncidentsToResponse(incidents []model.Incident) []PublicIncidentResponse
 func generate90DayStats(stats []model.MonitorDailyStat) []PublicUptimeDayResponse {
 	statMap := make(map[string]model.MonitorDailyStat)
 	for _, s := range stats {
-		statMap[s.Date.Format("2006-01-02")] = s
+		statMap[s.Date.UTC().Format("2006-01-02")] = s
 	}
 
 	result := make([]PublicUptimeDayResponse, 90)
-	now := time.Now()
+	now := time.Now().UTC()
 
 	for i := 0; i < 90; i++ {
 		day := now.AddDate(0, 0, -(89 - i))
@@ -844,12 +844,12 @@ func (s *StatusPageServiceImpl) DeleteMaintenance(orgID, statusPageID, maintenan
 func groupIncidentsByDay(incidents []model.Incident, continuousDays int) []PublicIncidentDayGroup {
 	incMap := make(map[string][]model.Incident)
 	for _, inc := range incidents {
-		dateStr := inc.StartedAt.Format("2006-01-02")
+		dateStr := inc.StartedAt.UTC().Format("2006-01-02")
 		incMap[dateStr] = append(incMap[dateStr], inc)
 	}
 
 	result := make([]PublicIncidentDayGroup, 0)
-	now := time.Now()
+	now := time.Now().UTC()
 
 	seenDates := make(map[string]bool)
 	for i := 0; i < continuousDays; i++ {
@@ -868,7 +868,7 @@ func groupIncidentsByDay(incidents []model.Incident, continuousDays int) []Publi
 	}
 
 	for _, inc := range incidents {
-		dateStr := inc.StartedAt.Format("2006-01-02")
+		dateStr := inc.StartedAt.UTC().Format("2006-01-02")
 		if !seenDates[dateStr] {
 			seenDates[dateStr] = true
 			result = append(result, PublicIncidentDayGroup{

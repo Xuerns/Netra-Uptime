@@ -1079,15 +1079,24 @@ func TestComponentGroupCRUDAndIncidentHistory(t *testing.T) {
 	}
 
 	// Test groupIncidentsByDay
-	now := time.Now()
-	resAt := now.Add(-10 * time.Minute)
+	now := time.Now().UTC()
+	yesterday := now.AddDate(0, 0, -1)
+	resAt := now
 	incidents := []model.Incident{
 		{
 			ID:         uuid.New(),
 			Summary:    "API Timeout Spike",
 			Severity:   "high",
 			Status:     "resolved",
-			StartedAt:  now.Add(-30 * time.Minute),
+			StartedAt:  now,
+			ResolvedAt: &resAt,
+		},
+		{
+			ID:         uuid.New(),
+			Summary:    "Database Outage Yesterday",
+			Severity:   "critical",
+			Status:     "resolved",
+			StartedAt:  yesterday,
 			ResolvedAt: &resAt,
 		},
 	}
@@ -1097,6 +1106,9 @@ func TestComponentGroupCRUDAndIncidentHistory(t *testing.T) {
 	}
 	if len(dailyGroups[0].Incidents) != 1 {
 		t.Errorf("expected 1 incident today, got %d", len(dailyGroups[0].Incidents))
+	}
+	if len(dailyGroups[1].Incidents) != 1 {
+		t.Errorf("expected 1 incident yesterday, got %d", len(dailyGroups[1].Incidents))
 	}
 }
 
