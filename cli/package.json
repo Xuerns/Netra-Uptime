@@ -1,6 +1,6 @@
 {
   "name": "netra-uptime",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CLI to install and run Netra Uptime with Docker Compose",
   "main": "bin/index.js",
   "files": [
